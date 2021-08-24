@@ -17,10 +17,12 @@
 package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Preconditions;
+import java.util.Optional;
+import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 
-/**
- Media item returned by queries to the Google Photos API.  Represents what is stored by Google.
- */
+/** Media item returned by queries to the Google Photos API. Represents what is stored by Google. */
 public class GoogleMediaItem {
   @JsonProperty("id")
   private String id;
@@ -43,31 +45,84 @@ public class GoogleMediaItem {
   @JsonProperty("productUrl")
   private String productUrl;
 
-  public String getId() { return id; }
+  public static VideoModel convertToVideoModel(
+      Optional<String> albumId, GoogleMediaItem mediaItem) {
+    Preconditions.checkArgument(mediaItem.getMediaMetadata().getVideo() != null);
 
-  public String getDescription() { return description; }
+    return new VideoModel(
+        "", // TODO: no title?
+        // dv = download video otherwise you only get a thumbnail
+        mediaItem.getBaseUrl() + "=dv",
+        mediaItem.getDescription(),
+        mediaItem.getMimeType(),
+        mediaItem.getId(),
+        albumId.orElse(null),
+        false);
+  }
 
-  public String getBaseUrl() { return baseUrl; }
+  public static PhotoModel convertToPhotoModel(
+      Optional<String> albumId, GoogleMediaItem mediaItem) {
+    Preconditions.checkArgument(mediaItem.getMediaMetadata().getPhoto() != null);
 
-  public String getMimeType() { return mimeType; }
+    return new PhotoModel(
+        mediaItem.getFilename(),
+        mediaItem.getBaseUrl() + "=d",
+        mediaItem.getDescription(),
+        mediaItem.getMimeType(),
+        mediaItem.getId(),
+        albumId.orElse(null),
+        false);
+  }
 
-  public String getFilename() { return filename; }
+  public String getId() {
+    return id;
+  }
+
+  public void setId(String id) {
+    this.id = id;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
+  public String getBaseUrl() {
+    return baseUrl;
+  }
+
+  public void setBaseUrl(String baseUrl) {
+    this.baseUrl = baseUrl;
+  }
+
+  public String getMimeType() {
+    return mimeType;
+  }
+
+  public void setMimeType(String mimeType) {
+    this.mimeType = mimeType;
+  }
+
+  public String getFilename() {
+    return filename;
+  }
+
+  public void setFilename(String filename) {
+    this.filename = filename;
+  }
 
   public String getProductUrl() {
     return productUrl;
   }
 
-  public MediaMetadata getMediaMetadata() { return mediaMetadata; }
+  public MediaMetadata getMediaMetadata() {
+    return mediaMetadata;
+  }
 
-  public void setDescription(String description) { this.description = description; }
-
-  public void setBaseUrl(String baseUrl) { this.baseUrl = baseUrl; }
-
-  public void setId(String id) { this.id = id; }
-
-  public void setMimeType(String mimeType) { this.mimeType = mimeType; }
-
-  public void setFilename(String filename) { this.filename = filename; }
-
-  public void setMediaMetadata(MediaMetadata mediaMetadata) { this.mediaMetadata = mediaMetadata; }
+  public void setMediaMetadata(MediaMetadata mediaMetadata) {
+    this.mediaMetadata = mediaMetadata;
+  }
 }

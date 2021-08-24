@@ -164,7 +164,7 @@ public class GooglePhotosExporter
     for (PhotoModel photo : container.getPhotos()) {
       GoogleMediaItem googleMediaItem =
           getOrCreatePhotosInterface(authData).getMediaItem(photo.getDataId());
-      photosBuilder.add(convertToPhotoModel(Optional.empty(), googleMediaItem));
+      photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), googleMediaItem));
     }
 
     PhotosContainerResource photosContainerResource =
@@ -348,7 +348,7 @@ public class GooglePhotosExporter
         }
 
         if (shouldUpload) {
-          PhotoModel photoModel = convertToPhotoModel(albumId, mediaItem);
+          PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(albumId, mediaItem);
           photos.add(photoModel);
 
           monitor.debug(
@@ -357,19 +357,6 @@ public class GooglePhotosExporter
       }
     }
     return photos;
-  }
-
-  public static PhotoModel convertToPhotoModel(Optional<String> albumId, GoogleMediaItem mediaItem) {
-    Preconditions.checkArgument(mediaItem.getMediaMetadata().getPhoto() != null);
-
-    return new PhotoModel(
-        mediaItem.getFilename(),
-        mediaItem.getBaseUrl() + "=d",
-        mediaItem.getDescription(),
-        mediaItem.getMimeType(),
-        mediaItem.getId(),
-        albumId.orElse(null),
-        false);
   }
 
   private synchronized GooglePhotosInterface getOrCreatePhotosInterface(

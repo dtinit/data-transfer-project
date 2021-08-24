@@ -19,7 +19,6 @@ package org.datatransferproject.datatransfer.google.videos;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -57,21 +56,6 @@ public class GoogleVideosExporter
       GoogleCredentialFactory credentialFactory, GoogleVideosInterface videosInterface) {
     this.credentialFactory = credentialFactory;
     this.videosInterface = videosInterface;
-  }
-
-  public static VideoModel convertToVideoModel(
-      Optional<String> albumId, GoogleMediaItem mediaItem) {
-    Preconditions.checkArgument(mediaItem.getMediaMetadata().getVideo() != null);
-
-    return new VideoModel(
-        "", // TODO: no title?
-        //            dv = download video otherwise you only get a thumbnail
-        mediaItem.getBaseUrl() + "=dv",
-        mediaItem.getDescription(),
-        mediaItem.getMimeType(),
-        mediaItem.getId(),
-        albumId.orElse(null),
-        false);
   }
 
   @Override
@@ -120,7 +104,7 @@ public class GoogleVideosExporter
     for (GoogleMediaItem mediaItem : mediaItems) {
       if (mediaItem.getMediaMetadata().getVideo() != null) {
 
-        videos.add(convertToVideoModel(Optional.empty(), mediaItem));
+        videos.add(GoogleMediaItem.convertToVideoModel(Optional.empty(), mediaItem));
       }
     }
     return videos;

@@ -37,9 +37,7 @@ import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
-import org.datatransferproject.datatransfer.google.photos.GooglePhotosExporter;
 import org.datatransferproject.datatransfer.google.photos.GooglePhotosInterface;
-import org.datatransferproject.datatransfer.google.videos.GoogleVideosExporter;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
@@ -183,7 +181,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
     for (PhotoModel photo : container.getPhotos()) {
       GoogleMediaItem googleMediaItem =
           getOrCreatePhotosInterface(authData).getMediaItem(photo.getDataId());
-      photosBuilder.add(GooglePhotosExporter.convertToPhotoModel(Optional.empty(), googleMediaItem));
+      photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), googleMediaItem));
     }
 
     MediaContainerResource mediaContainerResource =
@@ -213,7 +211,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
     for (PhotoModel photo : container.getPhotos()) {
       GoogleMediaItem googleMediaItem =
           getOrCreatePhotosInterface(authData).getMediaItem(photo.getDataId());
-      photosBuilder.add(GooglePhotosExporter.convertToPhotoModel(Optional.empty(), googleMediaItem));
+      photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), googleMediaItem));
     }
 
     // TODO: go through the videos in the MediaContainerResource, look them up and add them to the
@@ -391,7 +389,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
 
       if (mediaItem.getMediaMetadata().getPhoto() != null) {
         if (shouldUpload) {
-          PhotoModel photoModel = GooglePhotosExporter.convertToPhotoModel(albumId, mediaItem);
+          PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(albumId, mediaItem);
           photos.add(photoModel);
 
           monitor.debug(
@@ -399,7 +397,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
         }
       } else if (mediaItem.getMediaMetadata().getVideo() != null) {
         if (shouldUpload) {
-          VideoModel videoModel = GoogleVideosExporter.convertToVideoModel(albumId, mediaItem);
+          VideoModel videoModel = GoogleMediaItem.convertToVideoModel(albumId, mediaItem);
           videos.add(videoModel);
           monitor.debug(
               () -> String.format("%s: Google exporting video: %s", jobId, videoModel.getDataId()));
