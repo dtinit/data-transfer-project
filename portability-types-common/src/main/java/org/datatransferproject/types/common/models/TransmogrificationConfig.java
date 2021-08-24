@@ -2,7 +2,7 @@ package org.datatransferproject.types.common.models;
 
 /**
  * This class is meant to be extended with custom logic for each service. These defaults represent
- * no-chnage transmogrifications.
+ * no-change transmogrifications.
  */
 public class TransmogrificationConfig {
   private static final String PHOTO_TITLE_FORBIDDEN_CHARACTERS = "";
