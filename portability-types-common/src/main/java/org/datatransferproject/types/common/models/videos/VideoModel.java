@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
+import java.util.stream.Collectors;
 import org.datatransferproject.types.common.models.MediaObject;
 
 public class VideoModel extends MediaObject {
@@ -84,6 +85,30 @@ public class VideoModel extends MediaObject {
             Objects.equal(getDataId(), that.getDataId()) &&
             Objects.equal(getAlbumId(), that.getAlbumId());
   }
+
+  // Assign this video to a different album. Used in cases where an album is too large and
+  // needs to be divided into smaller albums, the videos will each get reassigned to new
+  // albumnIds.
+  public void reassignToAlbum(String newAlbum){
+    this.albumId = newAlbum;
+  }
+
+  // remove all forbidden characters
+  public void cleanName(String forbiddenCharacters, char replacementCharacter, int maxLength) {
+    String name = getName().chars()
+        .mapToObj(c -> (char) c)
+        .map(c -> forbiddenCharacters.contains(Character.toString(c)) ? replacementCharacter : c)
+        .map(Object::toString)
+        .collect(Collectors.joining("")).trim();
+
+    if (maxLength <= 0) {
+      setName(name.trim());
+      return;
+    }
+
+    setName(name.substring(0, Math.min(maxLength, name.length())).trim());
+  }
+
 
   @Override
   public int hashCode() {
