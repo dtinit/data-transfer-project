@@ -36,7 +36,6 @@ public final class PhotobucketConstants {
 
   // Clients
   public static final String GQL_URL = ENVIRONMENT_URL + "/api/graphql";
-  public static final String UPLOAD_BY_URL_URL = ENVIRONMENT_URL + "/api/upload_by_url";
   public static final String UPLOAD_URL = ENVIRONMENT_URL + "/api/uploadMobile";
   public static final String USER_STATS_URL = "https://auth.photobucket.com/me";
 
