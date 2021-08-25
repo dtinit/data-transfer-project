@@ -45,7 +45,10 @@ import org.datatransferproject.types.common.models.videos.VideoObject;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
@@ -175,47 +178,44 @@ public class PhotobucketClient {
       throws CopyExceptionWithFailureReason {
     try {
       RequestBody uploadRequestBody;
-      String url;
       // get pbAlbumId based on provided albumId
       String pbAlbumId = getPBAlbumId(mediaModel.getAlbumId());
+      String url =
+          String.format(
+              "%s?albumId=%s&name=%s",
+              UPLOAD_URL, encodeQueryParam(pbAlbumId), encodeQueryParam(mediaModel.getTitle()));
+      String maybeUploadDate = extractUploadDate(mediaModel);
+      // extract upload date either from provided metadata or from exif
+      if (maybeUploadDate != null) {
+        url = url + String.format("&uploadDate=%s", encodeQueryParam(maybeUploadDate));
+      }
+      InputStream inputStream;
       if (mediaModel.isInTempStore()) {
-        // stream file
-        BufferedInputStream inputStream =
+        // stream file from temp store
+        monitor.debug(
+            () ->
+                (String.format(
+                    "Getting stream from temp store for image url [%s]",
+                    mediaModel.getFetchableUrl())));
+        inputStream =
             new BufferedInputStream(
                 jobStore.getStream(jobId, mediaModel.getFetchableUrl()).getStream());
-        uploadRequestBody =
-            new InputStreamRequestBody(MediaType.parse(mediaModel.getMediaType()), inputStream);
-        url =
-            String.format(
-                "%s?albumId=%s&name=%s",
-                UPLOAD_URL, encodeQueryParam(pbAlbumId), encodeQueryParam(mediaModel.getTitle()));
-        String maybeUploadDate = extractUploadDate(mediaModel);
-        // extract upload date either from provided metadata or from exif
-        if (maybeUploadDate != null) {
-          url = url + String.format("&uploadDate=%s", encodeQueryParam(maybeUploadDate));
-        }
+
       } else if (mediaModel.getFetchableUrl() != null) {
-        // upload media file via url
-        // add query parameters
-        url =
-            String.format(
-                "%s?url=%s&albumId=%s",
-                UPLOAD_BY_URL_URL,
-                encodeQueryParam(mediaModel.getFetchableUrl()),
-                encodeQueryParam(pbAlbumId));
-        // set upload date based on provided metadata
-        if (mediaModel.getUploadedTime() != null) {
-          url =
-              url
-                  + String.format(
-                      "&uploadDate=%s",
-                      encodeQueryParam(simpleDateFormat.format(mediaModel.getUploadedTime())));
-        }
-        uploadRequestBody = new FormBody.Builder().build();
+        // stream file from url
+        monitor.debug(
+            () ->
+                (String.format(
+                    "Getting stream by url store for image url [%s]",
+                    mediaModel.getFetchableUrl())));
+        inputStream = getConnection(mediaModel.getFetchableUrl()).getInputStream();
+
       } else {
         throw new IllegalStateException(
             "Unable to get input stream for image " + mediaModel.getTitle());
       }
+      uploadRequestBody =
+          new InputStreamRequestBody(MediaType.parse(mediaModel.getMediaType()), inputStream);
 
       if (isUserOveStorage(uploadRequestBody.contentLength())) {
         throw new OverlimitException();
@@ -428,5 +428,17 @@ public class PhotobucketClient {
         return null;
       }
     }
+  }
+
+  /**
+   * All timeouts are set for default as infinite
+   *
+   * @see java/net/URLConnection.java
+   */
+  private HttpURLConnection getConnection(String urlStr) throws IOException {
+    URL url = new URL(urlStr);
+    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    conn.connect();
+    return conn;
   }
 }
