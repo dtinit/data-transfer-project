@@ -155,7 +155,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       // were still listing out all of the albums since we have pagination data
       return exportAlbums(authData, Optional.of(paginationToken), jobId);
     } else {
-      return exportPhotos(
+      return exportMedia(
           authData,
           Optional.ofNullable(idOnlyContainerResource),
           Optional.ofNullable(paginationToken),
@@ -278,7 +278,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
   }
 
   @VisibleForTesting
-  ExportResult<MediaContainerResource> exportPhotos(
+  ExportResult<MediaContainerResource> exportMedia(
       TokensAndUrlAuthData authData,
       Optional<IdOnlyContainerResource> albumData,
       Optional<PaginationData> paginationData,
