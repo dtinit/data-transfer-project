@@ -110,7 +110,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       throws IOException, InvalidTokenException, PermissionDeniedException {
     if (!exportInformation.isPresent()) {
       // Make list of photos contained in albums so they are not exported twice later on
-      populateContainedPhotosList(jobId, authData);
+      populateContainedMediaList(jobId, authData);
       return exportAlbums(authData, Optional.empty(), jobId);
     } else if (exportInformation.get().getContainerResource() instanceof PhotosContainerResource) {
       // if ExportInformation is a photos container, this is a request to only export the contents
@@ -316,8 +316,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
   }
 
   /** Method for storing a list of all photos that are already contained in albums */
-  @VisibleForTesting
-  void populateContainedPhotosList(UUID jobId, TokensAndUrlAuthData authData)
+  void populateContainedMediaList(UUID jobId, TokensAndUrlAuthData authData)
       throws IOException, InvalidTokenException, PermissionDeniedException {
     // This method is only called once at the beginning of the transfer, so we can start by
     // initializing a new TempPhotosData to be store in the job store.
