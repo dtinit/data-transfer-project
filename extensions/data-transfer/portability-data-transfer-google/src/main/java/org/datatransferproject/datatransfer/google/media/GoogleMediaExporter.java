@@ -214,8 +214,10 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), googleMediaItem));
     }
 
-    // TODO: go through the videos in the MediaContainerResource, look them up and add them to the
-    // videos builder
+    for (VideoModel video : container.getVideos()) {
+      GoogleMediaItem googleMediaItem = getOrCreatePhotosInterface(authData).getMediaItem(video.getDataId());
+      videosBuilder.add(GoogleMediaItem.convertToVideoModel(Optional.empty(), googleMediaItem));
+    }
 
     MediaContainerResource mediaContainerResource =
         new MediaContainerResource(
