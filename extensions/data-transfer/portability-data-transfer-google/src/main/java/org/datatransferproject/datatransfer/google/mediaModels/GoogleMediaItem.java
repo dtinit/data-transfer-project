@@ -50,7 +50,7 @@ public class GoogleMediaItem {
     Preconditions.checkArgument(mediaItem.getMediaMetadata().getVideo() != null);
 
     return new VideoModel(
-        "", // TODO: no title?
+        mediaItem.getFilename(),
         // dv = download video otherwise you only get a thumbnail
         mediaItem.getBaseUrl() + "=dv",
         mediaItem.getDescription(),
