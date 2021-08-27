@@ -17,7 +17,8 @@
 package org.datatransferproject.transfer.photobucket.data;
 
 public final class PhotobucketConstants {
-  private static final String ENVIRONMENT_URL = "https://app.photobucket.com";
+  private static final String ENVIRONMENT_URL =
+      "http://a99628859f98211e98ec1028f336f240-a9996cfe26f27b96.elb.us-east-1.amazonaws.com:3000";
 
   // Configs
   public static boolean IS_OVER_STORAGE_VERIFICATION_ENABLED = false;
@@ -28,14 +29,15 @@ public final class PhotobucketConstants {
   public static final String PB_SERVICE_ID = "Photobucket";
 
   // Titles and prefixes
-  // TODO: use the same top level album for both, photos and videos. Need change on back end api layer.
+  // TODO: use the same top level album for both, photos and videos. Need change on back end api
+  // layer.
   public static final String MAIN_PHOTO_ALBUM_TITLE_SUFFIX = " photos";
   public static final String MAIN_VIDEO_ALBUM_TITLE_SUFFIX = " videos";
   // deprecated because of https://github.com/google/data-transfer-project/pull/991/commits
   public static final String ALBUM_TITLE_PREFIX = "";
 
   // Clients
-  public static final String GQL_URL = ENVIRONMENT_URL + "/api/graphql";
+  public static final String GQL_URL = ENVIRONMENT_URL + "/graphql";
   public static final String UPLOAD_URL = ENVIRONMENT_URL + "/api/uploadMobile";
   public static final String USER_STATS_URL = "https://auth.photobucket.com/me";
 
