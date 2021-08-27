@@ -19,6 +19,9 @@ package org.datatransferproject.transfer.photobucket.client;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
 import okhttp3.*;
+import okio.BufferedSink;
+import okio.Okio;
+import okio.Source;
 import org.apache.commons.imaging.Imaging;
 import org.apache.commons.imaging.common.ImageMetadata;
 import org.apache.commons.imaging.formats.jpeg.JpegImageMetadata;
@@ -29,7 +32,6 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 import org.datatransferproject.transfer.photobucket.client.helper.ExceptionTransformer;
-import org.datatransferproject.transfer.photobucket.client.helper.InputStreamRequestBody;
 import org.datatransferproject.transfer.photobucket.client.helper.OkHttpClientWrapper;
 import org.datatransferproject.transfer.photobucket.model.MediaModel;
 import org.datatransferproject.transfer.photobucket.model.PhotobucketAlbum;
@@ -43,6 +45,7 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.videos.VideoAlbum;
 import org.datatransferproject.types.common.models.videos.VideoObject;
 
+import javax.annotation.Nullable;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -190,6 +193,8 @@ public class PhotobucketClient {
         url = url + String.format("&uploadDate=%s", encodeQueryParam(maybeUploadDate));
       }
       InputStream inputStream;
+      HttpURLConnection connection;
+      long contentLength = -1;
       if (mediaModel.isInTempStore()) {
         // stream file from temp store
         monitor.debug(
@@ -208,14 +213,17 @@ public class PhotobucketClient {
                 (String.format(
                     "Getting stream by url store for image url [%s]",
                     mediaModel.getFetchableUrl())));
-        inputStream = getConnection(mediaModel.getFetchableUrl()).getInputStream();
-
+        connection = getConnection(mediaModel.getFetchableUrl());
+        contentLength = connection.getContentLength();
+        inputStream = connection.getInputStream();
       } else {
         throw new IllegalStateException(
             "Unable to get input stream for image " + mediaModel.getTitle());
       }
+
+
       uploadRequestBody =
-          new InputStreamRequestBody(MediaType.parse(mediaModel.getMediaType()), inputStream);
+              new InputStreamRequestBodyCustom(MediaType.parse(mediaModel.getMediaType()), inputStream, contentLength);
 
       if (isUserOveStorage(uploadRequestBody.contentLength())) {
         throw new OverlimitException();
@@ -441,4 +449,39 @@ public class PhotobucketClient {
     conn.connect();
     return conn;
   }
+
+  private static class InputStreamRequestBodyCustom extends RequestBody {
+    private final InputStream inputStream;
+    private final MediaType contentType;
+    private final long contentLength;
+
+    public InputStreamRequestBodyCustom(MediaType contentType, InputStream inputStream, long contentLength) {
+      if (inputStream == null) throw new NullPointerException("inputStream == null");
+      this.contentType = contentType;
+      this.inputStream = inputStream;
+      this.contentLength = contentLength;
+    }
+
+    @Nullable
+    @Override
+    public MediaType contentType() {
+      return contentType;
+    }
+
+    @Override
+    public long contentLength() throws IOException {
+      if (contentLength == -1) {
+        return inputStream.available() == 0 ? -1 : inputStream.available();
+      }
+      return contentLength;
+    }
+
+    @Override
+    public void writeTo(BufferedSink sink) throws IOException {
+      try (Source source = Okio.source(inputStream)) {
+        sink.writeAll(source);
+      }
+    }
+  }
+
 }
