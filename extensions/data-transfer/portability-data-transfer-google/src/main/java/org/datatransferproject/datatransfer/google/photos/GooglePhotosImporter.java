@@ -208,7 +208,6 @@ public class GooglePhotosImporter
     final HashMap<String, PhotoModel> uploadTokenToDataId = new HashMap<>();
     final HashMap<String, Long> uploadTokenToLength = new HashMap<>();
 
-
     // TODO: resumable uploads https://developers.google.com/photos/library/guides/resumable-uploads
     //  Resumable uploads would allow the upload of larger media that don't fit in memory.  To do
     //  this however, seems to require knowledge of the total file size.
@@ -230,7 +229,7 @@ public class GooglePhotosImporter
 
         String uploadToken =
             getOrCreatePhotosInterface(jobId, authData).uploadPhotoContent(inputStream);
-        mediaItems.add(new NewMediaItem(getPhotoDescription(jobId, photo), uploadToken));
+        mediaItems.add(new NewMediaItem(getPhotoDescription(photo), uploadToken));
         uploadTokenToDataId.put(uploadToken, photo);
         uploadTokenToLength.put(uploadToken, bytes);
         try {
@@ -322,7 +321,7 @@ public class GooglePhotosImporter
     return photo.getAlbumId() + "-" + photo.getDataId();
   }
 
-  private String getPhotoDescription(UUID jobId, PhotoModel inputPhoto) {
+  private String getPhotoDescription(PhotoModel inputPhoto) {
     String description;
     if (Strings.isNullOrEmpty(inputPhoto.getDescription())) {
       description = "";
