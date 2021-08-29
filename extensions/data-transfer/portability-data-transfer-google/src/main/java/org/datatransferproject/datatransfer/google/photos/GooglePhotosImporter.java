@@ -15,6 +15,8 @@
  */
 package org.datatransferproject.datatransfer.google.photos;
 
+import static java.lang.String.format;
+
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
@@ -26,7 +28,6 @@ import com.google.rpc.Code;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -37,8 +38,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
-import org.datatransferproject.spi.transfer.i18n.BaseMultilingualDictionary;
-import org.datatransferproject.spi.transfer.i18n.BaseMultilingualString;
 import org.datatransferproject.datatransfer.google.mediaModels.BatchMediaItemResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;
@@ -48,6 +47,7 @@ import org.datatransferproject.datatransfer.google.mediaModels.Status;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
+import org.datatransferproject.spi.transfer.i18n.BaseMultilingualDictionary;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -60,8 +60,6 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-import static java.lang.String.format;
-
 public class GooglePhotosImporter
     implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
@@ -71,10 +69,9 @@ public class GooglePhotosImporter
   private final ImageStreamProvider imageStreamProvider;
   private final Monitor monitor;
   private final double writesPerSecond;
-  private volatile Map<UUID, GooglePhotosInterface> photosInterfacesMap;
-  private volatile GooglePhotosInterface photosInterface;
-  private volatile HashMap<UUID, BaseMultilingualDictionary> multilingualStrings =
-      new HashMap<>();
+  private final Map<UUID, GooglePhotosInterface> photosInterfacesMap;
+  private final GooglePhotosInterface photosInterface;
+  private final HashMap<UUID, BaseMultilingualDictionary> multilingualStrings = new HashMap<>();
 
   public GooglePhotosImporter(
       GoogleCredentialFactory credentialFactory,
@@ -133,40 +130,7 @@ public class GooglePhotosImporter
       }
     }
 
-    long bytes = 0L;
-    // Uploads photos
-    Collection<PhotoModel> photos = data.getPhotos();
-    if (photos != null && photos.size() > 0) {
-      Map<String, List<PhotoModel>> photosByAlbum =
-          photos.stream()
-              .filter(photo -> !idempotentImportExecutor.isKeyCached(getIdempotentId(photo)))
-              .collect(Collectors.groupingBy(PhotoModel::getAlbumId));
-      for (Entry<String, List<PhotoModel>> albumEntry : photosByAlbum.entrySet()) {
-        String originalAlbumId = albumEntry.getKey();
-        String googleAlbumId;
-        if (Strings.isNullOrEmpty(originalAlbumId)) {
-          // This is ok, since NewMediaItemUpload will ignore all null values and it's possible to
-          // upload a NewMediaItem without a corresponding album id.
-          googleAlbumId = null;
-        } else {
-          // Note this will throw if creating the album failed, which is what we want
-          // because that will also mark this photo as being failed.
-          googleAlbumId = idempotentImportExecutor.getCachedValue(originalAlbumId);
-        }
-
-        // We partition into groups of 49 as 50 is the maximum number of items that can be created
-        // in one call. (We use 49 to avoid potential off by one errors)
-        // https://developers.google.com/photos/library/guides/upload-media#creating-media-item
-        UnmodifiableIterator<List<PhotoModel>> batches =
-            Iterators.partition(albumEntry.getValue().iterator(), 49);
-        while (batches.hasNext()) {
-          long batchBytes =
-              importPhotoBatch(
-                  jobId, authData, batches.next(), idempotentImportExecutor, googleAlbumId);
-          bytes += batchBytes;
-        }
-      }
-    }
+    long bytes = importPhotos(data.getPhotos(), idempotentImportExecutor, jobId, authData);
 
     final ImportResult result = ImportResult.OK;
     return result.copyWithBytes(bytes);
@@ -191,6 +155,48 @@ public class GooglePhotosImporter
     return responseAlbum.getId();
   }
 
+  long importPhotos(
+      Collection<PhotoModel> photos,
+      IdempotentImportExecutor executor,
+      UUID jobId,
+      TokensAndUrlAuthData authData)
+      throws Exception {
+    long bytes = 0L;
+    // Uploads photos
+    if (photos != null && photos.size() > 0) {
+      Map<String, List<PhotoModel>> photosByAlbum =
+          photos.stream()
+              .filter(photo -> !executor.isKeyCached(getIdempotentId(photo)))
+              .collect(Collectors.groupingBy(PhotoModel::getAlbumId));
+
+      for (Entry<String, List<PhotoModel>> albumEntry : photosByAlbum.entrySet()) {
+        String originalAlbumId = albumEntry.getKey();
+        String googleAlbumId;
+        if (Strings.isNullOrEmpty(originalAlbumId)) {
+          // This is ok, since NewMediaItemUpload will ignore all null values and it's possible to
+          // upload a NewMediaItem without a corresponding album id.
+          googleAlbumId = null;
+        } else {
+          // Note this will throw if creating the album failed, which is what we want
+          // because that will also mark this photo as being failed.
+          googleAlbumId = executor.getCachedValue(originalAlbumId);
+        }
+
+        // We partition into groups of 49 as 50 is the maximum number of items that can be created
+        // in one call. (We use 49 to avoid potential off by one errors)
+        // https://developers.google.com/photos/library/guides/upload-media#creating-media-item
+        UnmodifiableIterator<List<PhotoModel>> batches =
+            Iterators.partition(albumEntry.getValue().iterator(), 49);
+        while (batches.hasNext()) {
+          long batchBytes =
+              importPhotoBatch(jobId, authData, batches.next(), executor, googleAlbumId);
+          bytes += batchBytes;
+        }
+      }
+    }
+    return bytes;
+  }
+
   long importPhotoBatch(
       UUID jobId,
       TokensAndUrlAuthData authData,
@@ -202,12 +208,10 @@ public class GooglePhotosImporter
     final HashMap<String, PhotoModel> uploadTokenToDataId = new HashMap<>();
     final HashMap<String, Long> uploadTokenToLength = new HashMap<>();
 
-    /*
-    TODO: resumable uploads https://developers.google.com/photos/library/guides/resumable-uploads
-    Resumable uploads would allow the upload of larger media that don't fit in memory.  To do this,
-    however, seems to require knowledge of the total file size.
-    */
-    // Upload photos
+
+    // TODO: resumable uploads https://developers.google.com/photos/library/guides/resumable-uploads
+    //  Resumable uploads would allow the upload of larger media that don't fit in memory.  To do
+    //  this however, seems to require knowledge of the total file size.
     for (PhotoModel photo : photos) {
       try {
         InputStream inputStream;
@@ -236,8 +240,11 @@ public class GooglePhotosImporter
         } catch (Exception e) {
           // Swallow the exception caused by Remove data so that existing flows continue
           monitor.info(
-                  () -> format("%s: Exception swallowed in removeData call for localPath %s",
-                          jobId, photo.getFetchableUrl()), e);
+              () ->
+                  format(
+                      "%s: Exception swallowed in removeData call for localPath %s",
+                      jobId, photo.getFetchableUrl()),
+              e);
         }
       } catch (IOException e) {
         executor.executeAndSwallowIOExceptions(
