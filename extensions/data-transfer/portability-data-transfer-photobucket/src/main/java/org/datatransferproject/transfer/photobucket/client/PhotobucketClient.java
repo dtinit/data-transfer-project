@@ -28,6 +28,7 @@ import org.apache.commons.imaging.formats.jpeg.JpegImageMetadata;
 import org.apache.commons.imaging.formats.tiff.TiffImageMetadata;
 import org.apache.commons.imaging.formats.tiff.constants.ExifTagConstants;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
@@ -221,9 +222,9 @@ public class PhotobucketClient {
             "Unable to get input stream for image " + mediaModel.getTitle());
       }
 
-
       uploadRequestBody =
-              new InputStreamRequestBodyCustom(MediaType.parse(mediaModel.getMediaType()), inputStream, contentLength);
+          new InputStreamRequestBodyCustom(
+              MediaType.parse(mediaModel.getMediaType()), inputStream, contentLength);
 
       if (isUserOveStorage(uploadRequestBody.contentLength())) {
         throw new OverlimitException();
@@ -241,7 +242,6 @@ public class PhotobucketClient {
             if (uploadImageResponse.body() != null
                 && mediaModel.getDescription() != null
                 && !mediaModel.getDescription().isEmpty()) {
-              String description = mediaModel.getDescription().replace("\"", "").replace("\n", " ");
               // get imageId from provided response
               String imageId;
               try {
@@ -253,13 +253,16 @@ public class PhotobucketClient {
                 return new ProcessingResult(
                     "Partial success: image was uploaded, but metadata wasn't updated - body parsing exception");
               }
+              String requestBodyString = String.format(
+                      "{\"query\": \"mutation updateImageDTP($imageId: String!, $title: String!, $description: String){ updateImage(imageId: $imageId, title: $title, description: $description)}\", \"variables\": {\"imageId\": \"%s\", \"title\": \"%s\", \"description\": \"%s\"}}",
+                      imageId, escapeSpecialCharacters(mediaModel.getTitle()), escapeSpecialCharacters(mediaModel.getDescription()));
+
               // update metadata gql query
               RequestBody updateMetadataRequestBody =
                   RequestBody.create(
                       MediaType.parse("application/json"),
-                      String.format(
-                          "{\"query\": \"mutation updateImageDTP($imageId: String!, $title: String!, $description: String){ updateImage(imageId: $imageId, title: $title, description: $description)}\", \"variables\": {\"imageId\": \"%s\", \"title\": \"%s\", \"description\": \"%s\"}}",
-                          imageId, mediaModel.getTitle(), description));
+                          requestBodyString
+                      );
 
               // do not verify update metadata response
               Function<Response, ProcessingResult> updateMetadataTransformationF =
@@ -292,6 +295,11 @@ public class PhotobucketClient {
     }
   }
 
+  private String escapeSpecialCharacters(String str) {
+    if (str != null) return StringEscapeUtils.escapeJava(str);
+    return null;
+  }
+
   /**
    * Create album either under pbRoot album (in case if we create top album) or under top album
    * TODO: add description while album creation, not supported for now within the same call
@@ -303,7 +311,7 @@ public class PhotobucketClient {
     String jsonString =
         String.format(
             "{\"query\": \"mutation createAlbumDTP($title: String!, $parentAlbumId: String!){ createAlbum(title: $title, parentAlbumId: $parentAlbumId){ id }}\", \"variables\": {\"title\": \"%s\", \"parentAlbumId\": \"%s\"}}",
-            prefix + photoAlbum.getName(), pbParentId);
+            prefix + escapeSpecialCharacters(photoAlbum.getName()), pbParentId);
     return RequestBody.create(MediaType.parse("application/json"), jsonString);
   }
 
@@ -455,7 +463,8 @@ public class PhotobucketClient {
     private final MediaType contentType;
     private final long contentLength;
 
-    public InputStreamRequestBodyCustom(MediaType contentType, InputStream inputStream, long contentLength) {
+    public InputStreamRequestBodyCustom(
+        MediaType contentType, InputStream inputStream, long contentLength) {
       if (inputStream == null) throw new NullPointerException("inputStream == null");
       this.contentType = contentType;
       this.inputStream = inputStream;
@@ -483,5 +492,4 @@ public class PhotobucketClient {
       }
     }
   }
-
 }
