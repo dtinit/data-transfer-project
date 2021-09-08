@@ -134,10 +134,10 @@ public class SmugMugInterface {
     headersMap.put("Content-Type", photoModel.getMediaType());
 
     if (!Strings.isNullOrEmpty(photoModel.getTitle())) {
-      headersMap.put("X-Smug-Title", photoModel.getTitle());
+      headersMap.put("X-Smug-Title", cleanHeader(photoModel.getTitle()));
     }
     if (!Strings.isNullOrEmpty(photoModel.getDescription())) {
-      headersMap.put("X-Smug-Caption", photoModel.getDescription());
+      headersMap.put("X-Smug-Caption", cleanHeader(photoModel.getDescription()));
     }
 
     // Upload photo
@@ -257,5 +257,9 @@ public class SmugMugInterface {
         .limit(40)
         .map(Object::toString)
         .collect(Collectors.joining(""));
+  }
+
+  static String cleanHeader(String header) {
+    return header.replace("\n", "%0A").replace("\r", "%0D");
   }
 }
