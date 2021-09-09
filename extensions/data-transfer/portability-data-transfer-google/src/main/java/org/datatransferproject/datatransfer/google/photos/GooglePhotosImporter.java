@@ -24,6 +24,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
+import com.google.gdata.util.common.base.Pair;
 import com.google.rpc.Code;
 import java.io.IOException;
 import java.io.InputStream;
@@ -213,25 +214,16 @@ public class GooglePhotosImporter
     //  this however, seems to require knowledge of the total file size.
     for (PhotoModel photo : photos) {
       try {
-        InputStream inputStream;
-        long bytes;
-        if (photo.isInTempStore()) {
-          final InputStreamWrapper streamWrapper =
-              jobStore.getStream(jobId, photo.getFetchableUrl());
-          bytes = streamWrapper.getBytes();
-          inputStream = streamWrapper.getStream();
-        } else {
-          HttpURLConnection conn = imageStreamProvider.getConnection(photo.getFetchableUrl());
-          final long contentLengthLong = conn.getContentLengthLong();
-          bytes = contentLengthLong != -1 ? contentLengthLong : 0;
-          inputStream = conn.getInputStream();
-        }
+        Pair<InputStream, Long> inputStreamBytesPair =
+            getInputStreamForUrl(jobId, photo.getFetchableUrl(), photo.isInTempStore());
 
         String uploadToken =
-            getOrCreatePhotosInterface(jobId, authData).uploadPhotoContent(inputStream);
+            getOrCreatePhotosInterface(jobId, authData)
+                .uploadPhotoContent(inputStreamBytesPair.getFirst());
         mediaItems.add(new NewMediaItem(cleanDescription(photo.getDescription()), uploadToken));
         uploadTokenToDataId.put(uploadToken, photo);
-        uploadTokenToLength.put(uploadToken, bytes);
+        uploadTokenToLength.put(uploadToken, inputStreamBytesPair.getSecond());
+
         try {
           if (photo.isInTempStore()) {
             jobStore.removeData(jobId, photo.getFetchableUrl());
@@ -315,6 +307,18 @@ public class GooglePhotosImporter
     }
 
     return totalBytes;
+  }
+
+  private Pair<InputStream, Long> getInputStreamForUrl(
+      UUID jobId, String fetchableUrl, boolean inTempStore) throws IOException {
+    if (inTempStore) {
+      final InputStreamWrapper streamWrapper = jobStore.getStream(jobId, fetchableUrl);
+      return Pair.of(streamWrapper.getStream(), streamWrapper.getBytes());
+    }
+
+    HttpURLConnection conn = imageStreamProvider.getConnection(fetchableUrl);
+    return Pair.of(
+        conn.getInputStream(), conn.getContentLengthLong() != -1 ? conn.getContentLengthLong() : 0);
   }
 
   String getIdempotentId(PhotoModel photo) {
