@@ -88,7 +88,7 @@ public class GooglePhotosInterface {
   private final GoogleCredentialFactory credentialFactory;
   private final RateLimiter writeRateLimiter;
 
-  GooglePhotosInterface(
+  public GooglePhotosInterface(
       GoogleCredentialFactory credentialFactory,
       Credential credential,
       JsonFactory jsonFactory,
@@ -139,7 +139,7 @@ public class GooglePhotosInterface {
         BASE_URL + "mediaItems:search", Optional.empty(), content, MediaItemSearchResponse.class);
   }
 
-  GoogleAlbum createAlbum(GoogleAlbum googleAlbum)
+  public GoogleAlbum createAlbum(GoogleAlbum googleAlbum)
           throws IOException, InvalidTokenException, PermissionDeniedException {
     Map<String, Object> albumMap = createJsonMap(googleAlbum);
     Map<String, Object> contentMap = ImmutableMap.of("album", albumMap);
@@ -148,7 +148,7 @@ public class GooglePhotosInterface {
     return makePostRequest(BASE_URL + "albums", Optional.empty(), content, GoogleAlbum.class);
   }
 
-  String uploadPhotoContent(InputStream inputStream)
+  public String uploadPhotoContent(InputStream inputStream)
           throws IOException, InvalidTokenException, PermissionDeniedException {
     // TODO: add filename
     InputStreamContent content = new InputStreamContent(null, inputStream);
@@ -165,7 +165,7 @@ public class GooglePhotosInterface {
         BASE_URL + "uploads/", Optional.of(PHOTO_UPLOAD_PARAMS), httpContent, String.class);
   }
 
-  BatchMediaItemResponse createPhotos(NewMediaItemUpload newMediaItemUpload)
+  public BatchMediaItemResponse createPhotos(NewMediaItemUpload newMediaItemUpload)
       throws IOException, InvalidTokenException, PermissionDeniedException {
     HashMap<String, Object> map = createJsonMap(newMediaItemUpload);
     HttpContent httpContent = new JsonHttpContent(new JacksonFactory(), map);
