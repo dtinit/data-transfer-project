@@ -229,7 +229,7 @@ public class GooglePhotosImporter
 
         String uploadToken =
             getOrCreatePhotosInterface(jobId, authData).uploadPhotoContent(inputStream);
-        mediaItems.add(new NewMediaItem(getPhotoDescription(photo), uploadToken));
+        mediaItems.add(new NewMediaItem(cleanDescription(photo.getDescription()), uploadToken));
         uploadTokenToDataId.put(uploadToken, photo);
         uploadTokenToLength.put(uploadToken, bytes);
         try {
@@ -321,17 +321,13 @@ public class GooglePhotosImporter
     return photo.getAlbumId() + "-" + photo.getDataId();
   }
 
-  private String getPhotoDescription(PhotoModel inputPhoto) {
-    String description;
-    if (Strings.isNullOrEmpty(inputPhoto.getDescription())) {
-      description = "";
-    } else {
-      description = inputPhoto.getDescription();
-      // Descriptions are restricted to 1000 characters
-      // https://developers.google.com/photos/library/guides/upload-media#creating-media-item
-      if (description.length() > 1000) {
-        description = description.substring(0, 997) + "...";
-      }
+  private String cleanDescription(String origDescription) {
+    String description = Strings.isNullOrEmpty(origDescription) ? "" : origDescription;
+
+    // Descriptions are restricted to 1000 characters
+    // https://developers.google.com/photos/library/guides/upload-media#creating-media-item
+    if (description.length() > 1000) {
+      description = description.substring(0, 997) + "...";
     }
     return description;
   }
