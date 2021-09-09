@@ -148,7 +148,7 @@ public class GooglePhotosInterface {
     return makePostRequest(BASE_URL + "albums", Optional.empty(), content, GoogleAlbum.class);
   }
 
-  public String uploadPhotoContent(InputStream inputStream)
+  public String uploadMediaContent(InputStream inputStream)
           throws IOException, InvalidTokenException, PermissionDeniedException {
     // TODO: add filename
     InputStreamContent content = new InputStreamContent(null, inputStream);

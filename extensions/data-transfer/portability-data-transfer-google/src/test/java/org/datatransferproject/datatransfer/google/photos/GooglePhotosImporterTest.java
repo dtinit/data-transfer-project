@@ -141,7 +141,7 @@ public class GooglePhotosImporterTest {
             OLD_ALBUM_ID,
             false);
 
-    Mockito.when(googlePhotosInterface.uploadPhotoContent(any())).thenReturn("token1", "token2");
+    Mockito.when(googlePhotosInterface.uploadMediaContent(any())).thenReturn("token1", "token2");
     BatchMediaItemResponse batchMediaItemResponse =
         new BatchMediaItemResponse(
             new NewMediaItemResult[] {
@@ -199,7 +199,7 @@ public class GooglePhotosImporterTest {
             OLD_ALBUM_ID,
             false);
 
-    Mockito.when(googlePhotosInterface.uploadPhotoContent(any())).thenReturn("token1", "token2");
+    Mockito.when(googlePhotosInterface.uploadMediaContent(any())).thenReturn("token1", "token2");
     BatchMediaItemResponse batchMediaItemResponse =
         new BatchMediaItemResponse(
             new NewMediaItemResult[] {
@@ -293,7 +293,7 @@ public class GooglePhotosImporterTest {
             OLD_ALBUM_ID,
             true);
 
-    Mockito.when(googlePhotosInterface.uploadPhotoContent(any())).thenReturn("token1");
+    Mockito.when(googlePhotosInterface.uploadMediaContent(any())).thenReturn("token1");
     JobStore jobStore = Mockito.mock(LocalJobStore.class);
     Mockito.when(jobStore.getStream(any(), any()))
         .thenReturn(
@@ -338,7 +338,7 @@ public class GooglePhotosImporterTest {
             OLD_ALBUM_ID,
             true);
 
-    Mockito.when(googlePhotosInterface.uploadPhotoContent(any()))
+    Mockito.when(googlePhotosInterface.uploadMediaContent(any()))
         .thenThrow(new IOException("Unit Testing"));
     JobStore jobStore = Mockito.mock(LocalJobStore.class);
     Mockito.when(jobStore.getStream(any(), any()))
