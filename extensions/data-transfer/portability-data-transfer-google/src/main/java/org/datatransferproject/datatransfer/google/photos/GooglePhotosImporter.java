@@ -246,6 +246,7 @@ public class GooglePhotosImporter
             });
       }
     }
+
     if (mediaItems.isEmpty()) {
       // Either we were not passed in any videos or we failed upload on all of them.
       return 0L;
@@ -260,32 +261,17 @@ public class GooglePhotosImporter
       NewMediaItemResult[] mediaItemResults = photoCreationResponse.getResults();
       Preconditions.checkNotNull(mediaItemResults);
       for (NewMediaItemResult mediaItem : mediaItemResults) {
-        String uploadToken = mediaItem.getUploadToken();
-        Status status = mediaItem.getStatus();
-
-        PhotoModel photo = uploadTokenToDataId.get(uploadToken);
-        Preconditions.checkNotNull(photo);
-        if (status.getCode() == Code.OK_VALUE) {
-          Long bytes = uploadTokenToLength.get(uploadToken);
-          Preconditions.checkNotNull(bytes);
-          executor.executeAndSwallowIOExceptions(
-              getIdempotentId(photo),
-              photo.getTitle(),
-              () -> new PhotoResult(mediaItem.getMediaItem().getId(), bytes));
-          totalBytes += bytes;
-        } else {
-          executor.executeAndSwallowIOExceptions(
-              getIdempotentId(photo),
-              photo.getTitle(),
-              () -> {
-                throw new IOException(
-                    String.format(
-                        "Photo could not be created. Code: %d Message: %s",
-                        status.getCode(), status.getMessage()));
-              });
-        }
-        uploadTokenToDataId.remove(uploadToken);
+        PhotoModel photo = uploadTokenToDataId.get(mediaItem.getUploadToken());
+        totalBytes +=
+            processMediaResult(
+                mediaItem,
+                getIdempotentId(photo),
+                executor,
+                photo.getTitle(),
+                uploadTokenToLength.get(mediaItem.getUploadToken()));
+        uploadTokenToDataId.remove(mediaItem.getUploadToken());
       }
+
       if (!uploadTokenToDataId.isEmpty()) {
         for (PhotoModel photo : uploadTokenToDataId.values()) {
           executor.executeAndSwallowIOExceptions(
@@ -296,7 +282,6 @@ public class GooglePhotosImporter
               });
         }
       }
-
     } catch (IOException e) {
       if (e.getMessage() != null
           && e.getMessage().contains("The remaining storage in the user's account is not enough")) {
@@ -307,6 +292,32 @@ public class GooglePhotosImporter
     }
 
     return totalBytes;
+  }
+
+  private long processMediaResult(
+      NewMediaItemResult mediaItem,
+      String idempotentId,
+      IdempotentImportExecutor executor,
+      String title,
+      long bytes)
+      throws Exception {
+    Status status = mediaItem.getStatus();
+    if (status.getCode() == Code.OK_VALUE) {
+      executor.executeAndSwallowIOExceptions(
+          idempotentId, title, () -> new MediaResult(mediaItem.getMediaItem().getId(), bytes));
+      return bytes;
+    } else {
+      executor.executeAndSwallowIOExceptions(
+          idempotentId,
+          title,
+          () -> {
+            throw new IOException(
+                String.format(
+                    "Media item could not be created. Code: %d Message: %s",
+                    status.getCode(), status.getMessage()));
+          });
+      return 0;
+    }
   }
 
   private Pair<InputStream, Long> getInputStreamForUrl(
