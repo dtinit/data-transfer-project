@@ -16,6 +16,7 @@
 package org.datatransferproject.transfer.koofr.videos;
 
 import java.io.BufferedInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.UUID;
@@ -115,9 +116,8 @@ public class KoofrVideosImporter
     monitor.debug(() -> String.format("Import single video %s", video.getName()));
 
     HttpURLConnection conn = imageStreamProvider.getConnection(video.getContentUrl().toString());
-    BufferedInputStream inputStream = new BufferedInputStream(conn.getInputStream());
 
-    try {
+    try (BufferedInputStream inputStream = new BufferedInputStream(conn.getInputStream())) {
       String parentPath;
       if (video.getAlbumId() == null) {
         parentPath = koofrClient.ensureVideosFolder();
@@ -137,9 +137,11 @@ public class KoofrVideosImporter
       }
 
       return koofrClient.uploadFile(
-          parentPath, name, inputStream, video.getEncodingFormat(), null, description);
-    } finally {
-      inputStream.close();
+              parentPath, name, inputStream, video.getEncodingFormat(), null, description);
+    } catch (FileNotFoundException e) {
+      monitor.info(
+              () -> String.format("Video resource was missing for id: %s", video.getDataId()), e);
+      return null;
     }
   }
 }

@@ -213,4 +213,31 @@ public class KoofrVideosImporterTest {
             eq("A video 2"));
     clientInOrder.verifyNoMoreInteractions();
   }
+
+  @Test
+  public void testSkipNotFoundVideo() throws Exception {
+    server.enqueue(new MockResponse().setResponseCode(404).setBody("4567"));
+
+    UUID jobId = UUID.randomUUID();
+    Collection<VideoAlbum> albums = ImmutableList.of();
+
+    Collection<VideoModel> videos =
+            ImmutableList.of(
+                    new VideoModel(
+                            "not_found_video_1.mp4",
+                            server.url("/not_found.mp4").toString(),
+                            "Video not founded in CDN",
+                            "video/mp4",
+                            "not_found_video_1",
+                            null,
+                            false));
+
+    VideosContainerResource resource = spy(new VideosContainerResource(albums, videos));
+
+    importer.importItem(jobId, executor, authData, resource);
+
+    InOrder clientInOrder = Mockito.inOrder(client);
+
+    clientInOrder.verifyNoMoreInteractions();
+  }
 }
