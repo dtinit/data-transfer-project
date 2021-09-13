@@ -223,7 +223,7 @@ public class GooglePhotosImporterTest {
     assertFalse(executor.isKeyCached(failedDataId));
     ErrorDetail errorDetail = executor.getErrors().iterator().next();
     assertEquals(failedDataId, errorDetail.id());
-    assertThat(errorDetail.exception(), CoreMatchers.containsString("Photo could not be created."));
+    assertThat(errorDetail.exception(), CoreMatchers.containsString("Media item could not be created."));
   }
 
   @Test
