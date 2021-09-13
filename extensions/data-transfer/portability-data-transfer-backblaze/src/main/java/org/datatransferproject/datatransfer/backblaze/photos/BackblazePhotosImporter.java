@@ -41,14 +41,19 @@ public class BackblazePhotosImporter
   private static final String PHOTO_TRANSFER_MAIN_FOLDER = "Photo Transfer";
 
   private final TemporaryPerJobDataStore jobStore;
-  private final ImageStreamProvider imageStreamProvider = new ImageStreamProvider();
+  private final ImageStreamProvider imageStreamProvider;
   private final Monitor monitor;
   private final BackblazeDataTransferClientFactory b2ClientFactory;
 
-  public BackblazePhotosImporter(Monitor monitor, TemporaryPerJobDataStore jobStore) {
+  public BackblazePhotosImporter(
+          Monitor monitor,
+          TemporaryPerJobDataStore jobStore,
+          ImageStreamProvider imageStreamProvider,
+          BackblazeDataTransferClientFactory b2ClientFactory) {
     this.monitor = monitor;
     this.jobStore = jobStore;
-    this.b2ClientFactory = new BackblazeDataTransferClientFactory();
+    this.imageStreamProvider = imageStreamProvider;
+    this.b2ClientFactory = b2ClientFactory;
   }
 
   @Override

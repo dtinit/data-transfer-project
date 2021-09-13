@@ -22,12 +22,14 @@ import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.datatransfer.backblaze.common.BackblazeDataTransferClientFactory;
 import org.datatransferproject.datatransfer.backblaze.photos.BackblazePhotosImporter;
 import org.datatransferproject.datatransfer.backblaze.videos.BackblazeVideosImporter;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.transfer.ImageStreamProvider;
 
 public class BackblazeTransferExtension implements TransferExtension {
   public static final String SERVICE_ID = "Backblaze";
@@ -69,7 +71,11 @@ public class BackblazeTransferExtension implements TransferExtension {
     TemporaryPerJobDataStore jobStore = context.getService(TemporaryPerJobDataStore.class);
 
     ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
-    importerBuilder.put("PHOTOS", new BackblazePhotosImporter(monitor, jobStore));
+    BackblazeDataTransferClientFactory backblazeDataTransferClientFactory =
+            new BackblazeDataTransferClientFactory();
+    ImageStreamProvider isProvider = new ImageStreamProvider();
+
+    importerBuilder.put("PHOTOS", new BackblazePhotosImporter(monitor, jobStore, isProvider, backblazeDataTransferClientFactory));
     importerBuilder.put("VIDEOS", new BackblazeVideosImporter(monitor, jobStore));
     importerMap = importerBuilder.build();
     initialized = true;
