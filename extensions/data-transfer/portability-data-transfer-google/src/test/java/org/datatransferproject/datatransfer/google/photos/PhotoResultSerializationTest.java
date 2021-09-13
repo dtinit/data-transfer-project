@@ -12,14 +12,14 @@ public class PhotoResultSerializationTest {
   public void testSerialization() throws IOException, ClassNotFoundException {
     String photoId = "photoId";
     long bytes = 97397L;
-    MediaResult result = new MediaResult(photoId, bytes);
+    PhotoResult result = new PhotoResult(photoId, bytes);
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     new ObjectOutputStream(out).writeObject(result);
 
     ByteArrayInputStream bais = new ByteArrayInputStream(out.toByteArray());
     Object readObject = new ObjectInputStream(bais).readObject();
-    assertThat(readObject, instanceOf(MediaResult.class));
-    MediaResult deserialized = (MediaResult) readObject;
+    assertThat(readObject, instanceOf(PhotoResult.class));
+    PhotoResult deserialized = (PhotoResult) readObject;
     assertThat(deserialized.getId(), equalTo(photoId));
     assertThat(deserialized.getBytes(), equalTo(bytes));
   }

@@ -2,11 +2,11 @@ package org.datatransferproject.datatransfer.google.photos;
 
 import java.io.Serializable;
 
-class MediaResult implements Serializable {
+class PhotoResult implements Serializable {
   private String id;
   private Long bytes;
 
-  public MediaResult(String id, Long bytes) {
+  public PhotoResult(String id, Long bytes) {
     this.id = id;
     this.bytes = bytes == null ? 0 : bytes;
   }

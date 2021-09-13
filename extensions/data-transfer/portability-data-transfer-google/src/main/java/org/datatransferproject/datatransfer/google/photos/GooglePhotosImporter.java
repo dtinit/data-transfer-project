@@ -304,7 +304,7 @@ public class GooglePhotosImporter
     Status status = mediaItem.getStatus();
     if (status.getCode() == Code.OK_VALUE) {
       executor.executeAndSwallowIOExceptions(
-          idempotentId, title, () -> new MediaResult(mediaItem.getMediaItem().getId(), bytes));
+          idempotentId, title, () -> new PhotoResult(mediaItem.getMediaItem().getId(), bytes));
       return bytes;
     } else {
       executor.executeAndSwallowIOExceptions(
