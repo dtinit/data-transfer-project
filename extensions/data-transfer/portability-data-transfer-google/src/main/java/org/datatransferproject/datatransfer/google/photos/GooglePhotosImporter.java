@@ -217,12 +217,12 @@ public class GooglePhotosImporter
         Pair<InputStream, Long> inputStreamBytesPair =
             getInputStreamForUrl(jobId, photo.getFetchableUrl(), photo.isInTempStore());
 
-        String uploadToken =
-            getOrCreatePhotosInterface(jobId, authData)
-                .uploadPhotoContent(inputStreamBytesPair.getFirst());
-        mediaItems.add(new NewMediaItem(cleanDescription(photo.getDescription()), uploadToken));
-        uploadTokenToDataId.put(uploadToken, photo);
-        uploadTokenToLength.put(uploadToken, inputStreamBytesPair.getSecond());
+        try (InputStream s = inputStreamBytesPair.getFirst()) {
+          String uploadToken = getOrCreatePhotosInterface(jobId, authData).uploadPhotoContent(s);
+          mediaItems.add(new NewMediaItem(cleanDescription(photo.getDescription()), uploadToken));
+          uploadTokenToDataId.put(uploadToken, photo);
+          uploadTokenToLength.put(uploadToken, inputStreamBytesPair.getSecond());
+        }
 
         try {
           if (photo.isInTempStore()) {
