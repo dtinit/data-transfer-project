@@ -37,14 +37,19 @@ public class BackblazeVideosImporter
   private static final String VIDEO_TRANSFER_MAIN_FOLDER = "Video Transfer";
 
   private final TemporaryPerJobDataStore jobStore;
-  private final ImageStreamProvider imageStreamProvider = new ImageStreamProvider();
+  private final ImageStreamProvider imageStreamProvider;
   private final Monitor monitor;
   private final BackblazeDataTransferClientFactory b2ClientFactory;
 
-  public BackblazeVideosImporter(Monitor monitor, TemporaryPerJobDataStore jobStore) {
+  public BackblazeVideosImporter(
+          Monitor monitor,
+          TemporaryPerJobDataStore jobStore,
+          ImageStreamProvider imageStreamProvider,
+          BackblazeDataTransferClientFactory b2ClientFactory) {
     this.monitor = monitor;
     this.jobStore = jobStore;
-    this.b2ClientFactory = new BackblazeDataTransferClientFactory();
+    this.imageStreamProvider = imageStreamProvider;
+    this.b2ClientFactory = b2ClientFactory;
   }
 
   @Override

@@ -75,8 +75,14 @@ public class BackblazeTransferExtension implements TransferExtension {
             new BackblazeDataTransferClientFactory();
     ImageStreamProvider isProvider = new ImageStreamProvider();
 
-    importerBuilder.put("PHOTOS", new BackblazePhotosImporter(monitor, jobStore, isProvider, backblazeDataTransferClientFactory));
-    importerBuilder.put("VIDEOS", new BackblazeVideosImporter(monitor, jobStore));
+    importerBuilder.put(
+            "PHOTOS",
+            new BackblazePhotosImporter(
+                    monitor, jobStore, isProvider, backblazeDataTransferClientFactory));
+    importerBuilder.put(
+            "VIDEOS",
+            new BackblazeVideosImporter(
+                    monitor, jobStore, isProvider, backblazeDataTransferClientFactory));
     importerMap = importerBuilder.build();
     initialized = true;
   }
