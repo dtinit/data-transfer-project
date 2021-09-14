@@ -61,18 +61,28 @@ public class BackblazeDataTransferClient {
   private final List<String> BACKBLAZE_REGIONS =
       Arrays.asList("us-west-000", "us-west-001", "us-west-002", "eu-central-003");
 
-  private static final long SIZE_THRESHOLD_FOR_MULTIPART_UPLOAD = 20 * 1024 * 1024; // 20 MB.
-  private static final long PART_SIZE_FOR_MULTIPART_UPLOAD = 5 * 1024 * 1024; // 5 MB.
-
+  private final long sizeThresholdForMultipartUpload;
+  private final long partSizeForMultiPartUpload;
+  private final BackblazeS3Client backblazeS3Client;
   private final Monitor monitor;
   private S3Client s3Client;
   private String bucketName;
 
-  public BackblazeDataTransferClient(Monitor monitor) {
+  public BackblazeDataTransferClient(
+          Monitor monitor,
+          BackblazeS3Client backblazeS3Client,
+          long sizeThresholdForMultipartUpload,
+          long partSizeForMultiPartUpload) {
     this.monitor = monitor;
+    this.backblazeS3Client = backblazeS3Client;
+    // Avoid infinite loops
+    if (partSizeForMultiPartUpload <= 0)
+      throw new IllegalArgumentException("Part size for multipart upload must be positive.");
+    this.sizeThresholdForMultipartUpload = sizeThresholdForMultipartUpload;
+    this.partSizeForMultiPartUpload = partSizeForMultiPartUpload;
   }
 
-  public void init(String keyId, String applicationKey)
+  public void init(String keyId, String applicationKey, String exportService)
       throws BackblazeCredentialsException, IOException {
     // Fetch all the available buckets and use that to find which region the user is in
     ListBucketsResponse listBucketsResponse = null;
@@ -92,7 +102,7 @@ public class BackblazeDataTransferClient {
     Throwable s3Exception = null;
     for (String region : BACKBLAZE_REGIONS) {
       try {
-        s3Client = getOrCreateS3Client(keyId, applicationKey, region);
+        s3Client = backblazeS3Client.createS3Client(keyId, applicationKey, region);
 
         listBucketsResponse = s3Client.listBuckets();
         userRegion = region;
@@ -113,7 +123,7 @@ public class BackblazeDataTransferClient {
           "User's credentials or permissions are not valid for any regions available", s3Exception);
     }
 
-    bucketName = getOrCreateBucket(s3Client, listBucketsResponse, userRegion);
+    bucketName = getOrCreateBucket(s3Client, listBucketsResponse, userRegion, exportService);
   }
 
   public String uploadFile(String fileKey, File file) throws IOException {
@@ -126,12 +136,12 @@ public class BackblazeDataTransferClient {
       monitor.debug(
           () -> String.format("Uploading '%s' with file size %d bytes", fileKey, contentLength));
 
-      if (contentLength >= SIZE_THRESHOLD_FOR_MULTIPART_UPLOAD) {
+      if (contentLength >= sizeThresholdForMultipartUpload) {
         monitor.debug(
             () ->
                 String.format(
                     "File size is larger than %d bytes, so using multipart upload",
-                    SIZE_THRESHOLD_FOR_MULTIPART_UPLOAD));
+                        sizeThresholdForMultipartUpload));
         return uploadFileUsingMultipartUpload(fileKey, file, contentLength);
       }
 
@@ -160,7 +170,7 @@ public class BackblazeDataTransferClient {
     try (InputStream fileInputStream = new FileInputStream(file)) {
       for (int i = 1; filePosition < contentLength; i++) {
         // Because the last part could be smaller than others, adjust the part size as needed
-        long partSize = Math.min(PART_SIZE_FOR_MULTIPART_UPLOAD, (contentLength - filePosition));
+        long partSize = Math.min(partSizeForMultiPartUpload, (contentLength - filePosition));
 
         UploadPartRequest uploadRequest =
             UploadPartRequest.builder()
@@ -194,13 +204,16 @@ public class BackblazeDataTransferClient {
   }
 
   private String getOrCreateBucket(
-      S3Client s3Client, ListBucketsResponse listBucketsResponse, String region)
+      S3Client s3Client,
+      ListBucketsResponse listBucketsResponse,
+      String region,
+      String exportService)
       throws IOException {
 
     String fullPrefix =
         String.format(
             DATA_TRANSFER_BUCKET_PREFIX_FORMAT_STRING,
-            JobMetadata.getExportService().toLowerCase());
+            exportService.toLowerCase());
     try {
       for (Bucket bucket : listBucketsResponse.buckets()) {
         if (bucket.name().startsWith(fullPrefix)) {
@@ -233,22 +246,5 @@ public class BackblazeDataTransferClient {
     } catch (AwsServiceException | SdkClientException e) {
       throw new IOException("Error while creating bucket", e);
     }
-  }
-
-  private S3Client getOrCreateS3Client(String accessKey, String secretKey, String region) {
-    AwsSessionCredentials awsCreds = AwsSessionCredentials.create(accessKey, secretKey, "");
-
-    ClientOverrideConfiguration clientOverrideConfiguration =
-        ClientOverrideConfiguration.builder().putHeader("User-Agent", "Facebook-DTP").build();
-
-    // Use any AWS region for the client, the Backblaze API does not care about it
-    Region awsRegion = Region.US_EAST_1;
-
-    return S3Client.builder()
-        .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
-        .overrideConfiguration(clientOverrideConfiguration)
-        .endpointOverride(URI.create(String.format(S3_ENDPOINT_FORMAT_STRING, region)))
-        .region(awsRegion)
-        .build();
   }
 }
