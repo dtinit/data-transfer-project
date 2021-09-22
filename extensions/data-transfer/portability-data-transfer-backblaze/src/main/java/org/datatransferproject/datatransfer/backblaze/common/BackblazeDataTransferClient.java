@@ -56,7 +56,6 @@ import software.amazon.awssdk.services.s3.model.UploadPartResponse;
 
 public class BackblazeDataTransferClient {
   private static final String DATA_TRANSFER_BUCKET_PREFIX_FORMAT_STRING = "%s-data-transfer";
-  private static final String S3_ENDPOINT_FORMAT_STRING = "https://s3.%s.backblazeb2.com";
   private static final int MAX_BUCKET_CREATION_ATTEMPTS = 10;
   private final List<String> BACKBLAZE_REGIONS =
       Arrays.asList("us-west-000", "us-west-001", "us-west-002", "eu-central-003");
