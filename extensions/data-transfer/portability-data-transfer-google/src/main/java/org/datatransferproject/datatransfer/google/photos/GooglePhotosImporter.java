@@ -216,13 +216,13 @@ public class GooglePhotosImporter
       try {
         Pair<InputStream, Long> inputStreamBytesPair =
             getInputStreamForUrl(jobId, photo.getFetchableUrl(), photo.isInTempStore());
-
-        String uploadToken =
-            getOrCreatePhotosInterface(jobId, authData)
-                .uploadMediaContent(inputStreamBytesPair.getFirst());
-        mediaItems.add(new NewMediaItem(cleanDescription(photo.getDescription()), uploadToken));
-        uploadTokenToDataId.put(uploadToken, photo);
-        uploadTokenToLength.put(uploadToken, inputStreamBytesPair.getSecond());
+        
+        try (InputStream s = inputStreamBytesPair.getFirst()) {
+          String uploadToken = getOrCreatePhotosInterface(jobId, authData).uploadPhotoContent(s);
+          mediaItems.add(new NewMediaItem(cleanDescription(photo.getDescription()), uploadToken));
+          uploadTokenToDataId.put(uploadToken, photo);
+          uploadTokenToLength.put(uploadToken, inputStreamBytesPair.getSecond());
+        }
 
         try {
           if (photo.isInTempStore()) {
@@ -304,7 +304,7 @@ public class GooglePhotosImporter
     Status status = mediaItem.getStatus();
     if (status.getCode() == Code.OK_VALUE) {
       executor.executeAndSwallowIOExceptions(
-          idempotentId, title, () -> new MediaResult(mediaItem.getMediaItem().getId(), bytes));
+          idempotentId, title, () -> new PhotoResult(mediaItem.getMediaItem().getId(), bytes));
       return bytes;
     } else {
       executor.executeAndSwallowIOExceptions(
