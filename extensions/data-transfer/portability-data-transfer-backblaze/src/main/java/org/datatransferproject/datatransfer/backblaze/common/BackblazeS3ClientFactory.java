@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Data Transfer Project Authors.
+ * Copyright 2021 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,10 @@
  * limitations under the License.
  */
 
-plugins {
-    id 'maven'
-    id 'signing'
+package org.datatransferproject.datatransfer.backblaze.common;
+
+import software.amazon.awssdk.services.s3.S3Client;
+
+public interface BackblazeS3ClientFactory {
+    S3Client createS3Client(String accessKey, String secretKey, String region);
 }
-
-dependencies {
-    compile project(':portability-spi-cloud')
-    compile project(':portability-spi-transfer')
-    compile project(':portability-transfer')
-    compile project(':libraries:transfer')
-
-    compile('software.amazon.awssdk:s3:2.15.24')
-    compile('org.apache.commons:commons-lang3:3.11')
-    compile("commons-io:commons-io:2.6")
-
-    testCompile("org.mockito:mockito-core:${mockitoVersion}")
-}
-
-configurePublication(project)
