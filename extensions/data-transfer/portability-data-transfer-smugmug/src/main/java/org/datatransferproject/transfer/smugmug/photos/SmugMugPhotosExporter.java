@@ -143,9 +143,11 @@ public class SmugMugPhotosExporter
 
     // Build album list
     List<PhotoAlbum> albumsList = new ArrayList<>();
-    for (SmugMugAlbum album : albumsResponse.getAlbums()) {
-      albumsList.add(new PhotoAlbum(album.getUri(), album.getName(), album.getDescription()));
-      continuationData.addContainerResource(new IdOnlyContainerResource(album.getUri()));
+    if (albumsResponse.getAlbums() != null) {
+      for (SmugMugAlbum album : albumsResponse.getAlbums()) {
+        albumsList.add(new PhotoAlbum(album.getUri(), album.getName(), album.getDescription()));
+        continuationData.addContainerResource(new IdOnlyContainerResource(album.getUri()));
+      }
     }
     PhotosContainerResource resource = new PhotosContainerResource(albumsList, null);
 
