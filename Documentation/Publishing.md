@@ -1,12 +1,14 @@
 # Publishing
 
-Artifacts are signed and published to Maven Central. This is automated through Gradle plugins.
+Artifacts are signed and published to Maven Central. You can see the latest version at the maven central website https://search.maven.org/search?q=g:org.datatransferproject.
+
+The publication process is mostly automated through Gradle plugins as documented below.
 
 ## 1. Setting properties
  First you must set the necessary properties in [gradle.properties](../gradle.properties). These are:
  - `projectVersion` - this is the new version you wish to publish. We use [Semantic Versioning](https://semver.org/).
  - `ossrhUsername` & `ossrhPassword` - These are your Sonatype Jira credentials. Your account must have been granted publishing permissions. These are managed from a [JIRA ticket](https://issues.sonatype.org/browse/OSSRH-44189).
- - `signing.keyId` - The GPG key being used for signing the artifacts.
+ - `signing.keyId` - The GPG key being used for signing the artifacts. (More information about setting up GPG keys can be found [here](https://central.sonatype.org/publish/requirements/gpg/))
  - `signing.password` - The password for that GPG private key.
  - `signing.secretKeyRingFile` - The path to the file containing the GPG private key.
 
