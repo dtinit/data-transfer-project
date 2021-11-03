@@ -143,9 +143,11 @@ public class SmugMugPhotosExporter
 
     // Build album list
     List<PhotoAlbum> albumsList = new ArrayList<>();
-    for (SmugMugAlbum album : albumsResponse.getAlbums()) {
-      albumsList.add(new PhotoAlbum(album.getUri(), album.getName(), album.getDescription()));
-      continuationData.addContainerResource(new IdOnlyContainerResource(album.getUri()));
+    if (albumsResponse.getAlbums() != null) {
+      for (SmugMugAlbum album : albumsResponse.getAlbums()) {
+        albumsList.add(new PhotoAlbum(album.getUri(), album.getName(), album.getDescription()));
+        continuationData.addContainerResource(new IdOnlyContainerResource(album.getUri()));
+      }
     }
     PhotosContainerResource resource = new PhotosContainerResource(albumsList, null);
 
@@ -201,6 +203,10 @@ public class SmugMugPhotosExporter
             : albumImageList.getAlbumImages();
 
     for (SmugMugImage albumImage : images) {
+      if (!albumImage.isPhoto()) {
+        continue;
+      }
+
       String title = albumImage.getTitle();
       if (Strings.isNullOrEmpty(title)) {
         title = albumImage.getFileName();
@@ -248,6 +254,8 @@ public class SmugMugPhotosExporter
         return "image/jpeg";
       case "PNG":
         return "image/png";
+      case "GIF":
+        return "image/gif";
       default:
         throw new IllegalArgumentException("Don't know how to map: " + smugMugformat);
     }
