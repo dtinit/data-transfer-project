@@ -173,3 +173,10 @@ def setGitVersion() {
     ext.gitVersion = version + (clean ? '' : '.modified')
 }
 
+
+allprojects {
+    tasks.withType(Test).configureEach {
+        forkEvery = 100
+    }
+
+}
