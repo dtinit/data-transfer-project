@@ -18,12 +18,12 @@ public class DaybookOAuthConfig implements OAuth2Config {
 
   @Override
   public String getAuthUrl() {
-    return "https://daybookdevvoice.firebaseapp.com/";
+    return "https://voice.daybook.app";
   }
 
   @Override
   public String getTokenUrl() {
-    return "https://devworld.session.daybooklabs.com/api/auth";
+    return "https://auth.session.daybooklabs.com/api/auth";
   }
 
   @Override
