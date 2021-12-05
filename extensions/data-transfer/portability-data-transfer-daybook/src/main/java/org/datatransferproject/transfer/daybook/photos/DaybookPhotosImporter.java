@@ -152,14 +152,19 @@ public class DaybookPhotosImporter
     FormBody formBody = builder.build();
     requestBuilder.post(formBody);
 
-    Response response = client.newCall(requestBuilder.build()).execute();
-    int code = response.code();
-    // Though sometimes it returns error code for success requests
-    Preconditions.checkArgument(
-        code >= 200 && code <= 299,
-        String.format(
-            "Error occurred in request for %s, code: %s, message: %s",
-            baseUrl, code, response.message()));
-    return response.code();
+    try (Response response = client.newCall(requestBuilder.build()).execute()) {
+      int code = response.code();
+      // Though sometimes it returns error code for success requests
+      Preconditions.checkArgument(
+          code >= 200 && code <= 299,
+          String.format(
+              "Error occurred in request for %s, code: %s, message: %s",
+              baseUrl, code, response.message()));
+
+      if (photoModel.isInTempStore()) {
+        jobStore.removeData(jobId, photoModel.getFetchableUrl());
+      }
+      return response.code();
+    }
   }
 }
