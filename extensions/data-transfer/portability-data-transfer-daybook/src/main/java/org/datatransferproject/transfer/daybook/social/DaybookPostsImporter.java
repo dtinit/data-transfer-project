@@ -150,15 +150,16 @@ public class DaybookPostsImporter
     FormBody formBody = builder.build();
     requestBuilder.post(formBody);
 
-    Response response = client.newCall(requestBuilder.build()).execute();
-    int code = response.code();
-    // Though sometimes it returns error code for success requests
-    if (code < 200 || code > 299) {
-      throw new IOException(
-          String.format(
-              "Error occurred in request for adding entry, message: %s", response.message()));
-    }
+    try (Response response = client.newCall(requestBuilder.build()).execute()) {
+      int code = response.code();
+      // Though sometimes it returns error code for success requests
+      if (code < 200 || code > 299) {
+        throw new IOException(
+            String.format(
+                "Error occurred in request for adding entry, message: %s", response.message()));
+      }
 
-    return response.message();
+      return response.message();
+    }
   }
 }
