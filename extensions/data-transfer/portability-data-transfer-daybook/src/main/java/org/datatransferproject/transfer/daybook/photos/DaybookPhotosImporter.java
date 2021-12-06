@@ -96,8 +96,6 @@ public class DaybookPhotosImporter
           });
     }
 
-    // API to trigger daybook API
-
     return new ImportResult(ImportResult.ResultType.OK);
   }
 
