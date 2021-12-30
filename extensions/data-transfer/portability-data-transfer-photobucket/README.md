@@ -24,7 +24,7 @@ The Photobucket extensions were created and is maintained by
 
 By default, both data-transfer and auth extensions use Photobucket prod environment. To switch to the stage environment, please update these variables:
 - [ENVIRONMENT_URL](./src/main/java/org/datatransferproject/transfer/photobucket/data/PhotobucketConstants.java#L20)
-- [USER_STATS_URL](./src/main/java/org/datatransferproject/transfer/photobucket/data/PhotobucketConstants.java#L36)
+- [USER_STATS_URL](./src/main/java/org/datatransferproject/transfer/photobucket/data/PhotobucketConstants.java#L41)
 - [PB_AUTH_URL](../../auth/portability-auth-photobucket/src/main/java/org/datatransferproject/auth/photobucket/PhotobucketOAuthConfig.java#L32)
 - [PB_TOKEN_URL](../../auth/portability-auth-photobucket/src/main/java/org/datatransferproject/auth/photobucket/PhotobucketOAuthConfig.java#L33)
 
