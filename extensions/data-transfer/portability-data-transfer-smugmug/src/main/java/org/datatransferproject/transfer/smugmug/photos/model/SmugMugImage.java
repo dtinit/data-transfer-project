@@ -36,6 +36,12 @@ public class SmugMugImage {
   @JsonProperty("Format")
   private String format;
 
+  @JsonProperty("IsArchive")
+  private Boolean isArchive;
+
+  @JsonProperty("IsVideo")
+  private Boolean isVideo;
+
   @JsonProperty("UploadKey")
   private String uploadKey;
 
@@ -76,4 +82,9 @@ public class SmugMugImage {
   public String getArchivedUri() {
     return archivedUri;
   }
+
+  public Boolean isPhoto() {
+    return !isArchive && !isVideo;
+  }
+
 }

@@ -176,7 +176,7 @@ public class PhotosContainerResource extends ContainerResource {
   private void transmogrifyPhotos(TransmogrificationConfig config) {
     ensureCleanPhotoTitles(
             config.getPhotoTitleForbiddenCharacters(),
-            config.getPhotoTitleReplacementCharater(),
+            config.getPhotoTitleReplacementCharacter(),
             config.getPhotoTitleMaxLength());
   }
 

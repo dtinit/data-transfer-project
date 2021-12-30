@@ -102,7 +102,7 @@ public class FlickrPhotosImporterTest {
     when(uploader.upload(any(BufferedInputStream.class), any(UploadMetaData.class)))
         .thenReturn(FLICKR_PHOTO_ID);
 
-    String flickrAlbumTitle = FlickrPhotosImporter.COPY_PREFIX + ALBUM_NAME;
+    String flickrAlbumTitle = ALBUM_NAME;
     Photoset photoset =
         FlickrTestUtils.initializePhotoset(FLICKR_ALBUM_ID, ALBUM_DESCRIPTION, FLICKR_PHOTO_ID);
     when(photosetsInterface.create(flickrAlbumTitle, ALBUM_DESCRIPTION, FLICKR_PHOTO_ID))
@@ -127,8 +127,7 @@ public class FlickrPhotosImporterTest {
         ArgumentCaptor.forClass(UploadMetaData.class);
     verify(uploader).upload(eq(bufferedInputStream), uploadMetaDataArgumentCaptor.capture());
     UploadMetaData actualUploadMetaData = uploadMetaDataArgumentCaptor.getValue();
-    assertThat(actualUploadMetaData.getTitle())
-        .isEqualTo(FlickrPhotosImporter.COPY_PREFIX + PHOTO_TITLE);
+    assertThat(actualUploadMetaData.getTitle()).isEqualTo(PHOTO_TITLE);
     assertThat(actualUploadMetaData.getDescription()).isEqualTo(PHOTO_DESCRIPTION);
 
     // Verify the photosets interface got the command to create the correct album

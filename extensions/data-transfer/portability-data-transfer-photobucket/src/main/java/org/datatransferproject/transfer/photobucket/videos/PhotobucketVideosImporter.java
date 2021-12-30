@@ -29,7 +29,7 @@ import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.photobucket.client.PhotobucketClient;
 import org.datatransferproject.transfer.photobucket.client.PhotobucketCredentialsFactory;
 import org.datatransferproject.types.common.models.videos.VideoAlbum;
-import org.datatransferproject.types.common.models.videos.VideoObject;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
@@ -102,7 +102,7 @@ public class PhotobucketVideosImporter
 
     // import photos
     monitor.debug(() -> String.format("Starting videos import for jobId=[%s]", jobId));
-    for (VideoObject video : data.getVideos()) {
+    for (VideoModel video : data.getVideos()) {
       idempotentExecutor.executeAndSwallowIOExceptions(
           video.getAlbumId() + "-" + video.getDataId(),
           video.getName(),

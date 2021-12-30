@@ -27,7 +27,7 @@ import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportE
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.ImageStreamProvider;
-import org.datatransferproject.types.common.models.videos.VideoObject;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 
@@ -37,14 +37,19 @@ public class BackblazeVideosImporter
   private static final String VIDEO_TRANSFER_MAIN_FOLDER = "Video Transfer";
 
   private final TemporaryPerJobDataStore jobStore;
-  private final ImageStreamProvider imageStreamProvider = new ImageStreamProvider();
+  private final ImageStreamProvider imageStreamProvider;
   private final Monitor monitor;
   private final BackblazeDataTransferClientFactory b2ClientFactory;
 
-  public BackblazeVideosImporter(Monitor monitor, TemporaryPerJobDataStore jobStore) {
+  public BackblazeVideosImporter(
+          Monitor monitor,
+          TemporaryPerJobDataStore jobStore,
+          ImageStreamProvider imageStreamProvider,
+          BackblazeDataTransferClientFactory b2ClientFactory) {
     this.monitor = monitor;
     this.jobStore = jobStore;
-    this.b2ClientFactory = new BackblazeDataTransferClientFactory();
+    this.imageStreamProvider = imageStreamProvider;
+    this.b2ClientFactory = b2ClientFactory;
   }
 
   @Override
@@ -62,7 +67,7 @@ public class BackblazeVideosImporter
     BackblazeDataTransferClient b2Client = b2ClientFactory.getOrCreateB2Client(monitor, authData);
 
     if (data.getVideos() != null && data.getVideos().size() > 0) {
-      for (VideoObject video : data.getVideos()) {
+      for (VideoModel video : data.getVideos()) {
         idempotentExecutor.executeAndSwallowIOExceptions(
             video.getDataId(), video.getName(), () -> importSingleVideo(b2Client, video));
       }
@@ -71,7 +76,7 @@ public class BackblazeVideosImporter
     return ImportResult.OK;
   }
 
-  private String importSingleVideo(BackblazeDataTransferClient b2Client, VideoObject video)
+  private String importSingleVideo(BackblazeDataTransferClient b2Client, VideoModel video)
       throws IOException {
     InputStream videoFileStream =
         imageStreamProvider.getConnection(video.getContentUrl().toString()).getInputStream();

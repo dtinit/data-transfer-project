@@ -31,6 +31,9 @@ include ':extensions:security:portability-security-cleartext', ':extensions:secu
 include ':extensions:copier:portability-stack-copier'
 
 // Service Integrations - Auth and Transfer Extensions
+// Daybook
+include ':extensions:auth:portability-auth-daybook'
+include ':extensions:data-transfer:portability-data-transfer-daybook'
 // Deezer
 include ':extensions:auth:portability-auth-deezer'
 include ':extensions:data-transfer:portability-data-transfer-deezer'

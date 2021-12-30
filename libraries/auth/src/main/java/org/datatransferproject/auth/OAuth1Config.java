@@ -18,7 +18,10 @@ package org.datatransferproject.auth;
 
 import com.google.api.client.auth.oauth.OAuthHmacSigner;
 import com.google.api.client.auth.oauth.OAuthSigner;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 
 /**
  * Interface for providing information necessary to run OAuth1 flow
@@ -46,31 +49,27 @@ public interface OAuth1Config {
   String getAccessTokenUrl();
 
   /**
-   * Returns a map of scopes needed for export, keyed by data type (e.g., PHOTOS, CALENDAR) as
-   * defined in the auth data generator or elsewhere
-   * Note: this method assumes that scopes are required to use this service
+   * Returns a list of export data types (e.g., PHOTOS, CALENDAR) this config is designed to support.
    */
-  Map<String, String> getExportScopes();
+  List<String> getExportTypes();
 
   /**
-   * Returns a map of scopes needed for import, keyed by data type (e.g., PHOTOS, CALENDAR) as
-   * defined in the auth data generator or elsewhere
-   * Note: this method assumes that scopes are required to use this service
+   * Returns a list of import data types (e.g., PHOTOS, CALENDAR) this config is designed to support.
    */
-  Map<String, String> getImportScopes();
+  List<String> getImportTypes();
 
   /**
-   * Returns the parameter name for scopes
-   * Note: this method assumes that scopes are required to use this service
+   * Return a map of parameters that will be added to the OAuth request.
+   *
+   * <p>The OAuth 1 spec allows service-defined parameters on the request token and authorization
+   * URLs. Typically this is used for token scope, but may have additional uses as well.
+   *
+   * <p>Some services require different parameters (scopes) for different data types. The minimum
+   * privilege for the given mode (EXPORT, IMPORT) should be used.
    */
-  String getScopeParameterName();
-
-  /**
-   * Shows what step the scopes should be requested in
-   * Note: this method assumes that scopes are required to use this service
-   */
-  default OAuth1Step whenAddScopes() {
-    return OAuth1Step.AUTHORIZATION;
+  default Map<String, String> getAdditionalUrlParameters(
+      String dataType, AuthMode mode, OAuth1Step step) {
+    return Collections.emptyMap();
   }
 
   /**

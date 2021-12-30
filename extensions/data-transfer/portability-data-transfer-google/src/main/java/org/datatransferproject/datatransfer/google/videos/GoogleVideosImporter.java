@@ -74,16 +74,13 @@ import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException
 import org.datatransferproject.spi.transfer.types.UploadErrorException;
 import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.models.MediaObject;
-import org.datatransferproject.types.common.models.videos.VideoObject;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 public class GoogleVideosImporter
     implements Importer<TokensAndUrlAuthData, VideosContainerResource> {
-
-  // TODO: internationalize copy prefix
-  private static final String COPY_PREFIX = "Copy of ";
 
   private final ImageStreamProvider videoStreamProvider;
   private Monitor monitor;
@@ -143,16 +140,16 @@ public class GoogleVideosImporter
 
     long bytes = 0L;
     //     Uploads videos
-    final Collection<VideoObject> videos = data.getVideos();
+    final Collection<VideoModel> videos = data.getVideos();
     if (videos != null && videos.size() > 0) {
-      Stream<VideoObject> stream =
+      Stream<VideoModel> stream =
           videos.stream()
               .filter(video -> shouldImport(video, executor))
               .map(this::transformVideoName);
       // We partition into groups of 49 as 50 is the maximum number of items that can be created in
       // one call. (We use 49 to avoid potential off by one errors)
       // https://developers.google.com/photos/library/guides/upload-media#creating-media-item
-      final UnmodifiableIterator<List<VideoObject>> batches =
+      final UnmodifiableIterator<List<VideoModel>> batches =
           Iterators.partition(stream.iterator(), 49);
       while (batches.hasNext()) {
         long batchBytes = importVideoBatch(batches.next(), client, executor);
@@ -163,7 +160,7 @@ public class GoogleVideosImporter
     return result.copyWithBytes(bytes);
   }
 
-  private boolean shouldImport(VideoObject video, IdempotentImportExecutor executor) {
+  private boolean shouldImport(VideoModel video, IdempotentImportExecutor executor) {
     if (video.getContentUrl() == null) {
       monitor.info(() -> "Content Url is empty. Make sure that you provide a valid content Url.");
       return false;
@@ -173,29 +170,24 @@ public class GoogleVideosImporter
     }
   }
 
-  private VideoObject transformVideoName(VideoObject video) {
-    String filename;
-    if (Strings.isNullOrEmpty(video.getName())) {
-      filename = "untitled";
-    } else {
-      filename = COPY_PREFIX + video.getName();
-    }
+  private VideoModel transformVideoName(VideoModel video) {
+    String filename = Strings.isNullOrEmpty(video.getName()) ? "untitled": video.getName();
     video.setName(filename);
     return video;
   }
 
   long importVideoBatch(
-      List<VideoObject> batchedVideos,
+      List<VideoModel> batchedVideos,
       PhotosLibraryClient client,
       IdempotentImportExecutor executor)
       throws Exception {
     final ArrayList<NewMediaItem> mediaItems = new ArrayList<>();
-    final HashMap<String, VideoObject> uploadTokenToDataId = new HashMap<>();
+    final HashMap<String, VideoModel> uploadTokenToDataId = new HashMap<>();
     final HashMap<String, Long> uploadTokenToLength = new HashMap<>();
     // The PhotosLibraryClient can throw InvalidArgumentException and this try block wraps the two
     // calls of the client to handle the InvalidArgumentException when the user's storage is full.
     try {
-      for (VideoObject video : batchedVideos) {
+      for (VideoModel video : batchedVideos) {
         try {
           Pair<String, Long> pair = uploadMediaItem(video, client);
           final String uploadToken = pair.getLeft();
@@ -230,7 +222,7 @@ public class GoogleVideosImporter
         String uploadToken = result.getUploadToken();
         Status status = result.getStatus();
 
-        final VideoObject video = uploadTokenToDataId.get(uploadToken);
+        final VideoModel video = uploadTokenToDataId.get(uploadToken);
         Preconditions.checkNotNull(video);
         final int code = status.getCode();
         if (code == Code.OK_VALUE) {
@@ -254,7 +246,7 @@ public class GoogleVideosImporter
         uploadTokenToDataId.remove(uploadToken);
       }
       if (!uploadTokenToDataId.isEmpty()) {
-        for (VideoObject video : uploadTokenToDataId.values()) {
+        for (VideoModel video : uploadTokenToDataId.values()) {
           executor.executeAndSwallowIOExceptions(
               video.getDataId(),
               video.getName(),
@@ -316,7 +308,7 @@ public class GoogleVideosImporter
   }
 
   @VisibleForTesting
-  NewMediaItem buildMediaItem(VideoObject inputVideo, String uploadToken) {
+  NewMediaItem buildMediaItem(VideoModel inputVideo, String uploadToken) {
     NewMediaItem newMediaItem;
     String videoDescription = inputVideo.getDescription();
     if (Strings.isNullOrEmpty(videoDescription)) {

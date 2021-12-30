@@ -34,7 +34,7 @@ import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.PaginationData;
 import org.datatransferproject.types.common.StringPaginationToken;
-import org.datatransferproject.types.common.models.videos.VideoObject;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
@@ -84,7 +84,7 @@ public class FacebookVideosExporter
         return new ExportResult<>(ExportResult.ResultType.END, null);
       }
 
-      ArrayList<VideoObject> exportVideos = new ArrayList<>();
+      ArrayList<VideoModel> exportVideos = new ArrayList<>();
       for (Video video : videos) {
         final String url = video.getSource();
         final String fbid = video.getId();
@@ -93,7 +93,7 @@ public class FacebookVideosExporter
           continue;
         }
         exportVideos.add(
-            new VideoObject(
+            new VideoModel(
                 String.format("%s.mp4", fbid),
                 url,
                 video.getDescription(),

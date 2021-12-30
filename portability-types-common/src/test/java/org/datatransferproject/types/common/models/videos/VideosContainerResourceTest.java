@@ -33,11 +33,11 @@ public class VideosContainerResourceTest {
     List<VideoAlbum> albums =
             ImmutableList.of(new VideoAlbum("id1", "album1", "This is a fake album"));
 
-    List<VideoObject> videos =
+    List<VideoModel> videos =
             ImmutableList.of(
-                    new VideoObject("Vid1", "http://example.com/1.mp4", "A video", "video/mp4", "v1", "id1",
+                    new VideoModel("Vid1", "http://example.com/1.mp4", "A video", "video/mp4", "v1", "id1",
                             false),
-                    new VideoObject(
+                    new VideoModel(
                             "Vid2", "https://example.com/2.mpeg", "A 2. video", "video/mpeg", "v2", "id1", false));
     
     ContainerResource data = new VideosContainerResource(albums, videos);

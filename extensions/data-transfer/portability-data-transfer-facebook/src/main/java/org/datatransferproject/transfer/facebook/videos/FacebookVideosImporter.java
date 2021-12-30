@@ -26,7 +26,7 @@ import java.util.UUID;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.types.common.models.videos.VideoObject;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
@@ -51,14 +51,14 @@ public class FacebookVideosImporter
         new DefaultFacebookClient(
             authData.getAccessToken(), appCredentials.getSecret(), Version.VERSION_3_0);
 
-    for (VideoObject video : data.getVideos()) {
+    for (VideoModel video : data.getVideos()) {
       importSingleVideo(client, video);
     }
 
     return ImportResult.OK;
   }
 
-  void importSingleVideo(FacebookClient client, VideoObject video) {
+  void importSingleVideo(FacebookClient client, VideoModel video) {
     ArrayList<Parameter> params = new ArrayList<>();
     params.add(Parameter.with("file_url", video.getContentUrl().toString()));
     if (video.getDescription() != null)
