@@ -103,7 +103,7 @@ public class WorkerMain {
     monitor.info(() -> "Using SecurityExtension: " + securityExtension.getClass().getName());
 
     IdempotentImportExecutor idempotentImportExecutor =
-        IdempotentImportExecutorLoader.load(monitor);
+        IdempotentImportExecutorLoader.load(extensionContext);
     monitor.info(
         () -> "Using IdempotentImportExecutor: " + idempotentImportExecutor.getClass().getName());
 
