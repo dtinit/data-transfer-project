@@ -167,7 +167,7 @@ public class GooglePhotosImporter
     if (photos != null && photos.size() > 0) {
       Map<String, List<PhotoModel>> photosByAlbum =
           photos.stream()
-              .filter(photo -> !executor.isKeyCached(getIdempotentId(photo)))
+              .filter(photo -> !executor.isKeyCached(photo.getDataId()))
               .collect(Collectors.groupingBy(PhotoModel::getAlbumId));
 
       for (Entry<String, List<PhotoModel>> albumEntry : photosByAlbum.entrySet()) {
@@ -239,7 +239,7 @@ public class GooglePhotosImporter
         }
       } catch (IOException e) {
         executor.executeAndSwallowIOExceptions(
-            getIdempotentId(photo),
+            photo.getDataId(),
             photo.getTitle(),
             () -> {
               throw e;
@@ -265,7 +265,7 @@ public class GooglePhotosImporter
         totalBytes +=
             processMediaResult(
                 mediaItem,
-                getIdempotentId(photo),
+                photo.getDataId(),
                 executor,
                 photo.getTitle(),
                 uploadTokenToLength.get(mediaItem.getUploadToken()));
@@ -275,7 +275,7 @@ public class GooglePhotosImporter
       if (!uploadTokenToDataId.isEmpty()) {
         for (PhotoModel photo : uploadTokenToDataId.values()) {
           executor.executeAndSwallowIOExceptions(
-              getIdempotentId(photo),
+              photo.getDataId(),
               photo.getTitle(),
               () -> {
                 throw new IOException("Photo was missing from results list.");
@@ -330,10 +330,6 @@ public class GooglePhotosImporter
     HttpURLConnection conn = imageStreamProvider.getConnection(fetchableUrl);
     return Pair.of(
         conn.getInputStream(), conn.getContentLengthLong() != -1 ? conn.getContentLengthLong() : 0);
-  }
-
-  String getIdempotentId(PhotoModel photo) {
-    return photo.getAlbumId() + "-" + photo.getDataId();
   }
 
   private String cleanDescription(String origDescription) {

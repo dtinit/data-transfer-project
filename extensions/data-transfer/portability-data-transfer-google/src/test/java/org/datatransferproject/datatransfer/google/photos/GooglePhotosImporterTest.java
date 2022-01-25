@@ -160,8 +160,8 @@ public class GooglePhotosImporterTest {
             NEW_ALBUM_ID);
     // Two photos of 32L each imported
     assertEquals(64L, length);
-    assertTrue(executor.isKeyCached(googlePhotosImporter.getIdempotentId(photoModel1)));
-    assertTrue(executor.isKeyCached(googlePhotosImporter.getIdempotentId(photoModel2)));
+    assertTrue(executor.isKeyCached(photoModel1.getDataId()));
+    assertTrue(executor.isKeyCached(photoModel2.getDataId()));
   }
 
   private NewMediaItemResult buildMediaItemResult(String uploadToken, int code) {
@@ -218,8 +218,8 @@ public class GooglePhotosImporterTest {
             NEW_ALBUM_ID);
     // Only one photo of 32L imported
     assertEquals(32L, length);
-    assertTrue(executor.isKeyCached(googlePhotosImporter.getIdempotentId(photoModel1)));
-    String failedDataId = googlePhotosImporter.getIdempotentId(photoModel2);
+    assertTrue(executor.isKeyCached(photoModel1.getDataId()));
+    String failedDataId = photoModel2.getDataId();
     assertFalse(executor.isKeyCached(failedDataId));
     ErrorDetail errorDetail = executor.getErrors().iterator().next();
     assertEquals(failedDataId, errorDetail.id());
@@ -321,7 +321,7 @@ public class GooglePhotosImporterTest {
             Lists.newArrayList(photoModel),
             executor,
             NEW_ALBUM_ID);
-    assertTrue(executor.isKeyCached(googlePhotosImporter.getIdempotentId(photoModel)));
+    assertTrue(executor.isKeyCached(photoModel.getDataId()));
     Mockito.verify(jobStore, Mockito.times(1)).removeData(any(), anyString());
     Mockito.verify(jobStore, Mockito.times(1)).getStream(any(), anyString());
   }
