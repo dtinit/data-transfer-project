@@ -102,7 +102,7 @@ task bumpPatchVersion {
     doLast {
         println "Current version: ${projectVersion}"
         def (major, minor, patch) = projectVersion.tokenize(['.-'])
-        bumpVersion(major, minor, patch.toInteger() + 1)
+        setSnapshotVersion(major, minor, patch.toInteger() + 1)
     }
 }
 
@@ -110,7 +110,7 @@ task bumpMinorVersion {
     doLast {
         println "Current version: ${projectVersion}"
         def (major, minor, patch) = projectVersion.tokenize(['.-'])
-        bumpVersion(major, minor.toInteger() + 1, patch)
+        setSnapshotVersion(major, minor.toInteger() + 1, patch)
     }
 }
 
@@ -118,11 +118,11 @@ task bumpMajorVersion {
     doLast {
         println "Current version: ${projectVersion}"
         def (major, minor, patch) = projectVersion.tokenize(['.-'])
-        bumpVersion(major.toInteger() + 1, minor, patch)
+        setSnapshotVersion(major.toInteger() + 1, minor, patch)
     }
 }
 
-def bumpVersion(major, minor, patch) {
+def setSnapshotVersion(major, minor, patch) {
     def newVersion = "$major.$minor.$patch-SNAPSHOT"
 
     println "New version: ${newVersion}"
