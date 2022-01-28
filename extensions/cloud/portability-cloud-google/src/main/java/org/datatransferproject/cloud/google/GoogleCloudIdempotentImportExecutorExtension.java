@@ -4,6 +4,7 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
 import java.io.IOException;
+import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorExtension;
@@ -14,7 +15,8 @@ public class GoogleCloudIdempotentImportExecutorExtension implements
   private Datastore datastore;
 
   @Override
-  public IdempotentImportExecutor getIdempotentImportExecutor(Monitor monitor) {
+  public IdempotentImportExecutor getIdempotentImportExecutor(ExtensionContext extensionContext) {
+    Monitor monitor = extensionContext.getMonitor();
     try {
       return new GoogleCloudIdempotentImportExecutor(getDatastore(), monitor);
     } catch (IOException e) {
@@ -25,7 +27,6 @@ public class GoogleCloudIdempotentImportExecutorExtension implements
 
   @Override
   public void initialize() {
-
   }
 
   private synchronized Datastore getDatastore() throws IOException {
