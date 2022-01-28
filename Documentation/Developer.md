@@ -117,3 +117,5 @@ used with the client-rest UI.
   * `./gradlew -PtransportType=jettyrest -PapiPort=3000  -PcloudType=local clean check :distributions:demo-server:dockerize`
   * `docker run --rm -p 8080:8080 -p 5005:5005 -p 3000:3000 --env-file distributions/demo-server/env.secrets --name demoserver --network dataportability datatransferproject/demo`
 
+## Publishing to Maven Central
+See [here](Publishing.md) for more details.
