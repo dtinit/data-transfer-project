@@ -163,6 +163,7 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
                 && CopyExceptionWithFailureReason.class.isAssignableFrom(e.getCause().getClass())) {
           throw (CopyExceptionWithFailureReason) e.getCause();
         }
+        throw new CopyException(jobIdPrefix + "Error happened during import", e);
       } finally {
         metricRecorder.importPageFinished(
                 JobMetadata.getDataType(),
