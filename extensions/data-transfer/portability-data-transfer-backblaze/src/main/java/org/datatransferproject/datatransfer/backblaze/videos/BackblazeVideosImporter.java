@@ -64,7 +64,7 @@ public class BackblazeVideosImporter
       return ImportResult.OK;
     }
 
-    BackblazeDataTransferClient b2Client = b2ClientFactory.getOrCreateB2Client(monitor, authData);
+    BackblazeDataTransferClient b2Client = b2ClientFactory.getOrCreateB2Client(jobId, authData);
 
     if (data.getVideos() != null && data.getVideos().size() > 0) {
       for (VideoModel video : data.getVideos()) {

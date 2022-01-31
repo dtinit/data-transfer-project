@@ -68,7 +68,7 @@ public class BackblazePhotosImporter
       return ImportResult.OK;
     }
 
-    BackblazeDataTransferClient b2Client = b2ClientFactory.getOrCreateB2Client(monitor, authData);
+    BackblazeDataTransferClient b2Client = b2ClientFactory.getOrCreateB2Client(jobId, authData);
 
     if (data.getAlbums() != null && data.getAlbums().size() > 0) {
       for (PhotoAlbum album : data.getAlbums()) {
