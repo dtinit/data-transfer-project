@@ -93,7 +93,7 @@ public class FlickrPhotosImporterTest {
 
     // Setup Mock
     when(user.getId()).thenReturn("userId");
-    when(authInterface.checkToken(any(Token.class))).thenReturn(auth);
+    when(authInterface.checkToken("token", "secret")).thenReturn(auth);
 
     when(flickr.getPhotosetsInterface()).thenReturn(photosetsInterface);
     when(flickr.getUploader()).thenReturn(uploader);
