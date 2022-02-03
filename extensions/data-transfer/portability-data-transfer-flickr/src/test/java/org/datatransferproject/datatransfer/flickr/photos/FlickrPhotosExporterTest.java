@@ -91,7 +91,7 @@ public class FlickrPhotosExporterTest {
   public void exportAlbumInitial() throws FlickrException {
     // set up auth, flickr service
     when(user.getId()).thenReturn("userId");
-    when(authInterface.checkToken(any(Token.class))).thenReturn(auth);
+    when(authInterface.checkToken("token", "secret")).thenReturn(auth);
     when(flickr.getPhotosetsInterface()).thenReturn(photosetsInterface);
     when(flickr.getPhotosInterface()).thenReturn(photosInterface);
     when(flickr.getAuthInterface()).thenReturn(authInterface);
@@ -136,7 +136,7 @@ public class FlickrPhotosExporterTest {
   public void exportPhotosFromPhotoset() throws FlickrException {
     // set up auth, flickr service
     when(user.getId()).thenReturn("userId");
-    when(authInterface.checkToken(any(Token.class))).thenReturn(auth);
+    when(authInterface.checkToken("token", "secret")).thenReturn(auth);
     when(flickr.getPhotosetsInterface()).thenReturn(photosetsInterface);
     when(flickr.getPhotosInterface()).thenReturn(photosInterface);
     when(flickr.getAuthInterface()).thenReturn(authInterface);
