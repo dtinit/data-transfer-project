@@ -34,4 +34,3 @@ dependencies {
 
 
 configurePublication(project)
-
