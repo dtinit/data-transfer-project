@@ -21,7 +21,6 @@ plugins {
 
 dependencies {
     
-    implementation 'com.flickr4java:flickr4java:3.0.6'
     compile project(':portability-api-launcher')
     
     compile project(":portability-types-common")
@@ -36,6 +35,3 @@ dependencies {
 
 configurePublication(project)
 
-repositories {
-    mavenCentral()
-}
