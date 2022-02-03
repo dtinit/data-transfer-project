@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.flickr4java.flickr.Flickr;
 import com.flickr4java.flickr.FlickrException;
 import com.flickr4java.flickr.auth.Auth;
+import com.github.scribejava.core.model.OAuth1Token;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.scribe.model.Token;
@@ -32,7 +33,6 @@ public class FlickrUtils {
         "authData expected to be TokenSecretAuthData not %s",
         authData.getClass().getCanonicalName());
     TokenSecretAuthData tokenAuthData = (TokenSecretAuthData) authData;
-    Token requestToken = new Token(tokenAuthData.getToken(), tokenAuthData.getSecret());
-    return flickr.getAuthInterface().checkToken(requestToken);
+    return flickr.getAuthInterface().checkToken(tokenAuthData.getToken(), tokenAuthData.getSecret());
   }
 }
