@@ -16,6 +16,7 @@
 
 package org.datatransferproject.datatransfer.backblaze.videos;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
@@ -78,11 +79,16 @@ public class BackblazeVideosImporter
 
   private String importSingleVideo(BackblazeDataTransferClient b2Client, VideoModel video)
       throws IOException {
-    InputStream videoFileStream =
-        imageStreamProvider.getConnection(video.getContentUrl().toString()).getInputStream();
+    try (InputStream videoFileStream =
+        imageStreamProvider.getConnection(video.getContentUrl().toString()).getInputStream()) {
 
-    return b2Client.uploadFile(
-        String.format("%s/%s.mp4", VIDEO_TRANSFER_MAIN_FOLDER, video.getDataId()),
-        jobStore.getTempFileFromInputStream(videoFileStream, video.getDataId(), ".mp4"));
+      return b2Client.uploadFile(
+          String.format("%s/%s.mp4", VIDEO_TRANSFER_MAIN_FOLDER, video.getDataId()),
+          jobStore.getTempFileFromInputStream(videoFileStream, video.getDataId(), ".mp4"));
+    } catch (FileNotFoundException e) {
+      monitor.severe(
+          () -> String.format("Video resource was missing for id: %s", video.getDataId()), e);
+    }
+    return null;
   }
 }
