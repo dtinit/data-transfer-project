@@ -33,6 +33,7 @@ import org.apache.commons.io.IOUtils;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorHelper;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
@@ -102,7 +103,7 @@ public class KoofrPhotosImporter
 
     for (PhotoModel photoModel : resource.getPhotos()) {
       idempotentImportExecutor.executeAndSwallowIOExceptions(
-          photoModel.getAlbumId() + "-" + photoModel.getDataId(),
+          IdempotentImportExecutorHelper.getPhotoIdempotentId(photoModel),
           photoModel.getTitle(),
           () -> importSinglePhoto(photoModel, jobId, idempotentImportExecutor, koofrClient));
     }
