@@ -25,6 +25,7 @@ import org.datatransferproject.datatransfer.backblaze.common.BackblazeDataTransf
 import org.datatransferproject.datatransfer.backblaze.common.BackblazeDataTransferClientFactory;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorHelper;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.ImageStreamProvider;
@@ -82,7 +83,7 @@ public class BackblazePhotosImporter
     if (data.getPhotos() != null && data.getPhotos().size() > 0) {
       for (PhotoModel photo : data.getPhotos()) {
         idempotentExecutor.executeAndSwallowIOExceptions(
-            photo.getDataId(),
+            IdempotentImportExecutorHelper.getPhotoIdempotentId(photo),
             photo.getTitle(),
             () -> importSinglePhoto(idempotentExecutor, b2Client, jobId, photo));
       }

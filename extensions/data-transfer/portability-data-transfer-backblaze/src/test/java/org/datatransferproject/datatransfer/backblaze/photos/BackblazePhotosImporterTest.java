@@ -126,7 +126,7 @@ public class BackblazePhotosImporterTest {
 
         ArgumentCaptor<Callable<String>> importCapture = ArgumentCaptor.forClass(Callable.class);
         verify(executor, times(1))
-                .executeAndSwallowIOExceptions(eq(dataId), eq(title), importCapture.capture());
+                .executeAndSwallowIOExceptions(eq(String.format("%s-%s", albumId, dataId)), eq(title), importCapture.capture());
 
         String actual = importCapture.getValue().call();
         assertEquals(response, actual);
