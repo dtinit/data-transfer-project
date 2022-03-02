@@ -72,7 +72,7 @@ public class BackblazeTransferExtension implements TransferExtension {
 
     ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
     BackblazeDataTransferClientFactory backblazeDataTransferClientFactory =
-            new BackblazeDataTransferClientFactory();
+            new BackblazeDataTransferClientFactory(monitor);
     ImageStreamProvider isProvider = new ImageStreamProvider();
 
     importerBuilder.put(

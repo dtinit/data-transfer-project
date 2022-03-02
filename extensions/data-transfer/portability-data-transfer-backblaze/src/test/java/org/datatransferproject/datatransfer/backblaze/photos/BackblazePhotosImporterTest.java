@@ -104,7 +104,7 @@ public class BackblazePhotosImporterTest {
         String albumName = "albumName";
         String albumId = "albumId";
         String response = "response";
-
+        UUID jobId = UUID.randomUUID();
         PhotoModel photoModel = new PhotoModel(title, photoUrl, "", "", dataId, albumId, false, null);
         ArrayList<PhotoModel> photos = new ArrayList<>();
         photos.add(photoModel);
@@ -118,11 +118,11 @@ public class BackblazePhotosImporterTest {
         when(streamProvider.getConnection(photoUrl)).thenReturn(connection);
 
         when(client.uploadFile(eq("Photo Transfer/albumName/dataId.jpg"), any())).thenReturn(response);
-        when(clientFactory.getOrCreateB2Client(monitor, authData)).thenReturn(client);
+        when(clientFactory.getOrCreateB2Client(jobId, authData)).thenReturn(client);
 
         BackblazePhotosImporter sut =
                 new BackblazePhotosImporter(monitor, dataStore, streamProvider, clientFactory);
-        sut.importItem(UUID.randomUUID(), executor, authData, data);
+        sut.importItem(jobId, executor, authData, data);
 
         ArgumentCaptor<Callable<String>> importCapture = ArgumentCaptor.forClass(Callable.class);
         verify(executor, times(1))
