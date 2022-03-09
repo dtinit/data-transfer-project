@@ -33,6 +33,7 @@ package org.datatransferproject.datatransfer.google.videos;
 
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.rpc.InvalidArgumentException;
+import com.google.api.gax.rpc.UnauthenticatedException;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.UserCredentials;
 import com.google.common.annotations.VisibleForTesting;
@@ -263,6 +264,8 @@ public class GoogleVideosImporter
       } else {
         throw e;
       }
+    } catch (UnauthenticatedException e) {
+      throw new InvalidTokenException("Token has been expired or revoked", e);
     }
   }
 
