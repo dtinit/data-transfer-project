@@ -46,9 +46,9 @@ import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
 import org.datatransferproject.transfer.microsoft.driveModels.*;
+import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.Before;
 import org.junit.Test;
@@ -97,7 +97,7 @@ public class MicrosoftMediaImporterTest {
     List<PhotoAlbum> albums =
         ImmutableList.of(new PhotoAlbum("id1", "album1.", "This is a fake albumb"));
 
-    PhotosContainerResource data = new PhotosContainerResource(albums, null);
+    MediaContainerResource data = new MediaContainerResource(albums, null);
 
     Call call = mock(Call.class);
     doReturn(call).when(client).newCall(argThat((Request r) -> {
@@ -137,7 +137,7 @@ public class MicrosoftMediaImporterTest {
     List<PhotoAlbum> albums =
         ImmutableList.of(new PhotoAlbum("id1", "album1.", "This is a fake albumb"));
 
-    PhotosContainerResource data = new PhotosContainerResource(albums, null);
+    MediaContainerResource data = new MediaContainerResource(albums, null);
 
     Call call = mock(Call.class);
     doReturn(call).when(client).newCall(
@@ -173,7 +173,7 @@ public class MicrosoftMediaImporterTest {
         .thenReturn(new InputStreamWrapper(new ByteArrayInputStream(new byte[CHUNK_SIZE])));
     when(jobStore.getStream(uuid, "https://fake.com/2.png"))
         .thenReturn(new InputStreamWrapper(new ByteArrayInputStream(new byte[CHUNK_SIZE])));
-    PhotosContainerResource data = new PhotosContainerResource(albums, photos);
+    MediaContainerResource data = new MediaContainerResource(albums, photos);
 
     Call call = mock(Call.class);
     doReturn(call).when(client).newCall(

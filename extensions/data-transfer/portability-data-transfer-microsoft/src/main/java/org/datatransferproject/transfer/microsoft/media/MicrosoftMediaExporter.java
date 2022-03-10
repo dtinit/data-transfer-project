@@ -37,9 +37,9 @@ import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.PaginationData;
 import org.datatransferproject.types.common.StringPaginationToken;
 import org.datatransferproject.types.common.models.IdOnlyContainerResource;
+import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 /**
@@ -48,7 +48,7 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
  * <p>Converts folders to albums.
  */
 public class MicrosoftMediaExporter
-    implements Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
+    implements Exporter<TokensAndUrlAuthData, MediaContainerResource> {
   static final String DRIVE_TOKEN_PREFIX = "drive:";
 
   private final MicrosoftCredentialFactory credentialFactory;
@@ -73,7 +73,7 @@ public class MicrosoftMediaExporter
   }
 
   @Override
-  public ExportResult<PhotosContainerResource> export(UUID jobId, TokensAndUrlAuthData authData,
+  public ExportResult<MediaContainerResource> export(UUID jobId, TokensAndUrlAuthData authData,
       Optional<ExportInformation> exportInformation) throws IOException {
     if (!exportInformation.isPresent()) {
       return exportOneDrivePhotos(authData, Optional.empty(), Optional.empty(), jobId);
@@ -89,7 +89,7 @@ public class MicrosoftMediaExporter
   }
 
   @VisibleForTesting
-  ExportResult<PhotosContainerResource> exportOneDrivePhotos(TokensAndUrlAuthData authData,
+  ExportResult<MediaContainerResource> exportOneDrivePhotos(TokensAndUrlAuthData authData,
       Optional<IdOnlyContainerResource> albumData, Optional<PaginationData> paginationData,
       UUID jobId) throws IOException {
     Optional<String> albumId = Optional.empty();
@@ -109,7 +109,7 @@ public class MicrosoftMediaExporter
 
     PaginationData nextPageData = SetNextPageToken(driveItemsResponse);
     ContinuationData continuationData = new ContinuationData(nextPageData);
-    PhotosContainerResource containerResource;
+    MediaContainerResource containerResource;
     MicrosoftDriveItem[] driveItems = driveItemsResponse.getDriveItems();
     List<PhotoAlbum> albums = new ArrayList<>();
     List<PhotoModel> photos = new ArrayList<>();
@@ -131,7 +131,7 @@ public class MicrosoftMediaExporter
 
     ExportResult.ResultType result =
         nextPageData == null ? ExportResult.ResultType.END : ExportResult.ResultType.CONTINUE;
-    containerResource = new PhotosContainerResource(albums, photos);
+    containerResource = new MediaContainerResource(albums, photos);
     return new ExportResult<>(result, containerResource, continuationData);
   }
 

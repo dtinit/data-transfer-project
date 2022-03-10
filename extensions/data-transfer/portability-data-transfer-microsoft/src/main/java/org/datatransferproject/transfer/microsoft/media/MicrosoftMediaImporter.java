@@ -45,16 +45,16 @@ import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.transfer.microsoft.DataChunk;
 import org.datatransferproject.transfer.microsoft.MicrosoftTransmogrificationConfig;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
+import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 /**
  * Imports albums and photos to OneDrive using the Microsoft Graph API.
  */
 public class MicrosoftMediaImporter
-    implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
+    implements Importer<TokensAndUrlAuthData, MediaContainerResource> {
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
   private final TemporaryPerJobDataStore jobStore;
@@ -90,7 +90,7 @@ public class MicrosoftMediaImporter
 
   @Override
   public ImportResult importItem(UUID jobId, IdempotentImportExecutor idempotentImportExecutor,
-      TokensAndUrlAuthData authData, PhotosContainerResource resource) throws Exception {
+      TokensAndUrlAuthData authData, MediaContainerResource resource) throws Exception {
     // Ensure credential is populated
     getOrCreateCredential(authData);
 

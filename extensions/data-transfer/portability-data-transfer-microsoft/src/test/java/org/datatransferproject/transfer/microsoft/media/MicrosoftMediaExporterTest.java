@@ -36,9 +36,9 @@ import org.datatransferproject.transfer.microsoft.driveModels.*;
 import org.datatransferproject.types.common.StringPaginationToken;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.common.models.IdOnlyContainerResource;
+import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.Before;
 import org.junit.Test;
@@ -85,7 +85,7 @@ public class MicrosoftMediaExporterTest {
     when(driveItemsResponse.getNextPageLink()).thenReturn(DRIVE_PAGE_URL);
 
     // Run
-    ExportResult<PhotosContainerResource> result = microsoftPhotosExporter.exportOneDrivePhotos(
+    ExportResult<MediaContainerResource> result = microsoftPhotosExporter.exportOneDrivePhotos(
         null, Optional.empty(), Optional.empty(), uuid);
 
     // Verify method calls
@@ -126,7 +126,7 @@ public class MicrosoftMediaExporterTest {
         new StringPaginationToken(DRIVE_TOKEN_PREFIX + DRIVE_PAGE_URL);
 
     // Run
-    ExportResult<PhotosContainerResource> result = microsoftPhotosExporter.exportOneDrivePhotos(
+    ExportResult<MediaContainerResource> result = microsoftPhotosExporter.exportOneDrivePhotos(
         null, Optional.empty(), Optional.of(inputPaginationToken), uuid);
 
     // Verify method calls
@@ -166,7 +166,7 @@ public class MicrosoftMediaExporterTest {
     IdOnlyContainerResource idOnlyContainerResource = new IdOnlyContainerResource(FOLDER_ID);
 
     // Run
-    ExportResult<PhotosContainerResource> result = microsoftPhotosExporter.exportOneDrivePhotos(
+    ExportResult<MediaContainerResource> result = microsoftPhotosExporter.exportOneDrivePhotos(
         null, Optional.of(idOnlyContainerResource), Optional.empty(), uuid);
 
     // Verify method calls
@@ -209,7 +209,7 @@ public class MicrosoftMediaExporterTest {
     IdOnlyContainerResource idOnlyContainerResource = new IdOnlyContainerResource(FOLDER_ID);
 
     // Run
-    ExportResult<PhotosContainerResource> result = microsoftPhotosExporter.exportOneDrivePhotos(
+    ExportResult<MediaContainerResource> result = microsoftPhotosExporter.exportOneDrivePhotos(
         null, Optional.of(idOnlyContainerResource), Optional.of(inputPaginationToken), uuid);
 
     // Verify method calls
@@ -250,7 +250,7 @@ public class MicrosoftMediaExporterTest {
     when(driveItemsResponse.getNextPageLink()).thenReturn(DRIVE_PAGE_URL);
 
     // Run
-    ExportResult<PhotosContainerResource> result = microsoftPhotosExporter.exportOneDrivePhotos(
+    ExportResult<MediaContainerResource> result = microsoftPhotosExporter.exportOneDrivePhotos(
         null, Optional.empty(), Optional.empty(), uuid);
 
     // Verify method calls
