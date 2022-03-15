@@ -58,6 +58,7 @@ class JobCancelWatchingService extends AbstractScheduledService {
             JobMetadata.getImportService(),
             JobMetadata.getStopWatch().elapsed());
         monitor.flushLogs();
+        store.abandonJob(JobMetadata.getJobId(), PortabilityJob.State.CANCELED.toString());
         System.exit(0);
         break;
       case ERROR:
@@ -66,6 +67,7 @@ class JobCancelWatchingService extends AbstractScheduledService {
             EventCode.WATCHING_SERVICE_JOB_ERRORED);
         recordGeneralMetric(PortabilityJob.State.ERROR.toString());
         monitor.flushLogs();
+        store.abandonJob(JobMetadata.getJobId(), PortabilityJob.State.ERROR.toString());
         System.exit(0);
         break;
       case PREEMPTED:
@@ -74,6 +76,7 @@ class JobCancelWatchingService extends AbstractScheduledService {
             EventCode.WATCHING_SERVICE_JOB_PREEMPTED);
         recordGeneralMetric(PortabilityJob.State.PREEMPTED.toString());
         monitor.flushLogs();
+        store.abandonJob(JobMetadata.getJobId(), PortabilityJob.State.PREEMPTED.toString());
         System.exit(0);
         break;
       default:
