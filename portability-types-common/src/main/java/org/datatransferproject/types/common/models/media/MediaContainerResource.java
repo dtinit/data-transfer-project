@@ -31,7 +31,7 @@ public class MediaContainerResource extends ContainerResource {
       @JsonProperty("videos") Collection<VideoModel> videos) {
     this.albums = albums == null ? ImmutableList.of() : albums;
     this.photos = photos == null ? ImmutableList.of() : photos;
-    this.videos = photos == null ? ImmutableList.of() : videos;
+    this.videos = videos == null ? ImmutableList.of() : videos;
   }
 
   public Collection<MediaAlbum> getAlbums() {
