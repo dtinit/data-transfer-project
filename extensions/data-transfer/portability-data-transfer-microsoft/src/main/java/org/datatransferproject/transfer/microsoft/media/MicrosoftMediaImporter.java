@@ -45,8 +45,8 @@ import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.transfer.microsoft.DataChunk;
 import org.datatransferproject.transfer.microsoft.MicrosoftTransmogrificationConfig;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
+import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
-import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
@@ -106,7 +106,7 @@ public class MicrosoftMediaImporter
             -> String.format("%s: Importing %s albums and %s photos after transmogrification",
                 jobId, resource.getAlbums().size(), resource.getPhotos().size()));
 
-    for (PhotoAlbum album : resource.getAlbums()) {
+    for (MediaAlbum album : resource.getAlbums()) {
       // Create a OneDrive folder and then save the id with the mapping data
       idempotentImportExecutor.executeAndSwallowIOExceptions(
           album.getId(), album.getName(), () -> createOneDriveFolder(album));
@@ -121,13 +121,13 @@ public class MicrosoftMediaImporter
   }
 
   @SuppressWarnings("unchecked")
-  private String createOneDriveFolder(PhotoAlbum album)
+  private String createOneDriveFolder(MediaAlbum album)
       throws IOException, CopyExceptionWithFailureReason {
     Map<String, Object> rawFolder = new LinkedHashMap<>();
     // clean up album name for microsoft specifically
-    // Note that PhotoAlbum.getName() can return an empty string or null depending
-    // on the results of PhotoAlbum.cleanName(), e.g. if a Google Photos album has
-    // title=" ", its cleaned name will be "". See PhotoAlbum.cleanName for further
+    // Note that MediaAlbum.getName() can return an empty string or null depending
+    // on the results of MediaAlbum.cleanName(), e.g. if a Google Photos album has
+    // title=" ", its cleaned name will be "". See MediaAlbum.cleanName for further
     // details on what forms the name can take.
     String albumName = Strings.isNullOrEmpty(album.getName()) ? "Untitled" : album.getName();
     rawFolder.put("name", albumName);

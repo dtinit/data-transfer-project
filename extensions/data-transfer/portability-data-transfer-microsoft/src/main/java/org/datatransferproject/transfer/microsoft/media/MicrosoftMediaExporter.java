@@ -38,14 +38,14 @@ import org.datatransferproject.types.common.PaginationData;
 import org.datatransferproject.types.common.StringPaginationToken;
 import org.datatransferproject.types.common.models.IdOnlyContainerResource;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
-import org.datatransferproject.types.common.models.photos.PhotoAlbum;
+import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 /**
  * Exports Microsoft OneDrive photos using the Graph API.
  *
- * <p>Converts folders to albums.
+ * <p>Converts folders to media albums.
  */
 public class MicrosoftMediaExporter
     implements Exporter<TokensAndUrlAuthData, MediaContainerResource> {
@@ -101,9 +101,9 @@ public class MicrosoftMediaExporter
     MicrosoftDriveItemsResponse driveItemsResponse;
     if (paginationData.isPresent() || albumData.isPresent()) {
       driveItemsResponse =
-          getOrCreatePhotosInterface(authData).getDriveItems(albumId, paginationUrl);
+          getOrCreateMediaInterface(authData).getDriveItems(albumId, paginationUrl);
     } else {
-      driveItemsResponse = getOrCreatePhotosInterface(authData).getDriveItemsFromSpecialFolder(
+      driveItemsResponse = getOrCreateMediaInterface(authData).getDriveItemsFromSpecialFolder(
           MicrosoftSpecialFolder.FolderType.photos);
     }
 
@@ -111,12 +111,12 @@ public class MicrosoftMediaExporter
     ContinuationData continuationData = new ContinuationData(nextPageData);
     MediaContainerResource containerResource;
     MicrosoftDriveItem[] driveItems = driveItemsResponse.getDriveItems();
-    List<PhotoAlbum> albums = new ArrayList<>();
+    List<MediaAlbum> albums = new ArrayList<>();
     List<PhotoModel> photos = new ArrayList<>();
 
     if (driveItems != null && driveItems.length > 0) {
       for (MicrosoftDriveItem driveItem : driveItems) {
-        PhotoAlbum album = tryConvertDriveItemToPhotoAlbum(driveItem, jobId);
+        MediaAlbum album = tryConvertDriveItemToMediaAlbum(driveItem, jobId);
         if (album != null) {
           albums.add(album);
           continuationData.addContainerResource(new IdOnlyContainerResource(driveItem.id));
@@ -131,13 +131,13 @@ public class MicrosoftMediaExporter
 
     ExportResult.ResultType result =
         nextPageData == null ? ExportResult.ResultType.END : ExportResult.ResultType.CONTINUE;
-    containerResource = new MediaContainerResource(albums, photos);
+    containerResource = new MediaContainerResource(albums, photos, null /*videos*/);
     return new ExportResult<>(result, containerResource, continuationData);
   }
 
-  private PhotoAlbum tryConvertDriveItemToPhotoAlbum(MicrosoftDriveItem driveItem, UUID jobId) {
+  private MediaAlbum tryConvertDriveItemToMediaAlbum(MicrosoftDriveItem driveItem, UUID jobId) {
     if (driveItem.folder != null) {
-      PhotoAlbum photoAlbum = new PhotoAlbum(driveItem.id, driveItem.name, driveItem.description);
+      MediaAlbum photoAlbum = new MediaAlbum(driveItem.id, driveItem.name, driveItem.description);
       monitor.debug(
           () -> String.format("%s: Microsoft OneDrive exporting album: %s", jobId, photoAlbum));
       return photoAlbum;
@@ -189,12 +189,12 @@ public class MicrosoftMediaExporter
     return paginationToken;
   }
 
-  private synchronized MicrosoftMediaInterface getOrCreatePhotosInterface(
+  private synchronized MicrosoftMediaInterface getOrCreateMediaInterface(
       TokensAndUrlAuthData authData) {
-    return photosInterface == null ? makePhotosInterface(authData) : photosInterface;
+    return photosInterface == null ? makeMediaInterface(authData) : photosInterface;
   }
 
-  private synchronized MicrosoftMediaInterface makePhotosInterface(TokensAndUrlAuthData authData) {
+  private synchronized MicrosoftMediaInterface makeMediaInterface(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
     return new MicrosoftMediaInterface(credential, jsonFactory);
   }

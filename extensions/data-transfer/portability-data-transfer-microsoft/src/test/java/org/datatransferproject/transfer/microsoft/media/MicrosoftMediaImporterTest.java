@@ -47,7 +47,7 @@ import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
 import org.datatransferproject.transfer.microsoft.driveModels.*;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
-import org.datatransferproject.types.common.models.photos.PhotoAlbum;
+import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.Before;
@@ -94,10 +94,10 @@ public class MicrosoftMediaImporterTest {
 
   @Test
   public void testCleanAlbumNames() throws Exception {
-    List<PhotoAlbum> albums =
-        ImmutableList.of(new PhotoAlbum("id1", "album1.", "This is a fake albumb"));
+    List<MediaAlbum> albums =
+        ImmutableList.of(new MediaAlbum("id1", "album1.", "This is a fake albumb"));
 
-    MediaContainerResource data = new MediaContainerResource(albums, null);
+    MediaContainerResource data = new MediaContainerResource(albums, null /*phots*/, null /*videos*/);
 
     Call call = mock(Call.class);
     doReturn(call).when(client).newCall(argThat((Request r) -> {
@@ -134,10 +134,10 @@ public class MicrosoftMediaImporterTest {
 
   @Test(expected = PermissionDeniedException.class)
   public void testImportItemPermissionDenied() throws Exception {
-    List<PhotoAlbum> albums =
-        ImmutableList.of(new PhotoAlbum("id1", "album1.", "This is a fake albumb"));
+    List<MediaAlbum> albums =
+        ImmutableList.of(new MediaAlbum("id1", "album1.", "This is a fake albumb"));
 
-    MediaContainerResource data = new MediaContainerResource(albums, null);
+    MediaContainerResource data = new MediaContainerResource(albums, null /*photos*/, null /*videos*/);
 
     Call call = mock(Call.class);
     doReturn(call).when(client).newCall(
@@ -162,8 +162,8 @@ public class MicrosoftMediaImporterTest {
 
   @Test
   public void testImportItemAllSuccess() throws Exception {
-    List<PhotoAlbum> albums =
-        ImmutableList.of(new PhotoAlbum("id1", "albumb1", "This is a fake albumb"));
+    List<MediaAlbum> albums =
+        ImmutableList.of(new MediaAlbum("id1", "albumb1", "This is a fake albumb"));
 
     List<PhotoModel> photos = ImmutableList.of(
         new PhotoModel("Pic1", "http://fake.com/1.jpg", "A pic", "image/jpg", "p1", "id1", true),
@@ -173,7 +173,7 @@ public class MicrosoftMediaImporterTest {
         .thenReturn(new InputStreamWrapper(new ByteArrayInputStream(new byte[CHUNK_SIZE])));
     when(jobStore.getStream(uuid, "https://fake.com/2.png"))
         .thenReturn(new InputStreamWrapper(new ByteArrayInputStream(new byte[CHUNK_SIZE])));
-    MediaContainerResource data = new MediaContainerResource(albums, photos);
+    MediaContainerResource data = new MediaContainerResource(albums, photos, null /*videos*/);
 
     Call call = mock(Call.class);
     doReturn(call).when(client).newCall(

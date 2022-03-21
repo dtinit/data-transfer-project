@@ -37,7 +37,7 @@ import org.datatransferproject.types.common.StringPaginationToken;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.common.models.IdOnlyContainerResource;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
-import org.datatransferproject.types.common.models.photos.PhotoAlbum;
+import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.Before;
@@ -100,8 +100,8 @@ public class MicrosoftMediaExporterTest {
     assertThat(paginationToken.getToken()).isEqualTo(DRIVE_TOKEN_PREFIX + DRIVE_PAGE_URL);
 
     // Verify one album is ready for import
-    Collection<PhotoAlbum> actualAlbums = result.getExportedData().getAlbums();
-    assertThat(actualAlbums.stream().map(PhotoAlbum::getId).collect(Collectors.toList()))
+    Collection<MediaAlbum> actualAlbums = result.getExportedData().getAlbums();
+    assertThat(actualAlbums.stream().map(MediaAlbum::getId).collect(Collectors.toList()))
         .containsExactly(FOLDER_ID);
 
     // Verify photos should be empty (in the root)
@@ -140,8 +140,8 @@ public class MicrosoftMediaExporterTest {
     assertThat(paginationToken).isEqualTo(null);
 
     // Verify one album is ready for import
-    Collection<PhotoAlbum> actualAlbums = result.getExportedData().getAlbums();
-    assertThat(actualAlbums.stream().map(PhotoAlbum::getId).collect(Collectors.toList()))
+    Collection<MediaAlbum> actualAlbums = result.getExportedData().getAlbums();
+    assertThat(actualAlbums.stream().map(MediaAlbum::getId).collect(Collectors.toList()))
         .containsExactly(FOLDER_ID);
 
     // Verify photos should be empty (in the root)
@@ -180,7 +180,7 @@ public class MicrosoftMediaExporterTest {
     assertThat(paginationToken.getToken()).isEqualTo(DRIVE_TOKEN_PREFIX + DRIVE_PAGE_URL);
 
     // Verify no albums are exported
-    Collection<PhotoAlbum> actualAlbums = result.getExportedData().getAlbums();
+    Collection<MediaAlbum> actualAlbums = result.getExportedData().getAlbums();
     assertThat(actualAlbums).isEmpty();
 
     // Verify one photo (in an album) should be exported
@@ -223,7 +223,7 @@ public class MicrosoftMediaExporterTest {
     assertThat(paginationToken).isEqualTo(null);
 
     // Verify no albums are exported
-    Collection<PhotoAlbum> actualAlbums = result.getExportedData().getAlbums();
+    Collection<MediaAlbum> actualAlbums = result.getExportedData().getAlbums();
     assertThat(actualAlbums).isEmpty();
 
     // Verify one photo (in an album) should be exported
@@ -265,8 +265,8 @@ public class MicrosoftMediaExporterTest {
     assertThat(paginationToken.getToken()).isEqualTo(DRIVE_TOKEN_PREFIX + DRIVE_PAGE_URL);
 
     // Verify one album is ready for import
-    Collection<PhotoAlbum> actualAlbums = result.getExportedData().getAlbums();
-    assertThat(actualAlbums.stream().map(PhotoAlbum::getId).collect(Collectors.toList()))
+    Collection<MediaAlbum> actualAlbums = result.getExportedData().getAlbums();
+    assertThat(actualAlbums.stream().map(MediaAlbum::getId).collect(Collectors.toList()))
         .containsExactly(FOLDER_ID);
 
     // Verify one photo should be present (in the root Photos special folder)
