@@ -153,4 +153,12 @@ public interface JobStore extends TemporaryPerJobDataStore {
    * transfer.
    */
   default void storeJobStack(UUID jobId, Stack<ExportInformation> stack) {}
+
+  /**
+   * Called by a transfer worker when abandoning the job matching {@code jobId}, and do cleanup at their end.
+   * Accepts the {@code reason} for abandoning the job (can be derived from but not limited to {@link State})
+   *
+   * @throws IllegalStateException if failed to successfully abandon the job.
+   */
+  default void abandonJob(UUID jobId, String reason) {}
 }
