@@ -103,6 +103,7 @@ public class BackblazeVideosImporterTest {
         String albumName = "albumName";
         String albumId = "albumId";
         String response = "response";
+        UUID jobId = UUID.randomUUID();
 
         VideoModel videoObject =
                 new VideoModel(title, videoUrl, description, encodingFormat, dataId, albumId, false);
@@ -118,11 +119,11 @@ public class BackblazeVideosImporterTest {
         when(streamProvider.getConnection(videoUrl)).thenReturn(connection);
 
         when(client.uploadFile(eq("Video Transfer/dataId.mp4"), any())).thenReturn(response);
-        when(clientFactory.getOrCreateB2Client(monitor, authData)).thenReturn(client);
+        when(clientFactory.getOrCreateB2Client(jobId, authData)).thenReturn(client);
 
         BackblazeVideosImporter sut =
                 new BackblazeVideosImporter(monitor, dataStore, streamProvider, clientFactory);
-        sut.importItem(UUID.randomUUID(), executor, authData, data);
+        sut.importItem(jobId, executor, authData, data);
 
         ArgumentCaptor<Callable<String>> importCapture = ArgumentCaptor.forClass(Callable.class);
         verify(executor, times(1))

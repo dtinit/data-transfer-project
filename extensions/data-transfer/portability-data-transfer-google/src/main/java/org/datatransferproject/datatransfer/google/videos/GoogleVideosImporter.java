@@ -33,6 +33,7 @@ package org.datatransferproject.datatransfer.google.videos;
 
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.rpc.InvalidArgumentException;
+import com.google.api.gax.rpc.UnauthenticatedException;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.UserCredentials;
 import com.google.common.annotations.VisibleForTesting;
@@ -71,6 +72,7 @@ import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportE
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
+import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.UploadErrorException;
 import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.models.MediaObject;
@@ -262,12 +264,14 @@ public class GoogleVideosImporter
       } else {
         throw e;
       }
+    } catch (UnauthenticatedException e) {
+      throw new InvalidTokenException("Token has been expired or revoked", e);
     }
   }
 
   private Pair<String, Long> uploadMediaItem(
       MediaObject inputVideo, PhotosLibraryClient photosLibraryClient)
-      throws IOException, UploadErrorException {
+      throws IOException, UploadErrorException, InvalidTokenException {
 
     final File tmp;
     try (InputStream inputStream =
@@ -286,14 +290,17 @@ public class GoogleVideosImporter
       String uploadToken;
       if (uploadResponse.getError().isPresent() || !uploadResponse.getUploadToken().isPresent()) {
         Error error = uploadResponse.getError().orElse(null);
-        if (error != null
-            && error
-                .getCause()
-                .getMessage()
-                .contains("The upload url is either finalized or rejected by the server")) {
-          throw new UploadErrorException(
-              "Upload was terminated because of error", error.getCause());
+
+        if (error != null) {
+          Throwable cause = error.getCause();
+          String message = cause.getMessage();
+          if (message.contains("The upload url is either finalized or rejected by the server")) {
+            throw new UploadErrorException("Upload was terminated because of error", cause);
+          } else if (message.contains("invalid_grant")) {
+            throw new InvalidTokenException("Token has been expired or revoked", cause);
+          }
         }
+
         throw new IOException(
             "An error was encountered while uploading the video.",
             error != null ? error.getCause() : null);
