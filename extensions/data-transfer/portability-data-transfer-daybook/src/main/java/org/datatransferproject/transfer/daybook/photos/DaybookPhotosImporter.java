@@ -29,6 +29,7 @@ import okhttp3.*;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorHelper;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.JobMetadata;
@@ -83,7 +84,7 @@ public class DaybookPhotosImporter
     // Import photos
     for (PhotoModel photo : resource.getPhotos()) {
       executor.executeAndSwallowIOExceptions(
-          photo.getDataId(),
+          IdempotentImportExecutorHelper.getPhotoIdempotentId(photo),
           photo.getTitle(),
           () -> {
             String albumId;
