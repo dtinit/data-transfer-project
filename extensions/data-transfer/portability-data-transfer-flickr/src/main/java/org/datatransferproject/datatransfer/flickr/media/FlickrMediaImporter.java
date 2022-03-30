@@ -137,6 +137,7 @@ public class FlickrMediaImporter implements Importer<AuthData, MediaContainerRes
             }
         }
 
+        //TODO: implement import for videos
         return new ImportResult(ImportResult.ResultType.OK);
     }
 
