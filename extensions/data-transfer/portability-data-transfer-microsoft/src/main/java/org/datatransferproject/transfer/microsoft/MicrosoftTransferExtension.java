@@ -15,6 +15,7 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.spi.transfer.provider.convert.PhotoToMediaConversionExporter;
 import org.datatransferproject.transfer.microsoft.calendar.MicrosoftCalendarExporter;
 import org.datatransferproject.transfer.microsoft.calendar.MicrosoftCalendarImporter;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
@@ -36,11 +37,16 @@ public class MicrosoftTransferExtension implements TransferExtension {
   private static final String CONTACTS = "CONTACTS";
   private static final String CALENDAR = "CALENDAR";
   private static final String PHOTOS = "PHOTOS";
+  private static final String MEDIA = "MEDIA";
   private static final String OFFLINE_DATA = "OFFLINE-DATA";
+
+  // TODO(jzacsh) don't keep adding here - just have the converters invoked automatically when Media
+  // isn't supported on one or the other side of this equation; this is just a WIP prototype to
+  // show the concept of converters at play.
   private static final ImmutableList<String> SUPPORTED_IMPORT_SERVICES =
-      ImmutableList.of(CALENDAR, CONTACTS, PHOTOS);
+      ImmutableList.of(CALENDAR, CONTACTS, PHOTOS, MEDIA);
   private static final ImmutableList<String> SUPPORTED_EXPORT_SERVICES =
-      ImmutableList.of(CALENDAR, CONTACTS, PHOTOS, OFFLINE_DATA);
+      ImmutableList.of(CALENDAR, CONTACTS, PHOTOS, MEDIA, OFFLINE_DATA);
   private ImmutableMap<String, Importer> importerMap;
   private ImmutableMap<String, Exporter> exporterMap;
 
@@ -137,6 +143,8 @@ public class MicrosoftTransferExtension implements TransferExtension {
         new MicrosoftCalendarExporter(BASE_GRAPH_URL, client, mapper, transformerService));
     exporterBuilder.put(
         PHOTOS, new MicrosoftPhotosExporter(credentialFactory, jsonFactory, monitor));
+    exporterBuilder.put(
+        MEDIA, PhotoToMediaConversionExporter(new MicrosoftPhotosExporter(credentialFactory, jsonFactory, monitor)));
     exporterBuilder.put(
         OFFLINE_DATA, new MicrosoftOfflineDataExporter(BASE_GRAPH_URL, client, mapper));
 
