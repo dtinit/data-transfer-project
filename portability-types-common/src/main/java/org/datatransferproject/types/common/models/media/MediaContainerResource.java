@@ -7,8 +7,10 @@ import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.common.models.TransmogrificationConfig;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
@@ -22,7 +24,7 @@ public class MediaContainerResource extends ContainerResource {
   private static final String ROOT_ALBUM = "Transferred Photos";
   private final Collection<PhotoModel> photos;
   private final Collection<VideoModel> videos;
-  private final Collection<MediaAlbum> albums;
+  private Collection<MediaAlbum> albums;
 
   @JsonCreator
   public MediaContainerResource(
@@ -66,7 +68,9 @@ public class MediaContainerResource extends ContainerResource {
   }
 
   public void transmogrify(TransmogrificationConfig config) {
-    ensureRootAlbum(config.getAlbumAllowRootPhotos());
+    if (!config.getAlbumAllowRootPhotos()) {
+      ensureRootAlbum();
+    }
     transmogrifyTitles(config);
 
     // TODO(#1000): This splitting code isn't entirely correct since it assumes all the album items
@@ -103,11 +107,8 @@ public class MediaContainerResource extends ContainerResource {
   }
 
   // Ensures that the model obeys the restrictions of the destination service, grouping all
-  // un-nested photos into their own root album if allowRootPhotos is true, noop otherwise
-  void ensureRootAlbum(boolean allowRootPhotos) {
-    if (allowRootPhotos) {
-      return;
-    }
+  // un-nested photos into their own root album
+  private void ensureRootAlbum() {
     MediaAlbum rootAlbum =
         new MediaAlbum(
             ROOT_ALBUM, ROOT_ALBUM, "A copy of your transferred media that were not in any album");
@@ -128,7 +129,9 @@ public class MediaContainerResource extends ContainerResource {
     }
 
     if (usedRootAlbum) {
-      albums.add(rootAlbum);
+      List<MediaAlbum> tempMutableAlbums = this.albums.stream().collect(Collectors.toList());
+      tempMutableAlbums.add(rootAlbum);
+      this.albums = ImmutableList.copyOf(tempMutableAlbums);
     }
   }
 
