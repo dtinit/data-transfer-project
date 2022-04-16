@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.common.models.TransmogrificationConfig;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 
 @JsonTypeName("MediaContainerResource")
@@ -34,6 +35,31 @@ public class MediaContainerResource extends ContainerResource {
     this.albums = albums == null ? ImmutableList.of() : albums;
     this.photos = photos == null ? ImmutableList.of() : photos;
     this.videos = videos == null ? ImmutableList.of() : videos;
+  }
+
+  /**
+   * Builds a MediaContainerResource without video by mapping a PhotosContainerResource's fields
+   * 1:1 to MediaContainerResource.
+   */
+  public static MediaContainerResource photoToMedia(PhotosContainerResource photosContainer) {
+    return new MediaContainerResource(photosContainer.getAlbums()
+                                          .stream()
+                                          .map(a -> MediaAlbum.photoToMediaAlbum(a))
+                                          .collect(Collectors.toList()),
+        photosContainer.getPhotos(), null /*videos*/
+    );
+  }
+
+  /**
+   * Extracts a new PhotosContainerResource from the relevant matching fields in a given
+   * MediaContainerResource.
+   */
+  public static PhotosContainerResource mediaToPhoto(MediaContainerResource mediaContainer) {
+    return new PhotosContainerResource(mediaContainer.getAlbums()
+                                           .stream()
+                                           .map(a -> MediaAlbum.mediaToPhotoAlbum(a))
+                                           .collect(Collectors.toList()),
+        mediaContainer.getPhotos());
   }
 
   public Collection<MediaAlbum> getAlbums() {

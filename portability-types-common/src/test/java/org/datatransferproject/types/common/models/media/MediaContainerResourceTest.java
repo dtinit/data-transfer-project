@@ -8,7 +8,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.common.models.TransmogrificationConfig;
+import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -302,6 +304,74 @@ public class MediaContainerResourceTest {
     data.transmogrify(config);
     Truth.assertThat(Iterables.get(data.getPhotos(), 0).getTitle()).isEqualTo("Pic1");
     Truth.assertThat(Iterables.get(data.getPhotos(), 1).getTitle()).isEqualTo("Pic3");
+  }
 
+  @Test
+  public void verifyPhotoToMediaContainer() throws Exception {
+    TransmogrificationConfig config = new TransmogrificationConfig();
+    List<PhotoAlbum> givenPhotoAlbum =
+        ImmutableList.of(new PhotoAlbum("id1", "albumb1", "This:a fake album!"));
+    List<MediaAlbum> expectedMediaAlbum =
+        ImmutableList.of(new MediaAlbum("id1", "albumb1", "This:a fake album!"));
+    // Ensure our _actual_ test below even makes sense; if this breaks that means we have caused api
+    // incompatability between media and photo album, which was not somethin we've expected.
+    Truth.assertThat(givenPhotoAlbum.stream().map(a -> a.getId()).collect(Collectors.toList()))
+        .containsExactlyElementsIn(
+            expectedMediaAlbum.stream().map(a -> a.getId()).collect(Collectors.toList()));
+    Truth.assertThat(givenPhotoAlbum.stream().map(a -> a.getName()).collect(Collectors.toList()))
+        .containsExactlyElementsIn(
+            expectedMediaAlbum.stream().map(a -> a.getName()).collect(Collectors.toList()));
+    Truth
+        .assertThat(
+            givenPhotoAlbum.stream().map(a -> a.getDescription()).collect(Collectors.toList()))
+        .containsExactlyElementsIn(
+            expectedMediaAlbum.stream().map(a -> a.getDescription()).collect(Collectors.toList()));
+
+    List<PhotoModel> photos = ImmutableList.of(
+        new PhotoModel("Pic1 ", "http://fake.com/1.jpg", "A pic", "image/jpg", "p1", "id1", false),
+        new PhotoModel("Pic3 ", "http://fake.com/2.jpg", "A pic", "image/jpg", "p3", "id1", false));
+    PhotosContainerResource photoData = new PhotosContainerResource(givenPhotoAlbum, photos);
+    MediaContainerResource generatedMediaData = MediaContainerResource.photoToMedia(photoData);
+
+    Truth.assertThat(generatedMediaData.getAlbums()).containsExactlyElementsIn(expectedMediaAlbum);
+    Truth.assertThat(generatedMediaData.getPhotos()).containsExactlyElementsIn(photos);
+    Truth.assertThat(generatedMediaData.getVideos()).isEmpty();
+  }
+
+  @Test
+  public void verifyMediaToPhotoContainer() throws Exception {
+    TransmogrificationConfig config = new TransmogrificationConfig();
+    List<MediaAlbum> albums =
+        ImmutableList.of(new MediaAlbum("id1", "albumb1", "This:a fake album!"));
+    List<PhotoModel> photos = ImmutableList.of(
+        new PhotoModel("Pic1 ", "http://fake.com/1.jpg", "A pic", "image/jpg", "p1", "id1", false),
+        new PhotoModel("Pic3 ", "http://fake.com/2.jpg", "A pic", "image/jpg", "p3", "id1", false));
+    // TODO(#1060) populate video content here to show that MediaContainerResource#photoToMedia
+    // doesn't care.
+    MediaContainerResource data = new MediaContainerResource(albums, photos, null /*video*/);
+
+    PhotosContainerResource generatedPhotoData = MediaContainerResource.mediaToPhoto(data);
+    Truth
+        .assertThat(generatedPhotoData.getAlbums()
+                        .stream()
+                        .map(a -> a.getId())
+                        .collect(Collectors.toList()))
+        .containsExactlyElementsIn(
+            albums.stream().map(a -> a.getId()).collect(Collectors.toList()));
+    Truth
+        .assertThat(generatedPhotoData.getAlbums()
+                        .stream()
+                        .map(a -> a.getName())
+                        .collect(Collectors.toList()))
+        .containsExactlyElementsIn(
+            albums.stream().map(a -> a.getName()).collect(Collectors.toList()));
+    Truth
+        .assertThat(generatedPhotoData.getAlbums()
+                        .stream()
+                        .map(a -> a.getDescription())
+                        .collect(Collectors.toList()))
+        .containsExactlyElementsIn(
+            albums.stream().map(a -> a.getDescription()).collect(Collectors.toList()));
+    Truth.assertThat(generatedPhotoData.getPhotos()).containsExactlyElementsIn(photos);
   }
 }
