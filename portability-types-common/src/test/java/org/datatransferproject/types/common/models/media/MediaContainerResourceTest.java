@@ -13,7 +13,7 @@ import org.junit.Test;
 import java.util.stream.Collectors;
 import java.util.List;
 
-// TODO(zacsh,sihamh) this code was ported over without unit tests; below is a mostly 1:1-port
+// TODO(#1060) this code was ported over without unit tests; below is a mostly 1:1-port
 // backfill but the new video handling logic in MediaContainerResource should have test coverage
 // too.
 public class MediaContainerResourceTest {
