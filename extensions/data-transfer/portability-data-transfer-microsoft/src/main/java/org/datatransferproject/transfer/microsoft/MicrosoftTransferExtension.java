@@ -15,7 +15,7 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.spi.transfer.provider.convert.PhotoToMediaConversionExporter;
+import org.datatransferproject.spi.transfer.provider.converter.PhotoToMediaConversionExporter;
 import org.datatransferproject.transfer.microsoft.calendar.MicrosoftCalendarExporter;
 import org.datatransferproject.transfer.microsoft.calendar.MicrosoftCalendarImporter;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
@@ -141,12 +141,11 @@ public class MicrosoftTransferExtension implements TransferExtension {
     exporterBuilder.put(
         CALENDAR,
         new MicrosoftCalendarExporter(BASE_GRAPH_URL, client, mapper, transformerService));
-    exporterBuilder.put(
-        PHOTOS, new MicrosoftPhotosExporter(credentialFactory, jsonFactory, monitor));
     // TODO(jzacsh,wmorland) don't require this manual mapping; just do this automatically inside
     // DTP
-    exporterBuilder.put(
-        MEDIA, PhotoToMediaConversionExporter(exporterBuilder.get(PHOTOS)));
+    MicrosoftPhotosExporter photosExporter = new MicrosoftPhotosExporter(credentialFactory, jsonFactory, monitor);
+    exporterBuilder.put(PHOTOS, photosExporter);
+    exporterBuilder.put(MEDIA, new PhotoToMediaConversionExporter(photosExporter));
     exporterBuilder.put(
         OFFLINE_DATA, new MicrosoftOfflineDataExporter(BASE_GRAPH_URL, client, mapper));
 
