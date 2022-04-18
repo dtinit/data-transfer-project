@@ -28,8 +28,7 @@ public class MediaContainerResource extends ContainerResource {
   private Collection<MediaAlbum> albums;
 
   @JsonCreator
-  public MediaContainerResource(
-      @JsonProperty("albums") Collection<MediaAlbum> albums,
+  public MediaContainerResource(@JsonProperty("albums") Collection<MediaAlbum> albums,
       @JsonProperty("photos") Collection<PhotoModel> photos,
       @JsonProperty("videos") Collection<VideoModel> videos) {
     this.albums = albums == null ? ImmutableList.of() : albums;
@@ -46,8 +45,7 @@ public class MediaContainerResource extends ContainerResource {
                                           .stream()
                                           .map(a -> MediaAlbum.photoToMediaAlbum(a))
                                           .collect(Collectors.toList()),
-        photosContainer.getPhotos(), null /*videos*/
-    );
+        photosContainer.getPhotos(), null /*videos*/);
   }
 
   /**
@@ -85,8 +83,10 @@ public class MediaContainerResource extends ContainerResource {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
     MediaContainerResource that = (MediaContainerResource) o;
     return Objects.equals(getAlbums(), that.getAlbums())
         && Objects.equals(getPhotos(), that.getPhotos())
@@ -111,33 +111,26 @@ public class MediaContainerResource extends ContainerResource {
   private void transmogrifyTitles(TransmogrificationConfig config) {
     // Replaces forbidden characters and makes sure that the title is not too long
     for (PhotoModel photo : photos) {
-      photo.cleanTitle(
-          config.getPhotoTitleForbiddenCharacters(),
-          config.getPhotoTitleReplacementCharacter(),
-          config.getPhotoTitleMaxLength());
+      photo.cleanTitle(config.getPhotoTitleForbiddenCharacters(),
+          config.getPhotoTitleReplacementCharacter(), config.getPhotoTitleMaxLength());
     }
 
     for (VideoModel video : videos) {
-      video.cleanName(
-          config.getVideoTitleForbiddenCharacters(),
-          config.getVideoTitleReplacementCharacter(),
-          config.getVideoTitleMaxLength());
+      video.cleanName(config.getVideoTitleForbiddenCharacters(),
+          config.getVideoTitleReplacementCharacter(), config.getVideoTitleMaxLength());
     }
 
     for (MediaAlbum album : albums) {
-      album.cleanName(
-          config.getAlbumNameForbiddenCharacters(),
-          config.getAlbumNameReplacementCharacter(),
-          config.getAlbumNameMaxLength());
+      album.cleanName(config.getAlbumNameForbiddenCharacters(),
+          config.getAlbumNameReplacementCharacter(), config.getAlbumNameMaxLength());
     }
   }
 
   // Ensures that the model obeys the restrictions of the destination service, grouping all
   // un-nested photos into their own root album
   private void ensureRootAlbum() {
-    MediaAlbum rootAlbum =
-        new MediaAlbum(
-            ROOT_ALBUM, ROOT_ALBUM, "A copy of your transferred media that were not in any album");
+    MediaAlbum rootAlbum = new MediaAlbum(
+        ROOT_ALBUM, ROOT_ALBUM, "A copy of your transferred media that were not in any album");
     boolean usedRootAlbum = false;
 
     for (PhotoModel photo : photos) {
