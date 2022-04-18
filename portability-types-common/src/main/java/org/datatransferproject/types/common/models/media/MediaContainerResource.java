@@ -42,12 +42,14 @@ public class MediaContainerResource extends ContainerResource {
    * 1:1 to MediaContainerResource.
    */
   public static MediaContainerResource photoToMedia(PhotosContainerResource photosContainer) {
-    return new MediaContainerResource(photosContainer.getAlbums()
-                                          .stream()
-                                          .map(a -> MediaAlbum.photoToMediaAlbum(a))
-                                          .collect(Collectors.toList()),
-        photosContainer.getPhotos(), null /*videos*/
-    );
+    return new MediaContainerResource(
+        photosContainer
+            .getAlbums()
+            .stream()
+            .map(a -> MediaAlbum.photoToMediaAlbum(a))
+            .collect(Collectors.toList()),
+        photosContainer.getPhotos(),
+        null /*videos*/);
   }
 
   /**
@@ -55,10 +57,12 @@ public class MediaContainerResource extends ContainerResource {
    * MediaContainerResource.
    */
   public static PhotosContainerResource mediaToPhoto(MediaContainerResource mediaContainer) {
-    return new PhotosContainerResource(mediaContainer.getAlbums()
-                                           .stream()
-                                           .map(a -> MediaAlbum.mediaToPhotoAlbum(a))
-                                           .collect(Collectors.toList()),
+    return new PhotosContainerResource(
+        mediaContainer
+            .getAlbums()
+            .stream()
+            .map(a -> MediaAlbum.mediaToPhotoAlbum(a))
+            .collect(Collectors.toList()),
         mediaContainer.getPhotos());
   }
 
