@@ -16,23 +16,26 @@
 
 package org.datatransferproject.transfer.daybook.photos;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Base64;
 import java.util.UUID;
-import okhttp3.*;
+
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorHelper;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
@@ -43,22 +46,22 @@ public class DaybookPhotosImporter
     implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
   private final OkHttpClient client;
-  private final ObjectMapper objectMapper;
   private final TemporaryPerJobDataStore jobStore;
   private final Monitor monitor;
   private final String baseUrl;
+  private final String exportService;
 
   public DaybookPhotosImporter(
       Monitor monitor,
       OkHttpClient client,
-      ObjectMapper objectMapper,
       TemporaryPerJobDataStore jobStore,
-      String baseUrl) {
+      String baseUrl,
+      String exportService) {
     this.client = client;
-    this.objectMapper = objectMapper;
     this.jobStore = jobStore;
     this.monitor = monitor;
     this.baseUrl = baseUrl;
+    this.exportService = exportService;
   }
 
   @Override
@@ -78,7 +81,7 @@ public class DaybookPhotosImporter
     // Import albums
     for (PhotoAlbum album : resource.getAlbums()) {
       executor.executeAndSwallowIOExceptions(
-          album.getId(), album.getName(), () -> importAlbum(album, authData));
+          album.getId(), album.getName(), () -> importAlbum(album));
     }
 
     // Import photos
@@ -97,10 +100,12 @@ public class DaybookPhotosImporter
           });
     }
 
+    // API to trigger daybook API
+
     return new ImportResult(ImportResult.ResultType.OK);
   }
 
-  private String importAlbum(PhotoAlbum album, TokensAndUrlAuthData authData) throws IOException {
+  private String importAlbum(PhotoAlbum album) {
     String description = album.getDescription();
     String album_name = album.getName();
     monitor.debug(() -> String.format("Album Name: %s", album_name));
@@ -114,8 +119,7 @@ public class DaybookPhotosImporter
   private int importPhoto(
       PhotoModel photoModel, UUID jobId, TokensAndUrlAuthData authData, String newAlbumId)
       throws IOException {
-    InputStream inputStream = null;
-    String albumId = photoModel.getAlbumId();
+    InputStream inputStream;
     String imageDescription = photoModel.getDescription();
     String title = photoModel.getTitle();
 
@@ -134,8 +138,8 @@ public class DaybookPhotosImporter
     Request.Builder requestBuilder = new Request.Builder().url(baseUrl);
     requestBuilder.header("token", authData.getAccessToken());
 
-    FormBody.Builder builder = new FormBody.Builder().add("image", imageData);
-    builder.add("exporter", JobMetadata.getExportService());
+    FormBody.Builder builder =
+        new FormBody.Builder().add("image", imageData).add("exporter", exportService);
 
     if (!Strings.isNullOrEmpty(newAlbumId)) {
       builder.add("album", newAlbumId);
