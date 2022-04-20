@@ -17,10 +17,10 @@ import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.StringPaginationToken;
+import org.datatransferproject.types.common.models.blob.BlobbyStorageContainerResource;
+import org.datatransferproject.types.common.models.blob.DigitalDocumentWrapper;
+import org.datatransferproject.types.common.models.blob.DtpDigitalDocument;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.transfer.models.blob.BlobbyStorageContainerResource;
-import org.datatransferproject.types.transfer.models.blob.DigitalDocumentWrapper;
-import org.datatransferproject.types.transfer.models.blob.DtpDigitalDocument;
 
 import java.io.InputStream;
 import java.util.ArrayList;
