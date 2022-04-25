@@ -27,6 +27,22 @@ public class MediaAlbum {
     this.description = description;
   }
 
+  /**
+   * Converts a PhotoAlbum to its counterpart MediaAlbum since these classes are functionally
+   * identical.
+   */
+  public static MediaAlbum photoToMediaAlbum(PhotoAlbum photoAlbum) {
+    return new MediaAlbum(photoAlbum.getId(), photoAlbum.getName(), photoAlbum.getDescription());
+  }
+
+  /**
+   * Extracts photos-specific data from a MediaAlbum and drops anything unsupported by PhotoAlbum
+   * (eg: video content is ignored).
+   */
+  public static PhotoAlbum mediaToPhotoAlbum(MediaAlbum mediaAlbum) {
+    return new PhotoAlbum(mediaAlbum.getId(), mediaAlbum.getName(), mediaAlbum.getDescription());
+  }
+
   public String getName() {
     return name;
   }
