@@ -31,7 +31,6 @@ public class PhotoToMediaConversionExporter<
     PCR photosContainer = originalExportResult.getExportedData();
     MediaContainerResource mediaContainerResource =
         MediaContainerResource.photoToMedia(photosContainer);
-    return new ExportResult<>(originalExportResult.getType(), mediaContainerResource,
-        originalExportResult.getContinuationData());
+    return originalExportResult.copyWithContainerResource(mediaContainerResource);
   }
 }
