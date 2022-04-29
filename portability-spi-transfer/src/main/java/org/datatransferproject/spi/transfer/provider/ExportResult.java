@@ -9,7 +9,6 @@ import org.datatransferproject.types.common.models.DataModel;
  * The result of an item export operation, after retries.
  */
 public class ExportResult<T extends DataModel> {
-
   public static final ExportResult CONTINUE = new ExportResult(ResultType.CONTINUE);
   public static final ExportResult END = new ExportResult(ResultType.CONTINUE);
 
