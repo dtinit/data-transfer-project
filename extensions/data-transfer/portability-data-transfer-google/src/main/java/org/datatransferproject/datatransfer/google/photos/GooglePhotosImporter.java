@@ -19,7 +19,6 @@ import static java.lang.String.format;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.json.JsonFactory;
-import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -37,6 +36,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.Pair;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.mediaModels.BatchMediaItemResponse;
@@ -215,14 +215,14 @@ public class GooglePhotosImporter
     //  this however, seems to require knowledge of the total file size.
     for (PhotoModel photo : photos) {
       try {
-        InputStreamWithBytes inputStreamBytesPair =
+        Pair<InputStream, Long> inputStreamBytesPair =
             getInputStreamForUrl(jobId, photo.getFetchableUrl(), photo.isInTempStore());
 
-        try (InputStream s = inputStreamBytesPair.getInputStream()) {
+        try (InputStream s = inputStreamBytesPair.getLeft()) {
           String uploadToken = getOrCreatePhotosInterface(jobId, authData).uploadPhotoContent(s);
           mediaItems.add(new NewMediaItem(cleanDescription(photo.getDescription()), uploadToken));
           uploadTokenToDataId.put(uploadToken, photo);
-          uploadTokenToLength.put(uploadToken, inputStreamBytesPair.getBytes());
+          uploadTokenToLength.put(uploadToken, inputStreamBytesPair.getRight());
         }
 
         try {
@@ -321,26 +321,16 @@ public class GooglePhotosImporter
     }
   }
 
-  private InputStreamWithBytes getInputStreamForUrl(
-      UUID jobId, String fetchableUrl, boolean inTempStore) throws IOException {
+  private Pair<InputStream, Long> getInputStreamForUrl(
+     UUID jobId, String fetchableUrl, boolean inTempStore) throws IOException {
     if (inTempStore) {
       final InputStreamWrapper streamWrapper = jobStore.getStream(jobId, fetchableUrl);
-      return InputStreamWithBytes.create(streamWrapper.getStream(), streamWrapper.getBytes());
+      return Pair.of(streamWrapper.getStream(), streamWrapper.getBytes());
     }
 
     HttpURLConnection conn = imageStreamProvider.getConnection(fetchableUrl);
-    return InputStreamWithBytes.create(
+    return Pair.of(
         conn.getInputStream(), conn.getContentLengthLong() != -1 ? conn.getContentLengthLong() : 0);
-  }
-
-  @AutoValue
-  public abstract static class InputStreamWithBytes {
-    public abstract InputStream getInputStream();
-    public abstract long getBytes();
-
-    public static InputStreamWithBytes create(InputStream stream, long bytes) {
-      return new AutoValue_InputStreamWithBytes(stream, bytes);
-    }
   }
 
   private String cleanDescription(String origDescription) {
