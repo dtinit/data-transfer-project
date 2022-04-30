@@ -82,7 +82,7 @@ final class EncrypterImpl implements Encrypter {
         | NoSuchAlgorithmException
         | NoSuchPaddingException e) {
       monitor.severe(() -> format("Exception encrypting data, length: %s", data.length()), e);
-      throw new RuntimeException(e);
+      throw new RuntimeException("Couldn't encrypt data", e);
     }
   }
 

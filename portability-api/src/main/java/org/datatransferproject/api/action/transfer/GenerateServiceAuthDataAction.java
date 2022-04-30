@@ -116,7 +116,7 @@ public class GenerateServiceAuthDataAction
       String serialized = objectMapper.writeValueAsString(authData);
       return new ServiceAuthData(serialized);
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException("Couldn't handle request", e);
     }
   }
 }

@@ -164,7 +164,7 @@ public class ApiMain {
       monitor.info(
           () -> "Unable to initialize JWTTokenManager, did you specify a JWT_KEY and JWT_SECRET?",
           e);
-      throw new RuntimeException(e);
+      throw new RuntimeException("Couldn't initialize JWTTokenManager", e);
     }
 
     Injector injector;
