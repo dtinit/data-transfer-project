@@ -38,7 +38,6 @@ dependencies {
     compile("com.googlecode.ez-vcard:ez-vcard:${ezVcardVersion}")
     compile("com.google.apis:google-api-services-plus:${googlePlusVersion}")
     compile("com.google.photos.library:google-photos-library-client:1.5.0")
-    compile("com.google.auto.value:auto-value:${autoValueVersion}")
 
     testCompile("org.mockito:mockito-core:${mockitoVersion}")
     testCompile project(':extensions:cloud:portability-cloud-local')
