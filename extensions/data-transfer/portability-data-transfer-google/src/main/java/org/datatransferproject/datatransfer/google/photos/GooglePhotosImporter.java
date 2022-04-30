@@ -321,7 +321,7 @@ public class GooglePhotosImporter
     }
   }
 
-  private InputStreamWithBytes<InputStream, Long> getInputStreamForUrl(
+  private InputStreamWithBytes getInputStreamForUrl(
       UUID jobId, String fetchableUrl, boolean inTempStore) throws IOException {
     if (inTempStore) {
       final InputStreamWrapper streamWrapper = jobStore.getStream(jobId, fetchableUrl);
