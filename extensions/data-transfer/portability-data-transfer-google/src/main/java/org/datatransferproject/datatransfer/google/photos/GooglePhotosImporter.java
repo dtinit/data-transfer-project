@@ -20,6 +20,7 @@ import static java.lang.String.format;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Pair;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterators;
@@ -214,23 +215,15 @@ public class GooglePhotosImporter
     //  this however, seems to require knowledge of the total file size.
     for (PhotoModel photo : photos) {
       try {
-        InputStream stream;
-        Long bytes;
+        Pair<InputStream, Long> inputStreamBytesPair =
+            getInputStreamForUrl(jobId, photo.getFetchableUrl(), photo.isInTempStore());
 
-        if (photo.isInTempStore()) {
-          final InputStreamWrapper streamWrapper = jobStore.getStream(jobId, fetchableUrl);
-          stream = streamWrapper.getStream();
-          bytes = streamWrapper.getBytes();
-        } else {
-          HttpURLConnection conn = imageStreamProvider.getConnection(fetchableUrl);
-          stream = conn.getInputStream();
-          bytes = conn.getContentLengthLong() != -1 ? conn.getContentLengthLong() : 0;
+        try (InputStream s = inputStreamBytesPair.getFirst()) {
+          String uploadToken = getOrCreatePhotosInterface(jobId, authData).uploadPhotoContent(s);
+          mediaItems.add(new NewMediaItem(cleanDescription(photo.getDescription()), uploadToken));
+          uploadTokenToDataId.put(uploadToken, photo);
+          uploadTokenToLength.put(uploadToken, inputStreamBytesPair.getSecond());
         }
-
-        String uploadToken = getOrCreatePhotosInterface(jobId, authData).uploadPhotoContent(stream);
-        mediaItems.add(new NewMediaItem(cleanDescription(photo.getDescription()), uploadToken));
-        uploadTokenToDataId.put(uploadToken, photo);
-        uploadTokenToLength.put(uploadToken, bytes);
 
         try {
           if (photo.isInTempStore()) {
@@ -326,6 +319,18 @@ public class GooglePhotosImporter
           });
       return 0;
     }
+  }
+
+  private Pair<InputStream, Long> getInputStreamForUrl(
+      UUID jobId, String fetchableUrl, boolean inTempStore) throws IOException {
+    if (inTempStore) {
+      final InputStreamWrapper streamWrapper = jobStore.getStream(jobId, fetchableUrl);
+      return Pair.of(streamWrapper.getStream(), streamWrapper.getBytes());
+    }
+
+    HttpURLConnection conn = imageStreamProvider.getConnection(fetchableUrl);
+    return Pair.of(
+        conn.getInputStream(), conn.getContentLengthLong() != -1 ? conn.getContentLengthLong() : 0);
   }
 
   private String cleanDescription(String origDescription) {
