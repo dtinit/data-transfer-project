@@ -334,7 +334,7 @@ public class GooglePhotosImporter
   }
 
   @AutoValue
-  public abstract class InputStreamWithBytes {
+  public abstract static class InputStreamWithBytes {
     public abstract InputStream getInputStream();
     public abstract long getBytes();
 
