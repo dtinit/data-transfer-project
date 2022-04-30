@@ -215,14 +215,14 @@ public class GooglePhotosImporter
     //  this however, seems to require knowledge of the total file size.
     for (PhotoModel photo : photos) {
       try {
-        Pair<InputStream, Long> inputStreamBytesPair =
+        InputStreamWithBytes inputStreamBytesPair =
             getInputStreamForUrl(jobId, photo.getFetchableUrl(), photo.isInTempStore());
 
-        try (InputStream s = inputStreamBytesPair.getFirst()) {
+        try (InputStream s = inputStreamBytesPair.getInputStream()) {
           String uploadToken = getOrCreatePhotosInterface(jobId, authData).uploadPhotoContent(s);
           mediaItems.add(new NewMediaItem(cleanDescription(photo.getDescription()), uploadToken));
           uploadTokenToDataId.put(uploadToken, photo);
-          uploadTokenToLength.put(uploadToken, inputStreamBytesPair.getSecond());
+          uploadTokenToLength.put(uploadToken, inputStreamBytesPair.getBytes());
         }
 
         try {
@@ -321,16 +321,26 @@ public class GooglePhotosImporter
     }
   }
 
-  private Pair<InputStream, Long> getInputStreamForUrl(
+  private InputStreamWithBytes<InputStream, Long> getInputStreamForUrl(
       UUID jobId, String fetchableUrl, boolean inTempStore) throws IOException {
     if (inTempStore) {
       final InputStreamWrapper streamWrapper = jobStore.getStream(jobId, fetchableUrl);
-      return Pair.of(streamWrapper.getStream(), streamWrapper.getBytes());
+      return InputStreamWithBytes.create(streamWrapper.getStream(), streamWrapper.getBytes());
     }
 
     HttpURLConnection conn = imageStreamProvider.getConnection(fetchableUrl);
-    return Pair.of(
+    return InputStreamWithBytes.create(
         conn.getInputStream(), conn.getContentLengthLong() != -1 ? conn.getContentLengthLong() : 0);
+  }
+
+  @AutoValue
+  public abstract class InputStreamWithBytes {
+    public abstract InputStream getInputStream();
+    public abstract long getBytes();
+
+    public static InputStreamWithBytes create(InputStream stream, long bytes) {
+      return new AutoValue_InputStreamWithBytes(stream, bytes);
+    }
   }
 
   private String cleanDescription(String origDescription) {
