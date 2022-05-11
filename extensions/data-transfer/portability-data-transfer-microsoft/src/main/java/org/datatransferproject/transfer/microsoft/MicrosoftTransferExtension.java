@@ -40,9 +40,9 @@ public class MicrosoftTransferExtension implements TransferExtension {
   private static final String MEDIA = "MEDIA";
   private static final String OFFLINE_DATA = "OFFLINE-DATA";
 
-  // TODO(jzacsh,wmorland) don't keep adding here - just have the converters invoked automatically
-  // when Media isn't supported on one or the other side of this equation; this is just a WIP
-  // prototype to show the concept of converters at play.
+  // TODO(#1065) don't keep adding here - just have the converters invoked automatically when Media
+  // isn't supported on one or the other side of this equation; this is just a WIP prototype to show
+  // the concept of converters at play.
   private static final ImmutableList<String> SUPPORTED_IMPORT_SERVICES =
       ImmutableList.of(CALENDAR, CONTACTS, PHOTOS, MEDIA);
   private static final ImmutableList<String> SUPPORTED_EXPORT_SERVICES =
@@ -141,8 +141,7 @@ public class MicrosoftTransferExtension implements TransferExtension {
     exporterBuilder.put(
         CALENDAR,
         new MicrosoftCalendarExporter(BASE_GRAPH_URL, client, mapper, transformerService));
-    // TODO(jzacsh,wmorland) don't require this manual mapping; just do this automatically inside
-    // DTP
+    // TODO(#1065) don't require this manual mapping; just do this automatically inside DTP
     MicrosoftPhotosExporter photosExporter = new MicrosoftPhotosExporter(credentialFactory, jsonFactory, monitor);
     exporterBuilder.put(PHOTOS, photosExporter);
     exporterBuilder.put(MEDIA, new PhotoToMediaConversionExporter(photosExporter));
