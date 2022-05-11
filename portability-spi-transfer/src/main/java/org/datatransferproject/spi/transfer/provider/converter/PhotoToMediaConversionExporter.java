@@ -1,15 +1,14 @@
 package org.datatransferproject.spi.transfer.provider.converter;
 
-import org.datatransferproject.spi.transfer.provider.Exporter;
+import java.util.Optional;
+import java.util.UUID;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
+import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-
-import java.util.Optional;
-import java.util.UUID;
 
 public class PhotoToMediaConversionExporter<
       A extends AuthData,
@@ -31,7 +30,6 @@ public class PhotoToMediaConversionExporter<
     PCR photosContainer = originalExportResult.getExportedData();
     MediaContainerResource mediaContainerResource =
         MediaContainerResource.photoToMedia(photosContainer);
-    return new ExportResult<>(originalExportResult.getType(), mediaContainerResource,
-        originalExportResult.getContinuationData());
+    return originalExportResult.copyWithExportedData(mediaContainerResource);
   }
 }
