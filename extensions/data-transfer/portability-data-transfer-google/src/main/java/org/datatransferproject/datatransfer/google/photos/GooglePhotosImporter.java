@@ -24,7 +24,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
-import com.google.gdata.util.common.base.Pair;
 import com.google.rpc.Code;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,6 +36,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.Pair;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.mediaModels.BatchMediaItemResponse;
@@ -218,11 +218,11 @@ public class GooglePhotosImporter
         Pair<InputStream, Long> inputStreamBytesPair =
             getInputStreamForUrl(jobId, photo.getFetchableUrl(), photo.isInTempStore());
 
-        try (InputStream s = inputStreamBytesPair.getFirst()) {
+        try (InputStream s = inputStreamBytesPair.getLeft()) {
           String uploadToken = getOrCreatePhotosInterface(jobId, authData).uploadPhotoContent(s);
           mediaItems.add(new NewMediaItem(cleanDescription(photo.getDescription()), uploadToken));
           uploadTokenToDataId.put(uploadToken, photo);
-          uploadTokenToLength.put(uploadToken, inputStreamBytesPair.getSecond());
+          uploadTokenToLength.put(uploadToken, inputStreamBytesPair.getRight());
         }
 
         try {
@@ -322,7 +322,7 @@ public class GooglePhotosImporter
   }
 
   private Pair<InputStream, Long> getInputStreamForUrl(
-      UUID jobId, String fetchableUrl, boolean inTempStore) throws IOException {
+     UUID jobId, String fetchableUrl, boolean inTempStore) throws IOException {
     if (inTempStore) {
       final InputStreamWrapper streamWrapper = jobStore.getStream(jobId, fetchableUrl);
       return Pair.of(streamWrapper.getStream(), streamWrapper.getBytes());
