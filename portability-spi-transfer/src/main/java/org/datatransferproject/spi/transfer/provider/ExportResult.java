@@ -41,6 +41,14 @@ public class ExportResult<T extends DataModel> {
   }
 
   /**
+   * Builds a new ExportResult. copying the current one but replacing only the data with
+   * `replacementData`.
+   */
+  public <R extends DataModel> ExportResult<R> copyWithExportedData(R replacementData) {
+    return new ExportResult<>(this.getType(), replacementData, this.getContinuationData());
+  }
+
+  /**
    * Ctor.
    *
    * @param type the result type

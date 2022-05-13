@@ -18,11 +18,9 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
  * allows the provider to export Media objects with only the relevant photo fields populated and the
  * video fields ignored.
  */
-public class PhotoToMediaConversionExporter<
-      A extends AuthData,
-      PCR extends PhotosContainerResource,
-      PE extends Exporter<A, PCR>
-    > implements Exporter<A, MediaContainerResource> {
+public class PhotoToMediaConversionExporter<A extends AuthData, PCR extends PhotosContainerResource,
+                                            PE extends Exporter<A, PCR> >
+    implements Exporter<A, MediaContainerResource> {
   private final PE wrappedPhotoExporter;
 
   public PhotoToMediaConversionExporter(PE wrappedPhotoExporter) {
@@ -36,6 +34,6 @@ public class PhotoToMediaConversionExporter<
     PCR photosContainer = originalExportResult.getExportedData();
     MediaContainerResource mediaContainerResource =
         MediaContainerResource.photoToMedia(photosContainer);
-    return originalExportResult.copyWithContainerResource(mediaContainerResource);
+    return originalExportResult.copyWithExportedData(mediaContainerResource);
   }
 }
