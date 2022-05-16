@@ -27,7 +27,6 @@ import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
-import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorHelper;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.smugmug.SmugMugTransmogrificationConfig;
@@ -95,7 +94,7 @@ public class SmugMugPhotosImporter
       }
       for (PhotoModel photo : data.getPhotos()) {
         idempotentExecutor.executeAndSwallowIOExceptions(
-            IdempotentImportExecutorHelper.getPhotoIdempotentId(photo),
+            photo.getIdempotentId(),
             photo.getTitle(),
             () -> importSinglePhoto(jobId, idempotentExecutor, photo, smugMugInterface));
       }

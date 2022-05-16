@@ -40,7 +40,7 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
-import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorHelper;
+import org.datatransferproject.spi.transfer.idempotentexecutor.ItemImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
@@ -150,9 +150,8 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   private void importSinglePhoto(
       IdempotentImportExecutor idempotentExecutor, UUID id, PhotoModel photo) throws Exception {
     String photoId =
-        idempotentExecutor.executeAndSwallowIOExceptions(IdempotentImportExecutorHelper.getPhotoIdempotentId(photo),
-            photo.getTitle(),
-            () -> uploadPhoto(photo, id));
+        idempotentExecutor.importAndSwallowIOExceptions(
+            photo, p -> ItemImportResult.success(uploadPhoto(p, id), null));
     if (photoId == null) {
       return;
     }
@@ -201,8 +200,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
         oldAlbumId,
         album.getName(),
         () -> {
-          String albumName =
-              Strings.isNullOrEmpty(album.getName()) ? "untitled" : album.getName();
+          String albumName = Strings.isNullOrEmpty(album.getName()) ? "untitled" : album.getName();
           String albumDescription = cleanString(album.getDescription());
 
           perUserRateLimiter.acquire();
@@ -215,15 +213,13 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   private String uploadPhoto(PhotoModel photo, UUID jobId) throws IOException, FlickrException {
     InputStream inStream;
     if (photo.isInTempStore()) {
-      final InputStreamWrapper streamWrapper =
-          jobStore.getStream(jobId, photo.getFetchableUrl());
+      final InputStreamWrapper streamWrapper = jobStore.getStream(jobId, photo.getFetchableUrl());
       inStream = streamWrapper.getStream();
     } else {
       inStream = imageStreamProvider.get(photo.getFetchableUrl());
     }
 
-    String photoTitle =
-        Strings.isNullOrEmpty(photo.getTitle()) ? "" : photo.getTitle();
+    String photoTitle = Strings.isNullOrEmpty(photo.getTitle()) ? "" : photo.getTitle();
     String photoDescription = cleanString(photo.getDescription());
 
     UploadMetaData uploadMetaData =
