@@ -73,17 +73,6 @@ public class ExportResult<T extends DataModel> {
   }
 
   /**
-   * Generates a new export result identical to the current one, but with a new resource of a
-   * potentially differnt type.
-   *
-   * This can be useful when dealing with a model transformations (in this case from T to OtherT).
-   */
-  public <OtherT extends DataModel> ExportResult<OtherT> copyWithContainerResource(
-      OtherT containerResource) {
-    return new ExportResult<>(this.getType(), containerResource, this.getContinuationData());
-  }
-
-  /**
    * Returns the type of result.
    */
   public ResultType getType() {
