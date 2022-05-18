@@ -63,7 +63,7 @@ public class JWTTokenManager implements TokenManager {
     try {
       return Algorithm.HMAC256(secret);
     } catch (IllegalArgumentException e) {
-      throw new RuntimeException(e); // TODO: Better error handling
+      throw new RuntimeException("Couldn't create Algorithm instance", e);
     }
   }
 
