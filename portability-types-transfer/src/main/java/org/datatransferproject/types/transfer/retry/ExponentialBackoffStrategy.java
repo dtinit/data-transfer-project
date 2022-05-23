@@ -33,9 +33,9 @@ public class ExponentialBackoffStrategy implements RetryStrategy {
   @JsonProperty("identifier")
   private String identifier;
   public ExponentialBackoffStrategy(@JsonProperty("maxAttempts") int maxAttempts,
-                                    @JsonProperty("initialIntervalMillis") long initialIntervalMillis,
-                                    @JsonProperty("multiplier") double multiplier,
-                                    @JsonProperty("identifier") String identifier) {
+      @JsonProperty("initialIntervalMillis") long initialIntervalMillis,
+      @JsonProperty("multiplier") double multiplier,
+      @JsonProperty("identifier") String identifier) {
     Preconditions.checkArgument(maxAttempts > 0, "Max attempts should be > 0");
     Preconditions.checkArgument(initialIntervalMillis > 0L, "Initial interval should be > 0");
     Preconditions.checkArgument(multiplier >= 1, "Multiplier should be >= 1");
@@ -44,7 +44,6 @@ public class ExponentialBackoffStrategy implements RetryStrategy {
     this.multiplier = multiplier;
     this.identifier = identifier;
   }
-
   @Override
   public boolean canTryAgain(int tries) {
     return tries <= maxAttempts;
@@ -65,10 +64,10 @@ public class ExponentialBackoffStrategy implements RetryStrategy {
   @Override
   public String toString() {
     return "ExponentialBackoffStrategy{" +
-            "maxAttempts=" + maxAttempts +
-            ", initialIntervalMillis=" + initialIntervalMillis +
-            ", multiplier=" + multiplier +
-            ", identifier=" + identifier +
-            '}';
+        "maxAttempts=" + maxAttempts +
+        ", initialIntervalMillis=" + initialIntervalMillis +
+        ", multiplier=" + multiplier +
+        ", identifier=" + identifier +
+        '}';
   }
 }

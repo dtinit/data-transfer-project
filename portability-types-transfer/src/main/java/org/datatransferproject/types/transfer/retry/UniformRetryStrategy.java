@@ -32,8 +32,8 @@ public class UniformRetryStrategy implements RetryStrategy {
   private String identifier;
 
   public UniformRetryStrategy(@JsonProperty("maxAttempts") int maxAttempts,
-                              @JsonProperty("intervalMillis") long intervalMillis,
-                              @JsonProperty("identifier") String identifier) {
+      @JsonProperty("intervalMillis") long intervalMillis,
+      @JsonProperty("identifier") String identifier) {
     Preconditions.checkArgument(maxAttempts > 0, "Max attempts should be > 0");
     Preconditions.checkArgument(intervalMillis > 0L, "Interval should be > 0");
     // TODO: enforce stronger requirements (e.g., interval > 500ms)
@@ -61,9 +61,9 @@ public class UniformRetryStrategy implements RetryStrategy {
   @Override
   public String toString() {
     return "UniformRetryStrategy{" +
-            "maxAttempts=" + maxAttempts +
-            ", intervalMillis=" + intervalMillis +
-            ", identifier=" + identifier +
-            '}';
+        "maxAttempts=" + maxAttempts +
+        ", intervalMillis=" + intervalMillis +
+        ", identifier=" + identifier +
+        '}';
   }
 }
