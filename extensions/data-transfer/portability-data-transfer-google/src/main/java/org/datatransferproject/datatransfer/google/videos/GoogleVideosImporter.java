@@ -173,13 +173,15 @@ public class GoogleVideosImporter
   }
 
   private VideoModel transformVideoName(VideoModel video) {
-    String filename = Strings.isNullOrEmpty(video.getName()) ? "untitled" : video.getName();
+    String filename = Strings.isNullOrEmpty(video.getName()) ? "untitled": video.getName();
     video.setName(filename);
     return video;
   }
 
   long importVideoBatch(
-      List<VideoModel> batchedVideos, PhotosLibraryClient client, IdempotentImportExecutor executor)
+      List<VideoModel> batchedVideos,
+      PhotosLibraryClient client,
+      IdempotentImportExecutor executor)
       throws Exception {
     final ArrayList<NewMediaItem> mediaItems = new ArrayList<>();
     final HashMap<String, VideoModel> uploadTokenToDataId = new HashMap<>();
@@ -227,14 +229,14 @@ public class GoogleVideosImporter
         final int code = status.getCode();
         if (code == Code.OK_VALUE) {
           executor.executeAndSwallowIOExceptions(
-              video.getIdempotentId(), video.getName(), () -> result.getMediaItem().getId());
+              video.getDataId(), video.getName(), () -> result.getMediaItem().getId());
           Long length = uploadTokenToLength.get(uploadToken);
           if (length != null) {
             bytes += length;
           }
         } else {
           executor.executeAndSwallowIOExceptions(
-              video.getIdempotentId(),
+              video.getDataId(),
               video.getName(),
               () -> {
                 throw new IOException(
