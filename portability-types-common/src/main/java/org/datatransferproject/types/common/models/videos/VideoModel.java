@@ -17,13 +17,15 @@
 package org.datatransferproject.types.common.models.videos;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import java.util.stream.Collectors;
+import org.datatransferproject.types.common.DownloadableItem;
 import org.datatransferproject.types.common.models.MediaObject;
 
-public class VideoModel extends MediaObject {
+public class VideoModel extends MediaObject implements DownloadableItem {
 
   private String dataId;
   private String albumId;
@@ -56,8 +58,15 @@ public class VideoModel extends MediaObject {
     return dataId;
   }
 
+  @Override
   public boolean isInTempStore() {
     return inTempStore;
+  }
+
+  @JsonIgnore
+  @Override
+  public String getFetchableUrl() {
+    return getContentUrl().toString();
   }
 
   @Override

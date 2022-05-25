@@ -37,6 +37,7 @@ public abstract class PortabilityJob {
   private static final String EXPORT_ENCRYPTED_INITIAL_AUTH_DATA =
       "EXPORT_ENCRYPTED_INITIAL_AUTH_DATA";
   private static final String JOB_STATE = "JOB_STATE";
+  private static final String TRANSFER_MODE = "TRANSFER_MODE";
   private static final String FAILURE_REASON = "FAILURE_REASON";
   private static final String NUMBER_OF_FAILED_FILES_KEY = "NUM_FAILED_FILES";
   private static final String USER_TIMEZONE = "USER_TIMEZONE";
@@ -94,6 +95,11 @@ public abstract class PortabilityJob {
     String userLocale =
         properties.containsKey(USER_LOCALE) ? (String) properties.get(USER_LOCALE) : null;
 
+    TransferMode transferMode =
+        properties.containsKey(TRANSFER_MODE)
+            ? TransferMode.valueOf((String) properties.get(TRANSFER_MODE))
+            : TransferMode.DATA_TRANSFER;
+
     return PortabilityJob.builder()
         .setState(state)
         .setExportService((String) properties.get(EXPORT_SERVICE_KEY))
@@ -117,6 +123,7 @@ public abstract class PortabilityJob {
                 .build())
         .setUserTimeZone(userTimeZone)
         .setUserLocale(userLocale)
+        .setTransferMode(transferMode)
         .build();
   }
 
@@ -170,6 +177,10 @@ public abstract class PortabilityJob {
   @Nullable
   @JsonProperty("userLocale")
   public abstract String userLocale();
+
+  @Nullable
+  @JsonProperty("transferMode")
+  public abstract TransferMode transferMode();
 
   public abstract PortabilityJob.Builder toBuilder();
 
@@ -229,6 +240,10 @@ public abstract class PortabilityJob {
       builder.put(USER_LOCALE, userLocale());
     }
 
+    if (null != transferMode()) {
+      builder.put(TRANSFER_MODE, transferMode().toString());
+    }
+
     return builder.build();
   }
 
@@ -240,6 +255,19 @@ public abstract class PortabilityJob {
     ERROR,
     CANCELED,
     PREEMPTED
+  }
+
+  public enum TransferMode {
+    /**
+     * Regular data transfer mode: export data from a service, then import into another service.
+     */
+    DATA_TRANSFER,
+
+    /**
+     * Do not import the data. Instead, compute the size of every exported item and report the sizes
+     * to the job store.
+     */
+    SIZE_CALCULATION
   }
 
   @AutoValue.Builder
@@ -305,6 +333,10 @@ public abstract class PortabilityJob {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("userLocale")
     public abstract Builder setUserLocale(String locale);
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("transferMode")
+    public abstract Builder setTransferMode(TransferMode transferMode);
 
     // For internal use only; clients should use setAndValidateJobAuthorization
     protected abstract Builder setJobAuthorization(JobAuthorization jobAuthorization);

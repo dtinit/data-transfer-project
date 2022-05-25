@@ -20,12 +20,16 @@ import com.google.inject.Provider;
 import java.io.IOException;
 import java.time.Clock;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.launcher.monitor.events.EventCode;
+import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.types.PortabilityJob;
+import org.datatransferproject.spi.cloud.types.PortabilityJob.TransferMode;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -35,9 +39,13 @@ import org.datatransferproject.spi.transfer.types.CopyException;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 import org.datatransferproject.transfer.CallableExporter;
 import org.datatransferproject.transfer.CallableImporter;
+import org.datatransferproject.transfer.CallableSizeCalculator;
 import org.datatransferproject.transfer.JobMetadata;
+import org.datatransferproject.types.common.DownloadableItem;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.models.DataModel;
+import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
+import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 import org.datatransferproject.types.transfer.retry.RetryException;
@@ -101,7 +109,21 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
 
     DataModel exportedData = exportResult.getExportedData();
     if (exportedData != null) {
-      importIteration(jobId, importAuthData, jobIdPrefix, copyIteration, exportedData);
+      PortabilityJob job = jobStore.findJob(jobId);
+      TransferMode transferMode =
+          job.transferMode() == null ? TransferMode.DATA_TRANSFER : job.transferMode();
+      switch (transferMode) {
+        case DATA_TRANSFER:
+          importIteration(jobId, importAuthData, jobIdPrefix, copyIteration, exportedData);
+          break;
+        case SIZE_CALCULATION:
+          sizeCalculationIteration(jobId, jobIdPrefix, exportedData);
+          break;
+        default:
+          throw new IllegalStateException(
+              "Job mode " + transferMode.name() + " is not supported by "
+                  + getClass().getSimpleName());
+      }
     }
 
     return exportResult;
@@ -202,6 +224,34 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
           JobMetadata.getImportService(),
           importSuccess,
           importStopwatch.elapsed());
+    }
+  }
+
+  private void sizeCalculationIteration(UUID jobId, String jobIdPrefix,
+      DataModel exportedData) throws CopyException {
+    Collection<? extends DownloadableItem> items;
+    if (exportedData instanceof PhotosContainerResource) {
+      items = ((PhotosContainerResource) exportedData).getPhotos();
+    } else if (exportedData instanceof VideosContainerResource) {
+      items = ((VideosContainerResource) exportedData).getVideos();
+    } else {
+      return;
+    }
+
+    CallableSizeCalculator callableSizeCalculator =
+        new CallableSizeCalculator(jobId, new ConnectionProvider(jobStore), items);
+    try {
+      RetryingCallable<Map<String, Long>> retryingImporter =
+          new RetryingCallable<>(
+              callableSizeCalculator,
+              retryStrategyLibraryProvider.get(),
+              Clock.systemUTC(),
+              monitor,
+              JobMetadata.getDataType(),
+              JobMetadata.getImportService());
+      jobStore.addBytes(jobId, retryingImporter.call());
+    } catch (RetryException | RuntimeException e) {
+      throw convertToCopyException(jobIdPrefix, "size estimation", e);
     }
   }
 
