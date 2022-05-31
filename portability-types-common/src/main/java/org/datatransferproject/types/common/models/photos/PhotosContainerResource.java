@@ -106,7 +106,9 @@ public class PhotosContainerResource extends ContainerResource {
     }
     // Group photos by albumId
     Map<String, List<PhotoModel>> albumGroups =
-        photos.stream().collect(Collectors.groupingBy(PhotoModel::getAlbumId));
+        photos.stream()
+            .filter(photo -> photo.getAlbumId() != null)
+            .collect(Collectors.groupingBy(PhotoModel::getAlbumId));
     // Go through groups, splitting up anything that's too big
     for (Entry<String, List<PhotoModel>> entry : albumGroups.entrySet()) {
       List<PhotoModel> photosOfCurrentAlbum = entry.getValue();
