@@ -25,23 +25,22 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 public class PhotoToMediaConversionExporter<
     A extends AuthData,
     PCR extends PhotosContainerResource,
-    MCR extends MediaContainerResource,
     WrappedExporter extends Exporter<A, PCR>
-  > implements Exporter<A, MCR> {
+  > implements Exporter<A, MediaContainerResource> {
   private final WrappedExporter wrappedPhotoExporter;
 
   public PhotoToMediaConversionExporter(WrappedExporter wrappedPhotoExporter) {
     this.wrappedPhotoExporter = wrappedPhotoExporter;
   }
 
-  public ExportResult<MCR> export(
+  public ExportResult<MediaContainerResource> export(
       UUID jobId,
       A authData,
       Optional<ExportInformation> exportInformation) throws Exception {
     ExportResult<PCR> originalExportResult =
         wrappedPhotoExporter.export(jobId, authData, exportInformation);
     PCR photosContainerResource = originalExportResult.getExportedData();
-    MCR mediaContainerResource =
+    MediaContainerResource mediaContainerResource =
         MediaContainerResource.photoToMedia(photosContainerResource);
     return originalExportResult.copyWithExportedData(mediaContainerResource);
   }
