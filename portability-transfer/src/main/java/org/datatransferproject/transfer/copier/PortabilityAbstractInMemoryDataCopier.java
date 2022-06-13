@@ -37,13 +37,12 @@ import org.datatransferproject.transfer.CallableExporter;
 import org.datatransferproject.transfer.CallableImporter;
 import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.common.ExportInformation;
+import org.datatransferproject.types.common.models.DataModel;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 import org.datatransferproject.types.transfer.retry.RetryException;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 import org.datatransferproject.types.transfer.retry.RetryingCallable;
-
-
 
 public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryDataCopier {
   /**
@@ -97,84 +96,120 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
       throws CopyException {
     monitor.debug(() -> jobIdPrefix + "Copy iteration: " + copyIteration);
 
-    RetryStrategyLibrary retryStrategyLibrary = retryStrategyLibraryProvider.get();
+    ExportResult<?> exportResult =
+        exportIteration(jobId, exportAuthData, exportInformation, jobIdPrefix, copyIteration);
+
+    DataModel exportedData = exportResult.getExportedData();
+    if (exportedData != null) {
+      importIteration(jobId, importAuthData, jobIdPrefix, copyIteration, exportedData);
+    }
+
+    return exportResult;
+  }
+
+  private ExportResult<?> exportIteration(
+      UUID jobId,
+      AuthData exportAuthData,
+      Optional<ExportInformation> exportInformation,
+      String jobIdPrefix,
+      int copyIteration)
+      throws CopyException {
 
     monitor.debug(
-            () -> jobIdPrefix + "Starting export, copy iteration: " + copyIteration,
-            EventCode.COPIER_STARTED_EXPORT);
+        () -> jobIdPrefix + "Starting export, copy iteration: " + copyIteration,
+        EventCode.COPIER_STARTED_EXPORT);
+
     CallableExporter callableExporter =
-            new CallableExporter(
-                    exporterProvider, jobId, exportAuthData, exportInformation, metricRecorder);
+        new CallableExporter(
+            exporterProvider, jobId, exportAuthData, exportInformation, metricRecorder);
     RetryingCallable<ExportResult> retryingExporter =
-            new RetryingCallable<>(callableExporter, retryStrategyLibrary, Clock.systemUTC(), monitor, JobMetadata.getDataType(), JobMetadata.getExportService());
-    ExportResult<?> exportResult;
+        new RetryingCallable<>(
+            callableExporter,
+            retryStrategyLibraryProvider.get(),
+            Clock.systemUTC(),
+            monitor,
+            JobMetadata.getDataType(),
+            JobMetadata.getExportService());
     boolean exportSuccess = false;
     Stopwatch exportStopwatch = Stopwatch.createStarted();
     try {
-      exportResult = retryingExporter.call();
+      ExportResult<?> exportResult = retryingExporter.call();
       exportSuccess = exportResult.getType() != ExportResult.ResultType.ERROR;
+      monitor.debug(
+          () -> jobIdPrefix + "Finished export, copy iteration: " + copyIteration,
+          EventCode.COPIER_FINISHED_EXPORT);
+      return exportResult;
     } catch (RetryException | RuntimeException e) {
-      if (e.getClass() == RetryException.class
-              && CopyExceptionWithFailureReason.class.isAssignableFrom(e.getCause().getClass())) {
-        throw (CopyExceptionWithFailureReason) e.getCause();
-      }
-      throw new CopyException(jobIdPrefix + "Error happened during export", e);
+      throw convertToCopyException(jobIdPrefix, "export", e);
     } finally {
       metricRecorder.exportPageFinished(
-              JobMetadata.getDataType(),
-              JobMetadata.getExportService(),
-              exportSuccess,
-              exportStopwatch.elapsed());
+          JobMetadata.getDataType(),
+          JobMetadata.getExportService(),
+          exportSuccess,
+          exportStopwatch.elapsed());
     }
-    monitor.debug(
-            () -> jobIdPrefix + "Finished export, copy iteration: " + copyIteration,
-            EventCode.COPIER_FINISHED_EXPORT);
+  }
 
-    if (exportResult.getExportedData() != null) {
-      monitor.debug(
-              () -> jobIdPrefix + "Starting import, copy iteration: " + copyIteration,
-              EventCode.COPIER_STARTED_IMPORT);
-      CallableImporter callableImporter =
-              new CallableImporter(
-                      importerProvider,
-                      jobId,
-                      idempotentImportExecutor,
-                      importAuthData,
-                      exportResult.getExportedData(),
-                      metricRecorder);
-      RetryingCallable<ImportResult> retryingImporter =
-              new RetryingCallable<>(
-                      callableImporter, retryStrategyLibrary, Clock.systemUTC(), monitor, JobMetadata.getDataType(), JobMetadata.getImportService());
-      boolean importSuccess = false;
-      Stopwatch importStopwatch = Stopwatch.createStarted();
-      try {
-        ImportResult importResult = retryingImporter.call();
-        importSuccess = importResult.getType() == ImportResult.ResultType.OK;
-        if (importSuccess) {
-          try {
-            jobStore.addCounts(jobId, importResult.getCounts().orElse(null));
-            jobStore.addBytes(jobId, importResult.getBytes().orElse(null));
-          } catch (IOException e) {
-            monitor.debug(() -> jobIdPrefix + "Unable to add counts to job: ", e);
-          }
+  private void importIteration(
+      UUID jobId,
+      AuthData importAuthData,
+      String jobIdPrefix,
+      int copyIteration,
+      DataModel exportedData)
+      throws CopyException {
+
+    monitor.debug(
+        () -> jobIdPrefix + "Starting import, copy iteration: " + copyIteration,
+        EventCode.COPIER_STARTED_IMPORT);
+
+    CallableImporter callableImporter =
+        new CallableImporter(
+            importerProvider,
+            jobId,
+            idempotentImportExecutor,
+            importAuthData,
+            exportedData,
+            metricRecorder);
+    RetryingCallable<ImportResult> retryingImporter =
+        new RetryingCallable<>(
+            callableImporter,
+            retryStrategyLibraryProvider.get(),
+            Clock.systemUTC(),
+            monitor,
+            JobMetadata.getDataType(),
+            JobMetadata.getImportService());
+    boolean importSuccess = false;
+    Stopwatch importStopwatch = Stopwatch.createStarted();
+    try {
+      ImportResult importResult = retryingImporter.call();
+      importSuccess = importResult.getType() == ImportResult.ResultType.OK;
+      if (importSuccess) {
+        try {
+          jobStore.addCounts(jobId, importResult.getCounts().orElse(null));
+          jobStore.addBytes(jobId, importResult.getBytes().orElse(null));
+        } catch (IOException e) {
+          monitor.debug(() -> jobIdPrefix + "Unable to add counts to job: ", e);
         }
-      } catch (RetryException | RuntimeException e) {
-        if (e.getClass() == RetryException.class
-                && CopyExceptionWithFailureReason.class.isAssignableFrom(e.getCause().getClass())) {
-          throw (CopyExceptionWithFailureReason) e.getCause();
-        }
-        throw new CopyException(jobIdPrefix + "Error happened during import", e);
-      } finally {
-        metricRecorder.importPageFinished(
-                JobMetadata.getDataType(),
-                JobMetadata.getImportService(),
-                importSuccess,
-                importStopwatch.elapsed());
       }
       monitor.debug(
-              () -> jobIdPrefix + "Finished import, copy iteration: " + copyIteration,
-              EventCode.COPIER_FINISHED_IMPORT);
+          () -> jobIdPrefix + "Finished import, copy iteration: " + copyIteration,
+          EventCode.COPIER_FINISHED_IMPORT);
+    } catch (RetryException | RuntimeException e) {
+      throw convertToCopyException(jobIdPrefix, "import", e);
+    } finally {
+      metricRecorder.importPageFinished(
+          JobMetadata.getDataType(),
+          JobMetadata.getImportService(),
+          importSuccess,
+          importStopwatch.elapsed());
     }
-    return exportResult;
+  }
+
+  private CopyException convertToCopyException(String jobIdPrefix, String suffix, Exception e) {
+    if (e.getClass() == RetryException.class
+        && CopyExceptionWithFailureReason.class.isAssignableFrom(e.getCause().getClass())) {
+      return (CopyExceptionWithFailureReason) e.getCause();
+    }
+    return new CopyException(jobIdPrefix + "Error happened during " + suffix, e);
   }
 }
