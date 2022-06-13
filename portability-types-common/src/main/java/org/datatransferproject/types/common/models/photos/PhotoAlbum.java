@@ -20,10 +20,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 
+import com.google.common.base.Strings;
 import java.util.Objects;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class PhotoAlbum {
   private final String id;
@@ -73,41 +75,44 @@ public class PhotoAlbum {
 
   @Override
   public int hashCode() {
-
     return Objects.hash(id);
   }
 
-  // Generates PhotoAlbum objects that represent fragments of this one.
-  // Used in cases where an album from the originating service is larger than the allowable size
-  // in the destination service.
-  // If an album "MyAlbum" is split into 3, the results will be "MyAlbum (1/3)", etc.
-  public List<PhotoAlbum> split(int numberOfNewAlbums){
-    List<PhotoAlbum> newAlbums = new ArrayList<>();
-    for(int i = 1; i <= numberOfNewAlbums; i++){
-      newAlbums.add(
-        new PhotoAlbum(
-          String.format("%s-pt%d", id, i),
-          String.format("%s (%d/%d)", id, i, numberOfNewAlbums),
-          description
-        )
-      );
-    }
-    return newAlbums;
+  /**
+   * Generates PhotoAlbum objects that represent fragments of this one. Used in cases where an album
+   * from the originating service is larger than the allowable size in the destination service. If
+   * an album "MyAlbum" is split into 3, the results will be "MyAlbum (1/3)", etc. Please note the
+   * resulting albums lose the original name, getting 'id (X/Y)' instead of the name.
+   */
+  public List<PhotoAlbum> split(int numberOfNewAlbums) {
+    return IntStream.range(1, numberOfNewAlbums + 1)
+        .mapToObj(
+            i ->
+                new PhotoAlbum(
+                    String.format("%s-pt%d", id, i),
+                    String.format("%s (%d/%d)", id, i, numberOfNewAlbums),
+                    description))
+        .collect(Collectors.toList());
   }
 
-  // This allows us to make album names palatable, removing unpalatable characters and
-  // enforcing length rules
+  /**
+   * This allows us to make album names palatable, removing unpalatable characters and enforcing
+   * length rules.
+   */
   public void cleanName(String forbiddenCharacters, char replacementCharacter, int maxLength) {
     // An album name is allowed to be null, handled on the importer level if there is a problem with
     // this value, so we support it here
     if (name == null) {
       return;
     }
-    name = name.chars()
-        .mapToObj(c -> (char) c)
-        .map(c -> forbiddenCharacters.contains(Character.toString(c)) ? replacementCharacter : c)
-        .map(Object::toString)
-        .collect(Collectors.joining("")).trim();
+    name =
+        name.chars()
+            .mapToObj(c -> (char) c)
+            .map(
+                c -> forbiddenCharacters.contains(Character.toString(c)) ? replacementCharacter : c)
+            .map(Object::toString)
+            .collect(Collectors.joining(""))
+            .trim();
     if (maxLength <= 0 || maxLength >= name.length()) {
       return;
     }
