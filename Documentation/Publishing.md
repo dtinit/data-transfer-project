@@ -26,3 +26,14 @@ We exclude the client-rest archives as these are not a Java package.
 
 ## 4. Release
 You can then release the deployment to the Central Repository following the steps on the Sonatype website  [here](https://central.sonatype.org/publish/release/). We are on the legacy host so make sure to use https://oss.sonatype.org/. Only attempt to Close the staging repository once the upload has finished.
+ 
+## 5. Create github release and tag
+
+1. Go to [/releases](https://github.com/google/data-transfer-project/releases);
+2. Click 'Draft a new release';
+3. fill in the title and create a tag (the tag must have a `v` prefix, the title mustn't);
+4. Click 'Generate release notes';
+5. Publish release.
+
+## 6. Update the project version
+Go to `properties.gradle` and update the version, create a PR.
