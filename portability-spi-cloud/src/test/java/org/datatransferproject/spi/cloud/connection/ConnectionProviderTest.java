@@ -9,7 +9,6 @@ import static org.mockito.Mockito.when;
 
 import com.google.common.truth.Truth;
 import java.util.UUID;
-import okhttp3.mockwebserver.MockWebServer;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.types.common.DownloadableItem;
