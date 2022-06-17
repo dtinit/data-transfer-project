@@ -21,9 +21,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
-import java.util.stream.Collectors;
 import org.datatransferproject.types.common.DownloadableItem;
 import org.datatransferproject.types.common.models.MediaObject;
+
+import java.util.stream.Collectors;
 
 public class VideoModel extends MediaObject implements DownloadableItem {
 
@@ -67,6 +68,12 @@ public class VideoModel extends MediaObject implements DownloadableItem {
   @Override
   public String getFetchableUrl() {
     return getContentUrl().toString();
+  }
+
+  @JsonIgnore(false)
+  @Override
+  public String getName() {
+    return super.getName();
   }
 
   @Override
