@@ -24,9 +24,9 @@ import java.util.Date;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.datatransferproject.types.common.ImportableItem;
+import org.datatransferproject.types.common.DownloadableItem;
 
-public class PhotoModel implements ImportableItem {
+public class PhotoModel implements DownloadableItem {
 
   private String title;
   private final String fetchableUrl;
@@ -85,6 +85,7 @@ public class PhotoModel implements ImportableItem {
     return title;
   }
 
+  @Override
   public String getFetchableUrl() {
     return fetchableUrl;
   }
@@ -121,7 +122,8 @@ public class PhotoModel implements ImportableItem {
     }
     title = title.substring(0, Math.min(maxLength, title.length())).trim();
   }
-  
+
+  @Override
   public boolean isInTempStore() { return inTempStore; }
 
   @Override
