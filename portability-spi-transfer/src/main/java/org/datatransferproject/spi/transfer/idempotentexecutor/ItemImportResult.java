@@ -5,8 +5,7 @@ import java.io.Serializable;
 
 public class ItemImportResult<T> {
   /**
-   * The caching executor will keep it the cache. Nonnull in case of success. Null in case of
-   * failure.
+   * Internal cache of successfully imported data, or Null in case of failure.
    */
   private final T data;
 

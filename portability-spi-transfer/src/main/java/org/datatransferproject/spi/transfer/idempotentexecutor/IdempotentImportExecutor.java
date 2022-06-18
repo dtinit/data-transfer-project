@@ -47,7 +47,7 @@ public interface IdempotentImportExecutor extends CachingExecutor {
   }
 
   default <T extends ImportableItem, R extends Serializable>
-      List<R> importBatchAnsSwallowIOExceptions(
+      List<R> importBatchAndSwallowIOExceptions(
           List<T> items, ImportFunction<List<T>, List<R>> function) {
 
     // The general idea is:
