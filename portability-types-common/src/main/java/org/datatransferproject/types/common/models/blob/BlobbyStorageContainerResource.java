@@ -1,10 +1,13 @@
 package org.datatransferproject.types.common.models.blob;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
+import org.datatransferproject.types.common.ImportableItem;
 import org.datatransferproject.types.common.models.ContainerResource;
 
+import javax.annotation.Nonnull;
 import java.util.Collection;
 
 /**
@@ -12,7 +15,7 @@ import java.util.Collection;
  * Can contain multiple files (via {@link DigitalDocumentWrapper}) or folders (via nested
  * BlobbyStorageContainerResource).
  */
-public class BlobbyStorageContainerResource extends ContainerResource {
+public class BlobbyStorageContainerResource extends ContainerResource implements ImportableItem {
 
   private final String name;
   private final String id;
@@ -39,6 +42,8 @@ public class BlobbyStorageContainerResource extends ContainerResource {
     return folders;
   }
 
+  @JsonIgnore(false)
+  @Override
   public String getName() {
     return name;
   }
@@ -46,4 +51,11 @@ public class BlobbyStorageContainerResource extends ContainerResource {
   public String getId() {
     return id;
   }
+
+  @Nonnull
+  @Override
+  public String getIdempotentId() {
+    return getId();
+  }
+
 }
