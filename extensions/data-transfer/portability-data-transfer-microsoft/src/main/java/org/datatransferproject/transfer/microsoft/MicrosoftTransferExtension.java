@@ -44,7 +44,7 @@ public class MicrosoftTransferExtension implements TransferExtension {
   // isn't supported on one or the other side of this equation; this is just a WIP prototype to show
   // the concept of converters at play.
   private static final ImmutableList<String> SUPPORTED_IMPORT_SERVICES =
-      ImmutableList.of(CALENDAR, CONTACTS, PHOTOS, MEDIA);
+      ImmutableList.of(CALENDAR, CONTACTS, PHOTOS);
   private static final ImmutableList<String> SUPPORTED_EXPORT_SERVICES =
       ImmutableList.of(CALENDAR, CONTACTS, PHOTOS, MEDIA, OFFLINE_DATA);
   private ImmutableMap<String, Importer> importerMap;
