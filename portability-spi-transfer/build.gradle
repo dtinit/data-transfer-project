@@ -25,6 +25,8 @@ dependencies {
     compile project(':portability-types-transfer')
     compile project(':portability-api-launcher')
 
+    compile('org.apache.commons:commons-lang3:3.11')
+
 }
 
 configurePublication(project)

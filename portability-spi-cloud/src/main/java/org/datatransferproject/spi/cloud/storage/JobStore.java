@@ -135,6 +135,13 @@ public interface JobStore extends TemporaryPerJobDataStore {
    */
   default void addBytes(UUID jobId, Long bytes) throws IOException {}
 
+  /**
+   * Increments the bytes count for downloadable items of the given job.
+   *
+   * @param bytes key is idempotent id of a DownloadableItem
+   */
+  default void addBytes(UUID jobId, Map<String, Long> bytes) {}
+
   /** Provides the total number of bytes transferred. */
   default Long getBytes(UUID jobId) {
     return null;

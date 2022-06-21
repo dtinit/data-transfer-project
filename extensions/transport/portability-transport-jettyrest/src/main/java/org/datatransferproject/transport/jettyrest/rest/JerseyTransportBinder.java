@@ -77,7 +77,7 @@ public class JerseyTransportBinder implements TransportBinder {
       jettyTransport.registerServlet("/api/*", servletContainer);
 
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException("Couldn't start JerseyTransportBinder", e);
     }
   }
 }

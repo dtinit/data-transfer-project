@@ -20,12 +20,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.common.collect.ImmutableList;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Objects;
+
+import com.google.common.collect.ImmutableMap;
 import org.datatransferproject.types.common.models.ContainerResource;
 
 /** A Wrapper for all the possible objects that can be returned by a calendar exporter. */
 @JsonTypeName("CalendarContainerResource")
 public class CalendarContainerResource extends ContainerResource {
+  public static final String CALENDARS_COUNT_DATA_NAME = "calendarsCount";
+  public static final String EVENTS_COUNT_DATA_NAME = "eventsCount";
+
   private final Collection<CalendarModel> calendars;
   private final Collection<CalendarEventModel> events;
 
@@ -52,6 +58,14 @@ public class CalendarContainerResource extends ContainerResource {
     CalendarContainerResource that = (CalendarContainerResource) o;
     return Objects.equals(getCalendars(), that.getCalendars()) &&
             Objects.equals(getEvents(), that.getEvents());
+  }
+
+  @Override
+  public Map<String, Integer> getCounts() {
+    return new ImmutableMap.Builder<String, Integer>()
+            .put(CALENDARS_COUNT_DATA_NAME, calendars.size())
+            .put(EVENTS_COUNT_DATA_NAME, events.size())
+            .build();
   }
 
   @Override

@@ -16,12 +16,14 @@
 
 package org.datatransferproject.types.common.models;
 
-public class Thing {
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import javax.annotation.Nonnull;
+import org.datatransferproject.types.common.ImportableItem;
+
+public class Thing implements ImportableItem {
 
   private final String identifier;
-
   private String name;
-
   private String description;
 
   public Thing(String identifier) {
@@ -35,6 +37,13 @@ public class Thing {
     return identifier;
   }
 
+  @Nonnull
+  @Override
+  public String getIdempotentId() {
+    return getIdentifier();
+  }
+
+  @JsonIgnore(false) // we do want name in the json representation, so override the annotation
   public String getName() {
     return name;
   }
