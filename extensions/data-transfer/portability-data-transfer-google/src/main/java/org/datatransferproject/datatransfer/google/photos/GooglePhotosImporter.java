@@ -302,12 +302,12 @@ public class GooglePhotosImporter
     if (status.getCode() == Code.OK_VALUE) {
       PhotoResult photoResult = new PhotoResult(mediaItem.getMediaItem().getId(), bytes);
       executor.importAndSwallowIOExceptions(
-          item, inp -> ItemImportResult.success(photoResult, bytes));
+          item, itemToImport -> ItemImportResult.success(photoResult, bytes));
       return bytes;
     } else {
       executor.importAndSwallowIOExceptions(
           item,
-          inp ->
+          itemToImport ->
               ItemImportResult.error(
                   new IOException(
                       String.format(
