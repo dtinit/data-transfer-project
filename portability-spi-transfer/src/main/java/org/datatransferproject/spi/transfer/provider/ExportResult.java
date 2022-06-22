@@ -9,7 +9,6 @@ import org.datatransferproject.types.common.models.DataModel;
  * The result of an item export operation, after retries.
  */
 public class ExportResult<T extends DataModel> {
-
   public static final ExportResult CONTINUE = new ExportResult(ResultType.CONTINUE);
   public static final ExportResult END = new ExportResult(ResultType.CONTINUE);
 
@@ -39,6 +38,14 @@ public class ExportResult<T extends DataModel> {
     verifyNonErrorResultType(type);
     this.type = type;
     this.exportedData = exportedData;
+  }
+
+  /**
+   * Builds a new ExportResult. copying the current one but replacing only the data with
+   * `replacementData`.
+   */
+  public <R extends DataModel> ExportResult<R> copyWithExportedData(R replacementData) {
+    return new ExportResult<>(this.getType(), replacementData, this.getContinuationData());
   }
 
   /**
