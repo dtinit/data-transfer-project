@@ -28,7 +28,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.json.gson.GsonFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -94,7 +94,7 @@ public class GooglePhotosExporterTest {
 
     googlePhotosExporter =
         new GooglePhotosExporter(
-            credentialFactory, jobStore, new JacksonFactory(), photosInterface, monitor);
+            credentialFactory, jobStore, GsonFactory.getDefaultInstance(), photosInterface, monitor);
 
     when(photosInterface.listAlbums(any(Optional.class))).thenReturn(albumListResponse);
     when(photosInterface.listMediaItems(any(Optional.class), any(Optional.class)))

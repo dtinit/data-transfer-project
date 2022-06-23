@@ -32,6 +32,7 @@ dependencies {
     testCompile project(':extensions:auth:portability-auth-harness-microsoft')
     testCompile group: 'com.squareup.okhttp', name: 'mockwebserver', version: '2.7.5'
     testCompile group: 'com.squareup.okhttp3', name: 'mockwebserver', version: '3.2.0'
+    testCompile("com.google.http-client:google-http-client-gson:${googleHttpClientVersion}")
     testImplementation "org.mockito:mockito-inline:${mockitoVersion}"
 
 }
