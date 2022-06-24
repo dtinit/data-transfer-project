@@ -194,15 +194,3 @@ task installToolsAndDockerize {
     dependsOn ":client-rest:installTools", dockerize
 }
 
-configurations.all {
-    resolutionStrategy {
-        eachDependency { DependencyResolveDetails details ->
-            if (details.requested.group == 'com.google.guava') {
-                details.useVersion("${guavaVersion}")
-                details.because 'Some dependencies rely on lower version which does not support MoreCollections'
-
-            }
-        }
-    }
-}
-
