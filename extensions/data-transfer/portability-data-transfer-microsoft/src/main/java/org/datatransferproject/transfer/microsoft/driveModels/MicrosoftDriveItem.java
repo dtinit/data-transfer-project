@@ -37,7 +37,7 @@ public class MicrosoftDriveItem {
   public MicrosoftPhotoMetadata photo;
 
   @JsonProperty("video")
-  public MicrosoftPhotoMetadata video;
+  public MicrosoftVideoMetadata video;
 
   @JsonProperty("file")
   public MicrosoftFileMetadata file;
