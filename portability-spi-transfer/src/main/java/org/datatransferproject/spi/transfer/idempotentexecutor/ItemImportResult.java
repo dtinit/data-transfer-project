@@ -31,6 +31,7 @@ public class ItemImportResult<T> {
 
   public static <T extends Serializable> ItemImportResult<T> error(
       Exception exception, Long sizeInBytes) {
+    Preconditions.checkNotNull(exception);
     return new ItemImportResult<>(null, sizeInBytes, Status.ERROR, exception);
   }
 
