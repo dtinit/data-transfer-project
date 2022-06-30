@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
@@ -281,9 +282,12 @@ public class GooglePhotosImporter
         }
       }
     } catch (IOException e) {
-      if (e.getMessage() != null
-          && e.getMessage().contains("The remaining storage in the user's account is not enough")) {
+      if (StringUtils.contains(e.getMessage(), "The remaining storage in the user's account is not enough")) {
         throw new DestinationMemoryFullException("Google destination storage full", e);
+      } else if (StringUtils.contains(e.getMessage(), "The provided ID does not match any albums")) {
+        // which means the album was likely deleted by the user
+        // we skip this batch and log album data to dig into the root cause
+        logMissingAlbumDetails(jobId, authData, albumId, e);
       } else {
         throw e;
       }
@@ -292,12 +296,43 @@ public class GooglePhotosImporter
     return totalBytes;
   }
 
+  private void logMissingAlbumDetails(UUID jobId,
+                                      TokensAndUrlAuthData authData,
+                                      String albumId,
+                                      IOException e) {
+    monitor.info(() ->
+                    format(
+                            "Can't find album %s during createPhotos call, album is likely deleted",
+                            albumId
+                    ),
+            e
+    );
+    try {
+      GoogleAlbum album = getOrCreatePhotosInterface(jobId, authData).getAlbum(albumId);
+      monitor.debug(() ->
+                      format(
+                              "Can't find album %s during createPhotos call, album info: isWriteable %b, mediaItemsCount %d",
+                              albumId, album.getIsWritable(), album.getMediaItemsCount()
+                      ),
+              e
+      );
+    } catch (Exception ex) {
+      monitor.info(() ->
+                      format(
+                              "Can't find album %s during getAlbum call",
+                              albumId
+                      ),
+              ex
+      );
+    }
+  }
+
   private long processMediaResult(
-      NewMediaItemResult mediaItem,
-      ImportableItem item,
-      IdempotentImportExecutor executor,
-      long bytes)
-      throws Exception {
+          NewMediaItemResult mediaItem,
+          ImportableItem item,
+          IdempotentImportExecutor executor,
+          long bytes)
+          throws Exception {
     Status status = mediaItem.getStatus();
     if (status.getCode() == Code.OK_VALUE) {
       PhotoResult photoResult = new PhotoResult(mediaItem.getMediaItem().getId(), bytes);
