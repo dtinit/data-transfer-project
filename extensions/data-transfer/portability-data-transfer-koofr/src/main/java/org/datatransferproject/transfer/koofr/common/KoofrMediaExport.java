@@ -117,7 +117,8 @@ public class KoofrMediaExport {
               video.getEncodingFormat(),
               video.getDataId(),
               video.getAlbumId(),
-              video.isInTempStore()));
+              video.isInTempStore(),
+              video.getUploadedTime()));
     }
 
     return exportVideos;
@@ -193,13 +194,14 @@ public class KoofrMediaExport {
     String name = getFileName(file);
     String description = getFileDescription(file);
     String contentType = file.getContentType();
+    Date uploadedTime = new Date(file.getModified());
     String fullPath = rootPath + path;
 
     albumsWithVideos.add(albumId);
 
     VideoObjectContainer container = new VideoObjectContainer();
     container.videoModel =
-        new VideoModel(name, "", description, contentType, videoId, albumId, false);
+        new VideoModel(name, "", description, contentType, videoId, albumId, false, uploadedTime);
     container.fullPath = fullPath;
 
     videos.add(container);

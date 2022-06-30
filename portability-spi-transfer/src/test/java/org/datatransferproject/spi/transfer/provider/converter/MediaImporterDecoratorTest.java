@@ -41,9 +41,9 @@ public class MediaImporterDecoratorTest {
         new PhotoModel("p3", "", null, null, "d3", "a2", false, null, null));
 
     videos = List.of(
-        new VideoModel("v1", "", null, null, "d4", null, false),
-        new VideoModel("v2", "", null, null, "d5", "a3", false),
-        new VideoModel("v3", "", null, null, "d6", null, false));
+        new VideoModel("v1", "", null, null, "d4", null, false, null),
+        new VideoModel("v2", "", null, null, "d5", "a3", false, null),
+        new VideoModel("v3", "", null, null, "d6", null, false, null));
   }
 
   @Test

@@ -135,7 +135,8 @@ public class GoogleVideosImporterTest {
                     MP4_MEDIA_TYPE,
                     VIDEO_ID,
                     null,
-                    false),
+                    false,
+                    null),
                 new VideoModel(
                     VIDEO_TITLE,
                     VIDEO_URI,
@@ -143,7 +144,8 @@ public class GoogleVideosImporterTest {
                     MP4_MEDIA_TYPE,
                     "myId2",
                     null,
-                    false)),
+                    false,
+                    null)),
             photosLibraryClient,
             executor);
     assertEquals("Expected the number of bytes to be the two files of 32L.", 64L, length);
@@ -193,7 +195,8 @@ public class GoogleVideosImporterTest {
                     MP4_MEDIA_TYPE,
                     VIDEO_ID,
                     null,
-                    false),
+                    false,
+                    null),
                 new VideoModel(
                     VIDEO_TITLE,
                     VIDEO_URI,
@@ -201,7 +204,8 @@ public class GoogleVideosImporterTest {
                     MP4_MEDIA_TYPE,
                     "myId2",
                     null,
-                    false)),
+                    false,
+                    null)),
             photosLibraryClient,
             executor);
 
@@ -234,7 +238,8 @@ public class GoogleVideosImporterTest {
                     MP4_MEDIA_TYPE,
                     VIDEO_ID,
                     null,
-                    false)),
+                    false,
+                    null)),
             photosLibraryClient,
             executor);
     assertEquals("Expected the number of bytes to be 0L.", 0L, length);
@@ -258,7 +263,7 @@ public class GoogleVideosImporterTest {
             + "7890";
     final VideoModel videoModel =
         new VideoModel(
-            VIDEO_TITLE, VIDEO_URI, videoDescriptionOver1k, MP4_MEDIA_TYPE, VIDEO_ID, null, false);
+            VIDEO_TITLE, VIDEO_URI, videoDescriptionOver1k, MP4_MEDIA_TYPE, VIDEO_ID, null, false, null);
 
     String uploadToken = "token";
     NewMediaItem newMediaItemResult = googleVideosImporter.buildMediaItem(videoModel, uploadToken);
@@ -305,7 +310,8 @@ public class GoogleVideosImporterTest {
                     MP4_MEDIA_TYPE,
                     VIDEO_ID,
                     null,
-                    true)),
+                    true,
+                    null)),
             photosLibraryClient,
             executor);
     assertThat(length).isEqualTo(32);
@@ -330,7 +336,8 @@ public class GoogleVideosImporterTest {
                 MP4_MEDIA_TYPE,
                 VIDEO_ID,
                 null,
-                true)),
+                true,
+                null)),
         mock(PhotosLibraryClient.class),
         executor);
     // should only remove the video from temp store upon success

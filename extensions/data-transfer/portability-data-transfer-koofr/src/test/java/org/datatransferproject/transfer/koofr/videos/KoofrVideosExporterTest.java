@@ -6,6 +6,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -76,7 +79,8 @@ public class KoofrVideosExporterTest {
                 "video/mp4",
                 "/Album 2 :heart:/Video 1.mp4",
                 "/Album 2 :heart:",
-                false),
+                false,
+                Date.from(Instant.parse("2020-09-04T12:40:57.741Z"))),
             new VideoModel(
                 "Video 2.mp4",
                 "https://app-1.koofr.net/content/files/get/Video+2.mp4?base=TESTBASE",
@@ -84,7 +88,8 @@ public class KoofrVideosExporterTest {
                 "video/mp4",
                 "/Videos/Video 2.mp4",
                 "/Videos",
-                false));
+                false,
+                Date.from(Instant.parse("2020-09-04T12:41:06.949Z"))));
     assertEquals(expectedVideos, exportedData.getVideos());
   }
 }

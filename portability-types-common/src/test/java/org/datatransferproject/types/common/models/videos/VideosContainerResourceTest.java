@@ -35,9 +35,9 @@ public class VideosContainerResourceTest {
     List<VideoModel> videos =
             ImmutableList.of(
                     new VideoModel("Vid1", "http://example.com/1.mp4", "A video", "video/mp4", "v1", "id1",
-                            false),
+                            false, null),
                     new VideoModel(
-                            "Vid2", "https://example.com/2.mpeg", "A 2. video", "video/mpeg", "v2", "id1", false));
+                            "Vid2", "https://example.com/2.mpeg", "A 2. video", "video/mpeg", "v2", "id1", false, null));
     
     ContainerResource data = new VideosContainerResource(albums, videos);
 

@@ -35,7 +35,9 @@ import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-/** Imports albums and videos to Koofr. */
+/**
+ * Imports videos and their albums to Koofr.
+ */
 public class KoofrVideosImporter
     implements Importer<TokensAndUrlAuthData, VideosContainerResource> {
 
