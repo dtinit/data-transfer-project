@@ -306,18 +306,22 @@ public class MicrosoftMediaExporterTest {
         .containsExactly(FOLDER_ID);
   }
 
-  /** Sets up a response with a single album, containing a single photo. */
+  /** Sets up a response with a single album, containing photos and/or videos. */
   private MicrosoftDriveItem setUpSingleAlbum() {
     MicrosoftDriveItem albumEntry = new MicrosoftDriveItem();
     albumEntry.id = FOLDER_ID;
     albumEntry.name = "Title";
     albumEntry.folder = new MicrosoftDriveFolder();
+    // TODO(zacsh) remove this childCount setting (or better: set it to a non-sensical value like
+    // zero). We clearly don't care about this (our tests don't break if this is incorrect) so even
+    // though the upstream APIs provide this, we shouldn't be writing test-doubles that imply that
+    // we adhere to this API in anyway.
     albumEntry.folder.childCount = 1;
 
     return albumEntry;
   }
 
-  /** Sets up a response for a single photo. */
+  /** Sets up a response for a single file. */
   private MicrosoftDriveItem setupSingleFile(String fileName, String downloadUrl, String fileId, String mimeType) {
     MicrosoftDriveItem photoEntry = new MicrosoftDriveItem();
     photoEntry.description = String.format("Description of %s", fileId);
