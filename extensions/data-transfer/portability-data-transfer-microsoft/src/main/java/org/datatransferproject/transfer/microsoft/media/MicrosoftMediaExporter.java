@@ -109,7 +109,7 @@ public class MicrosoftMediaExporter
           MicrosoftSpecialFolder.FolderType.photos);
     }
 
-    PaginationData nextPageData = SetNextPageToken(driveItemsResponse);
+    PaginationData nextPageData = setNextPageToken(driveItemsResponse);
     ContinuationData continuationData = new ContinuationData(nextPageData);
     MediaContainerResource containerResource;
     MicrosoftDriveItem[] driveItems = driveItemsResponse.getDriveItems();
@@ -185,7 +185,7 @@ public class MicrosoftMediaExporter
     return video;
   }
 
-  private PaginationData SetNextPageToken(MicrosoftDriveItemsResponse driveItemsResponse) {
+  private PaginationData setNextPageToken(MicrosoftDriveItemsResponse driveItemsResponse) {
     String url = driveItemsResponse.getNextPageLink();
     if (Strings.isNullOrEmpty(url)) {
       return null;
