@@ -139,39 +139,36 @@ public class MicrosoftMediaExporter
   }
 
   private MediaAlbum tryConvertDriveItemToMediaAlbum(MicrosoftDriveItem driveItem, UUID jobId) {
-    if (driveItem.folder != null) {
-      MediaAlbum photoAlbum = new MediaAlbum(driveItem.id, driveItem.name, driveItem.description);
-      monitor.debug(
-          () -> String.format("%s: Microsoft OneDrive exporting album: %s", jobId, photoAlbum));
-      return photoAlbum;
+    if (!driveItem.isFolder()) {
+      return null;
     }
 
-    return null;
+    MediaAlbum mediaAlbum = new MediaAlbum(driveItem.id, driveItem.name, driveItem.description);
+    monitor.debug(
+        () -> String.format("%s: Microsoft OneDrive exporting album: %s", jobId, mediaAlbum));
+    return mediaAlbum;
   }
 
   private PhotoModel tryConvertDriveItemToPhotoModel(
       Optional<String> albumId, MicrosoftDriveItem driveItem, UUID jobId) {
-    if (driveItem.file != null && driveItem.file.mimeType != null
-        && driveItem.file.mimeType.startsWith("image/")) {
-      PhotoModel photo =
-          new PhotoModel(driveItem.name, driveItem.downloadUrl, driveItem.description,
-              driveItem.file.mimeType, driveItem.id, albumId.orElse(null), false);
-      monitor.debug(
-          () -> String.format("%s: Microsoft OneDrive exporting photo: %s", jobId, photo));
-      return photo;
+    if (!driveItem.isImage()) {
+      return null;
     }
 
-    return null;
+    PhotoModel photo =
+        new PhotoModel(driveItem.name, driveItem.downloadUrl, driveItem.description,
+            driveItem.file.mimeType, driveItem.id, albumId.orElse(null), false /*inTempStore*/);
+    monitor.debug(
+        () -> String.format("%s: Microsoft OneDrive exporting photo: %s", jobId, photo));
+    return photo;
   }
 
   private PaginationData SetNextPageToken(MicrosoftDriveItemsResponse driveItemsResponse) {
     String url = driveItemsResponse.getNextPageLink();
-
-    if (!Strings.isNullOrEmpty(url)) {
-      return new StringPaginationToken(DRIVE_TOKEN_PREFIX + url);
+    if (Strings.isNullOrEmpty(url)) {
+      return null;
     }
-
-    return null;
+    return new StringPaginationToken(DRIVE_TOKEN_PREFIX + url);
   }
 
   private Optional<String> getDrivePaginationToken(Optional<PaginationData> paginationData) {

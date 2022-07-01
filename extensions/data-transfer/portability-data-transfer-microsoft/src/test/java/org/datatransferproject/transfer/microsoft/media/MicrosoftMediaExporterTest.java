@@ -46,32 +46,32 @@ import org.mockito.Matchers;
 
 /** Unit tests of Microsoft onedrive exporter for Media models. */
 public class MicrosoftMediaExporterTest {
-  private String IMAGE_URI = "imageDownloadUri";
+  private String PHOTO_URI = "imageDownloadUri";
   private String PHOTO_ID = "uniquePhotoId";
+  private String PHOTO_FILENAME = "selfie-taken-by-cat.jpg";
   private String FOLDER_ID = "microsoftOneDriveFolderId";
   private String DRIVE_PAGE_URL = "driveToken";
-  private String FILENAME = "filename";
   private UUID uuid = UUID.randomUUID();
 
   private TokensAndUrlAuthData token;
-  private MicrosoftMediaExporter microsoftPhotosExporter;
-  private MicrosoftMediaInterface photosInterface;
+  private MicrosoftMediaExporter microsoftMediaExporter;
+  private MicrosoftMediaInterface mediaInterface;
 
   private MicrosoftDriveItemsResponse driveItemsResponse;
 
   @Before
   public void setUp() throws IOException {
     MicrosoftCredentialFactory credentialFactory = mock(MicrosoftCredentialFactory.class);
-    photosInterface = mock(MicrosoftMediaInterface.class);
+    mediaInterface = mock(MicrosoftMediaInterface.class);
     driveItemsResponse = mock(MicrosoftDriveItemsResponse.class);
     Monitor monitor = mock(Monitor.class);
 
-    microsoftPhotosExporter = new MicrosoftMediaExporter(
-        credentialFactory, new JacksonFactory(), photosInterface, monitor);
+    microsoftMediaExporter = new MicrosoftMediaExporter(
+        credentialFactory, new JacksonFactory(), mediaInterface, monitor);
 
-    when(photosInterface.getDriveItems(any(Optional.class), any(Optional.class)))
+    when(mediaInterface.getDriveItems(any(Optional.class), any(Optional.class)))
         .thenReturn(driveItemsResponse);
-    when(photosInterface.getDriveItemsFromSpecialFolder(
+    when(mediaInterface.getDriveItemsFromSpecialFolder(
              any(MicrosoftSpecialFolder.FolderType.class)))
         .thenReturn(driveItemsResponse);
     verifyNoInteractions(credentialFactory);
@@ -85,11 +85,11 @@ public class MicrosoftMediaExporterTest {
     when(driveItemsResponse.getNextPageLink()).thenReturn(DRIVE_PAGE_URL);
 
     // Run
-    ExportResult<MediaContainerResource> result = microsoftPhotosExporter.exportOneDrivePhotos(
+    ExportResult<MediaContainerResource> result = microsoftMediaExporter.exportOneDrivePhotos(
         null, Optional.empty(), Optional.empty(), uuid);
 
     // Verify method calls
-    verify(photosInterface)
+    verify(mediaInterface)
         .getDriveItemsFromSpecialFolder(MicrosoftSpecialFolder.FolderType.photos);
     verify(driveItemsResponse).getDriveItems();
 
@@ -126,11 +126,11 @@ public class MicrosoftMediaExporterTest {
         new StringPaginationToken(DRIVE_TOKEN_PREFIX + DRIVE_PAGE_URL);
 
     // Run
-    ExportResult<MediaContainerResource> result = microsoftPhotosExporter.exportOneDrivePhotos(
+    ExportResult<MediaContainerResource> result = microsoftMediaExporter.exportOneDrivePhotos(
         null, Optional.empty(), Optional.of(inputPaginationToken), uuid);
 
     // Verify method calls
-    verify(photosInterface).getDriveItems(Optional.empty(), Optional.of(DRIVE_PAGE_URL));
+    verify(mediaInterface).getDriveItems(Optional.empty(), Optional.of(DRIVE_PAGE_URL));
     verify(driveItemsResponse).getDriveItems();
 
     // Verify next pagination token is absent
@@ -157,20 +157,21 @@ public class MicrosoftMediaExporterTest {
   }
 
   @Test
-  public void exportPhotoWithNextPage() throws IOException {
+  public void exportMediaWithNextPage() throws IOException {
     // Setup
     when(driveItemsResponse.getNextPageLink()).thenReturn(null);
-    MicrosoftDriveItem photoItem = setUpSinglePhoto(IMAGE_URI, PHOTO_ID);
-    when(driveItemsResponse.getDriveItems()).thenReturn(new MicrosoftDriveItem[] {photoItem});
+    when(driveItemsResponse.getDriveItems()).thenReturn(new MicrosoftDriveItem[] {
+      setUpSinglePhoto(PHOTO_FILENAME, PHOTO_URI, PHOTO_ID),
+    });
     when(driveItemsResponse.getNextPageLink()).thenReturn(DRIVE_PAGE_URL);
     IdOnlyContainerResource idOnlyContainerResource = new IdOnlyContainerResource(FOLDER_ID);
 
     // Run
-    ExportResult<MediaContainerResource> result = microsoftPhotosExporter.exportOneDrivePhotos(
+    ExportResult<MediaContainerResource> result = microsoftMediaExporter.exportOneDrivePhotos(
         null, Optional.of(idOnlyContainerResource), Optional.empty(), uuid);
 
     // Verify method calls
-    verify(photosInterface).getDriveItems(Optional.of(FOLDER_ID), Optional.empty());
+    verify(mediaInterface).getDriveItems(Optional.of(FOLDER_ID), Optional.empty());
     verify(driveItemsResponse).getDriveItems();
 
     // Verify pagination token is set
@@ -185,12 +186,13 @@ public class MicrosoftMediaExporterTest {
 
     // Verify one photo (in an album) should be exported
     Collection<PhotoModel> actualPhotos = result.getExportedData().getPhotos();
+    assertThat(actualPhotos.size()).isEqualTo(1);
     assertThat(actualPhotos.stream().map(PhotoModel::getFetchableUrl).collect(Collectors.toList()))
-        .containsExactly(IMAGE_URI);
+        .containsExactly(PHOTO_URI);
     assertThat(actualPhotos.stream().map(PhotoModel::getAlbumId).collect(Collectors.toList()))
         .containsExactly(FOLDER_ID);
     assertThat(actualPhotos.stream().map(PhotoModel::getTitle).collect(Collectors.toList()))
-        .containsExactly(FILENAME);
+        .containsExactly(PHOTO_FILENAME);
 
     // Verify there are no containers ready for sub-processing
     List<ContainerResource> actualResources = continuationData.getContainerResources();
@@ -198,22 +200,23 @@ public class MicrosoftMediaExporterTest {
   }
 
   @Test
-  public void exportPhotoWithoutNextPage() throws IOException {
+  public void exportMediaWithoutNextPage() throws IOException {
     // Setup
     when(driveItemsResponse.getNextPageLink()).thenReturn(null);
-    MicrosoftDriveItem photoItem = setUpSinglePhoto(IMAGE_URI, PHOTO_ID);
-    when(driveItemsResponse.getDriveItems()).thenReturn(new MicrosoftDriveItem[] {photoItem});
+    when(driveItemsResponse.getDriveItems()).thenReturn(new MicrosoftDriveItem[] {
+      setUpSinglePhoto(PHOTO_FILENAME, PHOTO_URI, PHOTO_ID),
+    });
     when(driveItemsResponse.getNextPageLink()).thenReturn(null);
     StringPaginationToken inputPaginationToken =
         new StringPaginationToken(DRIVE_TOKEN_PREFIX + DRIVE_PAGE_URL);
     IdOnlyContainerResource idOnlyContainerResource = new IdOnlyContainerResource(FOLDER_ID);
 
     // Run
-    ExportResult<MediaContainerResource> result = microsoftPhotosExporter.exportOneDrivePhotos(
+    ExportResult<MediaContainerResource> result = microsoftMediaExporter.exportOneDrivePhotos(
         null, Optional.of(idOnlyContainerResource), Optional.of(inputPaginationToken), uuid);
 
     // Verify method calls
-    verify(photosInterface).getDriveItems(Optional.of(FOLDER_ID), Optional.of(DRIVE_PAGE_URL));
+    verify(mediaInterface).getDriveItems(Optional.of(FOLDER_ID), Optional.of(DRIVE_PAGE_URL));
     verify(driveItemsResponse).getDriveItems();
 
     // Verify next pagination token is absent
@@ -229,11 +232,11 @@ public class MicrosoftMediaExporterTest {
     // Verify one photo (in an album) should be exported
     Collection<PhotoModel> actualPhotos = result.getExportedData().getPhotos();
     assertThat(actualPhotos.stream().map(PhotoModel::getFetchableUrl).collect(Collectors.toList()))
-        .containsExactly(IMAGE_URI);
+        .containsExactly(PHOTO_URI);
     assertThat(actualPhotos.stream().map(PhotoModel::getAlbumId).collect(Collectors.toList()))
         .containsExactly(FOLDER_ID);
     assertThat(actualPhotos.stream().map(PhotoModel::getTitle).collect(Collectors.toList()))
-        .containsExactly(FILENAME);
+        .containsExactly(PHOTO_FILENAME);
 
     // Verify there are no containers ready for sub-processing
     List<ContainerResource> actualResources = continuationData.getContainerResources();
@@ -241,20 +244,21 @@ public class MicrosoftMediaExporterTest {
   }
 
   @Test
-  public void exportAlbumAndPhotoWithNextPage() throws IOException {
+  public void exportAlbumAndMediaWithNextPage() throws IOException {
     // Setup
-    MicrosoftDriveItem folderItem = setUpSingleAlbum();
-    MicrosoftDriveItem photoItem = setUpSinglePhoto(IMAGE_URI, PHOTO_ID);
     when(driveItemsResponse.getDriveItems())
-        .thenReturn(new MicrosoftDriveItem[] {folderItem, photoItem});
+        .thenReturn(new MicrosoftDriveItem[] {
+          setUpSingleAlbum(),
+          setUpSinglePhoto(PHOTO_FILENAME, PHOTO_URI, PHOTO_ID)
+        });
     when(driveItemsResponse.getNextPageLink()).thenReturn(DRIVE_PAGE_URL);
 
     // Run
-    ExportResult<MediaContainerResource> result = microsoftPhotosExporter.exportOneDrivePhotos(
+    ExportResult<MediaContainerResource> result = microsoftMediaExporter.exportOneDrivePhotos(
         null, Optional.empty(), Optional.empty(), uuid);
 
     // Verify method calls
-    verify(photosInterface)
+    verify(mediaInterface)
         .getDriveItemsFromSpecialFolder(MicrosoftSpecialFolder.FolderType.photos);
     verify(driveItemsResponse).getDriveItems();
 
@@ -272,11 +276,11 @@ public class MicrosoftMediaExporterTest {
     // Verify one photo should be present (in the root Photos special folder)
     Collection<PhotoModel> actualPhotos = result.getExportedData().getPhotos();
     assertThat(actualPhotos.stream().map(PhotoModel::getFetchableUrl).collect(Collectors.toList()))
-        .containsExactly(IMAGE_URI);
+        .containsExactly(PHOTO_URI);
     assertThat(actualPhotos.stream().map(PhotoModel::getAlbumId).collect(Collectors.toList()))
         .containsExactly(null);
     assertThat(actualPhotos.stream().map(PhotoModel::getTitle).collect(Collectors.toList()))
-        .containsExactly(FILENAME);
+        .containsExactly(PHOTO_FILENAME);
 
     // Verify there is one container ready for sub-processing
     List<ContainerResource> actualResources = continuationData.getContainerResources();
@@ -286,7 +290,7 @@ public class MicrosoftMediaExporterTest {
         .containsExactly(FOLDER_ID);
   }
 
-  /** Sets up a response with a single album, containing a single photo */
+  /** Sets up a response with a single album, containing a single photo. */
   private MicrosoftDriveItem setUpSingleAlbum() {
     MicrosoftDriveItem albumEntry = new MicrosoftDriveItem();
     albumEntry.id = FOLDER_ID;
@@ -297,17 +301,23 @@ public class MicrosoftMediaExporterTest {
     return albumEntry;
   }
 
-  /** Sets up a response for a single photo */
-  private MicrosoftDriveItem setUpSinglePhoto(String imageUri, String photoId) {
+  /** Sets up a response for a single photo. */
+  private MicrosoftDriveItem setupSingleFile(String fileName, String downloadUrl, String fileId, String mimeType) {
     MicrosoftDriveItem photoEntry = new MicrosoftDriveItem();
-    photoEntry.description = "Description";
+    photoEntry.description = String.format("Description of %s", fileId);
     photoEntry.file = new MicrosoftFileMetadata();
-    photoEntry.file.mimeType = "image/jpeg";
-    photoEntry.name = FILENAME;
-    photoEntry.id = photoId;
-    photoEntry.downloadUrl = imageUri;
+    photoEntry.file.mimeType = mimeType;
+    photoEntry.name = fileName;
+    photoEntry.id = fileId;
+    photoEntry.downloadUrl = downloadUrl;
     photoEntry.photo = new MicrosoftPhotoMetadata();
-
     return photoEntry;
+  }
+
+  /** Sets up a response for a single photo. */
+  private MicrosoftDriveItem setUpSinglePhoto(String fileName, String imageUri, String photoId) {
+    MicrosoftDriveItem driveItem = setupSingleFile(fileName, imageUri, photoId, "image/jpeg");
+    driveItem.photo = new MicrosoftPhotoMetadata();
+    return driveItem;
   }
 }

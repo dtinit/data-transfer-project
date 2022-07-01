@@ -47,4 +47,38 @@ public class MicrosoftDriveItem {
 
   @JsonProperty("@microsoft.graph.downloadUrl")
   public String downloadUrl;
+
+
+  public boolean isFolder() {
+    return folder != null;
+  }
+
+  public boolean isFile() {
+    return file != null;
+  }
+
+  /** Encodes mimetype tree for simple string matching. */
+  private enum MimeTypePrefix {
+    IMAGE("image"),
+    VIDEO("video")
+      ;
+
+    private final String prefix;
+    MimeTypePrefix(String prefix) {
+      this.prefix = prefix;
+    }
+
+    /** Whether mimeType is contained by the current prefix. */
+    public boolean containsType(String mimeType) {
+      return mimeType != null && mimeType.startsWith(this.prefix + "/");
+    }
+  }
+
+  private boolean isMimeType(MimeTypePrefix prefix) {
+    return prefix.containsType(file.mimeType);
+  }
+
+  public boolean isImage() {
+    return isFile() && isMimeType(MimeTypePrefix.IMAGE);
+  }
 }
