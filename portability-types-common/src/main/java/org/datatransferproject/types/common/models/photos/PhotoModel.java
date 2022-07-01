@@ -68,17 +68,15 @@ public class PhotoModel implements DownloadableItem {
       String dataId,
       String albumId,
       boolean inTempStore) {
-    this.title = title;
-    this.fetchableUrl = fetchableUrl;
-    this.description = description;
-    this.mediaType = mediaType;
-    if (dataId == null || dataId.isEmpty()) {
-      throw new IllegalArgumentException("dataID must be set");
-    }
-    this.dataId = dataId;
-    this.albumId = albumId;
-    this.inTempStore = inTempStore;
-    this.uploadedTime = null;
+    this(
+        title,
+        fetchableUrl,
+        description,
+        mediaType,
+        dataId,
+        albumId,
+        inTempStore,
+        null  /*uploadedTime*/);
   }
 
   public String getTitle() {
