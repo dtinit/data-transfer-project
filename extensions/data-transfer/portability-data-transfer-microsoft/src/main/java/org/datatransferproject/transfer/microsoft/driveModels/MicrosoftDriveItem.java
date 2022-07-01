@@ -81,4 +81,8 @@ public class MicrosoftDriveItem {
   public boolean isImage() {
     return isFile() && isMimeType(MimeTypePrefix.IMAGE);
   }
+
+  public boolean isVideo() {
+    return isFile() && isMimeType(MimeTypePrefix.VIDEO);
+  }
 }

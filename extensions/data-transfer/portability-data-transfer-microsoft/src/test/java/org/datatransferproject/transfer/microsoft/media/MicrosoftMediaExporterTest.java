@@ -39,6 +39,7 @@ import org.datatransferproject.types.common.models.IdOnlyContainerResource;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,6 +50,9 @@ public class MicrosoftMediaExporterTest {
   private String PHOTO_URI = "imageDownloadUri";
   private String PHOTO_ID = "uniquePhotoId";
   private String PHOTO_FILENAME = "selfie-taken-by-cat.jpg";
+  private String VIDEO_URI = "videoDownloadUri";
+  private String VIDEO_ID = "uniqueVideoId";
+  private String VIDEO_FILENAME = "cats-dancing.ogg";
   private String FOLDER_ID = "microsoftOneDriveFolderId";
   private String DRIVE_PAGE_URL = "driveToken";
   private UUID uuid = UUID.randomUUID();
@@ -162,6 +166,7 @@ public class MicrosoftMediaExporterTest {
     when(driveItemsResponse.getNextPageLink()).thenReturn(null);
     when(driveItemsResponse.getDriveItems()).thenReturn(new MicrosoftDriveItem[] {
       setUpSinglePhoto(PHOTO_FILENAME, PHOTO_URI, PHOTO_ID),
+      setUpSingleVideo(VIDEO_FILENAME, VIDEO_URI, VIDEO_ID)
     });
     when(driveItemsResponse.getNextPageLink()).thenReturn(DRIVE_PAGE_URL);
     IdOnlyContainerResource idOnlyContainerResource = new IdOnlyContainerResource(FOLDER_ID);
@@ -194,6 +199,16 @@ public class MicrosoftMediaExporterTest {
     assertThat(actualPhotos.stream().map(PhotoModel::getTitle).collect(Collectors.toList()))
         .containsExactly(PHOTO_FILENAME);
 
+    // Verify one video (in an album) should be exported
+    Collection<VideoModel> actualVideos = result.getExportedData().getVideos();
+    assertThat(actualVideos.size()).isEqualTo(1);
+    assertThat(actualVideos.stream().map(VideoModel::getFetchableUrl).collect(Collectors.toList()))
+        .containsExactly(VIDEO_URI);
+    assertThat(actualVideos.stream().map(VideoModel::getAlbumId).collect(Collectors.toList()))
+        .containsExactly(FOLDER_ID);
+    assertThat(actualVideos.stream().map(VideoModel::getName).collect(Collectors.toList()))
+        .containsExactly(VIDEO_FILENAME);
+
     // Verify there are no containers ready for sub-processing
     List<ContainerResource> actualResources = continuationData.getContainerResources();
     assertThat(actualResources).isEmpty();
@@ -205,6 +220,7 @@ public class MicrosoftMediaExporterTest {
     when(driveItemsResponse.getNextPageLink()).thenReturn(null);
     when(driveItemsResponse.getDriveItems()).thenReturn(new MicrosoftDriveItem[] {
       setUpSinglePhoto(PHOTO_FILENAME, PHOTO_URI, PHOTO_ID),
+      setUpSingleVideo(VIDEO_FILENAME, VIDEO_URI, VIDEO_ID)
     });
     when(driveItemsResponse.getNextPageLink()).thenReturn(null);
     StringPaginationToken inputPaginationToken =
@@ -318,6 +334,13 @@ public class MicrosoftMediaExporterTest {
   private MicrosoftDriveItem setUpSinglePhoto(String fileName, String imageUri, String photoId) {
     MicrosoftDriveItem driveItem = setupSingleFile(fileName, imageUri, photoId, "image/jpeg");
     driveItem.photo = new MicrosoftPhotoMetadata();
+    return driveItem;
+  }
+
+  /** Sets up a response for a single video. */
+  private MicrosoftDriveItem setUpSingleVideo(String fileName, String imageUri, String videoId) {
+    MicrosoftDriveItem driveItem = setupSingleFile(fileName, imageUri, videoId, "video/ogg");
+    driveItem.video = new MicrosoftVideoMetadata();
     return driveItem;
   }
 }

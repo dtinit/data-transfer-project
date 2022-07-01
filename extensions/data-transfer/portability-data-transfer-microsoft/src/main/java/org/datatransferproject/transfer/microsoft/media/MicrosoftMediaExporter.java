@@ -40,6 +40,7 @@ import org.datatransferproject.types.common.models.IdOnlyContainerResource;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 /**
@@ -114,6 +115,7 @@ public class MicrosoftMediaExporter
     MicrosoftDriveItem[] driveItems = driveItemsResponse.getDriveItems();
     List<MediaAlbum> albums = new ArrayList<>();
     List<PhotoModel> photos = new ArrayList<>();
+    List<VideoModel> videos = new ArrayList<>();
 
     if (driveItems != null && driveItems.length > 0) {
       for (MicrosoftDriveItem driveItem : driveItems) {
@@ -129,12 +131,18 @@ public class MicrosoftMediaExporter
           photos.add(photo);
           continue;
         }
+
+        VideoModel video = tryConvertDriveItemToVideoModel(albumId, driveItem, jobId);
+        if (video != null) {
+          videos.add(video);
+          continue;
+        }
       }
     }
 
     ExportResult.ResultType result =
         nextPageData == null ? ExportResult.ResultType.END : ExportResult.ResultType.CONTINUE;
-    containerResource = new MediaContainerResource(albums, photos, null /*videos*/);
+    containerResource = new MediaContainerResource(albums, photos, videos);
     return new ExportResult<>(result, containerResource, continuationData);
   }
 
@@ -161,6 +169,20 @@ public class MicrosoftMediaExporter
     monitor.debug(
         () -> String.format("%s: Microsoft OneDrive exporting photo: %s", jobId, photo));
     return photo;
+  }
+
+  private VideoModel tryConvertDriveItemToVideoModel(
+      Optional<String> albumId, MicrosoftDriveItem driveItem, UUID jobId) {
+    if (!driveItem.isVideo()) {
+      return null;
+    }
+
+    VideoModel video =
+        new VideoModel(driveItem.name, driveItem.downloadUrl, driveItem.description,
+            driveItem.file.mimeType, driveItem.id, albumId.orElse(null), false /*inTempStore*/);
+    monitor.debug(
+        () -> String.format("%s: Microsoft OneDrive exporting video: %s", jobId, video));
+    return video;
   }
 
   private PaginationData SetNextPageToken(MicrosoftDriveItemsResponse driveItemsResponse) {
