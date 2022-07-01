@@ -94,17 +94,12 @@ public class MicrosoftMediaImporter
     // Ensure credential is populated
     getOrCreateCredential(authData);
 
-    monitor.debug(
-        ()
-            -> String.format("%s: Importing %s albums and %s photos before transmogrification",
-                jobId, resource.getAlbums().size(), resource.getPhotos().size()));
+    logDebugJobStatus("%s before transmogrification", jobId, resource);
 
     // Make the data onedrive compatible
     resource.transmogrify(transmogrificationConfig);
-    monitor.debug(
-        ()
-            -> String.format("%s: Importing %s albums and %s photos after transmogrification",
-                jobId, resource.getAlbums().size(), resource.getPhotos().size()));
+
+    logDebugJobStatus("%s after transmogrification", jobId, resource);
 
     for (MediaAlbum album : resource.getAlbums()) {
       // Create a OneDrive folder and then save the id with the mapping data
@@ -118,6 +113,25 @@ public class MicrosoftMediaImporter
           () -> importSinglePhoto(photoModel, jobId, idempotentImportExecutor));
     }
     return ImportResult.OK;
+  }
+
+  /**
+   * Logs brief debugging message describing current state of job given `resource`.
+   *
+   * @param format a printf-style formatter that exactly one parameter: the string of the job's
+   *   current status.
+   */
+  private void logDebugJobStatus(
+      String format,
+      UUID jobId,
+      MediaContainerResource resource) {
+    String statusMessage = String.format(
+        "%s: Importing %s albums, %s photos, and %s videos",
+        jobId,
+        resource.getAlbums().size(),
+        resource.getPhotos().size(),
+        resource.getVideos().size());
+    monitor.debug(() ->  String.format(format, statusMessage));
   }
 
   @SuppressWarnings("unchecked")
