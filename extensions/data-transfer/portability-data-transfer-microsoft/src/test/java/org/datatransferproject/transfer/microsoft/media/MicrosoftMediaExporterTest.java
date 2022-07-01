@@ -44,7 +44,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
 
-/** */
+/** Unit tests of Microsoft onedrive exporter for Media models. */
 public class MicrosoftMediaExporterTest {
   private String IMAGE_URI = "imageDownloadUri";
   private String PHOTO_ID = "uniquePhotoId";

@@ -88,6 +88,7 @@ public class MicrosoftMediaExporter
         Optional.ofNullable(paginationToken), jobId);
   }
 
+  // TODO make this private and tests the real export().
   @VisibleForTesting
   ExportResult<MediaContainerResource> exportOneDrivePhotos(TokensAndUrlAuthData authData,
       Optional<IdOnlyContainerResource> albumData, Optional<PaginationData> paginationData,
@@ -120,11 +121,13 @@ public class MicrosoftMediaExporter
         if (album != null) {
           albums.add(album);
           continuationData.addContainerResource(new IdOnlyContainerResource(driveItem.id));
+          continue;
         }
 
         PhotoModel photo = tryConvertDriveItemToPhotoModel(albumId, driveItem, jobId);
         if (photo != null) {
           photos.add(photo);
+          continue;
         }
       }
     }
