@@ -44,6 +44,8 @@ import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.transfer.microsoft.DataChunk;
 import org.datatransferproject.transfer.microsoft.MicrosoftTransmogrificationConfig;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
+import org.datatransferproject.types.common.DownloadableItem;
+import org.datatransferproject.types.common.Fileable;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
@@ -112,14 +114,14 @@ public class MicrosoftMediaImporter
 
     for (VideoModel videoModel : resource.getVideos()) {
       idempotentImportExecutor.executeAndSwallowIOExceptions(
-          videoModel.getIdempotentId(), videoModel.getTitle(),
-          () -> importSingleVideo(videoModel, jobId, idempotentImportExecutor));
+          videoModel.getIdempotentId(), videoModel.getName(),
+          () -> importDownloadableItem(videoModel, jobId, idempotentImportExecutor));
     }
 
     for (PhotoModel photoModel : resource.getPhotos()) {
       idempotentImportExecutor.executeAndSwallowIOExceptions(
           photoModel.getIdempotentId(), photoModel.getTitle(),
-          () -> importSinglePhoto(photoModel, jobId, idempotentImportExecutor));
+          () -> importDownloadableItem(photoModel, jobId, idempotentImportExecutor));
     }
     return ImportResult.OK;
   }
@@ -194,68 +196,31 @@ public class MicrosoftMediaImporter
     }
   }
 
-  private String importSingleVideo(VideoModel video, UUID jobId,
+  private <T extends Fileable, DownloadableItem> String importDownloadableItem(
+      T item, UUID jobId,
       IdempotentImportExecutor idempotentImportExecutor) throws Exception {
     BufferedInputStream inputStream = null;
-    if (video.isInTempStore()) {
+    if (item.isInTempStore()) {
       inputStream =
-          new BufferedInputStream(jobStore.getStream(jobId, video.getFetchableUrl()).getStream());
-    } else if (video.getFetchableUrl() != null) {
-      inputStream = new BufferedInputStream(new URL(video.getFetchableUrl()).openStream());
+          new BufferedInputStream(jobStore.getStream(jobId, item.getFetchableUrl()).getStream());
+    } else if (item.getFetchableUrl() != null) {
+      inputStream = new BufferedInputStream(new URL(item.getFetchableUrl()).openStream());
     } else {
-      throw new IllegalStateException("Don't know how to get the inputStream for " + video);
+      throw new IllegalStateException("Don't know how to get the inputStream for " + item);
     }
 
-    String videoUploadUrl = createUploadSession(video, idempotentImportExecutor);
+    String itemUploadUrl = createUploadSession(item, idempotentImportExecutor);
 
     // Arrange the data to be uploaded in chunks
     List<DataChunk> chunksToSend = DataChunk.splitData(inputStream);
     inputStream.close();
     final int totalFileSize = chunksToSend.stream().map(DataChunk::getSize).reduce(0, Integer::sum);
     Preconditions.checkState(
-        chunksToSend.size() != 0, "Data was split into zero chunks %s.", video.getTitle());
+        chunksToSend.size() != 0, "Data was split into zero chunks %s.", item.getName());
 
     Response chunkResponse = null;
     for (DataChunk chunk : chunksToSend) {
-      chunkResponse = uploadChunk(chunk, videoUploadUrl, totalFileSize, video.getMediaType());
-    }
-    if (chunkResponse.code() != 200 && chunkResponse.code() != 201) {
-      // Once we upload the last chunk, we should have either 200 or 201.
-      // This should change to a precondition check after we debug some more.
-      monitor.debug(
-          () -> "Received a bad code on completion of uploading chunks", chunkResponse.code());
-    }
-    // get complete file response
-    ResponseBody chunkResponseBody = chunkResponse.body();
-    Map<String, Object> chunkResponseData =
-        objectMapper.readValue(chunkResponseBody.bytes(), Map.class);
-    return (String) chunkResponseData.get("id");
-  }
-
-  private String importSinglePhoto(PhotoModel photo, UUID jobId,
-      IdempotentImportExecutor idempotentImportExecutor) throws Exception {
-    BufferedInputStream inputStream = null;
-    if (photo.isInTempStore()) {
-      inputStream =
-          new BufferedInputStream(jobStore.getStream(jobId, photo.getFetchableUrl()).getStream());
-    } else if (photo.getFetchableUrl() != null) {
-      inputStream = new BufferedInputStream(new URL(photo.getFetchableUrl()).openStream());
-    } else {
-      throw new IllegalStateException("Don't know how to get the inputStream for " + photo);
-    }
-
-    String photoUploadUrl = createUploadSession(photo, idempotentImportExecutor);
-
-    // Arrange the data to be uploaded in chunks
-    List<DataChunk> chunksToSend = DataChunk.splitData(inputStream);
-    inputStream.close();
-    final int totalFileSize = chunksToSend.stream().map(DataChunk::getSize).reduce(0, Integer::sum);
-    Preconditions.checkState(
-        chunksToSend.size() != 0, "Data was split into zero chunks %s.", photo.getTitle());
-
-    Response chunkResponse = null;
-    for (DataChunk chunk : chunksToSend) {
-      chunkResponse = uploadChunk(chunk, photoUploadUrl, totalFileSize, photo.getMediaType());
+      chunkResponse = uploadChunk(chunk, itemUploadUrl, totalFileSize, item.getMimeType());
     }
     if (chunkResponse.code() != 200 && chunkResponse.code() != 201) {
       // Once we upload the last chunk, we should have either 200 or 201.
@@ -280,22 +245,27 @@ public class MicrosoftMediaImporter
   // Request an upload session to the OneDrive api so that we can upload chunks
   // to the returned URL
   private String createUploadSession(
-      PhotoModel photo, IdempotentImportExecutor idempotentImportExecutor)
+      DownloadableItem downloadableItem, IdempotentImportExecutor idempotentImportExecutor)
       throws IOException, CopyExceptionWithFailureReason {
     // Forming the URL to create an upload session
     String createSessionUrl;
-    if (Strings.isNullOrEmpty(photo.getAlbumId())) {
-      createSessionUrl = String.format(albumlessMediaUrlTemplate, photo.getTitle(), UPLOAD_PARAMS);
+    if (Strings.isNullOrEmpty(downloadableItem.getFolderId())) {
+      createSessionUrl = String.format(albumlessMediaUrlTemplate, downloadableItem.getName(), UPLOAD_PARAMS);
 
     } else {
-      String oneDriveFolderId = idempotentImportExecutor.getCachedValue(photo.getAlbumId());
+      String oneDriveFolderId = idempotentImportExecutor.getCachedValue(downloadableItem.getFolderId());
       createSessionUrl =
-          String.format(uploadMediaUrlTemplate, oneDriveFolderId, photo.getTitle(), UPLOAD_PARAMS);
+          String.format(uploadMediaUrlTemplate, oneDriveFolderId, downloadableItem.getName(), UPLOAD_PARAMS);
     }
 
     // create upload session
     // POST to /me/drive/items/{folder_id}:/{file_name}:/createUploadSession OR
-    // /me/drive/items/root:/Photos/{file_name}:/createUploadSession get {uploadurl} from response
+    // /me/drive/items/root:/Photos-Videos/{file_name}:/createUploadSession get {uploadurl} from response
+    //
+    // TODO(zacsh) DO NOT MERGE figure out where the original string above came from (what does the
+    // above comment even mean?); was originally:
+    //       /me/drive/items/root:/Photos-Videos/{file_name}:/createUploadSession get {uploadurl} from response
+    //
     Request.Builder createSessionRequestBuilder = new Request.Builder().url(createSessionUrl);
 
     // Auth headers
@@ -306,7 +276,7 @@ public class MicrosoftMediaImporter
     createSessionRequestBuilder.post(RequestBody.create(
         MediaType.parse("application/json"), objectMapper.writeValueAsString(ImmutableMap.of())));
 
-    // Make the call, we should get an upload url for photo data in a 200 response
+    // Make the call, we should get an upload url for downloadableItem data in a 200 response
     Response response = client.newCall(createSessionRequestBuilder.build()).execute();
     int code = response.code();
     ResponseBody responseBody = response.body();
@@ -336,15 +306,15 @@ public class MicrosoftMediaImporter
               + "body: %s\n"
               + "request url: %s\n"
               + "bearer token: %s\n"
-              + " photo: %s\n", // For debugging 404s on upload
+              + " downloadableItem: %s\n", // For debugging 404s on upload
           code, response.message(), response.body().string(), createSessionUrl,
-          credential.getAccessToken(), photo));
+          credential.getAccessToken(), downloadableItem));
     } else if (code != 200) {
       monitor.info(() -> String.format("Got an unexpected non-200, non-error response code"));
     }
     // make sure we have a non-null response body
     Preconditions.checkState(
-        responseBody != null, "Got Null Body when creating photo upload session %s", photo);
+        responseBody != null, "Got Null Body when creating downloadableItem upload session %s", downloadableItem);
     // convert to a map
     final Map<String, Object> responseData =
         objectMapper.readValue(responseBody.bytes(), Map.class);

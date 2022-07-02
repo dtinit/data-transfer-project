@@ -22,11 +22,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import org.datatransferproject.types.common.DownloadableItem;
+import org.datatransferproject.types.common.Fileable;
+import org.datatransferproject.types.common.FolderItem;
 import org.datatransferproject.types.common.models.MediaObject;
 
 import java.util.stream.Collectors;
 
-public class VideoModel extends MediaObject implements DownloadableItem {
+public class VideoModel extends MediaObject implements Fileable, FolderItem, DownloadableItem {
 
   private String dataId;
   private String albumId;
@@ -51,8 +53,24 @@ public class VideoModel extends MediaObject implements DownloadableItem {
     this.inTempStore = inTempStore;
   }
 
+  // TODO(zacsh) remove this in favor of getFolderId
   public String getAlbumId() {
     return albumId;
+  }
+
+  // requirement of FolderItem
+  @JsonIgnore
+  public String getFolderId() {
+    return getAlbumId();
+  }
+
+  @JsonIgnore
+  // requirement of Fileable
+  public String getMimeType() {
+    // TODO(zacsh) DO NOT MERGE - not everyone is using encodingFormat in this way - I swear I saw
+    // some code using "UTF-8" as a string value. Fix and then do a better job documenting the
+    // constructors of all Fileable models!
+    return getEncodingFormat();
   }
 
   public String getDataId() {
@@ -72,6 +90,9 @@ public class VideoModel extends MediaObject implements DownloadableItem {
 
   @JsonIgnore(false)
   @Override
+  // TODO(zacsh) this and video--and all *many* models perhaps--should agree on an interface so we
+  // don't have "getName()" vs "getTitle()" or "getFetchableUrl" that _happens_ to be the same
+  // method name but only by sheer luck
   public String getName() {
     return super.getName();
   }
