@@ -48,10 +48,11 @@ import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFact
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 /**
- * Imports albums and photos to OneDrive using the Microsoft Graph API.
+ * Imports albums with their photos and videos to OneDrive using the Microsoft Graph API.
  */
 public class MicrosoftMediaImporter
     implements Importer<TokensAndUrlAuthData, MediaContainerResource> {
@@ -65,20 +66,23 @@ public class MicrosoftMediaImporter
   private Credential credential;
 
   private final String createFolderUrl;
-  private final String uploadPhotoUrlTemplate;
-  private final String albumlessPhotoUrlTemplate;
+  private final String uploadMediaUrlTemplate;
+  private final String albumlessMediaUrlTemplate;
 
   private static final String UPLOAD_PARAMS = "?@microsoft.graph.conflictBehavior=rename";
 
   public MicrosoftMediaImporter(String baseUrl, OkHttpClient client, ObjectMapper objectMapper,
       TemporaryPerJobDataStore jobStore, Monitor monitor,
       MicrosoftCredentialFactory credentialFactory) {
-    createFolderUrl = baseUrl + "/v1.0/me/drive/special/photos/children";
+
+    /* TODO(zacsh) DO NOT MERGE - determine where this magic string "/v1.0/me/drive/special/photos/children" came from*/
+    createFolderUrl = baseUrl + "/v1.0/me/drive/special/photo-video/children";
     // first param is the folder id, second param is the file name
     // /me/drive/items/{parent-id}:/{filename}:/content;
-    uploadPhotoUrlTemplate = baseUrl + "/v1.0/me/drive/items/%s:/%s:/createUploadSession%s";
-    albumlessPhotoUrlTemplate =
-        baseUrl + "/v1.0/me/drive/special/photos:/%s:/createUploadSession%s";
+    uploadMediaUrlTemplate = baseUrl + "/v1.0/me/drive/items/%s:/%s:/createUploadSession%s";
+    albumlessMediaUrlTemplate =
+        baseUrl + "/v1.0/me/drive/special/photo-video:/%s:/createUploadSession%s";
+    /* TODO(zacsh) DO NOT MERGE - determine where this magic string "/v1.0/me/drive/special/photos:/%s:/createUploadSession%s" came from*/
 
     this.client = client;
     this.objectMapper = objectMapper;
@@ -105,6 +109,12 @@ public class MicrosoftMediaImporter
       // Create a OneDrive folder and then save the id with the mapping data
       idempotentImportExecutor.executeAndSwallowIOExceptions(
           album.getId(), album.getName(), () -> createOneDriveFolder(album));
+    }
+
+    for (VideoModel videoModel : resource.getVideos()) {
+      idempotentImportExecutor.executeAndSwallowIOExceptions(
+          IdempotentImportExecutorHelper.getVideoIdempotentId(videoModel), videoModel.getTitle(),
+          () -> importSingleVideo(videoModel, jobId, idempotentImportExecutor));
     }
 
     for (PhotoModel photoModel : resource.getPhotos()) {
@@ -185,6 +195,44 @@ public class MicrosoftMediaImporter
     }
   }
 
+  private String importSingleVideo(VideoModel video, UUID jobId,
+      IdempotentImportExecutor idempotentImportExecutor) throws Exception {
+    BufferedInputStream inputStream = null;
+    if (video.isInTempStore()) {
+      inputStream =
+          new BufferedInputStream(jobStore.getStream(jobId, video.getFetchableUrl()).getStream());
+    } else if (video.getFetchableUrl() != null) {
+      inputStream = new BufferedInputStream(new URL(video.getFetchableUrl()).openStream());
+    } else {
+      throw new IllegalStateException("Don't know how to get the inputStream for " + video);
+    }
+
+    String videoUploadUrl = createUploadSession(video, idempotentImportExecutor);
+
+    // Arrange the data to be uploaded in chunks
+    List<DataChunk> chunksToSend = DataChunk.splitData(inputStream);
+    inputStream.close();
+    final int totalFileSize = chunksToSend.stream().map(DataChunk::getSize).reduce(0, Integer::sum);
+    Preconditions.checkState(
+        chunksToSend.size() != 0, "Data was split into zero chunks %s.", video.getTitle());
+
+    Response chunkResponse = null;
+    for (DataChunk chunk : chunksToSend) {
+      chunkResponse = uploadChunk(chunk, videoUploadUrl, totalFileSize, video.getMediaType());
+    }
+    if (chunkResponse.code() != 200 && chunkResponse.code() != 201) {
+      // Once we upload the last chunk, we should have either 200 or 201.
+      // This should change to a precondition check after we debug some more.
+      monitor.debug(
+          () -> "Received a bad code on completion of uploading chunks", chunkResponse.code());
+    }
+    // get complete file response
+    ResponseBody chunkResponseBody = chunkResponse.body();
+    Map<String, Object> chunkResponseData =
+        objectMapper.readValue(chunkResponseBody.bytes(), Map.class);
+    return (String) chunkResponseData.get("id");
+  }
+
   private String importSinglePhoto(PhotoModel photo, UUID jobId,
       IdempotentImportExecutor idempotentImportExecutor) throws Exception {
     BufferedInputStream inputStream = null;
@@ -238,12 +286,12 @@ public class MicrosoftMediaImporter
     // Forming the URL to create an upload session
     String createSessionUrl;
     if (Strings.isNullOrEmpty(photo.getAlbumId())) {
-      createSessionUrl = String.format(albumlessPhotoUrlTemplate, photo.getTitle(), UPLOAD_PARAMS);
+      createSessionUrl = String.format(albumlessMediaUrlTemplate, photo.getTitle(), UPLOAD_PARAMS);
 
     } else {
       String oneDriveFolderId = idempotentImportExecutor.getCachedValue(photo.getAlbumId());
       createSessionUrl =
-          String.format(uploadPhotoUrlTemplate, oneDriveFolderId, photo.getTitle(), UPLOAD_PARAMS);
+          String.format(uploadMediaUrlTemplate, oneDriveFolderId, photo.getTitle(), UPLOAD_PARAMS);
     }
 
     // create upload session
