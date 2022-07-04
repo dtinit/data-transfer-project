@@ -111,7 +111,7 @@ task createTransferServerDockerfile(type: Dockerfile) {
     description = 'Builds the Transfer Server Dockerfile'
     group = 'docker'
     destFile project.file("${buildDir}/transfer/Dockerfile")
-    from "gcr.io/google-appengine/openjdk:8"
+    from "gcr.io/google-appengine/openjdk:11"
     exposePort 8080 // Port the transfer server is accessed from
     copyFile("build/libs/transfer-all.jar", "/app/transfer.jar")
     defaultCommand("java",
@@ -147,7 +147,7 @@ task createTransferServerDockerfileLocal(type: Dockerfile) {
     group = 'docker'
     dependsOn copyTransferServerDepsLocal
     destFile project.file("${buildDir}/transfer/Dockerfile")
-    from "gcr.io/google-appengine/openjdk:8"
+    from "gcr.io/google-appengine/openjdk:11"
     exposePort 8082 // Port the transfer server is accessed from
     copyFile("build/libs/transfer-all.jar", "/app/transfer.jar")
     copyFile("build/libs/service_acct_creds.json", '/service_acct_creds.json')
