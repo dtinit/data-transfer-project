@@ -19,13 +19,17 @@ package org.datatransferproject.spi.transfer.idempotentexecutor;
 import org.datatransferproject.types.common.ImportableItem;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 
-// TODO(#1111) this class will be deleted soon! do not depend on or continue developing to this
-// class!
-@Deprecated
+/**
+ * DEPRECATED: do not use or continue developing this class as it will be deleted soon.
+ */
+@Deprecated // TODO(#1111) delete this class
 public class IdempotentImportExecutorHelper {
 
-  // TODO(#1111) do not use this method; instead call ImportableItem#getIdempotentId directly.
-  @Deprecated
+  /**
+   * DEPRECATED: do not use this method; instead call {@link ImportableItem#getIdempotentId}
+   * directly.
+   */
+  @Deprecated // TODO(#1111) delete callers of this method
   public static String getPhotoIdempotentId(ImportableItem item) {
       return item.getIdempotentId();
   }
