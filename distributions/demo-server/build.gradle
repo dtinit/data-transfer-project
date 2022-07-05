@@ -47,6 +47,7 @@ plugins {
 
 repositories {
     mavenCentral()
+    jcenter()
 }
 
 def transportType = project.hasProperty('transportType') ? transportType : "jettyrest"
