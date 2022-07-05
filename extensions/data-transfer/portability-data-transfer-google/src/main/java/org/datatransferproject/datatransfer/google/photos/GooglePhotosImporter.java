@@ -286,7 +286,7 @@ public class GooglePhotosImporter
         throw new DestinationMemoryFullException("Google destination storage full", e);
       } else if (StringUtils.contains(e.getMessage(), "The provided ID does not match any albums")) {
         // which means the album was likely deleted by the user
-        // we skip this batch and log album data to dig into the root cause
+        // we skip this batch and log some data to understand it better
         logMissingAlbumDetails(jobId, authData, albumId, e);
       } else {
         throw e;
