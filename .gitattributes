@@ -17,6 +17,6 @@
 *.png binary
 *.jpg binary
 
-package-lock.json linguist-generated -diff -merge
+package-lock.json -diff -merge
 package-lock.json linguist-generated=true
 
