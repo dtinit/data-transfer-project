@@ -302,8 +302,7 @@ public class GooglePhotosImporter
                                       IOException e) {
     monitor.info(() ->
                     format(
-                            "Can't find album %s during createPhotos call, album is likely deleted",
-                            albumId
+                            "Can't find album during createPhotos call, album is likely deleted"
                     ),
             e
     );
@@ -311,16 +310,15 @@ public class GooglePhotosImporter
       GoogleAlbum album = getOrCreatePhotosInterface(jobId, authData).getAlbum(albumId);
       monitor.debug(() ->
                       format(
-                              "Can't find album %s during createPhotos call, album info: isWriteable %b, mediaItemsCount %d",
-                              albumId, album.getIsWritable(), album.getMediaItemsCount()
+                              "Can't find album during createPhotos call, album info: isWriteable %b, mediaItemsCount %d",
+                              album.getIsWritable(), album.getMediaItemsCount()
                       ),
               e
       );
     } catch (Exception ex) {
       monitor.info(() ->
                       format(
-                              "Can't find album %s during getAlbum call",
-                              albumId
+                              "Can't find album during getAlbum call"
                       ),
               ex
       );
