@@ -17,13 +17,16 @@
 package org.datatransferproject.types.common.models.videos;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
+import org.datatransferproject.types.common.ImportableItem;
 
+import javax.annotation.Nonnull;
 import java.util.Objects;
 
-public class VideoAlbum {
+public class VideoAlbum implements ImportableItem {
   private final String id;
   private final String name;
   private final String description;
@@ -42,6 +45,8 @@ public class VideoAlbum {
     this.description = description;
   }
 
+  @JsonIgnore(false)
+  @Override
   public String getName() {
     return name;
   }
@@ -52,6 +57,12 @@ public class VideoAlbum {
 
   public String getId() {
     return id;
+  }
+
+  @Nonnull
+  @Override
+  public String getIdempotentId() {
+    return getId();
   }
 
   @Override
