@@ -73,12 +73,11 @@ public interface CachingExecutor {
   Collection<ErrorDetail> getErrors();
 
   /**
-   * Sets the jobId for the IdempotentImportExecutor sot that any values can be linked to the job.
-   * This can enable resuming a job even in the situation that a transfer worker crashed without
-   * creating duplicate items. Some IdempotentImportExecutors may require this to be called before
-   * execution.
+   * Sets the jobId for the executor so that any values can be linked to the job. This can enable
+   * resuming the job without creating duplicate values even if a worker has crashed. Some executors
+   * may require this to be called before execution.
    *
-   * @param jobId The jobId of the job that this IdempotentImportExecutor is being used for
+   * @param jobId The id of the job this executor is being used for.
    */
   void setJobId(UUID jobId);
 
