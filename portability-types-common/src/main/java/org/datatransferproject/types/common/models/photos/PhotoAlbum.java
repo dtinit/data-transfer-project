@@ -16,18 +16,21 @@
 package org.datatransferproject.types.common.models.photos;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
-
+import org.datatransferproject.types.common.ImportableItem;
 import com.google.common.base.Strings;
+
+import javax.annotation.Nonnull;
 import java.util.Objects;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class PhotoAlbum {
+public class PhotoAlbum implements ImportableItem {
   private final String id;
   private String name;
   private final String description;
@@ -44,6 +47,8 @@ public class PhotoAlbum {
     this.description = description;
   }
 
+  @JsonIgnore(false)
+  @Override
   public String getName() {
     return name;
   }
@@ -54,6 +59,12 @@ public class PhotoAlbum {
 
   public String getId() {
     return id;
+  }
+
+  @Nonnull
+  @Override
+  public String getIdempotentId() {
+    return getId();
   }
 
   @Override
