@@ -85,7 +85,6 @@ public class BackblazePhotosImporter
       for (PhotoModel photo : data.getPhotos()) {
         idempotentExecutor.importAndSwallowIOExceptions(
             photo, p -> importSinglePhoto(idempotentExecutor, b2Client, jobId, p));
-
       }
     }
 
