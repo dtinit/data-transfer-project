@@ -83,12 +83,9 @@ public class BackblazePhotosImporter
 
     if (data.getPhotos() != null && data.getPhotos().size() > 0) {
       for (PhotoModel photo : data.getPhotos()) {
-        idempotentExecutor.executeAndSwallowIOExceptions(
-            photo.getIdempotentId(),
-            photo.getTitle(),
-            () -> importSinglePhoto(idempotentExecutor, b2Client, jobId, photo));
         idempotentExecutor.importAndSwallowIOExceptions(
             photo, p -> importSinglePhoto(idempotentExecutor, b2Client, jobId, p));
+
       }
     }
 
