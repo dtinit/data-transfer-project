@@ -282,9 +282,11 @@ public class GooglePhotosImporter
         }
       }
     } catch (IOException e) {
-      if (StringUtils.contains(e.getMessage(), "The remaining storage in the user's account is not enough")) {
+      if (StringUtils.contains(
+          e.getMessage(), "The remaining storage in the user's account is not enough")) {
         throw new DestinationMemoryFullException("Google destination storage full", e);
-      } else if (StringUtils.contains(e.getMessage(), "The provided ID does not match any albums")) {
+      } else if (StringUtils.contains(
+          e.getMessage(), "The provided ID does not match any albums")) {
         // which means the album was likely deleted by the user
         // we skip this batch and log some data to understand it better
         logMissingAlbumDetails(jobId, authData, albumId, e);
@@ -296,41 +298,29 @@ public class GooglePhotosImporter
     return totalBytes;
   }
 
-  private void logMissingAlbumDetails(UUID jobId,
-                                      TokensAndUrlAuthData authData,
-                                      String albumId,
-                                      IOException e) {
-    monitor.info(() ->
-                    format(
-                            "Can't find album during createPhotos call, album is likely deleted"
-                    ),
-            e
-    );
+  private void logMissingAlbumDetails(
+      UUID jobId, TokensAndUrlAuthData authData, String albumId, IOException e) {
+    monitor.info(
+        () -> format("Can't find album during createPhotos call, album is likely deleted"), e);
     try {
       GoogleAlbum album = getOrCreatePhotosInterface(jobId, authData).getAlbum(albumId);
-      monitor.debug(() ->
-                      format(
-                              "Can't find album during createPhotos call, album info: isWriteable %b, mediaItemsCount %d",
-                              album.getIsWritable(), album.getMediaItemsCount()
-                      ),
-              e
-      );
+      monitor.debug(
+          () ->
+              format(
+                  "Can't find album during createPhotos call, album info: isWriteable %b, mediaItemsCount %d",
+                  album.getIsWritable(), album.getMediaItemsCount()),
+          e);
     } catch (Exception ex) {
-      monitor.info(() ->
-                      format(
-                              "Can't find album during getAlbum call"
-                      ),
-              ex
-      );
+      monitor.info(() -> format("Can't find album during getAlbum call"), ex);
     }
   }
 
   private long processMediaResult(
-          NewMediaItemResult mediaItem,
-          ImportableItem item,
-          IdempotentImportExecutor executor,
-          long bytes)
-          throws Exception {
+      NewMediaItemResult mediaItem,
+      ImportableItem item,
+      IdempotentImportExecutor executor,
+      long bytes)
+      throws Exception {
     Status status = mediaItem.getStatus();
     if (status.getCode() == Code.OK_VALUE) {
       PhotoResult photoResult = new PhotoResult(mediaItem.getMediaItem().getId(), bytes);

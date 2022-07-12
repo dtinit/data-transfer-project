@@ -223,7 +223,8 @@ public class GooglePhotosImporterTest {
     assertFalse(executor.isKeyCached(failedDataId));
     ErrorDetail errorDetail = executor.getErrors().iterator().next();
     assertEquals(failedDataId, errorDetail.id());
-    assertThat(errorDetail.exception(), CoreMatchers.containsString("Media item could not be created."));
+    assertThat(
+        errorDetail.exception(), CoreMatchers.containsString("Media item could not be created."));
   }
 
   @Test
@@ -329,43 +330,43 @@ public class GooglePhotosImporterTest {
   @Test
   public void importPhotoInTempStoreFailure() throws Exception {
     PhotoModel photoModel =
-            new PhotoModel(
-                    PHOTO_TITLE,
-                    IMG_URI,
-                    PHOTO_DESCRIPTION,
-                    JPEG_MEDIA_TYPE,
-                    "oldPhotoID1",
-                    OLD_ALBUM_ID,
-                    true);
+        new PhotoModel(
+            PHOTO_TITLE,
+            IMG_URI,
+            PHOTO_DESCRIPTION,
+            JPEG_MEDIA_TYPE,
+            "oldPhotoID1",
+            OLD_ALBUM_ID,
+            true);
 
     Mockito.when(googlePhotosInterface.uploadPhotoContent(any()))
-            .thenThrow(new IOException("Unit Testing"));
+        .thenThrow(new IOException("Unit Testing"));
     JobStore jobStore = Mockito.mock(LocalJobStore.class);
     Mockito.when(jobStore.getStream(any(), any()))
-            .thenReturn(
-                    new TemporaryPerJobDataStore.InputStreamWrapper(
-                            new ByteArrayInputStream("TestingBytes".getBytes())));
+        .thenReturn(
+            new TemporaryPerJobDataStore.InputStreamWrapper(
+                new ByteArrayInputStream("TestingBytes".getBytes())));
     Mockito.doNothing().when(jobStore).removeData(any(), anyString());
 
     GooglePhotosImporter googlePhotosImporter =
-            new GooglePhotosImporter(
-                    null, jobStore, null, null, googlePhotosInterface, null, null, 1.0);
+        new GooglePhotosImporter(
+            null, jobStore, null, null, googlePhotosInterface, null, null, 1.0);
 
     BatchMediaItemResponse batchMediaItemResponse =
-            new BatchMediaItemResponse(
-                    new NewMediaItemResult[] {buildMediaItemResult("token1", Code.OK_VALUE)});
+        new BatchMediaItemResponse(
+            new NewMediaItemResult[] {buildMediaItemResult("token1", Code.OK_VALUE)});
 
     Mockito.when(googlePhotosInterface.createPhotos(any(NewMediaItemUpload.class)))
-            .thenReturn(batchMediaItemResponse);
+        .thenReturn(batchMediaItemResponse);
 
     UUID jobId = UUID.randomUUID();
 
     googlePhotosImporter.importPhotoBatch(
-            jobId,
-            Mockito.mock(TokensAndUrlAuthData.class),
-            Lists.newArrayList(photoModel),
-            executor,
-            NEW_ALBUM_ID);
+        jobId,
+        Mockito.mock(TokensAndUrlAuthData.class),
+        Lists.newArrayList(photoModel),
+        executor,
+        NEW_ALBUM_ID);
     Mockito.verify(jobStore, Mockito.times(0)).removeData(any(), anyString());
     Mockito.verify(jobStore, Mockito.times(1)).getStream(any(), anyString());
   }
@@ -373,32 +374,32 @@ public class GooglePhotosImporterTest {
   @Test
   public void importPhotoFailedToFindAlbum() throws Exception {
     PhotoModel photoModel =
-            new PhotoModel(
-                    PHOTO_TITLE,
-                    IMG_URI,
-                    PHOTO_DESCRIPTION,
-                    JPEG_MEDIA_TYPE,
-                    "oldPhotoID1",
-                    OLD_ALBUM_ID,
-                    true);
+        new PhotoModel(
+            PHOTO_TITLE,
+            IMG_URI,
+            PHOTO_DESCRIPTION,
+            JPEG_MEDIA_TYPE,
+            "oldPhotoID1",
+            OLD_ALBUM_ID,
+            true);
 
     Mockito.when(googlePhotosInterface.uploadPhotoContent(any())).thenReturn("token1", "token2");
     JobStore jobStore = Mockito.mock(LocalJobStore.class);
     Mockito.when(jobStore.getStream(any(), any()))
-            .thenReturn(
-                    new TemporaryPerJobDataStore.InputStreamWrapper(
-                            new ByteArrayInputStream("TestingBytes".getBytes())));
+        .thenReturn(
+            new TemporaryPerJobDataStore.InputStreamWrapper(
+                new ByteArrayInputStream("TestingBytes".getBytes())));
     googlePhotosImporter =
-            new GooglePhotosImporter(
-                    null, jobStore, null, null, googlePhotosInterface, imageStreamProvider, monitor, 1.0);
+        new GooglePhotosImporter(
+            null, jobStore, null, null, googlePhotosInterface, imageStreamProvider, monitor, 1.0);
     Mockito.when(googlePhotosInterface.createPhotos(any(NewMediaItemUpload.class)))
-            .thenThrow(new IOException("The provided ID does not match any albums"));
+        .thenThrow(new IOException("The provided ID does not match any albums"));
 
     GoogleAlbum responseAlbum = new GoogleAlbum();
-    Mockito.when(googlePhotosInterface.getAlbum(any()))
-            .thenReturn(responseAlbum);
+    Mockito.when(googlePhotosInterface.getAlbum(any())).thenReturn(responseAlbum);
 
-    long bytes = googlePhotosImporter.importPhotoBatch(
+    long bytes =
+        googlePhotosImporter.importPhotoBatch(
             uuid,
             Mockito.mock(TokensAndUrlAuthData.class),
             Lists.newArrayList(photoModel),
@@ -409,41 +410,39 @@ public class GooglePhotosImporterTest {
     assertEquals(0, bytes);
   }
 
-
   @Test(expected = IOException.class)
   public void importPhotoCreatePhotosOtherException() throws Exception {
     PhotoModel photoModel =
-            new PhotoModel(
-                    PHOTO_TITLE,
-                    IMG_URI,
-                    PHOTO_DESCRIPTION,
-                    JPEG_MEDIA_TYPE,
-                    "oldPhotoID1",
-                    OLD_ALBUM_ID,
-                    true);
+        new PhotoModel(
+            PHOTO_TITLE,
+            IMG_URI,
+            PHOTO_DESCRIPTION,
+            JPEG_MEDIA_TYPE,
+            "oldPhotoID1",
+            OLD_ALBUM_ID,
+            true);
 
     Mockito.when(googlePhotosInterface.uploadPhotoContent(any())).thenReturn("token1", "token2");
     JobStore jobStore = Mockito.mock(LocalJobStore.class);
     Mockito.when(jobStore.getStream(any(), any()))
-            .thenReturn(
-                    new TemporaryPerJobDataStore.InputStreamWrapper(
-                            new ByteArrayInputStream("TestingBytes".getBytes())));
+        .thenReturn(
+            new TemporaryPerJobDataStore.InputStreamWrapper(
+                new ByteArrayInputStream("TestingBytes".getBytes())));
     googlePhotosImporter =
-            new GooglePhotosImporter(
-                    null, jobStore, null, null, googlePhotosInterface, imageStreamProvider, monitor, 1.0);
+        new GooglePhotosImporter(
+            null, jobStore, null, null, googlePhotosInterface, imageStreamProvider, monitor, 1.0);
 
     Mockito.when(googlePhotosInterface.createPhotos(any(NewMediaItemUpload.class)))
-            .thenThrow(new IOException("Some other exception"));
+        .thenThrow(new IOException("Some other exception"));
 
     GoogleAlbum responseAlbum = new GoogleAlbum();
-    Mockito.when(googlePhotosInterface.getAlbum(any()))
-            .thenReturn(responseAlbum);
+    Mockito.when(googlePhotosInterface.getAlbum(any())).thenReturn(responseAlbum);
 
     googlePhotosImporter.importPhotoBatch(
-            uuid,
-            Mockito.mock(TokensAndUrlAuthData.class),
-            Lists.newArrayList(photoModel),
-            executor,
-            NEW_ALBUM_ID);
+        uuid,
+        Mockito.mock(TokensAndUrlAuthData.class),
+        Lists.newArrayList(photoModel),
+        executor,
+        NEW_ALBUM_ID);
   }
 }
