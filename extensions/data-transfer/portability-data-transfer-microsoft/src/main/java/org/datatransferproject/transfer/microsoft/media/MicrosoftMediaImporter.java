@@ -46,6 +46,7 @@ import org.datatransferproject.transfer.microsoft.MicrosoftTransmogrificationCon
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
 import org.datatransferproject.types.common.DownloadableItem;
 import org.datatransferproject.types.common.Fileable;
+import org.datatransferproject.types.common.FolderItem;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
@@ -196,7 +197,8 @@ public class MicrosoftMediaImporter
     }
   }
 
-  private <T extends Fileable, DownloadableItem> String importDownloadableItem(
+  // TODO(zacsh) DO NOT MERGE pull this T interface out somewhere common.
+  private <T extends Fileable & DownloadableItem & FolderItem> String importDownloadableItem(
       T item, UUID jobId,
       IdempotentImportExecutor idempotentImportExecutor) throws Exception {
     BufferedInputStream inputStream = null;
@@ -244,18 +246,18 @@ public class MicrosoftMediaImporter
 
   // Request an upload session to the OneDrive api so that we can upload chunks
   // to the returned URL
-  private String createUploadSession(
-      DownloadableItem downloadableItem, IdempotentImportExecutor idempotentImportExecutor)
+  private <T extends Fileable & DownloadableItem & FolderItem> String createUploadSession(
+      T item, IdempotentImportExecutor idempotentImportExecutor)
       throws IOException, CopyExceptionWithFailureReason {
     // Forming the URL to create an upload session
     String createSessionUrl;
-    if (Strings.isNullOrEmpty(downloadableItem.getFolderId())) {
-      createSessionUrl = String.format(albumlessMediaUrlTemplate, downloadableItem.getName(), UPLOAD_PARAMS);
+    if (Strings.isNullOrEmpty(item.getFolderId())) {
+      createSessionUrl = String.format(albumlessMediaUrlTemplate, item.getName(), UPLOAD_PARAMS);
 
     } else {
-      String oneDriveFolderId = idempotentImportExecutor.getCachedValue(downloadableItem.getFolderId());
+      String oneDriveFolderId = idempotentImportExecutor.getCachedValue(item.getFolderId());
       createSessionUrl =
-          String.format(uploadMediaUrlTemplate, oneDriveFolderId, downloadableItem.getName(), UPLOAD_PARAMS);
+          String.format(uploadMediaUrlTemplate, oneDriveFolderId, item.getName(), UPLOAD_PARAMS);
     }
 
     // create upload session
@@ -276,7 +278,7 @@ public class MicrosoftMediaImporter
     createSessionRequestBuilder.post(RequestBody.create(
         MediaType.parse("application/json"), objectMapper.writeValueAsString(ImmutableMap.of())));
 
-    // Make the call, we should get an upload url for downloadableItem data in a 200 response
+    // Make the call, we should get an upload url for item data in a 200 response
     Response response = client.newCall(createSessionRequestBuilder.build()).execute();
     int code = response.code();
     ResponseBody responseBody = response.body();
@@ -306,15 +308,15 @@ public class MicrosoftMediaImporter
               + "body: %s\n"
               + "request url: %s\n"
               + "bearer token: %s\n"
-              + " downloadableItem: %s\n", // For debugging 404s on upload
+              + " item: %s\n", // For debugging 404s on upload
           code, response.message(), response.body().string(), createSessionUrl,
-          credential.getAccessToken(), downloadableItem));
+          credential.getAccessToken(), item));
     } else if (code != 200) {
       monitor.info(() -> String.format("Got an unexpected non-200, non-error response code"));
     }
     // make sure we have a non-null response body
     Preconditions.checkState(
-        responseBody != null, "Got Null Body when creating downloadableItem upload session %s", downloadableItem);
+        responseBody != null, "Got Null Body when creating item upload session %s", item);
     // convert to a map
     final Map<String, Object> responseData =
         objectMapper.readValue(responseBody.bytes(), Map.class);
