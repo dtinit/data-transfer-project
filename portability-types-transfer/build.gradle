@@ -22,9 +22,10 @@ plugins {
 dependencies {
     
     compile project(':portability-api-launcher')
-    
     compile project(":portability-types-common")
-    compile("com.google.auto.value:auto-value:${autoValueVersion}")
+
+    compileOnly "com.google.auto.value:auto-value-annotations:${autoValueVersion}"
+    annotationProcessor "com.google.auto.value:auto-value:${autoValueVersion}"
 
     compile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}")
     
