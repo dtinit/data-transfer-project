@@ -52,6 +52,7 @@ import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.apache.commons.lang3.tuple.Pair;
 
 /**
  * Imports albums with their photos and videos to OneDrive using the Microsoft Graph API.
@@ -77,14 +78,12 @@ public class MicrosoftMediaImporter
       TemporaryPerJobDataStore jobStore, Monitor monitor,
       MicrosoftCredentialFactory credentialFactory) {
 
-    /* TODO(zacsh) DO NOT MERGE - determine where this magic string "/v1.0/me/drive/special/photos/children" came from*/
     createFolderUrl = baseUrl + "/v1.0/me/drive/special/photo-video/children";
     // first param is the folder id, second param is the file name
     // /me/drive/items/{parent-id}:/{filename}:/content;
     uploadMediaUrlTemplate = baseUrl + "/v1.0/me/drive/items/%s:/%s:/createUploadSession%s";
     albumlessMediaUrlTemplate =
         baseUrl + "/v1.0/me/drive/special/photo-video:/%s:/createUploadSession%s";
-    /* TODO(zacsh) DO NOT MERGE - determine where this magic string "/v1.0/me/drive/special/photos:/%s:/createUploadSession%s" came from*/
 
     this.client = client;
     this.objectMapper = objectMapper;
@@ -244,31 +243,29 @@ public class MicrosoftMediaImporter
     return this.credential;
   }
 
+  private Pair<Request, Response> tryWithCreds(Request.Builder requestBuilder) throws IOException {
+    Request request = requestBuilder.build();
+    Response response = client.newCall(request).execute();
+
+    // If there was an unauthorized error, then try refreshing the creds
+    if (response.code() != 401) {
+      return Pair.of(request, response);
+    }
+
+    this.credentialFactory.refreshCredential(credential);
+    monitor.info(() -> "Refreshed authorization token successfuly");
+
+    requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
+    request = requestBuilder.build();
+    return Pair.of(request, client.newCall(request).execute());
+  }
+
   // Request an upload session to the OneDrive api so that we can upload chunks
   // to the returned URL
   private <T extends Fileable & DownloadableItem & FolderItem> String createUploadSession(
       T item, IdempotentImportExecutor idempotentImportExecutor)
       throws IOException, CopyExceptionWithFailureReason {
-    // Forming the URL to create an upload session
-    String createSessionUrl;
-    if (Strings.isNullOrEmpty(item.getFolderId())) {
-      createSessionUrl = String.format(albumlessMediaUrlTemplate, item.getName(), UPLOAD_PARAMS);
-
-    } else {
-      String oneDriveFolderId = idempotentImportExecutor.getCachedValue(item.getFolderId());
-      createSessionUrl =
-          String.format(uploadMediaUrlTemplate, oneDriveFolderId, item.getName(), UPLOAD_PARAMS);
-    }
-
-    // create upload session
-    // POST to /me/drive/items/{folder_id}:/{file_name}:/createUploadSession OR
-    // /me/drive/items/root:/Photos-Videos/{file_name}:/createUploadSession get {uploadurl} from response
-    //
-    // TODO(zacsh) DO NOT MERGE figure out where the original string above came from (what does the
-    // above comment even mean?); was originally:
-    //       /me/drive/items/root:/Photos-Videos/{file_name}:/createUploadSession get {uploadurl} from response
-    //
-    Request.Builder createSessionRequestBuilder = new Request.Builder().url(createSessionUrl);
+    Request.Builder createSessionRequestBuilder = buildCreateUploadSessionPath(item, idempotentImportExecutor);
 
     // Auth headers
     createSessionRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
@@ -279,21 +276,9 @@ public class MicrosoftMediaImporter
         MediaType.parse("application/json"), objectMapper.writeValueAsString(ImmutableMap.of())));
 
     // Make the call, we should get an upload url for item data in a 200 response
-    Response response = client.newCall(createSessionRequestBuilder.build()).execute();
+    Pair<Request, Response> reqResp = tryWithCreds(createSessionRequestBuilder);
+    Response response = reqResp.getRight();
     int code = response.code();
-    ResponseBody responseBody = response.body();
-
-    // If there was an unauthorized error, then try refreshing the creds
-    if (code == 401) {
-      this.credentialFactory.refreshCredential(credential);
-      monitor.info(() -> "Refreshed authorization token successfuly");
-
-      createSessionRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
-      Response newResponse = client.newCall(createSessionRequestBuilder.build()).execute();
-      code = newResponse.code();
-      responseBody = newResponse.body();
-    }
-
     if (code == 403 && response.message().contains("Access Denied")) {
       throw new PermissionDeniedException("User access to Microsoft One Drive was denied",
           new IOException(
@@ -309,11 +294,12 @@ public class MicrosoftMediaImporter
               + "request url: %s\n"
               + "bearer token: %s\n"
               + " item: %s\n", // For debugging 404s on upload
-          code, response.message(), response.body().string(), createSessionUrl,
+          code, response.message(), response.body().string(), reqResp.getLeft().url(),
           credential.getAccessToken(), item));
     } else if (code != 200) {
       monitor.info(() -> String.format("Got an unexpected non-200, non-error response code"));
     }
+    ResponseBody responseBody = response.body();
     // make sure we have a non-null response body
     Preconditions.checkState(
         responseBody != null, "Got Null Body when creating item upload session %s", item);
@@ -323,6 +309,28 @@ public class MicrosoftMediaImporter
     // return the session's upload url
     Preconditions.checkState(responseData.containsKey("uploadUrl"), "No uploadUrl :(");
     return (String) responseData.get("uploadUrl");
+  }
+
+  /**
+   * Forms the URL to create an upload session.
+   *
+   * Creates an upload session path for one of two cases:
+   * - 1) POST to /me/drive/items/{folder_id}:/{file_name}:/createUploadSession
+   * - 2) GET {uploadurl} from /me/drive/items/root:/photos-video/{file_name}:/createUploadSession
+   */
+  private <T extends Fileable & DownloadableItem & FolderItem> Request.Builder buildCreateUploadSessionPath(
+      T item,
+      IdempotentImportExecutor idempotentImportExecutor) {
+    String createSessionUrl;
+    if (Strings.isNullOrEmpty(item.getFolderId())) {
+      createSessionUrl = String.format(albumlessMediaUrlTemplate, item.getName(), UPLOAD_PARAMS);
+    } else {
+      String oneDriveFolderId = idempotentImportExecutor.getCachedValue(item.getFolderId());
+      createSessionUrl =
+          String.format(uploadMediaUrlTemplate, oneDriveFolderId, item.getName(), UPLOAD_PARAMS);
+    }
+
+    return new Request.Builder().url(createSessionUrl);
   }
 
   // Uploads a single DataChunk to an upload URL
