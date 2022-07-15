@@ -308,7 +308,7 @@ public class GooglePhotosImporter
           () ->
               format(
                   "Can't find album during createPhotos call, album info: isWriteable %b, mediaItemsCount %d",
-                  album.getIsWritable(), album.getMediaItemsCount()),
+                  album.getIsWriteable(), album.getMediaItemsCount()),
           e);
     } catch (Exception ex) {
       monitor.info(() -> format("Can't find album during getAlbum call"), ex);
