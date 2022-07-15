@@ -38,7 +38,7 @@ public class GoogleAlbum {
 
   public String getTitle() { return title; }
 
-  public boolean getIsWritable() { return isWriteable; }
+  public boolean getIsWriteable() { return isWriteable; }
 
   public long getMediaItemsCount() { return mediaItemsCount; }
 
