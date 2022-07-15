@@ -40,7 +40,6 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
-import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorHelper;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
@@ -150,7 +149,8 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   private void importSinglePhoto(
       IdempotentImportExecutor idempotentExecutor, UUID id, PhotoModel photo) throws Exception {
     String photoId =
-        idempotentExecutor.executeAndSwallowIOExceptions(IdempotentImportExecutorHelper.getPhotoIdempotentId(photo),
+        idempotentExecutor.executeAndSwallowIOExceptions(
+            photo.getIdempotentId(),
             photo.getTitle(),
             () -> uploadPhoto(photo, id));
     if (photoId == null) {
