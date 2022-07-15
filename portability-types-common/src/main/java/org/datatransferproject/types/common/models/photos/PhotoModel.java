@@ -25,11 +25,9 @@ import java.util.Date;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.datatransferproject.types.common.DownloadableItem;
-import org.datatransferproject.types.common.Fileable;
-import org.datatransferproject.types.common.FolderItem;
+import org.datatransferproject.types.common.DownloadableFile;
 
-public class PhotoModel implements DownloadableItem, Fileable, FolderItem {
+public class PhotoModel implements DownloadableFile {
 
   private String title;
   private final String fetchableUrl;
@@ -82,7 +80,7 @@ public class PhotoModel implements DownloadableItem, Fileable, FolderItem {
         null  /*uploadedTime*/);
   }
 
-  // TODO(zacsh) convert all callers to getName() which is an interface guarantee of this class's
+  // TODO(zacsh) convert all callers to ImportableItem#getName() which is an interface guarantee of this class's
   // being a DownloadableItem. Then delete this method.
   public String getTitle() {
     return title;
@@ -191,6 +189,7 @@ public class PhotoModel implements DownloadableItem, Fileable, FolderItem {
 
   @Nullable
   @Override
+  // required for org.datatransferproject.types.common.ImportableItem
   public String getName() {
     return getTitle();
   }

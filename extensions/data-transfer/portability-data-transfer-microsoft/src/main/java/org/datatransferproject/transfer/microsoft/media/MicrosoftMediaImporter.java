@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableMap;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,13 +45,9 @@ import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.transfer.microsoft.DataChunk;
 import org.datatransferproject.transfer.microsoft.MicrosoftTransmogrificationConfig;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
-import org.datatransferproject.types.common.DownloadableItem;
-import org.datatransferproject.types.common.Fileable;
-import org.datatransferproject.types.common.FolderItem;
+import org.datatransferproject.types.common.DownloadableFile;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
-import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -112,17 +109,10 @@ public class MicrosoftMediaImporter
           album.getId(), album.getName(), () -> createOneDriveFolder(album));
     }
 
-    for (VideoModel videoModel : resource.getVideos()) {
-      idempotentImportExecutor.executeAndSwallowIOExceptions(
-          videoModel.getIdempotentId(), videoModel.getName(),
-          () -> importDownloadableItem(videoModel, jobId, idempotentImportExecutor));
-    }
+    executeIdempotentImport(jobId, idempotentImportExecutor, resource.getVideos());
 
-    for (PhotoModel photoModel : resource.getPhotos()) {
-      idempotentImportExecutor.executeAndSwallowIOExceptions(
-          photoModel.getIdempotentId(), photoModel.getTitle(),
-          () -> importDownloadableItem(photoModel, jobId, idempotentImportExecutor));
-    }
+    executeIdempotentImport(jobId, idempotentImportExecutor, resource.getPhotos());
+
     return ImportResult.OK;
   }
 
@@ -196,9 +186,19 @@ public class MicrosoftMediaImporter
     }
   }
 
-  // TODO(zacsh) DO NOT MERGE pull this T interface out somewhere common.
-  private <T extends Fileable & DownloadableItem & FolderItem> String importDownloadableItem(
-      T item, UUID jobId,
+  private void executeIdempotentImport(
+      UUID jobId,
+      IdempotentImportExecutor idempotentImportExecutor,
+      Collection<? extends DownloadableFile> downloadableFiles) throws Exception {
+    for (DownloadableFile downloadableFile : downloadableFiles) {
+      idempotentImportExecutor.executeAndSwallowIOExceptions(
+          downloadableFile.getIdempotentId(), downloadableFile.getName(),
+          () -> importDownloadableItem(downloadableFile, jobId, idempotentImportExecutor));
+    }
+  }
+
+  private String importDownloadableItem(
+      DownloadableFile item, UUID jobId,
       IdempotentImportExecutor idempotentImportExecutor) throws Exception {
     BufferedInputStream inputStream = null;
     if (item.isInTempStore()) {
@@ -262,8 +262,8 @@ public class MicrosoftMediaImporter
 
   // Request an upload session to the OneDrive api so that we can upload chunks
   // to the returned URL
-  private <T extends Fileable & DownloadableItem & FolderItem> String createUploadSession(
-      T item, IdempotentImportExecutor idempotentImportExecutor)
+  private String createUploadSession(
+      DownloadableFile item, IdempotentImportExecutor idempotentImportExecutor)
       throws IOException, CopyExceptionWithFailureReason {
     Request.Builder createSessionRequestBuilder = buildCreateUploadSessionPath(item, idempotentImportExecutor);
 
@@ -318,8 +318,8 @@ public class MicrosoftMediaImporter
    * - 1) POST to /me/drive/items/{folder_id}:/{file_name}:/createUploadSession
    * - 2) GET {uploadurl} from /me/drive/items/root:/photos-video/{file_name}:/createUploadSession
    */
-  private <T extends Fileable & DownloadableItem & FolderItem> Request.Builder buildCreateUploadSessionPath(
-      T item,
+  private Request.Builder buildCreateUploadSessionPath(
+      DownloadableFile item,
       IdempotentImportExecutor idempotentImportExecutor) {
     String createSessionUrl;
     if (Strings.isNullOrEmpty(item.getFolderId())) {
