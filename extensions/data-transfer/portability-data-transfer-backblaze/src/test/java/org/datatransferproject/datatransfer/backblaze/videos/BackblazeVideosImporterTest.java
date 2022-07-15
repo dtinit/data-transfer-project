@@ -104,7 +104,7 @@ public class BackblazeVideosImporterTest {
         String title = "title";
         String videoUrl = "videoUrl";
         String description = "description";
-        String encodingFormat = "UTF-8";
+        String encodingFormat = "video/mp4";
         String albumName = "albumName";
         String albumId = "albumId";
         String response = "response";

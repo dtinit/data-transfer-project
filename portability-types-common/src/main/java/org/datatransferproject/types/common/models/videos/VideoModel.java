@@ -65,9 +65,6 @@ public class VideoModel extends MediaObject implements DownloadableFile {
   @JsonIgnore
   // requirement of org.datatransferproject.types.common.Fileable
   public String getMimeType() {
-    // TODO(zacsh) DO NOT MERGE - not everyone is using encodingFormat in this way - I swear I saw
-    // some code using "UTF-8" as a string value. Fix and then do a better job documenting the
-    // constructors of all Fileable models!
     return getEncodingFormat();
   }
 
