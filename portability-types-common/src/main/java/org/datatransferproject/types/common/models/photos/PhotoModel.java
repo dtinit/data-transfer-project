@@ -95,7 +95,7 @@ public class PhotoModel implements DownloadableFile {
     return description;
   }
 
-  // TODO(zacsh) remove this in favor of getFolderId
+  // TODO(zacsh) remove this in favor of getMimeType
   public String getMediaType() {
     return mediaType;
   }
