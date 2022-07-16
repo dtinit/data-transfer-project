@@ -5,7 +5,7 @@ package org.datatransferproject.types.common;
  */
 public interface Fileable {
   /**
-   * Returns a standard MIME-type string one would expect to find if they inspected th edownloaded
+   * Returns a standard MIME-type string one would expect to find if they inspected the downloaded
    * version of this file with standard tools on their PC.
    *
    * See https://en.wikipedia.org/wiki/Media_type
