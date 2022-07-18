@@ -15,13 +15,14 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.spi.transfer.provider.converter.PhotoToMediaConversionExporter;
 import org.datatransferproject.transfer.microsoft.calendar.MicrosoftCalendarExporter;
 import org.datatransferproject.transfer.microsoft.calendar.MicrosoftCalendarImporter;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
 import org.datatransferproject.transfer.microsoft.contacts.MicrosoftContactsExporter;
 import org.datatransferproject.transfer.microsoft.contacts.MicrosoftContactsImporter;
 import org.datatransferproject.transfer.microsoft.offline.MicrosoftOfflineDataExporter;
+import org.datatransferproject.transfer.microsoft.media.MicrosoftMediaExporter;
+import org.datatransferproject.transfer.microsoft.media.MicrosoftMediaImporter;
 import org.datatransferproject.transfer.microsoft.photos.MicrosoftPhotosExporter;
 import org.datatransferproject.transfer.microsoft.photos.MicrosoftPhotosImporter;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerService;
@@ -33,7 +34,7 @@ import java.io.IOException;
 /** Bootstraps the Microsoft data transfer services. */
 public class MicrosoftTransferExtension implements TransferExtension {
   public static final String SERVICE_ID = "microsoft";
-  // TODO: centralized place, or enum type for these?
+  // TODO(#1065) centralized place, or enum type for these?
   private static final String CONTACTS = "CONTACTS";
   private static final String CALENDAR = "CALENDAR";
   private static final String PHOTOS = "PHOTOS";
@@ -132,6 +133,8 @@ public class MicrosoftTransferExtension implements TransferExtension {
     importBuilder.put(
         PHOTOS, new MicrosoftPhotosImporter(BASE_GRAPH_URL, client, mapper, jobStore, monitor,
           credentialFactory));
+    importBuilder.put(MEDIA, new MicrosoftMediaImporter(BASE_GRAPH_URL, client, mapper, jobStore, monitor,
+          credentialFactory));
     importerMap = importBuilder.build();
 
     ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();
@@ -141,10 +144,8 @@ public class MicrosoftTransferExtension implements TransferExtension {
     exporterBuilder.put(
         CALENDAR,
         new MicrosoftCalendarExporter(BASE_GRAPH_URL, client, mapper, transformerService));
-    // TODO(#1065) don't require this manual mapping; just do this automatically inside DTP
-    MicrosoftPhotosExporter photosExporter = new MicrosoftPhotosExporter(credentialFactory, jsonFactory, monitor);
-    exporterBuilder.put(PHOTOS, photosExporter);
-    exporterBuilder.put(MEDIA, new PhotoToMediaConversionExporter(photosExporter));
+    exporterBuilder.put(PHOTOS, new MicrosoftPhotosExporter(credentialFactory, jsonFactory, monitor));
+    exporterBuilder.put(MEDIA, new MicrosoftMediaExporter(credentialFactory, jsonFactory, monitor));
     exporterBuilder.put(
         OFFLINE_DATA, new MicrosoftOfflineDataExporter(BASE_GRAPH_URL, client, mapper));
 
