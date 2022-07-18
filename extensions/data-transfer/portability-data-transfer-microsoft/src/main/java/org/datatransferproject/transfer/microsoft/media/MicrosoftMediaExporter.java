@@ -40,6 +40,7 @@ import org.datatransferproject.types.common.models.IdOnlyContainerResource;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 /**
@@ -88,6 +89,7 @@ public class MicrosoftMediaExporter
         Optional.ofNullable(paginationToken), jobId);
   }
 
+  // TODO make this private and tests the real export().
   @VisibleForTesting
   ExportResult<MediaContainerResource> exportOneDrivePhotos(TokensAndUrlAuthData authData,
       Optional<IdOnlyContainerResource> albumData, Optional<PaginationData> paginationData,
@@ -107,12 +109,13 @@ public class MicrosoftMediaExporter
           MicrosoftSpecialFolder.FolderType.photos);
     }
 
-    PaginationData nextPageData = SetNextPageToken(driveItemsResponse);
+    PaginationData nextPageData = setNextPageToken(driveItemsResponse);
     ContinuationData continuationData = new ContinuationData(nextPageData);
     MediaContainerResource containerResource;
     MicrosoftDriveItem[] driveItems = driveItemsResponse.getDriveItems();
     List<MediaAlbum> albums = new ArrayList<>();
     List<PhotoModel> photos = new ArrayList<>();
+    List<VideoModel> videos = new ArrayList<>();
 
     if (driveItems != null && driveItems.length > 0) {
       for (MicrosoftDriveItem driveItem : driveItems) {
@@ -120,55 +123,74 @@ public class MicrosoftMediaExporter
         if (album != null) {
           albums.add(album);
           continuationData.addContainerResource(new IdOnlyContainerResource(driveItem.id));
+          continue;
         }
 
         PhotoModel photo = tryConvertDriveItemToPhotoModel(albumId, driveItem, jobId);
         if (photo != null) {
           photos.add(photo);
+          continue;
+        }
+
+        VideoModel video = tryConvertDriveItemToVideoModel(albumId, driveItem, jobId);
+        if (video != null) {
+          videos.add(video);
+          continue;
         }
       }
     }
 
     ExportResult.ResultType result =
         nextPageData == null ? ExportResult.ResultType.END : ExportResult.ResultType.CONTINUE;
-    containerResource = new MediaContainerResource(albums, photos, null /*videos*/);
+    containerResource = new MediaContainerResource(albums, photos, videos);
     return new ExportResult<>(result, containerResource, continuationData);
   }
 
   private MediaAlbum tryConvertDriveItemToMediaAlbum(MicrosoftDriveItem driveItem, UUID jobId) {
-    if (driveItem.folder != null) {
-      MediaAlbum photoAlbum = new MediaAlbum(driveItem.id, driveItem.name, driveItem.description);
-      monitor.debug(
-          () -> String.format("%s: Microsoft OneDrive exporting album: %s", jobId, photoAlbum));
-      return photoAlbum;
+    if (!driveItem.isFolder()) {
+      return null;
     }
 
-    return null;
+    MediaAlbum mediaAlbum = new MediaAlbum(driveItem.id, driveItem.name, driveItem.description);
+    monitor.debug(
+        () -> String.format("%s: Microsoft OneDrive exporting album: %s", jobId, mediaAlbum));
+    return mediaAlbum;
   }
 
   private PhotoModel tryConvertDriveItemToPhotoModel(
       Optional<String> albumId, MicrosoftDriveItem driveItem, UUID jobId) {
-    if (driveItem.file != null && driveItem.file.mimeType != null
-        && driveItem.file.mimeType.startsWith("image/")) {
-      PhotoModel photo =
-          new PhotoModel(driveItem.name, driveItem.downloadUrl, driveItem.description,
-              driveItem.file.mimeType, driveItem.id, albumId.orElse(null), false);
-      monitor.debug(
-          () -> String.format("%s: Microsoft OneDrive exporting photo: %s", jobId, photo));
-      return photo;
+    if (!driveItem.isImage()) {
+      return null;
     }
 
-    return null;
+    PhotoModel photo =
+        new PhotoModel(driveItem.name, driveItem.downloadUrl, driveItem.description,
+            driveItem.file.mimeType, driveItem.id, albumId.orElse(null), false /*inTempStore*/);
+    monitor.debug(
+        () -> String.format("%s: Microsoft OneDrive exporting photo: %s", jobId, photo));
+    return photo;
   }
 
-  private PaginationData SetNextPageToken(MicrosoftDriveItemsResponse driveItemsResponse) {
-    String url = driveItemsResponse.getNextPageLink();
-
-    if (!Strings.isNullOrEmpty(url)) {
-      return new StringPaginationToken(DRIVE_TOKEN_PREFIX + url);
+  private VideoModel tryConvertDriveItemToVideoModel(
+      Optional<String> albumId, MicrosoftDriveItem driveItem, UUID jobId) {
+    if (!driveItem.isVideo()) {
+      return null;
     }
 
-    return null;
+    VideoModel video =
+        new VideoModel(driveItem.name, driveItem.downloadUrl, driveItem.description,
+            driveItem.file.mimeType, driveItem.id, albumId.orElse(null), false /*inTempStore*/);
+    monitor.debug(
+        () -> String.format("%s: Microsoft OneDrive exporting video: %s", jobId, video));
+    return video;
+  }
+
+  private PaginationData setNextPageToken(MicrosoftDriveItemsResponse driveItemsResponse) {
+    String url = driveItemsResponse.getNextPageLink();
+    if (Strings.isNullOrEmpty(url)) {
+      return null;
+    }
+    return new StringPaginationToken(DRIVE_TOKEN_PREFIX + url);
   }
 
   private Optional<String> getDrivePaginationToken(Optional<PaginationData> paginationData) {
