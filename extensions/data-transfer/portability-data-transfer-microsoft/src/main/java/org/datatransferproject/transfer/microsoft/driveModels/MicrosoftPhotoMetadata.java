@@ -18,8 +18,6 @@ package org.datatransferproject.transfer.microsoft.driveModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.time.OffsetDateTime;
-
 /**
  * Microsoft photo metadata resource type Ref:
  * https://docs.microsoft.com/en-us/graph/api/resources/photo?view=graph-rest-1.0
