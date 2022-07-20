@@ -15,13 +15,18 @@
  */
 package org.datatransferproject.transfer.koofr.videos;
 
+import static java.util.Objects.requireNonNullElse;
+
 import java.io.BufferedInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.util.UUID;
+import javax.annotation.Nonnull;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.ItemImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
@@ -73,16 +78,9 @@ public class KoofrVideosImporter
     }
 
     for (VideoModel videoModel : resource.getVideos()) {
-      String id;
-      if (videoModel.getAlbumId() == null) {
-        id = videoModel.getDataId();
-      } else {
-        id = videoModel.getAlbumId() + "-" + videoModel.getDataId();
-      }
-      idempotentImportExecutor.executeAndSwallowIOExceptions(
-          id,
-          videoModel.getName(),
-          () -> importSingleVideo(videoModel, jobId, idempotentImportExecutor, koofrClient));
+      idempotentImportExecutor.importAndSwallowIOExceptions(
+          new KoofrVideoModel(videoModel),
+          video -> importSingleVideo(videoModel, idempotentImportExecutor, koofrClient));
     }
     return ImportResult.OK;
   }
@@ -107,9 +105,8 @@ public class KoofrVideosImporter
     return fullPath;
   }
 
-  private String importSingleVideo(
+  private ItemImportResult<String> importSingleVideo(
       VideoModel video,
-      UUID jobId,
       IdempotentImportExecutor idempotentImportExecutor,
       KoofrClient koofrClient)
       throws IOException, InvalidTokenException, DestinationMemoryFullException {
@@ -132,16 +129,41 @@ public class KoofrVideosImporter
 
       if (koofrClient.fileExists(fullPath)) {
         monitor.debug(() -> String.format("Video already exists %s", video.getName()));
-
-        return fullPath;
+        return ItemImportResult.success(fullPath, null);
       }
 
-      return koofrClient.uploadFile(
-              parentPath, name, inputStream, video.getEncodingFormat(), null, description);
+      String path = koofrClient.uploadFile(
+          parentPath, name, inputStream, video.getEncodingFormat(), null, description);
+      return ItemImportResult.success(path, null);
     } catch (FileNotFoundException e) {
       monitor.info(
-              () -> String.format("Video resource was missing for id: %s", video.getDataId()), e);
-      return null;
+          () -> String.format("Video resource was missing for id: %s", video.getDataId()), e);
+      return ItemImportResult.error(new IOException(e), null);
+    }
+  }
+
+  private static class KoofrVideoModel extends VideoModel {
+
+    public KoofrVideoModel(VideoModel video) {
+      super(
+          video.getName(),
+          requireNonNullElse(video.getContentUrl(), URI.create("")).toString(),
+          video.getDescription(),
+          video.getEncodingFormat(),
+          video.getDataId(),
+          video.getAlbumId(),
+          video.isInTempStore()
+      );
+    }
+
+    @Nonnull
+    @Override
+    public String getIdempotentId() {
+      if (getAlbumId() == null) {
+        return getDataId();
+      } else {
+        return getAlbumId() + "-" + getDataId();
+      }
     }
   }
 }
