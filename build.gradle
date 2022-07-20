@@ -83,8 +83,10 @@ configure(sourceProjects()) {
         compile "com.google.guava:guava:${guavaVersion}"
 
         testCompile project(":portability-test-utilities")
-        testCompile "junit:junit:${junitVersion}"
-        testCompile "com.google.truth:truth:0.39"
+        testCompile "com.google.truth:truth:${truthVersion}"
+        testCompile "org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}"
+        testCompile "org.junit.vintage:junit-vintage-engine:${junitJupiterVersion}"
+        testCompile "org.mockito:mockito-core:${mockitoVersion}"
     }
 
     task sourcesJar(type: Jar) {

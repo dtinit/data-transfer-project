@@ -26,7 +26,6 @@ dependencies {
 
     compile("org.scribe:scribe:1.3.7")
 
-    testCompile("org.mockito:mockito-core:${mockitoVersion}")
     testCompile project(":extensions:cloud:portability-cloud-local")
 }
 
