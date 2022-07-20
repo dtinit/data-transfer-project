@@ -37,20 +37,16 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.datatransfer.flickr.photos.FlickrPhotosImporter;
-import org.datatransferproject.datatransfer.flickr.photos.FlickrTempPhotoData;
-import org.datatransferproject.datatransfer.flickr.photos.FlickrUtils;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
-import org.datatransferproject.types.common.models.photos.PhotoAlbum;
-import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
+import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
@@ -113,7 +109,8 @@ public class FlickrMediaImporter implements Importer<AuthData, MediaContainerRes
         RequestContext.getRequestContext().setAuth(auth);
 
         Preconditions.checkArgument(
-                data.getAlbums() != null || data.getPhotos() != null, "Error: There is no data to import");
+                data.getAlbums() != null || data.getPhotos() != null || data.getVideos() != null,
+                "Error: There is no data to import");
 
         if (data.getAlbums() != null) {
             storeAlbums(jobId, data.getAlbums());
@@ -123,6 +120,24 @@ public class FlickrMediaImporter implements Importer<AuthData, MediaContainerRes
             for (PhotoModel photo : data.getPhotos()) {
                 try {
                     importSinglePhoto(idempotentExecutor, jobId, photo);
+                } catch (FlickrException e) {
+                    if (e.getMessage().contains("Upload limit reached")) {
+                        throw new DestinationMemoryFullException("Flickr destination memory reached", e);
+                    } else if (e.getMessage().contains("Photo already in set")) {
+                        // This can happen if we got a server error on our end, but the request went through.
+                        // When our retry strategy kicked in the request was complete and the photo already
+                        // uploaded
+                        continue;
+                    }
+                    throw new IOException(e);
+                }
+            }
+        }
+
+        if (data.getVideos() != null) {
+            for (VideoModel video : data.getVideos()) {
+                try {
+                    importSingleVideo(idempotentExecutor, jobId, video);
                 } catch (FlickrException e) {
                     if (e.getMessage().contains("Upload limit reached")) {
                         throw new DestinationMemoryFullException("Flickr destination memory reached", e);
@@ -175,6 +190,30 @@ public class FlickrMediaImporter implements Importer<AuthData, MediaContainerRes
         createOrAddToAlbum(idempotentExecutor, id, photo.getAlbumId(), photoId);
     }
 
+    private void importSingleVideo(
+            IdempotentImportExecutor idempotentExecutor, UUID id, VideoModel video) throws Exception {
+        String videoId =
+                idempotentExecutor.executeAndSwallowIOExceptions(
+                        video.getAlbumId() + "-" + video.getDataId(),
+                        video.getName(),
+                        () -> uploadVideo(video, id));
+        if (videoId == null) {
+            return;
+        }
+
+        String oldAlbumId = video.getAlbumId();
+
+        // If the video wasn't associated with an album, we don't have to do anything else, since we've
+        // already uploaded it above. This will mean it lives in the user's cameraroll and not in an
+        // album.
+        // If the uploadVideo() call fails above, an exception will be thrown, so we don't have to worry
+        // about the video not being uploaded here.
+        if (Strings.isNullOrEmpty(oldAlbumId)) {
+            return;
+        }
+        createOrAddToAlbum(idempotentExecutor, id, video.getAlbumId(), videoId);
+    }
+
     private void createOrAddToAlbum(
             IdempotentImportExecutor idempotentExecutor, UUID jobId, String oldAlbumId, String photoId)
             throws Exception {
@@ -206,8 +245,7 @@ public class FlickrMediaImporter implements Importer<AuthData, MediaContainerRes
                 oldAlbumId,
                 album.getName(),
                 () -> {
-                    String albumName =
-                            Strings.isNullOrEmpty(album.getName()) ? "untitled" : album.getName();
+                    String albumName = Strings.isNullOrEmpty(album.getName()) ? "untitled" : album.getName();
                     String albumDescription = cleanString(album.getDescription());
 
                     perUserRateLimiter.acquire();
@@ -220,15 +258,13 @@ public class FlickrMediaImporter implements Importer<AuthData, MediaContainerRes
     private String uploadPhoto(PhotoModel photo, UUID jobId) throws IOException, FlickrException {
         InputStream inStream;
         if (photo.isInTempStore()) {
-            final InputStreamWrapper streamWrapper =
-                    jobStore.getStream(jobId, photo.getFetchableUrl());
+            final InputStreamWrapper streamWrapper = jobStore.getStream(jobId, photo.getFetchableUrl());
             inStream = streamWrapper.getStream();
         } else {
             inStream = imageStreamProvider.get(photo.getFetchableUrl());
         }
 
-        String photoTitle =
-                Strings.isNullOrEmpty(photo.getTitle()) ? "" : photo.getTitle();
+        String photoTitle = Strings.isNullOrEmpty(photo.getTitle()) ? "" : photo.getTitle();
         String photoDescription = cleanString(photo.getDescription());
 
         UploadMetaData uploadMetaData =
@@ -243,6 +279,33 @@ public class FlickrMediaImporter implements Importer<AuthData, MediaContainerRes
         String uploadResult = uploader.upload(inStream, uploadMetaData);
         inStream.close();
         monitor.debug(() -> String.format("%s: Flickr importer uploading photo: %s", jobId, photo));
+        return uploadResult;
+    }
+
+    private String uploadVideo(VideoModel video, UUID jobId) throws IOException, FlickrException {
+        InputStream inStream;
+        if (video.isInTempStore()) {
+            final InputStreamWrapper streamWrapper = jobStore.getStream(jobId, video.getContentUrl());
+            inStream = streamWrapper.getStream();
+        } else {
+            inStream = imageStreamProvider.get(video.getContentUrl());
+        }
+
+        String videoTitle = Strings.isNullOrEmpty(video.getName()) ? "" : video.getName();
+        String videoDescription = cleanString(video.getDescription());
+
+        UploadMetaData uploadMetaData =
+                new UploadMetaData()
+                        .setAsync(false)
+                        .setPublicFlag(false)
+                        .setFriendFlag(false)
+                        .setFamilyFlag(false)
+                        .setTitle(videoTitle)
+                        .setDescription(videoDescription);
+        perUserRateLimiter.acquire();
+        String uploadResult = uploader.upload(inStream, uploadMetaData);
+        inStream.close();
+        monitor.debug(() -> String.format("%s: Flickr importer uploading photo: %s", jobId, video));
         return uploadResult;
     }
 
