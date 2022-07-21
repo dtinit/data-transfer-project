@@ -33,12 +33,6 @@ dependencies {
     compile("io.opencensus:opencensus-api:${openCensusVersion}")
     compile("io.opencensus:opencensus-impl:${openCensusVersion}")
     compile("io.opencensus:opencensus-exporter-stats-stackdriver:${openCensusVersion}")
-
-    testCompile("com.google.truth:truth:${truthVersion}")
-    testCompile("junit:junit:${junitVersion}")
-    testCompile("org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}")
-    testCompile("org.mockito:mockito-core:${mockitoVersion}")
-
 }
 
 configurePublication(project)

@@ -29,10 +29,6 @@ dependencies {
     annotationProcessor "com.google.auto.value:auto-value:${autoValueVersion}"
 
     compile("com.google.inject:guice:${guiceVersion}")
-
-    testCompile("junit:junit:${junitVersion}")
-    testCompile("org.mockito:mockito-core:${mockitoVersion}")
-    testCompile("com.google.truth:truth:${truthVersion}")
 }
 
 sourceSets {

@@ -30,7 +30,6 @@ dependencies {
     compile("org.apache.commons:commons-imaging:1.0-alpha1")
     compile("org.apache.httpcomponents:httpclient:${apacheHttpVersion}")
 
-    testCompile("org.mockito:mockito-core:${mockitoVersion}")
     testCompile("com.squareup.okhttp3:mockwebserver:${okHttpVersion}")
 }
 

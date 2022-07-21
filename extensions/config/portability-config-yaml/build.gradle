@@ -24,10 +24,6 @@ dependencies {
     compile project(':portability-types-transfer')
 
     compile("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}")
-
-    testCompile("junit:junit:${junitVersion}")
-    testCompile("org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}")
-    testCompile("org.mockito:mockito-core:${mockitoVersion}")
 }
 
 configurePublication(project)

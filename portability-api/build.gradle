@@ -39,9 +39,6 @@ dependencies {
     compile("com.google.oauth-client:google-oauth-client:${googleApiClient}")
     compile("org.apache.httpcomponents:httpclient:${httpclientVersion}")
     compile("org.simpleframework:simple:${simpleFrameworkVersion}")
-
-    testCompile("junit:junit:${junitVersion}")
-    testCompile("org.mockito:mockito-core:${mockitoVersion}")
 }
 
 sourceSets.test {

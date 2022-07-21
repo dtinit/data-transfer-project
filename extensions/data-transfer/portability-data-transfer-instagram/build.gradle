@@ -23,8 +23,6 @@ dependencies {
     compile project(':portability-spi-transfer')
 
     compile("com.google.api-client:google-api-client:${googleApiClient}")
-
-    testCompile("org.mockito:mockito-core:${mockitoVersion}")
 }
 
 configurePublication(project)
