@@ -73,19 +73,19 @@ public class KoofrVideosImporter
 
     for (VideoAlbum album : resource.getAlbums()) {
       // Create a Koofr folder and then save the id with the mapping data
-      idempotentImportExecutor.executeAndSwallowIOExceptions(
-          album.getId(), album.getName(), () -> createAlbumFolder(album, koofrClient));
+      idempotentImportExecutor.importAndSwallowIOExceptions(
+          album, albumModel -> createAlbumFolder(albumModel, koofrClient));
     }
 
     for (VideoModel videoModel : resource.getVideos()) {
       idempotentImportExecutor.importAndSwallowIOExceptions(
           new KoofrVideoModel(videoModel),
-          video -> importSingleVideo(videoModel, idempotentImportExecutor, koofrClient));
+          video -> importSingleVideo(video, idempotentImportExecutor, koofrClient));
     }
     return ImportResult.OK;
   }
 
-  private String createAlbumFolder(VideoAlbum album, KoofrClient koofrClient)
+  private ItemImportResult<String> createAlbumFolder(VideoAlbum album, KoofrClient koofrClient)
       throws IOException, InvalidTokenException {
     String albumName = KoofrTransmogrificationConfig.getAlbumName(album.getName());
 
@@ -102,7 +102,7 @@ public class KoofrVideosImporter
       koofrClient.addDescription(fullPath, description);
     }
 
-    return fullPath;
+    return ItemImportResult.success(fullPath, null);
   }
 
   private ItemImportResult<String> importSingleVideo(
@@ -142,7 +142,7 @@ public class KoofrVideosImporter
     }
   }
 
-  private static class KoofrVideoModel extends VideoModel {
+  static class KoofrVideoModel extends VideoModel {
 
     public KoofrVideoModel(VideoModel video) {
       super(

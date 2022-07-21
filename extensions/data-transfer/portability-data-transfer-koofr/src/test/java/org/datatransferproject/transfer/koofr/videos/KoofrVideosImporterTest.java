@@ -15,8 +15,13 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.ImportFunction;
+import org.datatransferproject.spi.transfer.idempotentexecutor.InMemoryIdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.ItemImportResult;
+import org.datatransferproject.spi.transfer.idempotentexecutor.ItemImportResult.Status;
 import org.datatransferproject.transfer.koofr.common.KoofrClient;
 import org.datatransferproject.transfer.koofr.common.KoofrClientFactory;
+import org.datatransferproject.transfer.koofr.videos.KoofrVideosImporter.KoofrVideoModel;
 import org.datatransferproject.types.common.models.videos.VideoAlbum;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
@@ -47,6 +52,7 @@ public class KoofrVideosImporterTest {
     server.start();
 
     client = mock(KoofrClient.class);
+    when(client.uploadFile(any(), any(), any(), any(), any(), any())).thenReturn("/path");
 
     clientFactory = mock(KoofrClientFactory.class);
     when(clientFactory.create(any())).thenReturn(client);
@@ -56,11 +62,16 @@ public class KoofrVideosImporterTest {
     importer = new KoofrVideosImporter(clientFactory, monitor);
 
     executor = mock(IdempotentImportExecutor.class);
-    when(executor.executeAndSwallowIOExceptions(any(), any(), any()))
+    when(executor.importAndSwallowIOExceptions(any(), any()))
         .then(
             (InvocationOnMock invocation) -> {
-              Callable<String> callable = invocation.getArgument(2);
-              return callable.call();
+              ImportFunction<?, String> callable = invocation.getArgument(1);
+              ItemImportResult<String> res = callable.apply(invocation.getArgument(0));
+              if (res.getStatus() == Status.SUCCESS) {
+                return res.getData();
+              } else {
+                return null;
+              }
             });
     authData = new TokensAndUrlAuthData("acc", "refresh", "");
   }
