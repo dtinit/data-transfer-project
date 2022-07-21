@@ -310,6 +310,10 @@ public class MicrosoftPhotosExporterTest {
     albumEntry.id = FOLDER_ID;
     albumEntry.name = "Title";
     albumEntry.folder = new MicrosoftDriveFolder();
+    // TODO(zacsh) remove this childCount setting (or better: set it to a non-sensical value like
+    // zero). We clearly don't care about this (our tests don't break if this is incorrect) so even
+    // though the upstream APIs provide this, we shouldn't be writing test-doubles that imply that
+    // we adhere to this API in anyway.
     albumEntry.folder.childCount = 1;
 
     return albumEntry;

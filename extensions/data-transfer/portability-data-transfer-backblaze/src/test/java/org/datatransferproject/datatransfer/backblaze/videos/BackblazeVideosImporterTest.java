@@ -27,20 +27,22 @@ import static org.mockito.Mockito.when;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import org.apache.commons.io.IOUtils;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.backblaze.common.BackblazeDataTransferClient;
 import org.datatransferproject.datatransfer.backblaze.common.BackblazeDataTransferClientFactory;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.ImportFunction;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 
 public class BackblazeVideosImporterTest {
@@ -51,6 +53,9 @@ public class BackblazeVideosImporterTest {
     IdempotentImportExecutor executor;
     TokenSecretAuthData authData;
     BackblazeDataTransferClient client;
+
+    @Rule
+    public TemporaryFolder folder = new TemporaryFolder();
 
     @Before
     public void setUp() {
@@ -99,10 +104,11 @@ public class BackblazeVideosImporterTest {
         String title = "title";
         String videoUrl = "videoUrl";
         String description = "description";
-        String encodingFormat = "UTF-8";
+        String encodingFormat = "video/mp4";
         String albumName = "albumName";
         String albumId = "albumId";
         String response = "response";
+        UUID jobId = UUID.randomUUID();
 
         VideoModel videoObject =
                 new VideoModel(title, videoUrl, description, encodingFormat, dataId, albumId, false);
@@ -117,18 +123,20 @@ public class BackblazeVideosImporterTest {
         when(connection.getInputStream()).thenReturn(IOUtils.toInputStream("video content", "UTF-8"));
         when(streamProvider.getConnection(videoUrl)).thenReturn(connection);
 
+        when(dataStore.getTempFileFromInputStream(any(), any(), any())).thenReturn(folder.newFile());
         when(client.uploadFile(eq("Video Transfer/dataId.mp4"), any())).thenReturn(response);
-        when(clientFactory.getOrCreateB2Client(monitor, authData)).thenReturn(client);
+        when(clientFactory.getOrCreateB2Client(jobId, authData)).thenReturn(client);
 
         BackblazeVideosImporter sut =
                 new BackblazeVideosImporter(monitor, dataStore, streamProvider, clientFactory);
-        sut.importItem(UUID.randomUUID(), executor, authData, data);
+        sut.importItem(jobId, executor, authData, data);
 
-        ArgumentCaptor<Callable<String>> importCapture = ArgumentCaptor.forClass(Callable.class);
+        ArgumentCaptor<ImportFunction<VideoModel, String>> importCapture = ArgumentCaptor.forClass(
+            ImportFunction.class);
         verify(executor, times(1))
-                .executeAndSwallowIOExceptions(eq(dataId), eq(title), importCapture.capture());
+                .importAndSwallowIOExceptions(eq(videoObject), importCapture.capture());
 
-        String actual = importCapture.getValue().call();
+        String actual = importCapture.getValue().apply(videoObject).getData();
         assertEquals(response, actual);
     }
 }

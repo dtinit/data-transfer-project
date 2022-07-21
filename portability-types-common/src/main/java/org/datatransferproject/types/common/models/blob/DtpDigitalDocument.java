@@ -1,4 +1,4 @@
-package org.datatransferproject.types.transfer.models.blob;
+package org.datatransferproject.types.common.models.blob;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

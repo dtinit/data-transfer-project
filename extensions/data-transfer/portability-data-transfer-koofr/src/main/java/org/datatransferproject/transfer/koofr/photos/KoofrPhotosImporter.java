@@ -102,7 +102,7 @@ public class KoofrPhotosImporter
 
     for (PhotoModel photoModel : resource.getPhotos()) {
       idempotentImportExecutor.executeAndSwallowIOExceptions(
-          photoModel.getAlbumId() + "-" + photoModel.getDataId(),
+          photoModel.getIdempotentId(),
           photoModel.getTitle(),
           () -> importSinglePhoto(photoModel, jobId, idempotentImportExecutor, koofrClient));
     }

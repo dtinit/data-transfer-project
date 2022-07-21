@@ -26,8 +26,6 @@ dependencies {
 
     compile("com.google.oauth-client:google-oauth-client:${googleApiClient}")
     compile("com.google.http-client:google-http-client-jackson2:${googleHttpClientVersion}")
-
-    testCompile("org.mockito:mockito-core:${mockitoVersion}")
 }
 
 configurePublication(project)

@@ -1,6 +1,7 @@
 package org.datatransferproject.types.common.models.media;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
@@ -8,9 +9,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.datatransferproject.types.common.ImportableItem;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 
-public class MediaAlbum {
+import javax.annotation.Nonnull;
+
+public class MediaAlbum implements ImportableItem {
   private final String id;
   private String name;
   private final String description;
@@ -27,6 +31,24 @@ public class MediaAlbum {
     this.description = description;
   }
 
+  /**
+   * Converts a PhotoAlbum to its counterpart MediaAlbum since these classes are functionally
+   * identical.
+   */
+  public static MediaAlbum photoToMediaAlbum(PhotoAlbum photoAlbum) {
+    return new MediaAlbum(photoAlbum.getId(), photoAlbum.getName(), photoAlbum.getDescription());
+  }
+
+  /**
+   * Extracts photos-specific data from a MediaAlbum and drops anything unsupported by PhotoAlbum
+   * (eg: video content is ignored).
+   */
+  public static PhotoAlbum mediaToPhotoAlbum(MediaAlbum mediaAlbum) {
+    return new PhotoAlbum(mediaAlbum.getId(), mediaAlbum.getName(), mediaAlbum.getDescription());
+  }
+
+  @JsonIgnore(false)
+  @Override
   public String getName() {
     return name;
   }
@@ -59,6 +81,12 @@ public class MediaAlbum {
   @Override
   public int hashCode() {
     return Objects.hash(id);
+  }
+
+  @Nonnull
+  @Override
+  public String getIdempotentId() {
+    return getId();
   }
 
   // This allows us to make album names palatable, removing unpalatable characters and

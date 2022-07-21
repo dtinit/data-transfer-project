@@ -86,7 +86,7 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
           createJob(encodedSessionKey, dataType, exportService, importService, exportInformation,
               encryptionScheme);
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException("Couldn't create job", e);
     }
     AuthDataGenerator exportGenerator =
         registry.getAuthDataGenerator(job.exportService(), job.transferDataType(), EXPORT);
@@ -135,7 +135,7 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
           exportConfiguration.getAuthProtocol(),
           importConfiguration.getAuthProtocol());
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException("Couldn't handle request", e);
     }
   }
 
