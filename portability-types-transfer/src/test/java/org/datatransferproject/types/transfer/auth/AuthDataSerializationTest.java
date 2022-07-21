@@ -6,14 +6,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.util.ArrayList;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AuthDataSerializationTest {
 
   private ObjectMapper objectMapper;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     objectMapper = new ObjectMapper();
     objectMapper.registerSubtypes(

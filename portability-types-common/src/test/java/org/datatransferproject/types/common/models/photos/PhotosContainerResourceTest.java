@@ -6,7 +6,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.truth.Truth;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.common.models.TransmogrificationConfig;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.stream.Collectors;
 import java.util.List;

@@ -24,8 +24,8 @@ import org.datatransferproject.transfer.microsoft.helper.TestTransformerContext;
 import org.datatransferproject.types.common.models.calendar.CalendarAttendeeModel;
 import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ToCalendarEventModelTransformerTest {
   private static final String SAMPLE_CALENDAR_EVENT =
@@ -127,7 +127,7 @@ public class ToCalendarEventModelTransformerTest {
     Assert.assertEquals(30, event.getEndTime().getDateTime().getMinute());
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     transformer = new ToCalendarEventModelTransformer();
     mapper = new ObjectMapper();

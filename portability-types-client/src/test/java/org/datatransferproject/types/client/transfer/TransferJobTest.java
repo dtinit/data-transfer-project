@@ -18,7 +18,7 @@ package org.datatransferproject.types.client.transfer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.datatransferproject.types.common.PortabilityCommon;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static com.google.common.truth.Truth.assertThat;
 

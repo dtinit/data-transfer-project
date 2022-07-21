@@ -1,18 +1,17 @@
 package org.datatransferproject.api.action.datatype;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry;
 import org.datatransferproject.types.client.datatype.DataTypes;
 import org.datatransferproject.types.client.datatype.GetDataTypes;
 import org.junit.Assert;
-import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.Test;
 
 public class DataTypesActionTest {
 

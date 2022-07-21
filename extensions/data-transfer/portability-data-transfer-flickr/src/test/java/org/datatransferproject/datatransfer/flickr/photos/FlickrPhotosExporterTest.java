@@ -50,7 +50,7 @@ import org.datatransferproject.types.common.models.photos.PhotosContainerResourc
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.scribe.model.Token;
 
 public class FlickrPhotosExporterTest {

@@ -20,7 +20,7 @@ import java.util.Map;
 import org.datatransferproject.transfer.microsoft.helper.TestTransformerContext;
 import org.datatransferproject.types.common.models.calendar.CalendarAttendeeModel;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ToCalendarAttendeeModelTransformerTest {
 

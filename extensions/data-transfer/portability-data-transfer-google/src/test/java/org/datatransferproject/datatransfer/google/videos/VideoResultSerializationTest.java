@@ -5,7 +5,7 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertThat;
 
 import java.io.*;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class VideoResultSerializationTest {
   @Test

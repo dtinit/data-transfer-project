@@ -5,8 +5,8 @@ import com.google.cloud.datastore.Transaction;
 import com.google.cloud.datastore.testing.LocalDatastoreHelper;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.io.IOException;
@@ -25,7 +25,7 @@ public class GoogleCloudIdempotentImportExecutorTest {
   private static Datastore datastore;
   private static GoogleCloudIdempotentImportExecutor googleExecutor;
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException, InterruptedException {
     // create a local datastore with 100% consistency for testing. This is ok to assume for the
     // purposes of this test because the implementation only reads from datastore after a job has

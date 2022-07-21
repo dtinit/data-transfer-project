@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import java.net.URL;
 import java.util.Map;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class RememberTheMilkSignatureGeneratorTest {
   private static final String KEY = "BANANAS1";
