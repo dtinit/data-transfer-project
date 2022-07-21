@@ -36,7 +36,7 @@ From the top level data-transfer-project directory:
 * Install Git: `sudo apt-get install git-all`
 * Install Gradle: `sudo apt-get install gradle`
  * Install NVM: `curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.0/install.sh | bash`
- * Install Node: [mac installer](https://nodejs.org/dist/v10.16.3/node-v10.16.3.pkg) or `nvm install v10.16.3`
+ * Install Node: [mac installer](https://nodejs.org/dist/v16.15.1/node-v16.15.1.pkg) or `nvm install v16.15.1`
  * Install Angular: `npm install -g @angular/cli`
  * [Install Docker](https://docs.docker.com/install/)
  * Install the Angular CLI `./gradlew client-rest:installLocalAngularCli`
@@ -58,7 +58,8 @@ The following instructions work for IntelliJ IDEA version 2017.2.6.
 
 #### Setup formatting
 * File -> Settings -> Editor -> General -> Ensure line feed at file end on Save
-* Install the 'google-java-format' plugin, and enable it in Settings
+* Install [the 'google-java-format' plugin](https://plugins.jetbrains.com/plugin/8527-google-java-format), and enable it in Settings
+* Apply [intellij-java-google-style.xml](https://github.com/google/styleguide/blob/gh-pages/intellij-java-google-style.xml) to [IntelliJ settings](https://www.jetbrains.com/help/idea/configuring-code-style.html#aadfdd2f)
 
 #### Setup automatic license header
 * Go to File -> Settings -> Editor -> Copyright -> Copyright Profiles

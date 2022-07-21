@@ -16,6 +16,7 @@
 
 package org.datatransferproject.datatransfer.backblaze.photos;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -25,6 +26,7 @@ import org.datatransferproject.datatransfer.backblaze.common.BackblazeDataTransf
 import org.datatransferproject.datatransfer.backblaze.common.BackblazeDataTransferClientFactory;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.ItemImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.ImageStreamProvider;
@@ -68,7 +70,7 @@ public class BackblazePhotosImporter
       return ImportResult.OK;
     }
 
-    BackblazeDataTransferClient b2Client = b2ClientFactory.getOrCreateB2Client(monitor, authData);
+    BackblazeDataTransferClient b2Client = b2ClientFactory.getOrCreateB2Client(jobId, authData);
 
     if (data.getAlbums() != null && data.getAlbums().size() > 0) {
       for (PhotoAlbum album : data.getAlbums()) {
@@ -81,17 +83,15 @@ public class BackblazePhotosImporter
 
     if (data.getPhotos() != null && data.getPhotos().size() > 0) {
       for (PhotoModel photo : data.getPhotos()) {
-        idempotentExecutor.executeAndSwallowIOExceptions(
-            photo.getDataId(),
-            photo.getTitle(),
-            () -> importSinglePhoto(idempotentExecutor, b2Client, jobId, photo));
+        idempotentExecutor.importAndSwallowIOExceptions(
+            photo, p -> importSinglePhoto(idempotentExecutor, b2Client, jobId, p));
       }
     }
 
     return ImportResult.OK;
   }
 
-  private String importSinglePhoto(
+  private ItemImportResult<String> importSinglePhoto(
       IdempotentImportExecutor idempotentExecutor,
       BackblazeDataTransferClient b2Client,
       UUID jobId,
@@ -107,9 +107,12 @@ public class BackblazePhotosImporter
       inputStream = conn.getInputStream();
     }
 
-    String response = b2Client.uploadFile(
-        String.format("%s/%s/%s.jpg", PHOTO_TRANSFER_MAIN_FOLDER, albumName, photo.getDataId()),
-        jobStore.getTempFileFromInputStream(inputStream, photo.getDataId(), ".jpg"));
+    File file = jobStore.getTempFileFromInputStream(inputStream, photo.getDataId(), ".jpg");
+    String response =
+        b2Client.uploadFile(
+            String.format("%s/%s/%s.jpg", PHOTO_TRANSFER_MAIN_FOLDER, albumName, photo.getDataId()),
+            file);
+    long size = file.length();
 
     try {
       if (photo.isInTempStore()) {
@@ -122,6 +125,6 @@ public class BackblazePhotosImporter
                       jobId, photo.getFetchableUrl()), e);
     }
 
-    return response;
+    return ItemImportResult.success(response, size);
   }
 }

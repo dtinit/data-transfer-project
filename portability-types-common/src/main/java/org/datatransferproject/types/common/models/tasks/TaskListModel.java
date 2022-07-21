@@ -16,12 +16,15 @@
 package org.datatransferproject.types.common.models.tasks;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.datatransferproject.types.common.models.DataModel;
+import org.datatransferproject.types.common.ImportableItem;
 
+import javax.annotation.Nonnull;
 import java.util.Objects;
 
-public class TaskListModel extends DataModel {
+public class TaskListModel extends DataModel implements ImportableItem {
   private final String id;
   private final String name;
 
@@ -31,12 +34,20 @@ public class TaskListModel extends DataModel {
     this.name = name;
   }
 
+  @JsonIgnore(false)
+  @Override
   public String getName() {
     return name;
   }
 
   public String getId() {
     return id;
+  }
+
+  @Nonnull
+  @Override
+  public String getIdempotentId() {
+    return getId();
   }
 
   @Override

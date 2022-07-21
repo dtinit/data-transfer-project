@@ -21,7 +21,6 @@ plugins {
 dependencies {
     compile project(':portability-api-launcher')
     compile project(':portability-spi-transfer')
-    testCompile("org.mockito:mockito-core:${mockitoVersion}")
 }
 
 configurePublication(project)

@@ -19,19 +19,33 @@ package org.datatransferproject.spi.cloud.types;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Map;
 import java.util.TimeZone;
 import org.datatransferproject.spi.cloud.types.PortabilityJob.State;
+import org.datatransferproject.spi.cloud.types.PortabilityJob.TransferMode;
 import org.datatransferproject.test.types.ObjectMapperFactory;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.junit.Test;
 
-/** Tests serialization and deserialization of a {@link PortabilityJob}. */
+/**
+ * Tests serialization and deserialization of a {@link PortabilityJob}.
+ */
 public class PortabilityJobTest {
+
+  private static final Map<String, Object> MANDATORY_FIELDS = ImmutableMap.<String, Object>builder()
+      .put("EXPORT_SERVICE", "test")
+      .put("IMPORT_SERVICE", "test")
+      .put("DATA_TYPE", "test")
+      .put("EXPORT_INFORMATION", "test")
+      .put("AUTHORIZATION_STATE", "INITIAL")
+      .build();
+
 
   @Test
   public void verifySerializeDeserialize() throws Exception {
@@ -156,5 +170,29 @@ public class PortabilityJobTest {
     PortabilityJob deserializedJob = objectMapper.readValue(serializedJob, PortabilityJob.class);
     assertThat(deserializedJob.userLocale()).isEqualTo(userLocale);
     assertThat(deserializedJob).isEqualTo(job);
+  }
+
+  @Test
+  public void verifyFromMapDefaultFields() {
+    PortabilityJob job = PortabilityJob.fromMap(MANDATORY_FIELDS);
+
+    assertThat(job.state()).isEqualTo(State.NEW);
+    assertThat(job.transferMode()).isEqualTo(TransferMode.DATA_TRANSFER);
+
+    // Even though toMap adds a default encryptionScheme value, PortabilityJob instance does not have it.
+    assertThat(job.jobAuthorization().encryptionScheme()).isNull();
+  }
+
+  @Test
+  public void verifyFromMapEqualsToMap() {
+    PortabilityJob job = PortabilityJob.fromMap(MANDATORY_FIELDS);
+    Map<String, Object> expectedMap = ImmutableMap.<String, Object>builder()
+        .putAll(MANDATORY_FIELDS)
+        .put("JOB_STATE", "NEW")
+        .put("ENCRYPTION_SCHEME", "jwe")
+        .put("TRANSFER_MODE", "DATA_TRANSFER")
+        .build();
+
+    assertThat(job.toMap()).containsExactlyEntriesIn(expectedMap);
   }
 }
