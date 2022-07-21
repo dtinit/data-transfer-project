@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Data Transfer Project Authors.
+ * Copyright 2022 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,7 +172,7 @@ public class FlickrMediaImporter implements Importer<AuthData, MediaContainerRes
             IdempotentImportExecutor idempotentExecutor, UUID id, PhotoModel photo) throws Exception {
         String photoId =
                 idempotentExecutor.executeAndSwallowIOExceptions(
-                        photo.getAlbumId() + "-" + photo.getDataId(),
+                        photo.getIdempotentId(),
                         photo.getTitle(),
                         () -> uploadPhoto(photo, id));
         if (photoId == null) {
@@ -196,7 +196,7 @@ public class FlickrMediaImporter implements Importer<AuthData, MediaContainerRes
             IdempotentImportExecutor idempotentExecutor, UUID id, VideoModel video) throws Exception {
         String videoId =
                 idempotentExecutor.executeAndSwallowIOExceptions(
-                        video.getAlbumId() + "-" + video.getDataId(),
+                        video.getIdempotentId(),
                         video.getName(),
                         () -> uploadVideo(video, id));
         if (videoId == null) {

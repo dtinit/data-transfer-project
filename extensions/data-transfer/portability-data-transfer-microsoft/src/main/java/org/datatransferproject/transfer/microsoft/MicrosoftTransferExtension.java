@@ -21,6 +21,8 @@ import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFact
 import org.datatransferproject.transfer.microsoft.contacts.MicrosoftContactsExporter;
 import org.datatransferproject.transfer.microsoft.contacts.MicrosoftContactsImporter;
 import org.datatransferproject.transfer.microsoft.offline.MicrosoftOfflineDataExporter;
+import org.datatransferproject.transfer.microsoft.media.MicrosoftMediaExporter;
+import org.datatransferproject.transfer.microsoft.media.MicrosoftMediaImporter;
 import org.datatransferproject.transfer.microsoft.photos.MicrosoftPhotosExporter;
 import org.datatransferproject.transfer.microsoft.photos.MicrosoftPhotosImporter;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerService;
@@ -32,15 +34,20 @@ import java.io.IOException;
 /** Bootstraps the Microsoft data transfer services. */
 public class MicrosoftTransferExtension implements TransferExtension {
   public static final String SERVICE_ID = "microsoft";
-  // TODO: centralized place, or enum type for these?
+  // TODO(#1065) centralized place, or enum type for these?
   private static final String CONTACTS = "CONTACTS";
   private static final String CALENDAR = "CALENDAR";
   private static final String PHOTOS = "PHOTOS";
+  private static final String MEDIA = "MEDIA";
   private static final String OFFLINE_DATA = "OFFLINE-DATA";
+
+  // TODO(#1065) don't keep adding here - just have the converters invoked automatically when Media
+  // isn't supported on one or the other side of this equation; this is just a WIP prototype to show
+  // the concept of converters at play.
   private static final ImmutableList<String> SUPPORTED_IMPORT_SERVICES =
       ImmutableList.of(CALENDAR, CONTACTS, PHOTOS);
   private static final ImmutableList<String> SUPPORTED_EXPORT_SERVICES =
-      ImmutableList.of(CALENDAR, CONTACTS, PHOTOS, OFFLINE_DATA);
+      ImmutableList.of(CALENDAR, CONTACTS, PHOTOS, MEDIA, OFFLINE_DATA);
   private ImmutableMap<String, Importer> importerMap;
   private ImmutableMap<String, Exporter> exporterMap;
 
@@ -126,6 +133,8 @@ public class MicrosoftTransferExtension implements TransferExtension {
     importBuilder.put(
         PHOTOS, new MicrosoftPhotosImporter(BASE_GRAPH_URL, client, mapper, jobStore, monitor,
           credentialFactory));
+    importBuilder.put(MEDIA, new MicrosoftMediaImporter(BASE_GRAPH_URL, client, mapper, jobStore, monitor,
+          credentialFactory));
     importerMap = importBuilder.build();
 
     ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();
@@ -135,8 +144,8 @@ public class MicrosoftTransferExtension implements TransferExtension {
     exporterBuilder.put(
         CALENDAR,
         new MicrosoftCalendarExporter(BASE_GRAPH_URL, client, mapper, transformerService));
-    exporterBuilder.put(
-        PHOTOS, new MicrosoftPhotosExporter(credentialFactory, jsonFactory, monitor));
+    exporterBuilder.put(PHOTOS, new MicrosoftPhotosExporter(credentialFactory, jsonFactory, monitor));
+    exporterBuilder.put(MEDIA, new MicrosoftMediaExporter(credentialFactory, jsonFactory, monitor));
     exporterBuilder.put(
         OFFLINE_DATA, new MicrosoftOfflineDataExporter(BASE_GRAPH_URL, client, mapper));
 

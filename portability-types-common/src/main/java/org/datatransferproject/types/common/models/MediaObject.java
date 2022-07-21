@@ -44,10 +44,12 @@ public class MediaObject extends CreativeWork {
     }
   }
 
+  /** schema.org/encodingFormat value - a mimetype string like "video/ogg". */
   public String getEncodingFormat() {
     return encodingFormat;
   }
 
+  /** Set the schema.org/encodingFormat value - a mimetype string like "video/ogg". */
   public void setEncodingFormat(String encodingFormat) {
     this.encodingFormat = encodingFormat;
   }

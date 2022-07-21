@@ -17,13 +17,16 @@
 package org.datatransferproject.types.common.models.videos;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
-import java.util.stream.Collectors;
+import org.datatransferproject.types.common.DownloadableFile;
 import org.datatransferproject.types.common.models.MediaObject;
 
-public class VideoModel extends MediaObject {
+import java.util.stream.Collectors;
+
+public class VideoModel extends MediaObject implements DownloadableFile {
 
   private String dataId;
   private String albumId;
@@ -48,16 +51,43 @@ public class VideoModel extends MediaObject {
     this.inTempStore = inTempStore;
   }
 
+  // TODO(zacsh) remove this in favor of getFolderId
   public String getAlbumId() {
     return albumId;
+  }
+
+  @JsonIgnore
+  // requirement of org.datatransferproject.types.common.FolderItem
+  public String getFolderId() {
+    return getAlbumId();
+  }
+
+  @JsonIgnore
+  // requirement of org.datatransferproject.types.common.Fileable
+  public String getMimeType() {
+    return getEncodingFormat();
   }
 
   public String getDataId() {
     return dataId;
   }
 
+  @Override
   public boolean isInTempStore() {
     return inTempStore;
+  }
+
+  @JsonIgnore
+  @Override
+  public String getFetchableUrl() {
+    return getContentUrl().toString();
+  }
+
+  @JsonIgnore(false)
+  @Override
+  // required for org.datatransferproject.types.common.ImportableItem
+  public String getName() {
+    return super.getName();
   }
 
   @Override

@@ -150,7 +150,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
       IdempotentImportExecutor idempotentExecutor, UUID id, PhotoModel photo) throws Exception {
     String photoId =
         idempotentExecutor.executeAndSwallowIOExceptions(
-            photo.getAlbumId() + "-" + photo.getDataId(),
+            photo.getIdempotentId(),
             photo.getTitle(),
             () -> uploadPhoto(photo, id));
     if (photoId == null) {

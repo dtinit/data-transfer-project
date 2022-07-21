@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.datatransfer.flickr.photos;
+package org.datatransferproject.datatransfer.flickr;
 
 import com.flickr4java.flickr.photos.Photo;
 import com.flickr4java.flickr.photos.Size;

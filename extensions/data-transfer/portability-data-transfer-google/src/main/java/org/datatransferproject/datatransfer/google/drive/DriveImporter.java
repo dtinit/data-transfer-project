@@ -16,10 +16,10 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.types.common.models.blob.BlobbyStorageContainerResource;
+import org.datatransferproject.types.common.models.blob.DigitalDocumentWrapper;
+import org.datatransferproject.types.common.models.blob.DtpDigitalDocument;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.transfer.models.blob.BlobbyStorageContainerResource;
-import org.datatransferproject.types.transfer.models.blob.DigitalDocumentWrapper;
-import org.datatransferproject.types.transfer.models.blob.DtpDigitalDocument;
 
 /** An {@link Importer} to import data to Google Drive. */
 public final class DriveImporter

@@ -41,11 +41,12 @@ buildscript {
 plugins {
     id 'java'
     id 'application'
-    id 'com.github.johnrengelman.shadow' version '2.0.2'
+    id 'com.github.johnrengelman.shadow' version '6.1.0'
     id 'com.bmuschko.docker-remote-api' version '3.2.6'
 }
 
 repositories {
+    mavenCentral()
     jcenter()
 }
 
