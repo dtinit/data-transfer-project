@@ -10,18 +10,15 @@ import static org.mockito.Mockito.when;
 import com.google.common.collect.ImmutableList;
 import java.util.Collection;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.ImportFunction;
-import org.datatransferproject.spi.transfer.idempotentexecutor.InMemoryIdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.ItemImportResult;
 import org.datatransferproject.spi.transfer.idempotentexecutor.ItemImportResult.Status;
 import org.datatransferproject.transfer.koofr.common.KoofrClient;
 import org.datatransferproject.transfer.koofr.common.KoofrClientFactory;
-import org.datatransferproject.transfer.koofr.videos.KoofrVideosImporter.KoofrVideoModel;
 import org.datatransferproject.types.common.models.videos.VideoAlbum;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
@@ -67,11 +64,7 @@ public class KoofrVideosImporterTest {
             (InvocationOnMock invocation) -> {
               ImportFunction<?, String> callable = invocation.getArgument(1);
               ItemImportResult<String> res = callable.apply(invocation.getArgument(0));
-              if (res.getStatus() == Status.SUCCESS) {
-                return res.getData();
-              } else {
-                return null;
-              }
+              return res.getStatus() == Status.SUCCESS ? res.getData() : null;
             });
     authData = new TokensAndUrlAuthData("acc", "refresh", "");
   }
@@ -233,15 +226,15 @@ public class KoofrVideosImporterTest {
     Collection<VideoAlbum> albums = ImmutableList.of();
 
     Collection<VideoModel> videos =
-            ImmutableList.of(
-                    new VideoModel(
-                            "not_found_video_1.mp4",
-                            server.url("/not_found.mp4").toString(),
-                            "Video not founded in CDN",
-                            "video/mp4",
-                            "not_found_video_1",
-                            null,
-                            false));
+        ImmutableList.of(
+            new VideoModel(
+                "not_found_video_1.mp4",
+                server.url("/not_found.mp4").toString(),
+                "Video not founded in CDN",
+                "video/mp4",
+                "not_found_video_1",
+                null,
+                false));
 
     VideosContainerResource resource = spy(new VideosContainerResource(albums, videos));
 
