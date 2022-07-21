@@ -16,6 +16,7 @@
 package org.datatransferproject.types.common.models.photos;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
@@ -24,9 +25,9 @@ import java.util.Date;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import org.datatransferproject.types.common.DownloadableItem;
+import org.datatransferproject.types.common.DownloadableFile;
 
-public class PhotoModel implements DownloadableItem {
+public class PhotoModel implements DownloadableFile {
 
   private String title;
   private final String fetchableUrl;
@@ -68,19 +69,19 @@ public class PhotoModel implements DownloadableItem {
       String dataId,
       String albumId,
       boolean inTempStore) {
-    this.title = title;
-    this.fetchableUrl = fetchableUrl;
-    this.description = description;
-    this.mediaType = mediaType;
-    if (dataId == null || dataId.isEmpty()) {
-      throw new IllegalArgumentException("dataID must be set");
-    }
-    this.dataId = dataId;
-    this.albumId = albumId;
-    this.inTempStore = inTempStore;
-    this.uploadedTime = null;
+    this(
+        title,
+        fetchableUrl,
+        description,
+        mediaType,
+        dataId,
+        albumId,
+        inTempStore,
+        null  /*uploadedTime*/);
   }
 
+  // TODO(zacsh) convert all callers to ImportableItem#getName() which is an interface guarantee of this class's
+  // being a DownloadableItem. Then delete this method.
   public String getTitle() {
     return title;
   }
@@ -94,12 +95,26 @@ public class PhotoModel implements DownloadableItem {
     return description;
   }
 
+  // TODO(zacsh) remove this in favor of getMimeType
   public String getMediaType() {
     return mediaType;
   }
 
+  @JsonIgnore
+  // requirement of Fileable
+  public String getMimeType() {
+    return getMediaType();
+  }
+
+  // TODO(zacsh) remove this in favor of getFolderId
   public String getAlbumId() {
     return albumId;
+  }
+
+  // requirement of FolderItem
+  @JsonIgnore
+  public String getFolderId() {
+    return getAlbumId();
   }
 
   public String getDataId() {
@@ -174,6 +189,7 @@ public class PhotoModel implements DownloadableItem {
 
   @Nullable
   @Override
+  // required for org.datatransferproject.types.common.ImportableItem
   public String getName() {
     return getTitle();
   }

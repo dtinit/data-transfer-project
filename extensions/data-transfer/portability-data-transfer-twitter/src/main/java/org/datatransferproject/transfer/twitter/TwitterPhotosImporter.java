@@ -19,7 +19,6 @@ package org.datatransferproject.transfer.twitter;
 import com.google.api.client.http.InputStreamContent;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
-import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorHelper;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -63,7 +62,7 @@ final class TwitterPhotosImporter
         update.media(image.getTitle(), content.getInputStream());
 
         idempotentExecutor.executeAndSwallowIOExceptions(
-            IdempotentImportExecutorHelper.getPhotoIdempotentId(image),
+            image.getIdempotentId(),
             image.getTitle(),
             () -> twitterApi.tweets().updateStatus(update));
       } catch (IOException e) {

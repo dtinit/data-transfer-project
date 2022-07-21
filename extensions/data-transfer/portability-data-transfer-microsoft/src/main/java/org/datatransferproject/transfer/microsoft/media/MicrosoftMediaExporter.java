@@ -13,13 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.datatransferproject.transfer.microsoft.photos;
+package org.datatransferproject.transfer.microsoft.media;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -32,33 +37,27 @@ import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.PaginationData;
 import org.datatransferproject.types.common.StringPaginationToken;
 import org.datatransferproject.types.common.models.IdOnlyContainerResource;
-import org.datatransferproject.types.common.models.photos.PhotoAlbum;
+import org.datatransferproject.types.common.models.media.MediaContainerResource;
+import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Exports Microsoft OneDrive photos using the Graph API.
  *
- * <p>Converts folders to albums.
+ * <p>Converts folders to media albums.
  */
-public class MicrosoftPhotosExporter
-    implements Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
-
+public class MicrosoftMediaExporter
+    implements Exporter<TokensAndUrlAuthData, MediaContainerResource> {
   static final String DRIVE_TOKEN_PREFIX = "drive:";
 
   private final MicrosoftCredentialFactory credentialFactory;
   private final JsonFactory jsonFactory;
   private final Monitor monitor;
-  private volatile MicrosoftPhotosInterface photosInterface;
+  private volatile MicrosoftMediaInterface photosInterface;
 
-  public MicrosoftPhotosExporter(
+  public MicrosoftMediaExporter(
       MicrosoftCredentialFactory credentialFactory, JsonFactory jsonFactory, Monitor monitor) {
     this.credentialFactory = credentialFactory;
     this.jsonFactory = jsonFactory;
@@ -66,11 +65,8 @@ public class MicrosoftPhotosExporter
   }
 
   @VisibleForTesting
-  public MicrosoftPhotosExporter(
-      MicrosoftCredentialFactory credentialFactory,
-      JsonFactory jsonFactory,
-      MicrosoftPhotosInterface photosInterface,
-      Monitor monitor) {
+  public MicrosoftMediaExporter(MicrosoftCredentialFactory credentialFactory,
+      JsonFactory jsonFactory, MicrosoftMediaInterface photosInterface, Monitor monitor) {
     this.credentialFactory = credentialFactory;
     this.jsonFactory = jsonFactory;
     this.photosInterface = photosInterface;
@@ -78,9 +74,8 @@ public class MicrosoftPhotosExporter
   }
 
   @Override
-  public ExportResult<PhotosContainerResource> export(
-      UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation)
-      throws IOException {
+  public ExportResult<MediaContainerResource> export(UUID jobId, TokensAndUrlAuthData authData,
+      Optional<ExportInformation> exportInformation) throws IOException {
     if (!exportInformation.isPresent()) {
       return exportOneDrivePhotos(authData, Optional.empty(), Optional.empty(), jobId);
     }
@@ -90,20 +85,15 @@ public class MicrosoftPhotosExporter
     StringPaginationToken paginationToken =
         (StringPaginationToken) exportInformation.get().getPaginationData();
 
-    return exportOneDrivePhotos(
-        authData,
-        Optional.ofNullable(idOnlyContainerResource),
-        Optional.ofNullable(paginationToken),
-        jobId);
+    return exportOneDrivePhotos(authData, Optional.ofNullable(idOnlyContainerResource),
+        Optional.ofNullable(paginationToken), jobId);
   }
 
+  // TODO make this private and tests the real export().
   @VisibleForTesting
-  ExportResult<PhotosContainerResource> exportOneDrivePhotos(
-      TokensAndUrlAuthData authData,
-      Optional<IdOnlyContainerResource> albumData,
-      Optional<PaginationData> paginationData,
-      UUID jobId)
-      throws IOException {
+  ExportResult<MediaContainerResource> exportOneDrivePhotos(TokensAndUrlAuthData authData,
+      Optional<IdOnlyContainerResource> albumData, Optional<PaginationData> paginationData,
+      UUID jobId) throws IOException {
     Optional<String> albumId = Optional.empty();
     if (albumData.isPresent()) {
       albumId = Optional.of(albumData.get().getId());
@@ -113,84 +103,94 @@ public class MicrosoftPhotosExporter
     MicrosoftDriveItemsResponse driveItemsResponse;
     if (paginationData.isPresent() || albumData.isPresent()) {
       driveItemsResponse =
-          getOrCreatePhotosInterface(authData).getDriveItems(albumId, paginationUrl);
+          getOrCreateMediaInterface(authData).getDriveItems(albumId, paginationUrl);
     } else {
-      driveItemsResponse =
-          getOrCreatePhotosInterface(authData)
-              .getDriveItemsFromSpecialFolder(MicrosoftSpecialFolder.FolderType.photos);
+      driveItemsResponse = getOrCreateMediaInterface(authData).getDriveItemsFromSpecialFolder(
+          MicrosoftSpecialFolder.FolderType.photos);
     }
 
     PaginationData nextPageData = setNextPageToken(driveItemsResponse);
     ContinuationData continuationData = new ContinuationData(nextPageData);
-    PhotosContainerResource containerResource;
+    MediaContainerResource containerResource;
     MicrosoftDriveItem[] driveItems = driveItemsResponse.getDriveItems();
-    List<PhotoAlbum> albums = new ArrayList<>();
+    List<MediaAlbum> albums = new ArrayList<>();
     List<PhotoModel> photos = new ArrayList<>();
+    List<VideoModel> videos = new ArrayList<>();
 
     if (driveItems != null && driveItems.length > 0) {
       for (MicrosoftDriveItem driveItem : driveItems) {
-        PhotoAlbum album = tryConvertDriveItemToPhotoAlbum(driveItem, jobId);
+        MediaAlbum album = tryConvertDriveItemToMediaAlbum(driveItem, jobId);
         if (album != null) {
           albums.add(album);
           continuationData.addContainerResource(new IdOnlyContainerResource(driveItem.id));
+          continue;
         }
 
         PhotoModel photo = tryConvertDriveItemToPhotoModel(albumId, driveItem, jobId);
         if (photo != null) {
           photos.add(photo);
+          continue;
+        }
+
+        VideoModel video = tryConvertDriveItemToVideoModel(albumId, driveItem, jobId);
+        if (video != null) {
+          videos.add(video);
+          continue;
         }
       }
     }
 
     ExportResult.ResultType result =
         nextPageData == null ? ExportResult.ResultType.END : ExportResult.ResultType.CONTINUE;
-    containerResource = new PhotosContainerResource(albums, photos);
+    containerResource = new MediaContainerResource(albums, photos, videos);
     return new ExportResult<>(result, containerResource, continuationData);
   }
 
-  private PhotoAlbum tryConvertDriveItemToPhotoAlbum(MicrosoftDriveItem driveItem, UUID jobId) {
-
-    if (driveItem.folder != null) {
-      PhotoAlbum photoAlbum = new PhotoAlbum(driveItem.id, driveItem.name, driveItem.description);
-      monitor.debug(
-          () -> String.format("%s: Microsoft OneDrive exporting album: %s", jobId, photoAlbum));
-      return photoAlbum;
+  private MediaAlbum tryConvertDriveItemToMediaAlbum(MicrosoftDriveItem driveItem, UUID jobId) {
+    if (!driveItem.isFolder()) {
+      return null;
     }
 
-    return null;
+    MediaAlbum mediaAlbum = new MediaAlbum(driveItem.id, driveItem.name, driveItem.description);
+    monitor.debug(
+        () -> String.format("%s: Microsoft OneDrive exporting album: %s", jobId, mediaAlbum));
+    return mediaAlbum;
   }
 
   private PhotoModel tryConvertDriveItemToPhotoModel(
       Optional<String> albumId, MicrosoftDriveItem driveItem, UUID jobId) {
-
-    if (driveItem.file != null
-        && driveItem.file.mimeType != null
-        && driveItem.file.mimeType.startsWith("image/")) {
-      PhotoModel photo =
-          new PhotoModel(
-              driveItem.name,
-              driveItem.downloadUrl,
-              driveItem.description,
-              driveItem.file.mimeType,
-              driveItem.id,
-              albumId.orElse(null),
-              false);
-      monitor.debug(
-          () -> String.format("%s: Microsoft OneDrive exporting photo: %s", jobId, photo));
-      return photo;
+    if (!driveItem.isImage()) {
+      return null;
     }
 
-    return null;
+    PhotoModel photo =
+        new PhotoModel(driveItem.name, driveItem.downloadUrl, driveItem.description,
+            driveItem.file.mimeType, driveItem.id, albumId.orElse(null), false /*inTempStore*/);
+    monitor.debug(
+        () -> String.format("%s: Microsoft OneDrive exporting photo: %s", jobId, photo));
+    return photo;
+  }
+
+  private VideoModel tryConvertDriveItemToVideoModel(
+      Optional<String> albumId, MicrosoftDriveItem driveItem, UUID jobId) {
+    if (!driveItem.isVideo()) {
+      return null;
+    }
+
+    VideoModel video =
+        new VideoModel(driveItem.name, driveItem.downloadUrl, driveItem.description,
+            driveItem.file.mimeType, driveItem.id, albumId.orElse(null), false /*inTempStore*/);
+    monitor.debug(
+        () -> String.format("%s: Microsoft OneDrive exporting video: %s", jobId, video));
+    return video;
   }
 
   private PaginationData setNextPageToken(MicrosoftDriveItemsResponse driveItemsResponse) {
     String url = driveItemsResponse.getNextPageLink();
-
-    if (!Strings.isNullOrEmpty(url)) {
-      return new StringPaginationToken(DRIVE_TOKEN_PREFIX + url);
+    if (Strings.isNullOrEmpty(url)) {
+      return null;
     }
-
-    return null;
+    return new StringPaginationToken(DRIVE_TOKEN_PREFIX + url);
   }
 
   private Optional<String> getDrivePaginationToken(Optional<PaginationData> paginationData) {
@@ -211,13 +211,13 @@ public class MicrosoftPhotosExporter
     return paginationToken;
   }
 
-  private synchronized MicrosoftPhotosInterface getOrCreatePhotosInterface(
+  private synchronized MicrosoftMediaInterface getOrCreateMediaInterface(
       TokensAndUrlAuthData authData) {
-    return photosInterface == null ? makePhotosInterface(authData) : photosInterface;
+    return photosInterface == null ? makeMediaInterface(authData) : photosInterface;
   }
 
-  private synchronized MicrosoftPhotosInterface makePhotosInterface(TokensAndUrlAuthData authData) {
+  private synchronized MicrosoftMediaInterface makeMediaInterface(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
-    return new MicrosoftPhotosInterface(credential, jsonFactory);
+    return new MicrosoftMediaInterface(credential, jsonFactory);
   }
 }

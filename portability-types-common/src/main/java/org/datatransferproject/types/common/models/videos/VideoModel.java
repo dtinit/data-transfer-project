@@ -21,12 +21,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
-import org.datatransferproject.types.common.DownloadableItem;
+import org.datatransferproject.types.common.DownloadableFile;
 import org.datatransferproject.types.common.models.MediaObject;
 
 import java.util.stream.Collectors;
 
-public class VideoModel extends MediaObject implements DownloadableItem {
+public class VideoModel extends MediaObject implements DownloadableFile {
 
   private String dataId;
   private String albumId;
@@ -51,8 +51,21 @@ public class VideoModel extends MediaObject implements DownloadableItem {
     this.inTempStore = inTempStore;
   }
 
+  // TODO(zacsh) remove this in favor of getFolderId
   public String getAlbumId() {
     return albumId;
+  }
+
+  @JsonIgnore
+  // requirement of org.datatransferproject.types.common.FolderItem
+  public String getFolderId() {
+    return getAlbumId();
+  }
+
+  @JsonIgnore
+  // requirement of org.datatransferproject.types.common.Fileable
+  public String getMimeType() {
+    return getEncodingFormat();
   }
 
   public String getDataId() {
@@ -72,6 +85,7 @@ public class VideoModel extends MediaObject implements DownloadableItem {
 
   @JsonIgnore(false)
   @Override
+  // required for org.datatransferproject.types.common.ImportableItem
   public String getName() {
     return super.getName();
   }
