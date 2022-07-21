@@ -45,6 +45,7 @@ buildscript {
     }
     dependencies {
         classpath 'org.eclipse.jgit:org.eclipse.jgit:5.2.1.201812262042-r'
+        classpath 'com.bmuschko:gradle-docker-plugin:5.3.0'
     }
 }
 
