@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
@@ -50,13 +51,14 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputS
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.spi.transfer.i18n.BaseMultilingualDictionary;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
-import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorHelper;
+import org.datatransferproject.spi.transfer.idempotentexecutor.ItemImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.transfer.ImageStreamProvider;
+import org.datatransferproject.types.common.ImportableItem;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
@@ -168,7 +170,7 @@ public class GooglePhotosImporter
     if (photos != null && photos.size() > 0) {
       Map<String, List<PhotoModel>> photosByAlbum =
           photos.stream()
-              .filter(photo -> !executor.isKeyCached(IdempotentImportExecutorHelper.getPhotoIdempotentId(photo)))
+              .filter(photo -> !executor.isKeyCached(photo.getIdempotentId()))
               .collect(Collectors.groupingBy(PhotoModel::getAlbumId));
 
       for (Entry<String, List<PhotoModel>> albumEntry : photosByAlbum.entrySet()) {
@@ -214,6 +216,7 @@ public class GooglePhotosImporter
     //  Resumable uploads would allow the upload of larger media that don't fit in memory.  To do
     //  this however, seems to require knowledge of the total file size.
     for (PhotoModel photo : photos) {
+      Long size = null;
       try {
         Pair<InputStream, Long> inputStreamBytesPair =
             getInputStreamForUrl(jobId, photo.getFetchableUrl(), photo.isInTempStore());
@@ -222,7 +225,8 @@ public class GooglePhotosImporter
           String uploadToken = getOrCreatePhotosInterface(jobId, authData).uploadPhotoContent(s);
           mediaItems.add(new NewMediaItem(cleanDescription(photo.getDescription()), uploadToken));
           uploadTokenToDataId.put(uploadToken, photo);
-          uploadTokenToLength.put(uploadToken, inputStreamBytesPair.getRight());
+          size = inputStreamBytesPair.getRight();
+          uploadTokenToLength.put(uploadToken, size);
         }
 
         try {
@@ -238,13 +242,10 @@ public class GooglePhotosImporter
                       jobId, photo.getFetchableUrl()),
               e);
         }
-      } catch (IOException e) {
-        executor.executeAndSwallowIOExceptions(
-            IdempotentImportExecutorHelper.getPhotoIdempotentId(photo),
-            photo.getTitle(),
-            () -> {
-              throw e;
-            });
+      } catch (IOException exception) {
+        Long finalSize = size;
+        executor.importAndSwallowIOExceptions(
+            photo, p -> ItemImportResult.error(exception, finalSize));
       }
     }
 
@@ -265,28 +266,30 @@ public class GooglePhotosImporter
         PhotoModel photo = uploadTokenToDataId.get(mediaItem.getUploadToken());
         totalBytes +=
             processMediaResult(
-                mediaItem,
-                IdempotentImportExecutorHelper.getPhotoIdempotentId(photo),
-                executor,
-                photo.getTitle(),
-                uploadTokenToLength.get(mediaItem.getUploadToken()));
+                mediaItem, photo, executor, uploadTokenToLength.get(mediaItem.getUploadToken()));
         uploadTokenToDataId.remove(mediaItem.getUploadToken());
       }
 
       if (!uploadTokenToDataId.isEmpty()) {
-        for (PhotoModel photo : uploadTokenToDataId.values()) {
-          executor.executeAndSwallowIOExceptions(
-              IdempotentImportExecutorHelper.getPhotoIdempotentId(photo),
-              photo.getTitle(),
-              () -> {
-                throw new IOException("Photo was missing from results list.");
-              });
+        for (Entry<String, PhotoModel> entry : uploadTokenToDataId.entrySet()) {
+          PhotoModel photo = entry.getValue();
+          executor.importAndSwallowIOExceptions(
+              photo,
+              p ->
+                  ItemImportResult.error(
+                      new IOException("Photo was missing from results list."),
+                      uploadTokenToLength.get(entry.getKey())));
         }
       }
     } catch (IOException e) {
-      if (e.getMessage() != null
-          && e.getMessage().contains("The remaining storage in the user's account is not enough")) {
+      if (StringUtils.contains(
+          e.getMessage(), "The remaining storage in the user's account is not enough")) {
         throw new DestinationMemoryFullException("Google destination storage full", e);
+      } else if (StringUtils.contains(
+          e.getMessage(), "The provided ID does not match any albums")) {
+        // which means the album was likely deleted by the user
+        // we skip this batch and log some data to understand it better
+        logMissingAlbumDetails(jobId, authData, albumId, e);
       } else {
         throw e;
       }
@@ -295,34 +298,51 @@ public class GooglePhotosImporter
     return totalBytes;
   }
 
+  private void logMissingAlbumDetails(
+      UUID jobId, TokensAndUrlAuthData authData, String albumId, IOException e) {
+    monitor.info(
+        () -> format("Can't find album during createPhotos call, album is likely deleted"), e);
+    try {
+      GoogleAlbum album = getOrCreatePhotosInterface(jobId, authData).getAlbum(albumId);
+      monitor.debug(
+          () ->
+              format(
+                  "Can't find album during createPhotos call, album info: isWriteable %b, mediaItemsCount %d",
+                  album.getIsWriteable(), album.getMediaItemsCount()),
+          e);
+    } catch (Exception ex) {
+      monitor.info(() -> format("Can't find album during getAlbum call"), ex);
+    }
+  }
+
   private long processMediaResult(
       NewMediaItemResult mediaItem,
-      String idempotentId,
+      ImportableItem item,
       IdempotentImportExecutor executor,
-      String title,
       long bytes)
       throws Exception {
     Status status = mediaItem.getStatus();
     if (status.getCode() == Code.OK_VALUE) {
-      executor.executeAndSwallowIOExceptions(
-          idempotentId, title, () -> new PhotoResult(mediaItem.getMediaItem().getId(), bytes));
+      PhotoResult photoResult = new PhotoResult(mediaItem.getMediaItem().getId(), bytes);
+      executor.importAndSwallowIOExceptions(
+          item, itemToImport -> ItemImportResult.success(photoResult, bytes));
       return bytes;
     } else {
-      executor.executeAndSwallowIOExceptions(
-          idempotentId,
-          title,
-          () -> {
-            throw new IOException(
-                String.format(
-                    "Media item could not be created. Code: %d Message: %s",
-                    status.getCode(), status.getMessage()));
-          });
+      executor.importAndSwallowIOExceptions(
+          item,
+          itemToImport ->
+              ItemImportResult.error(
+                  new IOException(
+                      String.format(
+                          "Media item could not be created. Code: %d Message: %s",
+                          status.getCode(), status.getMessage())),
+                  bytes));
       return 0;
     }
   }
 
   private Pair<InputStream, Long> getInputStreamForUrl(
-     UUID jobId, String fetchableUrl, boolean inTempStore) throws IOException {
+      UUID jobId, String fetchableUrl, boolean inTempStore) throws IOException {
     if (inTempStore) {
       final InputStreamWrapper streamWrapper = jobStore.getStream(jobId, fetchableUrl);
       return Pair.of(streamWrapper.getStream(), streamWrapper.getBytes());

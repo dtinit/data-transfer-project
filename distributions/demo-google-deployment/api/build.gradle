@@ -41,7 +41,7 @@ import com.bmuschko.gradle.docker.tasks.image.Dockerfile
  */
 
 plugins {
-    id 'com.github.johnrengelman.shadow' version '2.0.2'
+    id 'com.github.johnrengelman.shadow' version '6.1.0'
     id 'com.bmuschko.docker-remote-api' version '3.2.6'
     id 'java'
     id 'application'
@@ -121,7 +121,7 @@ task createApiServerDockerfile(type: Dockerfile) {
     description = 'Builds the API Server Dockerfile'
     group = 'docker'
     destFile project.file("${buildDir}/api/Dockerfile")
-    from "gcr.io/google-appengine/openjdk:8"
+    from "gcr.io/google-appengine/openjdk:11"
     exposePort 8080 // Port the API server is accessed from
     copyFile("build/libs/api-${project.version}-all.jar", "/app/api.jar")
     defaultCommand("java",
@@ -156,7 +156,7 @@ task createApiServerDockerfileLocal(type: Dockerfile) {
     group = 'docker'
     dependsOn copyApiServerDepsLocal
     destFile project.file("${buildDir}/api/Dockerfile")
-    from "gcr.io/google-appengine/openjdk:8"
+    from "gcr.io/google-appengine/openjdk:11"
     exposePort 8080 // Port the API server is accessed from
     copyFile("build/libs/api-${project.version}-all.jar", "/app/api.jar")
     copyFile("build/libs/service_acct_creds.json", '/service_acct_creds.json')

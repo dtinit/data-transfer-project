@@ -17,11 +17,14 @@
 package org.datatransferproject.types.common.models.social;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.datatransferproject.types.common.ImportableItem;
 
+import javax.annotation.Nonnull;
 import java.util.Objects;
 
-public class SocialActivityActor {
+public class SocialActivityActor implements ImportableItem {
   private String url;
   private String name;
   private String id;
@@ -41,12 +44,20 @@ public class SocialActivityActor {
     return url;
   }
 
+  @JsonIgnore(false)
+  @Override
   public String getName() {
     return name;
   }
 
   public String getId() {
     return id;
+  }
+
+  @Nonnull
+  @Override
+  public String getIdempotentId() {
+    return getId();
   }
 
   @Override

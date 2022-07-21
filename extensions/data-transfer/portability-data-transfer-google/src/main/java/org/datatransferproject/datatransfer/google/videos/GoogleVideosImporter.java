@@ -63,19 +63,20 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.ItemImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.UploadErrorException;
 import org.datatransferproject.transfer.ImageStreamProvider;
-import org.datatransferproject.types.common.models.MediaObject;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
@@ -154,7 +155,7 @@ public class GoogleVideosImporter
       final UnmodifiableIterator<List<VideoModel>> batches =
           Iterators.partition(stream.iterator(), 49);
       while (batches.hasNext()) {
-        long batchBytes = importVideoBatch(batches.next(), client, executor);
+        long batchBytes = importVideoBatch(jobId, batches.next(), client, executor);
         bytes += batchBytes;
       }
     }
@@ -173,16 +174,13 @@ public class GoogleVideosImporter
   }
 
   private VideoModel transformVideoName(VideoModel video) {
-    String filename = Strings.isNullOrEmpty(video.getName()) ? "untitled": video.getName();
+    String filename = Strings.isNullOrEmpty(video.getName()) ? "untitled" : video.getName();
     video.setName(filename);
     return video;
   }
 
-  long importVideoBatch(
-      List<VideoModel> batchedVideos,
-      PhotosLibraryClient client,
-      IdempotentImportExecutor executor)
-      throws Exception {
+  long importVideoBatch(UUID jobId, List<VideoModel> batchedVideos, PhotosLibraryClient client,
+      IdempotentImportExecutor executor) throws Exception {
     final ArrayList<NewMediaItem> mediaItems = new ArrayList<>();
     final HashMap<String, VideoModel> uploadTokenToDataId = new HashMap<>();
     final HashMap<String, Long> uploadTokenToLength = new HashMap<>();
@@ -191,11 +189,14 @@ public class GoogleVideosImporter
     try {
       for (VideoModel video : batchedVideos) {
         try {
-          Pair<String, Long> pair = uploadMediaItem(video, client);
+          Pair<String, Long> pair = uploadMediaItem(jobId, video, client);
           final String uploadToken = pair.getLeft();
           mediaItems.add(buildMediaItem(video, uploadToken));
           uploadTokenToDataId.put(uploadToken, video);
           uploadTokenToLength.put(uploadToken, pair.getRight());
+          if (video.isInTempStore()) {
+            dataStore.removeData(jobId, video.getDataId());
+          }
         } catch (IOException e) {
           if (e instanceof FileNotFoundException) {
             // If the video file is no longer available then skip the video. We see this in a small
@@ -204,12 +205,10 @@ public class GoogleVideosImporter
                 () -> String.format("Video resource was missing for id: %s", video.getDataId()), e);
             continue;
           }
-          executor.executeAndSwallowIOExceptions(
-              video.getDataId(),
-              video.getName(),
-              () -> {
-                throw e;
-              });
+          executor.importAndSwallowIOExceptions(
+              video,
+              videoModel -> ItemImportResult.error(e, null)
+          );
         }
       }
       if (mediaItems.isEmpty()) {
@@ -227,34 +226,35 @@ public class GoogleVideosImporter
         final VideoModel video = uploadTokenToDataId.get(uploadToken);
         Preconditions.checkNotNull(video);
         final int code = status.getCode();
+        Long length = uploadTokenToLength.get(uploadToken);
         if (code == Code.OK_VALUE) {
-          executor.executeAndSwallowIOExceptions(
-              video.getDataId(), video.getName(), () -> result.getMediaItem().getId());
-          Long length = uploadTokenToLength.get(uploadToken);
+          executor.importAndSwallowIOExceptions(
+              video, videoModel -> ItemImportResult.success(result.getMediaItem().getId(), length)
+          );
           if (length != null) {
             bytes += length;
           }
         } else {
-          executor.executeAndSwallowIOExceptions(
-              video.getDataId(),
-              video.getName(),
-              () -> {
-                throw new IOException(
-                    String.format(
-                        "Video item could not be created. Code: %d Message: %s",
-                        code, result.getStatus().getMessage()));
-              });
+          executor.importAndSwallowIOExceptions(
+              video,
+              videoModel -> ItemImportResult.error(new IOException(
+                  String.format(
+                      "Video item could not be created. Code: %d Message: %s",
+                      code, result.getStatus().getMessage())), length)
+          );
         }
         uploadTokenToDataId.remove(uploadToken);
       }
       if (!uploadTokenToDataId.isEmpty()) {
-        for (VideoModel video : uploadTokenToDataId.values()) {
-          executor.executeAndSwallowIOExceptions(
-              video.getDataId(),
-              video.getName(),
-              () -> {
-                throw new IOException("Video item was missing from results list.");
-              });
+        for (Entry<String, VideoModel> entry : uploadTokenToDataId.entrySet()) {
+          VideoModel video = entry.getValue();
+          String uploadToken = entry.getKey();
+          executor.importAndSwallowIOExceptions(
+              video,
+              videoModel -> ItemImportResult.error(
+                  new IOException("Video item was missing from results list."),
+                  uploadTokenToLength.get(uploadToken))
+          );
         }
       }
       return bytes;
@@ -269,17 +269,11 @@ public class GoogleVideosImporter
     }
   }
 
-  private Pair<String, Long> uploadMediaItem(
-      MediaObject inputVideo, PhotosLibraryClient photosLibraryClient)
+  private Pair<String, Long> uploadMediaItem(UUID jobId, VideoModel inputVideo,
+      PhotosLibraryClient photosLibraryClient)
       throws IOException, UploadErrorException, InvalidTokenException {
 
-    final File tmp;
-    try (InputStream inputStream =
-        this.videoStreamProvider
-            .getConnection(inputVideo.getContentUrl().toString())
-            .getInputStream()) {
-      tmp = dataStore.getTempFileFromInputStream(inputStream, inputVideo.getName(), ".mp4");
-    }
+    final File tmp = createTempVideoFile(jobId, inputVideo);
     try {
       UploadMediaItemRequest uploadRequest =
           UploadMediaItemRequest.newBuilder()
@@ -312,6 +306,18 @@ public class GoogleVideosImporter
       //noinspection ResultOfMethodCallIgnored
       tmp.delete();
     }
+  }
+
+  private File createTempVideoFile(UUID jobId, VideoModel inputVideo) throws IOException {
+    try (InputStream inputStream = getVideoInputStream(jobId, inputVideo)) {
+      return dataStore.getTempFileFromInputStream(inputStream, inputVideo.getName(), ".mp4");
+    }
+  }
+
+  private InputStream getVideoInputStream(UUID jobId, VideoModel inputVideo) throws IOException {
+    return inputVideo.isInTempStore() ?
+        dataStore.getStream(jobId, inputVideo.getDataId()).getStream()
+        : videoStreamProvider.getConnection(inputVideo.getContentUrl().toString()).getInputStream();
   }
 
   @VisibleForTesting

@@ -16,10 +16,21 @@
 
 package org.datatransferproject.spi.transfer.idempotentexecutor;
 
+import org.datatransferproject.types.common.ImportableItem;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 
+/**
+ * DEPRECATED: do not use or continue developing this class as it will be deleted soon.
+ */
+@Deprecated // TODO(#1111) delete this class
 public class IdempotentImportExecutorHelper {
-  public static String getPhotoIdempotentId(PhotoModel photo) {
-      return photo.getAlbumId() + "-" + photo.getDataId();
+
+  /**
+   * DEPRECATED: do not use this method; instead call {@link ImportableItem#getIdempotentId}
+   * directly.
+   */
+  @Deprecated // TODO(#1111) delete callers of this method
+  public static String getPhotoIdempotentId(ImportableItem item) {
+      return item.getIdempotentId();
   }
 }

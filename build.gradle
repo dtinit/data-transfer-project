@@ -75,7 +75,7 @@ configure(sourceProjects()) {
     group = "${projectGroup}"
     version = "${projectVersion}"
 
-    sourceCompatibility = 1.8
+    sourceCompatibility = 11
 
     dependencies {
         compile "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
@@ -152,11 +152,11 @@ def configurePublication(Project project) {
                 beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
                 repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2") {
-                    authentication(userName: hasProperty('ossrhUsername') ? ossrhUsername : '', password: hasProperty('ossrhPassword') ? ossrhPassword : '')
+                        authentication(userName: project.hasProperty('ossrhUsername') ? ossrhUsername : '', password: project.hasProperty('ossrhPassword') ? ossrhPassword : '')
                 }
 
                 snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots") {
-                    authentication(userName: hasProperty('ossrhUsername') ? ossrhUsername : '', password: hasProperty('ossrhPassword') ? ossrhPassword : '')
+                    authentication(userName: project.hasProperty('ossrhUsername') ? ossrhUsername : '', password: project.hasProperty('ossrhPassword') ? ossrhPassword : '')
                 }
 
                 pom.project {
