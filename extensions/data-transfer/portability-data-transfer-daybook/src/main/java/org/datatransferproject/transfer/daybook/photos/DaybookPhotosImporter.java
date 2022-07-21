@@ -127,8 +127,9 @@ public class DaybookPhotosImporter
     } else if (photoModel.getFetchableUrl() != null) {
       inputStream = new URL(photoModel.getFetchableUrl()).openStream();
     } else {
-      monitor.severe(() -> "Can't get inputStream for a photo");
-      return ItemImportResult.error(new IOException("Can't get inputStream for a photo"), null);
+      String errorMessage = "Can't get inputStream for a photo";
+      monitor.severe(() -> errorMessage);
+      return ItemImportResult.error(new IOException(errorMessage), null);
     }
 
     byte[] imageBytes = ByteStreams.toByteArray(inputStream);
