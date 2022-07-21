@@ -37,6 +37,8 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.datatransfer.flickr.photos.FlickrUtils;
+import org.datatransferproject.datatransfer.flickr.photos.FlickrTempPhotoData;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
@@ -285,10 +287,10 @@ public class FlickrMediaImporter implements Importer<AuthData, MediaContainerRes
     private String uploadVideo(VideoModel video, UUID jobId) throws IOException, FlickrException {
         InputStream inStream;
         if (video.isInTempStore()) {
-            final InputStreamWrapper streamWrapper = jobStore.getStream(jobId, video.getContentUrl());
+            final InputStreamWrapper streamWrapper = jobStore.getStream(jobId, video.getFetchableUrl());
             inStream = streamWrapper.getStream();
         } else {
-            inStream = imageStreamProvider.get(video.getContentUrl());
+            inStream = imageStreamProvider.get(video.getFetchableUrl());
         }
 
         String videoTitle = Strings.isNullOrEmpty(video.getName()) ? "" : video.getName();
