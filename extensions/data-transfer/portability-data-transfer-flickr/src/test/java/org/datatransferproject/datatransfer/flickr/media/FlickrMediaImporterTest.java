@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.cloud.local.LocalJobStore;
+import org.datatransferproject.datatransfer.flickr.photos.FlickrTestUtils;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
@@ -51,7 +52,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.scribe.model.Token;
 
-public class FlickrPhotosImporterTest {
+public class FlickrMediaImporterTest {
     private static final String ALBUM_ID = "Album ID";
     private static final String ALBUM_NAME = "Album name";
     private static final String ALBUM_DESCRIPTION = "Album description";
@@ -89,7 +90,7 @@ public class FlickrPhotosImporterTest {
 
         MediaContainerResource mediaContainerResource =
                 new MediaContainerResource(
-                        Collections.singletonList(Media_ALBUM), Collections.singletonList(PHOTO_MODEL));
+                        Collections.singletonList(Media_ALBUM), Collections.singletonList(PHOTO_MODEL), null);
 
         // Setup Mock
         when(user.getId()).thenReturn("userId");
