@@ -39,4 +39,9 @@ public class ContinuationData extends PortableType {
   public void addContainerResource(ContainerResource resource) {
     containerResources.add(resource);
   }
+
+  /** Adds a list of container resources. */
+  public void addContainerResources(List<ContainerResource> resources) {
+    containerResources.addAll(resources);
+  }
 }

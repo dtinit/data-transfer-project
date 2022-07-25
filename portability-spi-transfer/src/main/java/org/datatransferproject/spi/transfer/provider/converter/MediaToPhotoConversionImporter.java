@@ -23,6 +23,7 @@ import java.util.UUID;
  */
 // TODO(#1065) fix primitives-obession causing us to key Providers on "PHOTOS" string rather
 // than underlying file types.
+@Deprecated // prefer AnyToAnyImporter
 public class MediaToPhotoConversionImporter<
     A extends AuthData,
     PCR extends PhotosContainerResource,

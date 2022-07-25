@@ -19,7 +19,9 @@ import com.google.common.base.Stopwatch;
 import com.google.inject.Provider;
 import java.io.IOException;
 import java.time.Clock;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -44,6 +46,7 @@ import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.common.DownloadableItem;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.models.DataModel;
+import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.AuthData;
@@ -234,6 +237,11 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
       items = ((PhotosContainerResource) exportedData).getPhotos();
     } else if (exportedData instanceof VideosContainerResource) {
       items = ((VideosContainerResource) exportedData).getVideos();
+    } else if (exportedData instanceof MediaContainerResource) {
+      MediaContainerResource mcr = (MediaContainerResource) exportedData;
+      List<DownloadableItem> list = new ArrayList<>(mcr.getVideos());
+      list.addAll(mcr.getPhotos());
+      items = list;
     } else {
       return;
     }

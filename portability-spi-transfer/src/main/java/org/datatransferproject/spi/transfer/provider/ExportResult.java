@@ -1,6 +1,7 @@
 package org.datatransferproject.spi.transfer.provider;
 
 import com.google.common.base.Preconditions;
+import java.util.Objects;
 import java.util.Optional;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.types.common.models.DataModel;
@@ -9,6 +10,7 @@ import org.datatransferproject.types.common.models.DataModel;
  * The result of an item export operation, after retries.
  */
 public class ExportResult<T extends DataModel> {
+
   public static final ExportResult CONTINUE = new ExportResult(ResultType.CONTINUE);
   public static final ExportResult END = new ExportResult(ResultType.CONTINUE);
 
@@ -31,7 +33,7 @@ public class ExportResult<T extends DataModel> {
   /**
    * Ctor.
    *
-   * @param type the result type
+   * @param type         the result type
    * @param exportedData the exported data
    */
   public ExportResult(ResultType type, T exportedData) {
@@ -51,8 +53,8 @@ public class ExportResult<T extends DataModel> {
   /**
    * Ctor.
    *
-   * @param type the result type
-   * @param exportedData the exported data
+   * @param type             the result type
+   * @param exportedData     the exported data
    * @param continuationData continuation information
    */
   public ExportResult(ResultType type, T exportedData, ContinuationData continuationData) {
@@ -99,6 +101,26 @@ public class ExportResult<T extends DataModel> {
     Preconditions.checkArgument(!type.equals(ResultType.ERROR), mustHaveThrowable);
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof ExportResult)) {
+      return false;
+    }
+    ExportResult<?> that = (ExportResult<?>) o;
+    return type == that.type &&
+        Objects.equals(exportedData, that.exportedData) &&
+        Objects.equals(continuationData, that.continuationData) &&
+        Objects.equals(throwable, that.throwable);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(type, exportedData, continuationData, throwable);
+  }
+
   /**
    * Result types.
    */
@@ -115,6 +137,16 @@ public class ExportResult<T extends DataModel> {
     /**
      * Indicates an unrecoverable error was raised.
      */
-    ERROR
+    ERROR;
+
+    public static ResultType merge(ResultType t1, ResultType t2) {
+      if (t1 == ResultType.ERROR || t2 == ResultType.ERROR) {
+        return ResultType.ERROR;
+      }
+      if (t1 == ResultType.CONTINUE || t2 == ResultType.CONTINUE) {
+        return ResultType.CONTINUE;
+      }
+      return ResultType.END;
+    }
   }
 }
