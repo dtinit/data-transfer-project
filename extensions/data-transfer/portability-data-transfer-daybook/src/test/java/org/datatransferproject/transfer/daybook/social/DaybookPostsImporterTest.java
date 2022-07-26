@@ -46,9 +46,9 @@ import org.datatransferproject.types.common.models.social.SocialActivityLocation
 import org.datatransferproject.types.common.models.social.SocialActivityModel;
 import org.datatransferproject.types.common.models.social.SocialActivityType;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 
@@ -61,7 +61,7 @@ public class DaybookPostsImporterTest {
 
   @Rule public TemporaryFolder folder = new TemporaryFolder();
 
-  @Before
+  @BeforeEach
   public void setUp() {
     monitor = mock(Monitor.class);
     executor = new InMemoryIdempotentImportExecutor(monitor);

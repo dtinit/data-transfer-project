@@ -26,7 +26,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.datatransferproject.types.common.models.ContainerResource;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class SocialActivityContainerResourceTest {
 

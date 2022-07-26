@@ -15,11 +15,19 @@
  */
 package org.datatransferproject.transfer.microsoft.integration;
 
+import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import okhttp3.OkHttpClient;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
@@ -30,19 +38,10 @@ import org.datatransferproject.types.common.models.calendar.CalendarContainerRes
 import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
 import org.datatransferproject.types.common.models.calendar.CalendarModel;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static java.util.Collections.singleton;
-import static java.util.Collections.singletonList;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Verifies Calendar export using mock HTTP endpoints that replay responses from the Microsoft Graph
@@ -291,7 +290,7 @@ public class MicrosoftCalendarImportTest {
     Assert.assertEquals("UTC", endDate.get("timeZone"));
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     client = new OkHttpClient.Builder().build();
     mapper = new ObjectMapper();
@@ -300,7 +299,7 @@ public class MicrosoftCalendarImportTest {
     server = new MockWebServer();
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     server.shutdown();
   }

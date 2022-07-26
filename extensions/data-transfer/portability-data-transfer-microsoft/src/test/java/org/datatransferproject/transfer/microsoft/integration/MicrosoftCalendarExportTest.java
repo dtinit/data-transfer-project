@@ -25,12 +25,12 @@ import okhttp3.OkHttpClient;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.transfer.microsoft.calendar.MicrosoftCalendarExporter;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerServiceImpl;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
-import org.junit.After;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Verifies Calendar export using mock HTTP endpoints that replay responses from the Microsoft Graph
@@ -257,7 +257,7 @@ public class MicrosoftCalendarExportTest {
                         && "Test Appointment 2".equals(e.getTitle())));
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     client = new OkHttpClient.Builder().build();
     mapper = new ObjectMapper();
@@ -266,7 +266,7 @@ public class MicrosoftCalendarExportTest {
     server = new MockWebServer();
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     server.shutdown();
   }
