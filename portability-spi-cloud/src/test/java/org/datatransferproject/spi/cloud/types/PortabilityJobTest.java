@@ -31,7 +31,7 @@ import org.datatransferproject.test.types.ObjectMapperFactory;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests serialization and deserialization of a {@link PortabilityJob}.

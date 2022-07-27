@@ -42,9 +42,9 @@ import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
-import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 
@@ -57,7 +57,7 @@ public class BackblazePhotosImporterTest {
     TokenSecretAuthData authData;
     BackblazeDataTransferClient client;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         monitor = mock(Monitor.class);
         dataStore = mock(TemporaryPerJobDataStore.class);

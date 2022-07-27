@@ -19,10 +19,9 @@ package org.datatransferproject.types.common.models.videos;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Truth;
-import org.datatransferproject.types.common.models.ContainerResource;
-import org.junit.Test;
-
 import java.util.List;
+import org.datatransferproject.types.common.models.ContainerResource;
+import org.junit.jupiter.api.Test;
 
 public class VideosContainerResourceTest {
   @Test

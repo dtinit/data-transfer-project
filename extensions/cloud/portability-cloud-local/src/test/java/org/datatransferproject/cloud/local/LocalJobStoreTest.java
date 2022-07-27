@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.truth.Truth;
 import java.util.Map;
 import java.util.UUID;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class LocalJobStoreTest {
 

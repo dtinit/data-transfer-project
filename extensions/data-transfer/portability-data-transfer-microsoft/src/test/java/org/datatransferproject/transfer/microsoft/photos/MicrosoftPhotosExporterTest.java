@@ -38,9 +38,8 @@ import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Matchers;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -63,7 +62,7 @@ public class MicrosoftPhotosExporterTest {
 
   private MicrosoftDriveItemsResponse driveItemsResponse;
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException {
     MicrosoftCredentialFactory credentialFactory = mock(MicrosoftCredentialFactory.class);
     photosInterface = mock(MicrosoftPhotosInterface.class);
