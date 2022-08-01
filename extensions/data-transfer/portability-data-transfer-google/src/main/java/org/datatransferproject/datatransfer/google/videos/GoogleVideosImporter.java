@@ -39,7 +39,10 @@ import com.google.auth.oauth2.UserCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.UnmodifiableIterator;
 import com.google.photos.library.v1.PhotosLibraryClient;
 import com.google.photos.library.v1.PhotosLibrarySettings;
@@ -65,9 +68,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.datatransfer.google.common.GooglePhotosImportUtils;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.ItemImportResult;
@@ -77,6 +82,7 @@ import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.UploadErrorException;
 import org.datatransferproject.transfer.ImageStreamProvider;
+import org.datatransferproject.types.common.models.videos.VideoAlbum;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
@@ -86,28 +92,28 @@ public class GoogleVideosImporter
     implements Importer<TokensAndUrlAuthData, VideosContainerResource> {
 
   private final ImageStreamProvider videoStreamProvider;
-  private Monitor monitor;
+  private final Monitor monitor;
   private final AppCredentials appCredentials;
   private final TemporaryPerJobDataStore dataStore;
-  private Map<UUID, PhotosLibraryClient> clientsMap = new HashMap<>();
+  private final Map<UUID, PhotosLibraryClient> clientsMap;
 
   public GoogleVideosImporter(
       AppCredentials appCredentials, TemporaryPerJobDataStore dataStore, Monitor monitor) {
-    this.monitor = monitor;
-    this.appCredentials = appCredentials;
-    this.dataStore = dataStore;
-    this.videoStreamProvider = new ImageStreamProvider();
+    this(appCredentials, dataStore, monitor, new ImageStreamProvider(), new HashMap<>());
   }
 
+  @VisibleForTesting
   GoogleVideosImporter(
       AppCredentials appCredentials,
       TemporaryPerJobDataStore dataStore,
       Monitor monitor,
-      ImageStreamProvider videoStreamProvider) {
+      ImageStreamProvider videoStreamProvider,
+      Map<UUID, PhotosLibraryClient> clientsMap) {
     this.videoStreamProvider = videoStreamProvider;
     this.monitor = monitor;
     this.appCredentials = appCredentials;
     this.dataStore = dataStore;
+    this.clientsMap = clientsMap;
   }
 
   @Override
@@ -139,6 +145,13 @@ public class GoogleVideosImporter
               .build();
       client = PhotosLibraryClient.initialize(settings);
       clientsMap.put(jobId, client);
+    }
+
+    for (VideoAlbum album : data.getAlbums()) {
+      executor.importAndSwallowIOExceptions(album, (a) -> {
+        String title = GooglePhotosImportUtils.cleanAlbumTitle(a.getName());
+        return ItemImportResult.success(client.createAlbum(title).getId());
+      });
     }
 
     long bytes = 0L;
@@ -181,9 +194,10 @@ public class GoogleVideosImporter
 
   long importVideoBatch(UUID jobId, List<VideoModel> batchedVideos, PhotosLibraryClient client,
       IdempotentImportExecutor executor) throws Exception {
-    final ArrayList<NewMediaItem> mediaItems = new ArrayList<>();
-    final HashMap<String, VideoModel> uploadTokenToDataId = new HashMap<>();
-    final HashMap<String, Long> uploadTokenToLength = new HashMap<>();
+    final ArrayListMultimap<String, NewMediaItem> mediaItemsByAlbum = ArrayListMultimap.create();
+    final Map<String, VideoModel> uploadTokenToDataId = new HashMap<>();
+    final Map<String, Long> uploadTokenToLength = new HashMap<>();
+
     // The PhotosLibraryClient can throw InvalidArgumentException and this try block wraps the two
     // calls of the client to handle the InvalidArgumentException when the user's storage is full.
     try {
@@ -191,7 +205,11 @@ public class GoogleVideosImporter
         try {
           Pair<String, Long> pair = uploadMediaItem(jobId, video, client);
           final String uploadToken = pair.getLeft();
-          mediaItems.add(buildMediaItem(video, uploadToken));
+          final String googleAlbumId =
+              Strings.isNullOrEmpty(video.getAlbumId())
+                  ? null
+                  : executor.getCachedValue(video.getAlbumId());
+          mediaItemsByAlbum.put(googleAlbumId, buildMediaItem(video, uploadToken));
           uploadTokenToDataId.put(uploadToken, video);
           uploadTokenToLength.put(uploadToken, pair.getRight());
           if (video.isInTempStore()) {
@@ -211,13 +229,21 @@ public class GoogleVideosImporter
           );
         }
       }
-      if (mediaItems.isEmpty()) {
+
+      if (mediaItemsByAlbum.isEmpty()) {
         // Either we were not passed in any videos or we failed upload on all of them.
         return 0L;
       }
 
-      BatchCreateMediaItemsResponse response = client.batchCreateMediaItems(mediaItems);
-      final List<NewMediaItemResult> resultsList = response.getNewMediaItemResultsList();
+      final List<NewMediaItemResult> resultsList = mediaItemsByAlbum.keySet().stream()
+          .map(k ->
+              k == null
+                  ? client.batchCreateMediaItems(mediaItemsByAlbum.get(null))
+                  : client.batchCreateMediaItems(k, mediaItemsByAlbum.get(k)))
+          .map(BatchCreateMediaItemsResponse::getNewMediaItemResultsList)
+          .flatMap(Collection::stream)
+          .collect(Collectors.toList());
+
       long bytes = 0L;
       for (NewMediaItemResult result : resultsList) {
         String uploadToken = result.getUploadToken();
@@ -327,9 +353,7 @@ public class GoogleVideosImporter
     if (Strings.isNullOrEmpty(videoDescription)) {
       newMediaItem = NewMediaItemFactory.createNewMediaItem(uploadToken);
     } else {
-      if (videoDescription.length() > 1000) {
-        videoDescription = videoDescription.substring(0, 997) + "...";
-      }
+      videoDescription = GooglePhotosImportUtils.cleanDescription(videoDescription);
       newMediaItem = NewMediaItemFactory.createNewMediaItem(uploadToken, videoDescription);
     }
     return newMediaItem;
