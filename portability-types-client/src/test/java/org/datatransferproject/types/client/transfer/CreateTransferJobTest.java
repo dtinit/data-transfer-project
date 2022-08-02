@@ -18,7 +18,7 @@ package org.datatransferproject.types.client.transfer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /* Test for CreateTransferJob */
 public class CreateTransferJobTest {

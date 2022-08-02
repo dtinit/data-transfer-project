@@ -51,8 +51,8 @@ import org.datatransferproject.spi.transfer.idempotentexecutor.InMemoryIdempoten
 import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentMatchers;
 
@@ -68,7 +68,7 @@ public class GoogleVideosImporterTest {
   private TemporaryPerJobDataStore dataStore;
   private ImageStreamProvider streamProvider;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     // Create files so we can accurately check the length of file counting
     dataStore = mock(TemporaryPerJobDataStore.class);

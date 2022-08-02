@@ -27,8 +27,6 @@ dependencies {
     compile("com.google.api-client:google-api-client:${googleApiClient}")
     compile "com.squareup.okhttp3:okhttp:${okHttpVersion}"
     compile("com.google.guava:guava:${guavaVersion}")
-
-    testCompile("org.mockito:mockito-core:${mockitoVersion}")
 }
 
 configurePublication(project)

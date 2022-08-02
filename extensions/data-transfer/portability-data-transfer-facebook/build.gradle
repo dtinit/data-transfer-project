@@ -27,8 +27,6 @@ dependencies {
     compile("com.restfb:restfb:2.14.0")
     compile("commons-io:commons-io:2.6")
     compile("org.apache.commons:commons-imaging:1.0-alpha1")
-
-    testCompile("org.mockito:mockito-core:${mockitoVersion}")
 }
 
 configurePublication(project)

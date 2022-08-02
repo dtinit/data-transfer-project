@@ -40,7 +40,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class GoogleContactsExportConversionTest {
   private static final String DEFAULT_SOURCE_TYPE = "CONTACT";
