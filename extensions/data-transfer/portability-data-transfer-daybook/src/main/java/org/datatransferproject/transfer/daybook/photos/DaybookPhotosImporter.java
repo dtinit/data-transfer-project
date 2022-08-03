@@ -31,6 +31,7 @@ import okhttp3.Response;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.ItemImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
@@ -38,7 +39,9 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-/** Imports albums and photos to Daybook */
+/**
+ * Imports albums and photos to Daybook
+ */
 public class DaybookPhotosImporter
     implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
@@ -83,10 +86,9 @@ public class DaybookPhotosImporter
 
     // Import photos
     for (PhotoModel photo : resource.getPhotos()) {
-      executor.executeAndSwallowIOExceptions(
-          photo.getIdempotentId(),
-          photo.getTitle(),
-          () -> {
+      executor.importAndSwallowIOExceptions(
+          photo,
+          photoModel -> {
             String albumId;
             if (Strings.isNullOrEmpty(photo.getAlbumId())) {
               albumId = null;
@@ -113,7 +115,7 @@ public class DaybookPhotosImporter
     return album_name;
   }
 
-  private int importPhoto(
+  private ItemImportResult<Integer> importPhoto(
       PhotoModel photoModel, UUID jobId, TokensAndUrlAuthData authData, String newAlbumId)
       throws IOException {
     InputStream inputStream;
@@ -125,8 +127,9 @@ public class DaybookPhotosImporter
     } else if (photoModel.getFetchableUrl() != null) {
       inputStream = new URL(photoModel.getFetchableUrl()).openStream();
     } else {
-      monitor.severe(() -> "Can't get inputStream for a photo");
-      return -1;
+      String errorMessage = "Can't get inputStream for a photo";
+      monitor.severe(() -> errorMessage);
+      return ItemImportResult.error(new IOException(errorMessage), null);
     }
 
     byte[] imageBytes = ByteStreams.toByteArray(inputStream);
@@ -164,7 +167,7 @@ public class DaybookPhotosImporter
       if (photoModel.isInTempStore()) {
         jobStore.removeData(jobId, photoModel.getFetchableUrl());
       }
-      return response.code();
+      return ItemImportResult.success(response.code(), (long) imageBytes.length);
     }
   }
 }
