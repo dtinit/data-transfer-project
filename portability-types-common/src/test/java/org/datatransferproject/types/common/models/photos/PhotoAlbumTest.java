@@ -2,7 +2,7 @@ package org.datatransferproject.types.common.models.photos;
 
 import com.google.common.truth.Truth;
 import java.util.List;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PhotoAlbumTest {
 

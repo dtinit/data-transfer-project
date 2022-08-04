@@ -11,8 +11,7 @@ import org.datatransferproject.types.common.models.TransmogrificationConfig;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 // TODO(#1060) this code was ported over without unit tests; below is a mostly 1:1-port
 // backfill but the new video handling logic in MediaContainerResource should have test coverage

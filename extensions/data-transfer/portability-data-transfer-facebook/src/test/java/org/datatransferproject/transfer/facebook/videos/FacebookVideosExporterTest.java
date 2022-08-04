@@ -32,8 +32,8 @@ import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class FacebookVideosExporterTest {
 
@@ -44,7 +44,7 @@ public class FacebookVideosExporterTest {
   private FacebookVideosExporter facebookVideosExporter;
   private UUID uuid = UUID.randomUUID();
 
-  @Before
+  @BeforeEach
   public void setUp() throws CopyExceptionWithFailureReason {
     FacebookVideosInterface videosInterface = mock(FacebookVideosInterface.class);
 

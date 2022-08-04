@@ -13,15 +13,15 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.types.common.DownloadableItem;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ConnectionProviderTest {
 
   private TemporaryPerJobDataStore jobStore;
   private ConnectionProvider connectionProvider;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     jobStore = mock(TemporaryPerJobDataStore.class);
     connectionProvider = new ConnectionProvider(jobStore);

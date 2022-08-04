@@ -58,8 +58,8 @@ import org.datatransferproject.types.common.models.IdOnlyContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 public class GooglePhotosExporterTest {
@@ -80,7 +80,7 @@ public class GooglePhotosExporterTest {
   private MediaItemSearchResponse mediaItemSearchResponse;
   private AlbumListResponse albumListResponse;
 
-  @Before
+  @BeforeEach
   public void setup() throws IOException, InvalidTokenException, PermissionDeniedException {
     GoogleCredentialFactory credentialFactory = mock(GoogleCredentialFactory.class);
     jobStore = mock(TemporaryPerJobDataStore.class);
