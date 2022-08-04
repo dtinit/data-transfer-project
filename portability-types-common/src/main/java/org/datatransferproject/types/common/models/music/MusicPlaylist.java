@@ -21,6 +21,7 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
 import java.time.Instant;
 import java.util.Objects;
 
@@ -48,11 +49,9 @@ final class MusicPlaylist extends CreativeWork {
             throw new IllegalArgumentException("id must be set for MusicPlaylist");
         }
         this.id = id;
-        if (isNullOrEmpty(description)) {
-            throw new IllegalArgumentException("description must be set for MusicPlaylist");
-        }
+        Preconditions.checkNotNull(description, "description must be set for MusicPlaylist");
         this.description = description;
-        if (isNullOrEmpty(description)) {
+        if (isNullOrEmpty(originalPlatform)) {
             throw new IllegalArgumentException("originalPlatform must be set for MusicPlaylist");
         }
         this.originalPlatform = originalPlatform;
