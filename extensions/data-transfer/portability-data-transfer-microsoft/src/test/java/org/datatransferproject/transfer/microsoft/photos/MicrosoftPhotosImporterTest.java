@@ -52,6 +52,7 @@ import org.datatransferproject.types.common.models.photos.PhotosContainerResourc
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 
 
 /**
@@ -140,7 +141,7 @@ public class MicrosoftPhotosImporterTest {
     assertThat(result).isEqualTo(ImportResult.OK);
   }
 
-  @Test(expected = PermissionDeniedException.class)
+  @Test
   public void testImportItemPermissionDenied() throws Exception {
     List<PhotoAlbum> albums =
         ImmutableList.of(new PhotoAlbum("id1", "album1.", "This is a fake albumb"));
@@ -162,7 +163,9 @@ public class MicrosoftPhotosImporterTest {
     when(response.body()).thenReturn(body);
     when(call.execute()).thenReturn(response);
 
-    ImportResult result = importer.importItem(uuid, executor, authData, data);
+    Assertions.assertThrows(PermissionDeniedException.class, () -> {
+      ImportResult result = importer.importItem(uuid, executor, authData, data);
+    });
   }
 
   @Test

@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 
 public class ItemImportResultTest {
 
@@ -15,23 +16,31 @@ public class ItemImportResultTest {
     assertFalse(result.hasBytes());
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void testNullBytesThrowOnGet() {
-    ItemImportResult.success("blabla", null).getBytes();
+    Assertions.assertThrows(IllegalStateException.class, () -> {
+      ItemImportResult.success("blabla", null).getBytes();
+    });
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void testSuccessWithNoData() {
-    ItemImportResult.success(null, 0L);
+    Assertions.assertThrows(NullPointerException.class, () -> {
+      ItemImportResult.success(null, 0L);
+    });
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testFailWithIncorrectBytes() {
-    ItemImportResult.success("blabla", -1L);
+    Assertions.assertThrows(IllegalArgumentException.class, () -> {
+      ItemImportResult.success("blabla", -1L);
+    });
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void testErrorWithNoException() {
-    ItemImportResult.error(null, 10L);
+    Assertions.assertThrows(NullPointerException.class, () -> {
+      ItemImportResult.error(null, 10L);
+    });
   }
 }
