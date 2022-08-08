@@ -43,10 +43,12 @@ public final class MusicContainerResourceTest {
                         new MusicPlaylistItem(
                                 new MusicRecording(null, "item1_isrc", new MusicRelease(null, "r1_icpn"), null),
                                 "p1_id",
+                                "Google",
                                 1),
                         new MusicPlaylistItem(
                                 new MusicRecording(null, "item2_isrc", new MusicRelease(null, "r1_icpn"), null),
                                 "p1_id",
+                                "Google",
                                 2));
 
         ImmutableList<MusicRecording> tracks =

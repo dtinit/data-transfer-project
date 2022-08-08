@@ -26,7 +26,7 @@ import java.time.Instant;
 import java.util.Objects;
 
 /** POJO for https://schema.org/MusicPlaylist */
-final class MusicPlaylist extends CreativeWork {
+public class MusicPlaylist extends CreativeWork {
     private final String id;
     private final String description;
     private final String originalPlatform;
@@ -43,7 +43,7 @@ final class MusicPlaylist extends CreativeWork {
             @JsonProperty("updateTime") Instant updateTime) {
         super(headline);
         if (isNullOrEmpty(this.headline)) {
-            throw new IllegalArgumentException("headline must be set for MusicPlaylist");
+            throw new IllegalArgumentException("headline must be for MusicPlaylist");
         }
         if (isNullOrEmpty(id)) {
             throw new IllegalArgumentException("id must be set for MusicPlaylist");
@@ -52,7 +52,7 @@ final class MusicPlaylist extends CreativeWork {
         Preconditions.checkNotNull(description, "description must be set for MusicPlaylist");
         this.description = description;
         if (isNullOrEmpty(originalPlatform)) {
-            throw new IllegalArgumentException("originalPlatform must be set for MusicPlaylist");
+            throw new IllegalArgumentException("originalPlatform muse be set for MusicPlaylist");
         }
         this.originalPlatform = originalPlatform;
         this.createTime = createTime;
@@ -96,7 +96,7 @@ final class MusicPlaylist extends CreativeWork {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof MusicPlaylist)) {
             return false;
         }
         MusicPlaylist that = (MusicPlaylist) o;
