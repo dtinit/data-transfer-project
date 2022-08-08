@@ -92,7 +92,7 @@ public class BackblazeVideosImporter
           file);
       return ItemImportResult.success(res, file.length());
     } catch (FileNotFoundException e) {
-      monitor.severe(
+      monitor.info(
           () -> String.format("Video resource was missing for id: %s", video.getDataId()), e);
       return ItemImportResult.error(e, null);
     }

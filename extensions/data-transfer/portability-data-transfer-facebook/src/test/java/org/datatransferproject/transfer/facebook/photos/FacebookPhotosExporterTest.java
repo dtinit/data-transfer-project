@@ -16,6 +16,14 @@
 
 package org.datatransferproject.transfer.facebook.photos;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.datatransferproject.transfer.facebook.photos.FacebookPhotosExporter.PHOTO_TOKEN_PREFIX;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.google.common.collect.Lists;
 import com.restfb.Connection;
 import com.restfb.types.Album;
@@ -41,17 +49,12 @@ import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
-import static com.google.common.truth.Truth.assertThat;
-import static org.datatransferproject.transfer.facebook.photos.FacebookPhotosExporter.PHOTO_TOKEN_PREFIX;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 public class FacebookPhotosExporterTest {
+
   private static final String ALBUM_NAME = "My Album";
   private static final String ALBUM_ID = "1946595";
   private static final String ALBUM_DESCRIPTION = "This is a test album";
@@ -181,11 +184,13 @@ public class FacebookPhotosExporterTest {
         .contains(new IdOnlyContainerResource(ALBUM_ID));
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void testIllegalExport() throws CopyExceptionWithFailureReason {
-    facebookPhotosExporter.export(
-        uuid,
-        new TokensAndUrlAuthData("accessToken", null, null),
-        Optional.of(new ExportInformation(new StringPaginationToken(PHOTO_TOKEN_PREFIX), null)));
+    assertThrows(IllegalStateException.class, () -> {
+      facebookPhotosExporter.export(
+          uuid,
+          new TokensAndUrlAuthData("accessToken", null, null),
+          Optional.of(new ExportInformation(new StringPaginationToken(PHOTO_TOKEN_PREFIX), null)));
+    });
   }
 }

@@ -17,6 +17,7 @@
 package org.datatransferproject.datatransfer.backblaze.common;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeast;
@@ -26,13 +27,11 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
-
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.backblaze.exception.BackblazeCredentialsException;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.jupiter.api.Assertions;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -95,7 +94,7 @@ public class BackblazeDataTransferClientTest {
 
   @Test
   public void testWrongPartSize() {
-    Assertions.assertThrows(IllegalArgumentException.class, () -> {
+    assertThrows(IllegalArgumentException.class, () -> {
       new BackblazeDataTransferClient(monitor, backblazeS3ClientFactory, 10, 0);
     });
   }
@@ -124,14 +123,10 @@ public class BackblazeDataTransferClientTest {
         .thenThrow(BucketAlreadyExistsException.builder().build());
     BackblazeDataTransferClient client = createDefaultClient();
 
-    Assertions.assertThrows(IOException.class, () -> {
-      try {
-        client.init(KEY_ID, APP_KEY, EXPORT_SERVICE);
-      } catch (Exception ex) {
-        verify(monitor, atLeast(1)).info(any());
-        throw ex;
-      }
+    assertThrows(IOException.class, () -> {
+      client.init(KEY_ID, APP_KEY, EXPORT_SERVICE);
     });
+    verify(monitor, atLeast(1)).info(any());
   }
 
   @Test
@@ -140,7 +135,7 @@ public class BackblazeDataTransferClientTest {
     when(s3Client.createBucket(any(CreateBucketRequest.class)))
         .thenThrow(AwsServiceException.builder().build());
     BackblazeDataTransferClient client = createDefaultClient();
-    Assertions.assertThrows(IOException.class, () -> {
+    assertThrows(IOException.class, () -> {
       client.init(KEY_ID, APP_KEY, EXPORT_SERVICE);
     });
   }
@@ -149,21 +144,17 @@ public class BackblazeDataTransferClientTest {
   public void testInitListBucketException() throws BackblazeCredentialsException, IOException {
     when(s3Client.listBuckets()).thenThrow(S3Exception.builder().statusCode(403).build());
     BackblazeDataTransferClient client = createDefaultClient();
-    Assertions.assertThrows(BackblazeCredentialsException.class, () -> {
-      try {
-        client.init(KEY_ID, APP_KEY, EXPORT_SERVICE);
-      } catch (Exception ex) {
-        verify(s3Client, atLeast(1)).close();
-        verify(monitor, atLeast(1)).debug(any());
-        throw ex;
-      }
+    assertThrows(BackblazeCredentialsException.class, () -> {
+      client.init(KEY_ID, APP_KEY, EXPORT_SERVICE);
     });
+    verify(s3Client, atLeast(1)).close();
+    verify(monitor, atLeast(1)).debug(any());
   }
 
   @Test
   public void testUploadFileNonInitialized() throws IOException {
     BackblazeDataTransferClient client = createDefaultClient();
-    Assertions.assertThrows(IllegalStateException.class, () -> {
+    assertThrows(IllegalStateException.class, () -> {
       client.uploadFile(FILE_KEY, testFile);
     });
   }
@@ -188,7 +179,7 @@ public class BackblazeDataTransferClientTest {
         .thenThrow(AwsServiceException.builder().build());
     BackblazeDataTransferClient client = createDefaultClient();
     client.init(KEY_ID, APP_KEY, EXPORT_SERVICE);
-    Assertions.assertThrows(IOException.class, () -> {
+    assertThrows(IOException.class, () -> {
       client.uploadFile(FILE_KEY, testFile);
     });
   }
@@ -227,7 +218,7 @@ public class BackblazeDataTransferClientTest {
         new BackblazeDataTransferClient(monitor, backblazeS3ClientFactory, fileSize / 2,
             fileSize / 8);
     client.init(KEY_ID, APP_KEY, EXPORT_SERVICE);
-    Assertions.assertThrows(IOException.class, () -> {
+    assertThrows(IOException.class, () -> {
       client.uploadFile(FILE_KEY, testFile);
     });
   }
