@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import java.util.Objects;
+import org.datatransferproject.types.common.models.CreativeWork;
 
 /** POJO for https://schema.org/MusicRelease */
 public class MusicRelease extends CreativeWork {
@@ -29,8 +30,11 @@ public class MusicRelease extends CreativeWork {
 
     @JsonCreator
     public MusicRelease(
-            @JsonProperty("headline") String headline, @JsonProperty("icpnCode") String icpnCode) {
-        super(headline);
+            @JsonProperty("identifier") String identifier,
+            @JsonProperty("headline") String headline,
+            @JsonProperty("icpnCode") String icpnCode) {
+        super(identifier);
+        setHeadline(headline);
         if (isNullOrEmpty(icpnCode)) {
             throw new IllegalArgumentException("icpnCode must be set for MusicRelease");
         }
@@ -44,6 +48,7 @@ public class MusicRelease extends CreativeWork {
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
+                .add("identifier", getIdentifier())
                 .add("headline", getHeadline())
                 .add("icpnCode", getIcpnCode())
                 .toString();

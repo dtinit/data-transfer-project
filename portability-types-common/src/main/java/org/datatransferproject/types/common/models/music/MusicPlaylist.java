@@ -24,10 +24,11 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import java.time.Instant;
 import java.util.Objects;
+import org.datatransferproject.types.common.models.CreativeWork;
+
 
 /** POJO for https://schema.org/MusicPlaylist */
 public class MusicPlaylist extends CreativeWork {
-    private final String id;
     private final String description;
     private final String originalPlatform;
     private final Instant createTime;
@@ -35,20 +36,17 @@ public class MusicPlaylist extends CreativeWork {
 
     @JsonCreator
     public MusicPlaylist(
+            @JsonProperty("identifier") String identifier,
             @JsonProperty("headline") String headline,
-            @JsonProperty("id") String id,
             @JsonProperty("description") String description,
             @JsonProperty("originalPlatform") String originalPlatform,
             @JsonProperty("createTime") Instant createTime,
             @JsonProperty("updateTime") Instant updateTime) {
-        super(headline);
-        if (isNullOrEmpty(this.headline)) {
+        super(identifier);
+        setHeadline(headline);
+        if (isNullOrEmpty(getHeadline())) {
             throw new IllegalArgumentException("headline must be for MusicPlaylist");
         }
-        if (isNullOrEmpty(id)) {
-            throw new IllegalArgumentException("id must be set for MusicPlaylist");
-        }
-        this.id = id;
         Preconditions.checkNotNull(description, "description must be set for MusicPlaylist");
         this.description = description;
         if (isNullOrEmpty(originalPlatform)) {
@@ -57,10 +55,6 @@ public class MusicPlaylist extends CreativeWork {
         this.originalPlatform = originalPlatform;
         this.createTime = createTime;
         this.updateTime = updateTime;
-    }
-
-    public String getId() {
-        return id;
     }
 
     public String getDescription() {
@@ -82,8 +76,8 @@ public class MusicPlaylist extends CreativeWork {
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
+                .add("identifier", getIdentifier())
                 .add("headline", getHeadline())
-                .add("id", getId())
                 .add("description", getDescription())
                 .add("originalPlatform", getOriginalPlatform())
                 .add("createTime", getCreateTime())
@@ -100,14 +94,14 @@ public class MusicPlaylist extends CreativeWork {
             return false;
         }
         MusicPlaylist that = (MusicPlaylist) o;
-        return Objects.equals(headline, that.headline)
-                && Objects.equals(id, that.id)
+        return Objects.equals(getIdentifier(), that.getIdentifier())
+                && Objects.equals(getHeadline(), that.getHeadline())
                 && Objects.equals(description, that.description)
                 && Objects.equals(originalPlatform, that.originalPlatform);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(headline, id, description, originalPlatform);
+        return Objects.hash(getIdentifier(), getHeadline(), description, originalPlatform);
     }
 }

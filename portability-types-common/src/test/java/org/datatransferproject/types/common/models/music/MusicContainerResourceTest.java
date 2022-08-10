@@ -23,55 +23,61 @@ import org.datatransferproject.types.common.models.ContainerResource;
 import org.junit.jupiter.api.Test;
 
 public final class MusicContainerResourceTest {
-    @Test
-    public void verifySerializeDeserialize() throws Exception {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerSubtypes(MusicContainerResource.class);
 
-        ImmutableList<MusicPlaylist> playlists =
-                ImmutableList.of(
-                        new MusicPlaylist(
-                                "p1_title",
-                                "p1_id",
-                                "p1_description",
-                               "Google",
-                                null,
-                                null));
+  @Test
+  public void verifySerializeDeserialize() throws Exception {
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerSubtypes(MusicContainerResource.class);
 
-        ImmutableList<MusicPlaylistItem> playlistItems =
-                ImmutableList.of(
-                        new MusicPlaylistItem(
-                                new MusicRecording(null, "item1_isrc", new MusicRelease(null, "r1_icpn"), null),
-                                "p1_id",
-                                "Google",
-                                1),
-                        new MusicPlaylistItem(
-                                new MusicRecording(null, "item2_isrc", new MusicRelease(null, "r1_icpn"), null),
-                                "p1_id",
-                                "Google",
-                                2));
+    ImmutableList<MusicPlaylist> playlists =
+        ImmutableList.of(
+            new MusicPlaylist(
+                "p1_id",
+                "p1_title",
+                "p1_description",
+                "Google",
+                null,
+                null));
 
-        ImmutableList<MusicRecording> tracks =
-                ImmutableList.of(
-                        new MusicRecording(null, "t1_isrc", new MusicRelease(null, "r2_icpn"), null),
-                        new MusicRecording(null, "t2_isrc", new MusicRelease(null, "r3_icpn"), null));
+    ImmutableList<MusicPlaylistItem> playlistItems =
+        ImmutableList.of(
+            new MusicPlaylistItem(
+                new MusicRecording("track_id", null, "item1_isrc",
+                    new MusicRelease("release_id", null, "r1_icpn"), null),
+                "p1_id",
+                "Google",
+                1),
+            new MusicPlaylistItem(
+                new MusicRecording("track_id", null, "item2_isrc",
+                    new MusicRelease("release_id", null, "r1_icpn"), null),
+                "p1_id",
+                "Google",
+                2));
 
-        ImmutableList<MusicRelease> releases = ImmutableList.of(new MusicRelease(null, "r4_icpn"));
+    ImmutableList<MusicRecording> tracks =
+        ImmutableList.of(
+            new MusicRecording("track_id", null, "t1_isrc", new MusicRelease("release_id", null, "r2_icpn"),
+                null),
+            new MusicRecording("track_id", null, "t2_isrc", new MusicRelease("release_id", null, "r3_icpn"),
+                null));
 
-        ContainerResource data = new MusicContainerResource(playlists, playlistItems, tracks, releases);
+    ImmutableList<MusicRelease> releases = ImmutableList.of(
+        new MusicRelease("release_id", null, "r4_icpn"));
 
-        String serialized = objectMapper.writeValueAsString(data);
+    ContainerResource data = new MusicContainerResource(playlists, playlistItems, tracks, releases);
 
-        ContainerResource deserializedModel =
-                objectMapper.readValue(serialized, ContainerResource.class);
+    String serialized = objectMapper.writeValueAsString(data);
 
-        Truth.assertThat(deserializedModel).isNotNull();
-        Truth.assertThat(deserializedModel).isInstanceOf(MusicContainerResource.class);
-        MusicContainerResource deserialized = (MusicContainerResource) deserializedModel;
-        Truth.assertThat(deserialized.getPlaylists()).hasSize(1);
-        Truth.assertThat(deserialized.getPlaylistItems()).hasSize(2);
-        Truth.assertThat(deserialized.getTracks()).hasSize(2);
-        Truth.assertThat(deserialized.getReleases()).hasSize(1);
-        Truth.assertThat(deserialized).isEqualTo(data);
-    }
+    ContainerResource deserializedModel =
+        objectMapper.readValue(serialized, ContainerResource.class);
+
+    Truth.assertThat(deserializedModel).isNotNull();
+    Truth.assertThat(deserializedModel).isInstanceOf(MusicContainerResource.class);
+    MusicContainerResource deserialized = (MusicContainerResource) deserializedModel;
+    Truth.assertThat(deserialized.getPlaylists()).hasSize(1);
+    Truth.assertThat(deserialized.getPlaylistItems()).hasSize(2);
+    Truth.assertThat(deserialized.getTracks()).hasSize(2);
+    Truth.assertThat(deserialized.getReleases()).hasSize(1);
+    Truth.assertThat(deserialized).isEqualTo(data);
+  }
 }

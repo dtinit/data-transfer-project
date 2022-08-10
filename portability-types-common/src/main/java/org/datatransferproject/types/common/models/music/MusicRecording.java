@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import java.util.Objects;
+import org.datatransferproject.types.common.models.CreativeWork;
 
 /** POJO for https://schema.org/MusicRecording */
 public class MusicRecording extends CreativeWork {
@@ -32,11 +33,13 @@ public class MusicRecording extends CreativeWork {
 
     @JsonCreator
     public MusicRecording(
+            @JsonProperty("identifier") String identifier,
             @JsonProperty("headline") String headline,
             @JsonProperty("isrcCode") String isrcCode,
             @JsonProperty("musicRelease") MusicRelease musicRelease,
             @JsonProperty("byArtist") MusicGroup byArtist) {
-        super(headline);
+        super(identifier);
+        setHeadline(headline);
         if (isNullOrEmpty(isrcCode)) {
             throw new IllegalArgumentException("isrcCode must be set for MusicRecording");
         }
@@ -61,6 +64,7 @@ public class MusicRecording extends CreativeWork {
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
+                .add("identifier", getHeadline())
                 .add("headline", getHeadline())
                 .add("isrcCode", getIsrcCode())
                 .add("musicRelease", getMusicRelease())
