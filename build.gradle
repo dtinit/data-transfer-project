@@ -216,4 +216,3 @@ def setGitVersion() {
     def clean = Git.wrap(repo).status().call().isClean()
     ext.gitVersion = version + (clean ? '' : '.modified')
 }
-

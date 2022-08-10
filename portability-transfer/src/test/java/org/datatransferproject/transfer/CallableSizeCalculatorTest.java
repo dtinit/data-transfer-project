@@ -25,6 +25,7 @@ import org.datatransferproject.types.common.DownloadableItem;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 
 public class CallableSizeCalculatorTest {
 
@@ -80,12 +81,14 @@ public class CallableSizeCalculatorTest {
     Truth.assertThat(nextByte).isEqualTo(-1);
   }
 
-  @Test(expected = IOException.class)
+  @Test
   public void testExceptionIsThrown() throws Exception {
     when(connectionProvider.getInputStreamForItem(any(), any()))
         .thenThrow(new IOException("oh no!"));
-    new CallableSizeCalculator(jobId, connectionProvider,
-        Collections.singleton(createItem("1-3242"))).call();
+    Assertions.assertThrows(IOException.class, () -> {
+      new CallableSizeCalculator(jobId, connectionProvider,
+          Collections.singleton(createItem("1-3242"))).call();
+    });
   }
 
   private DownloadableItem createItem(String dataId) {
