@@ -7,7 +7,6 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
-
 public class KoofrTransmogrificationConfigTest {
 
   @Test
