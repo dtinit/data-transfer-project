@@ -23,15 +23,15 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class KoofrClientTest {
 
   private MockWebServer server;
@@ -43,7 +43,7 @@ public class KoofrClientTest {
   private Credential credential;
   private TokensAndUrlAuthData authData;
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException {
     server = new MockWebServer();
     server.start();
@@ -66,7 +66,7 @@ public class KoofrClientTest {
     client.getOrCreateCredential(authData);
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     server.shutdown();
   }
@@ -393,7 +393,7 @@ public class KoofrClientTest {
             .setBody(
                 "{\"name\":\"image.jpg\",\"type\":\"file\",\"modified\":1591868314156,\"size\":5,\"contentType\":\"image/jpeg\",\"hash\":\"d05374dc381d9b52806446a71c8e79b1\",\"tags\":{}}"));
 
-    final InputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
+    final InputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
     String fullPath =
         client.uploadFile("/path/to/folder", "image.jpg", inputStream, "image/jpeg", null, null);
     Assert.assertEquals("/path/to/folder/image.jpg", fullPath);
@@ -421,7 +421,7 @@ public class KoofrClientTest {
             .setBody(
                 "{\"name\":\"image.jpg\",\"type\":\"file\",\"modified\":1591868314156,\"size\":5,\"contentType\":\"image/jpeg\",\"hash\":\"d05374dc381d9b52806446a71c8e79b1\",\"tags\":{}}"));
 
-    final InputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
+    final InputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
     final Date modified = new Date(1596450052000L);
     String fullPath =
         client.uploadFile(
@@ -451,7 +451,7 @@ public class KoofrClientTest {
             .setBody(
                 "{\"name\":\"image.jpg\",\"type\":\"file\",\"modified\":1591868314156,\"size\":5,\"contentType\":\"image/jpeg\",\"hash\":\"d05374dc381d9b52806446a71c8e79b1\",\"tags\":{}}"));
 
-    final InputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
+    final InputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
     String fullPath =
         client.uploadFile(
             "/path/to/folder", "image.jpg", inputStream, "image/jpeg", null, "Test description");
@@ -480,7 +480,7 @@ public class KoofrClientTest {
             .setBody(
                 "{\"name\":\"image (1).jpg\",\"type\":\"file\",\"modified\":1591868314156,\"size\":5,\"contentType\":\"image/jpeg\",\"hash\":\"d05374dc381d9b52806446a71c8e79b1\",\"tags\":{}}"));
 
-    final InputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
+    final InputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
     String fullPath =
         client.uploadFile("/path/to/folder", "image.jpg", inputStream, "image/jpeg", null, null);
     Assert.assertEquals("/path/to/folder/image (1).jpg", fullPath);
@@ -508,7 +508,7 @@ public class KoofrClientTest {
             .setBody(
                 "{\"error\":{\"code\":\"QuotaExceeded\",\"message\":\"Quota exceeded\"},\"requestId\":\"bad2465e-300e-4079-57ad-46b256e74d21\"}"));
 
-    final InputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
+    final InputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
 
     DestinationMemoryFullException caughtExc = null;
 
@@ -553,7 +553,7 @@ public class KoofrClientTest {
             .setBody(
                 "{\"name\":\"image.jpg\",\"type\":\"file\",\"modified\":1591868314156,\"size\":5,\"contentType\":\"image/jpeg\",\"hash\":\"d05374dc381d9b52806446a71c8e79b1\",\"tags\":{}}"));
 
-    final InputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
+    final InputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
     String fullPath =
         client.uploadFile("/path/to/folder", "image.jpg", inputStream, "image/jpeg", null, null);
     Assert.assertEquals("/path/to/folder/image.jpg", fullPath);
@@ -587,7 +587,7 @@ public class KoofrClientTest {
   public void testUploadFileError() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(500).setBody("Internal error"));
 
-    final InputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
+    final InputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
 
     Exception caughtExc = null;
 

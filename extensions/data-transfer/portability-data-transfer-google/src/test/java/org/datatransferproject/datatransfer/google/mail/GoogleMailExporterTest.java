@@ -46,15 +46,15 @@ import org.datatransferproject.types.common.PaginationData;
 import org.datatransferproject.types.common.StringPaginationToken;
 import org.datatransferproject.types.common.models.mail.MailContainerResource;
 import org.datatransferproject.types.common.models.mail.MailMessageModel;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class GoogleMailExporterTest {
 
   private static final UUID JOB_ID = UUID.randomUUID();
@@ -85,7 +85,7 @@ public class GoogleMailExporterTest {
 
   private GoogleMailExporter googleMailExporter;
 
-  @Before
+  @BeforeEach
   public void setup() throws IOException {
     googleMailExporter = new GoogleMailExporter(googleCredentialFactory, gmail);
 
