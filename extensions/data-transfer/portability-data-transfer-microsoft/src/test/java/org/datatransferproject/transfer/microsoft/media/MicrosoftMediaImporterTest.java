@@ -17,8 +17,14 @@
 package org.datatransferproject.transfer.microsoft.media;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,19 +51,20 @@ import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
-import org.datatransferproject.transfer.microsoft.driveModels.*;
-import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
+import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 
 /**
  * This tests the MicrosoftMediaImporter. As of now, it only tests the number of requests called.
  * More tests are needed to test request bodies and parameters.
  */
 public class MicrosoftMediaImporterTest {
+
   private static final int CHUNK_SIZE = 32000 * 1024; // 32000KiB
   private final static String BASE_URL = "https://www.baseurl.com";
   private final static UUID uuid = UUID.randomUUID();
@@ -97,7 +104,8 @@ public class MicrosoftMediaImporterTest {
     List<MediaAlbum> albums =
         ImmutableList.of(new MediaAlbum("id1", "album1.", "This is a fake albumb"));
 
-    MediaContainerResource data = new MediaContainerResource(albums, null /*phots*/, null /*videos*/);
+    MediaContainerResource data = new MediaContainerResource(albums, null /*phots*/,
+        null /*videos*/);
 
     Call call = mock(Call.class);
     doReturn(call).when(client).newCall(argThat((Request r) -> {
@@ -112,7 +120,7 @@ public class MicrosoftMediaImporterTest {
       }
 
       return r.url().toString().equals(
-                 "https://www.baseurl.com/v1.0/me/drive/special/photo-video/children")
+          "https://www.baseurl.com/v1.0/me/drive/special/photo-video/children")
           && body.contains("album1_");
     }));
     Response response = mock(Response.class);
@@ -132,18 +140,19 @@ public class MicrosoftMediaImporterTest {
     assertThat(result).isEqualTo(ImportResult.OK);
   }
 
-  @Test(expected = PermissionDeniedException.class)
+  @Test
   public void testImportItemPermissionDenied() throws Exception {
     List<MediaAlbum> albums =
         ImmutableList.of(new MediaAlbum("id1", "album1.", "This is a fake albumb"));
 
-    MediaContainerResource data = new MediaContainerResource(albums, null /*photos*/, null /*videos*/);
+    MediaContainerResource data = new MediaContainerResource(albums, null /*photos*/,
+        null /*videos*/);
 
     Call call = mock(Call.class);
     doReturn(call).when(client).newCall(
         argThat((Request r)
-                    -> r.url().toString().equals(
-                        "https://www.baseurl.com/v1.0/me/drive/special/photo-video/children")));
+            -> r.url().toString().equals(
+            "https://www.baseurl.com/v1.0/me/drive/special/photo-video/children")));
     Response response = mock(Response.class);
     ResponseBody body = mock(ResponseBody.class);
     when(body.bytes())
@@ -157,7 +166,9 @@ public class MicrosoftMediaImporterTest {
     when(response.body()).thenReturn(body);
     when(call.execute()).thenReturn(response);
 
-    ImportResult result = importer.importItem(uuid, executor, authData, data);
+    assertThrows(PermissionDeniedException.class, () -> {
+      ImportResult result = importer.importItem(uuid, executor, authData, data);
+    });
   }
 
   @Test
@@ -178,8 +189,8 @@ public class MicrosoftMediaImporterTest {
     Call call = mock(Call.class);
     doReturn(call).when(client).newCall(
         argThat((Request r)
-                    -> r.url().toString().equals(
-                        "https://www.baseurl.com/v1.0/me/drive/special/photo-video/children")));
+            -> r.url().toString().equals(
+            "https://www.baseurl.com/v1.0/me/drive/special/photo-video/children")));
     Response response = mock(Response.class);
     ResponseBody body = mock(ResponseBody.class);
     when(body.bytes())
@@ -199,14 +210,14 @@ public class MicrosoftMediaImporterTest {
     ResponseBody body2 = mock(ResponseBody.class);
     when(body2.bytes())
         .thenReturn(ResponseBody
-                        .create(MediaType.parse("application/json"),
-                            "{\"uploadUrl\": \"https://scalia.com/link\"}")
-                        .bytes());
+            .create(MediaType.parse("application/json"),
+                "{\"uploadUrl\": \"https://scalia.com/link\"}")
+            .bytes());
     when(body2.string())
         .thenReturn(ResponseBody
-                        .create(MediaType.parse("application/json"),
-                            "{\"uploadUrl\": \"https://scalia.com/link\"}")
-                        .string());
+            .create(MediaType.parse("application/json"),
+                "{\"uploadUrl\": \"https://scalia.com/link\"}")
+            .string());
     when(response2.code()).thenReturn(200);
     when(response2.body()).thenReturn(body2);
     when(call2.execute()).thenReturn(response2);
@@ -218,10 +229,10 @@ public class MicrosoftMediaImporterTest {
     ResponseBody body3 = mock(ResponseBody.class);
     when(body3.bytes())
         .thenReturn(ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"rand1\"}")
-                        .bytes());
+            .bytes());
     when(body3.string())
         .thenReturn(ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"rand1\"}")
-                        .string());
+            .string());
     when(response3.code()).thenReturn(200);
     when(response3.body()).thenReturn(body3);
     when(call3.execute()).thenReturn(response3);
