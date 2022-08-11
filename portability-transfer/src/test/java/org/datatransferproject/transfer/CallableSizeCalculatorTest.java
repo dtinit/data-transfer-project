@@ -26,7 +26,6 @@ import org.datatransferproject.types.common.DownloadableItem;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.jupiter.api.Assertions;
 
 
 public class CallableSizeCalculatorTest {

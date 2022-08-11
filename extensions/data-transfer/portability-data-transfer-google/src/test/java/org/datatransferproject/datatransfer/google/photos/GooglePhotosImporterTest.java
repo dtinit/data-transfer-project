@@ -56,7 +56,6 @@ import org.datatransferproject.types.transfer.errors.ErrorDetail;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.jupiter.api.Assertions;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
