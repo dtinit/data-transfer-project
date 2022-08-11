@@ -9,7 +9,6 @@ import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.junit.jupiter.api.Test;
-
 public class WorkerModuleTest {
 
   private static TransferExtension FOO_UPPER = createTransferExtension("FOO");
