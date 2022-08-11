@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -29,12 +30,12 @@ import java.io.File;
 import java.io.IOException;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.backblaze.exception.BackblazeCredentialsException;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -52,7 +53,7 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.UploadPartRequest;
 import software.amazon.awssdk.services.s3.model.UploadPartResponse;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class BackblazeDataTransferClientTest {
 
   @Mock
@@ -68,14 +69,14 @@ public class BackblazeDataTransferClientTest {
   private static final String FILE_KEY = "fileKey";
   private static final String VALID_BUCKET_NAME = EXPORT_SERVICE + "-data-transfer-bucket";
 
-  @BeforeClass
+  @BeforeAll
   public static void setUpClass() {
     testFile = new File("src/test/resources/test.txt");
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
-    when(backblazeS3ClientFactory.createS3Client(anyString(), anyString(), anyString()))
+    lenient().when(backblazeS3ClientFactory.createS3Client(anyString(), anyString(), anyString()))
         .thenReturn(s3Client);
   }
 
