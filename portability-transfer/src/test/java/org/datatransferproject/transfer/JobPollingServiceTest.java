@@ -15,53 +15,50 @@
  */
 package org.datatransferproject.transfer;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.google.common.util.concurrent.AbstractScheduledService.Scheduler;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.cloud.local.LocalJobStore;
-import org.datatransferproject.spi.transfer.security.TransferKeyGenerator;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.JobAuthorization.State;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
 import org.datatransferproject.spi.transfer.security.SecurityException;
+import org.datatransferproject.spi.transfer.security.TransferKeyGenerator;
 import org.datatransferproject.spi.transfer.security.TransferKeyGenerator.WorkerKeyPair;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigInteger;
-import java.security.KeyPair;
-import java.security.PublicKey;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
-import java.util.Collections;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import org.mockito.junit.MockitoJUnitRunner;
-
-import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class JobPollingServiceTest {
 
   private static final UUID TEST_ID = UUID.randomUUID();
   private static final WorkerKeyPair TEST_KEY_PAIR = createTestKeyPair();
 
-  @Mock private TransferKeyGenerator asymmetricKeyGenerator;
+  @Mock
+  private TransferKeyGenerator asymmetricKeyGenerator;
 
   private JobStore store;
   private JobPollingService jobPollingService;
 
   private static WorkerKeyPair createTestKeyPair() {
-    return new WorkerKeyPair(){
+    return new WorkerKeyPair() {
       @Override
-      public String getInstanceId() { return UUID.randomUUID().toString(); }
+      public String getInstanceId() {
+        return UUID.randomUUID().toString();
+      }
+
       @Override
       public byte[] getEncodedPublicKey() {
         return "TestPublicKey".getBytes();
@@ -74,7 +71,7 @@ public class JobPollingServiceTest {
     };
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     store = new LocalJobStore();
     PublicKeySerializer serializer =
@@ -90,11 +87,13 @@ public class JobPollingServiceTest {
           }
         };
     Scheduler scheduler = Scheduler.newFixedDelaySchedule(0, 20, TimeUnit.SECONDS);
-    Monitor monitor = new Monitor() {};
+    Monitor monitor = new Monitor() {
+    };
     ExtensionContext extensionContext = mock(ExtensionContext.class);
     when(extensionContext.getSetting("credTimeoutSeconds", 300)).thenReturn(300);
     jobPollingService =
-        new JobPollingService(store, asymmetricKeyGenerator, serializer, scheduler, monitor, extensionContext);
+        new JobPollingService(store, asymmetricKeyGenerator, serializer, scheduler, monitor,
+            extensionContext);
   }
 
   // TODO(data-transfer-project/issues/43): Make this an integration test which uses both the API

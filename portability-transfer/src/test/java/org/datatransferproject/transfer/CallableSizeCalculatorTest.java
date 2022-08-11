@@ -2,6 +2,7 @@ package org.datatransferproject.transfer;
 
 import static org.apache.commons.lang3.RandomUtils.nextInt;
 import static org.apache.commons.lang3.RandomUtils.nextLong;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -25,7 +26,7 @@ import org.datatransferproject.types.common.DownloadableItem;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.jupiter.api.Assertions;
+
 
 public class CallableSizeCalculatorTest {
 
@@ -85,7 +86,7 @@ public class CallableSizeCalculatorTest {
   public void testExceptionIsThrown() throws Exception {
     when(connectionProvider.getInputStreamForItem(any(), any()))
         .thenThrow(new IOException("oh no!"));
-    Assertions.assertThrows(IOException.class, () -> {
+    assertThrows(IOException.class, () -> {
       new CallableSizeCalculator(jobId, connectionProvider,
           Collections.singleton(createItem("1-3242"))).call();
     });
