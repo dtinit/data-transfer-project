@@ -57,7 +57,6 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.jupiter.api.Assertions;
 
 /**
  * This tests the MicrosoftMediaImporter. As of now, it only tests the number of requests called.
