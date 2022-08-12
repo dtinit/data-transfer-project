@@ -28,14 +28,12 @@ import java.util.Objects;
 public class MusicPlaylistItem {
     private final MusicRecording track;
     private final String playlistId;
-    private final String originalPlatform;
     private final int order;
 
     @JsonCreator
     public MusicPlaylistItem(
             @JsonProperty("track") MusicRecording track,
             @JsonProperty("playlistId") String playlistId,
-            @JsonProperty("originalPlatform") String originalPlatform,
             @JsonProperty("order") int order) {
         Preconditions.checkNotNull(track, "track must be set for MusicPlaylistItem");
         this.track = track;
@@ -43,10 +41,6 @@ public class MusicPlaylistItem {
             throw new IllegalArgumentException("playlistId must be set for MusicPlaylistItem");
         }
         this.playlistId = playlistId;
-        if (isNullOrEmpty(originalPlatform)) {
-            throw new IllegalArgumentException("originalPlatform must be set for MusicPlaylistItem");
-        }
-        this.originalPlatform = originalPlatform;
         this.order = order;
     }
 
@@ -58,10 +52,6 @@ public class MusicPlaylistItem {
         return playlistId;
     }
 
-    public String getOriginalPlatform() {
-        return originalPlatform;
-    }
-
     public int getOrder() {
         return order;
     }
@@ -71,7 +61,6 @@ public class MusicPlaylistItem {
         return MoreObjects.toStringHelper(this)
                 .add("track", getTrack())
                 .add("playlistId", getPlaylistId())
-                .add("originalPlatform", getOriginalPlatform())
                 .add("order", getOrder())
                 .toString();
     }
@@ -87,12 +76,11 @@ public class MusicPlaylistItem {
         MusicPlaylistItem that = (MusicPlaylistItem) o;
         return Objects.equals(track, that.track)
                 && Objects.equals(playlistId, that.playlistId)
-                && Objects.equals(originalPlatform, that.originalPlatform)
                 && order == that.order;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(track, playlistId, originalPlatform, order);
+        return Objects.hash(track, playlistId, order);
     }
 }

@@ -30,7 +30,6 @@ import org.datatransferproject.types.common.models.CreativeWork;
 /** POJO for https://schema.org/MusicPlaylist */
 public class MusicPlaylist extends CreativeWork {
     private final String description;
-    private final String originalPlatform;
     private final Instant createTime;
     private final Instant updateTime;
 
@@ -39,7 +38,6 @@ public class MusicPlaylist extends CreativeWork {
             @JsonProperty("identifier") String identifier,
             @JsonProperty("headline") String headline,
             @JsonProperty("description") String description,
-            @JsonProperty("originalPlatform") String originalPlatform,
             @JsonProperty("createTime") Instant createTime,
             @JsonProperty("updateTime") Instant updateTime) {
         super(identifier);
@@ -49,20 +47,12 @@ public class MusicPlaylist extends CreativeWork {
         }
         Preconditions.checkNotNull(description, "description must be set for MusicPlaylist");
         this.description = description;
-        if (isNullOrEmpty(originalPlatform)) {
-            throw new IllegalArgumentException("originalPlatform muse be set for MusicPlaylist");
-        }
-        this.originalPlatform = originalPlatform;
         this.createTime = createTime;
         this.updateTime = updateTime;
     }
 
     public String getDescription() {
         return description;
-    }
-
-    public String getOriginalPlatform() {
-        return originalPlatform;
     }
 
     public Instant getCreateTime() {
@@ -79,7 +69,6 @@ public class MusicPlaylist extends CreativeWork {
                 .add("identifier", getIdentifier())
                 .add("headline", getHeadline())
                 .add("description", getDescription())
-                .add("originalPlatform", getOriginalPlatform())
                 .add("createTime", getCreateTime())
                 .add("updateTime", getUpdateTime())
                 .toString();
@@ -96,12 +85,11 @@ public class MusicPlaylist extends CreativeWork {
         MusicPlaylist that = (MusicPlaylist) o;
         return Objects.equals(getIdentifier(), that.getIdentifier())
                 && Objects.equals(getHeadline(), that.getHeadline())
-                && Objects.equals(description, that.description)
-                && Objects.equals(originalPlatform, that.originalPlatform);
+                && Objects.equals(description, that.description);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getIdentifier(), getHeadline(), description, originalPlatform);
+        return Objects.hash(getIdentifier(), getHeadline(), description);
     }
 }

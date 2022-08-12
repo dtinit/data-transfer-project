@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Truth;
 import org.datatransferproject.types.common.models.ContainerResource;
+import org.datatransferproject.types.common.models.music.MusicContainerResource.MusicPlatform;
 import org.junit.jupiter.api.Test;
 
 public final class MusicContainerResourceTest {
@@ -35,7 +36,6 @@ public final class MusicContainerResourceTest {
                 "p1_id",
                 "p1_title",
                 "p1_description",
-                "Google",
                 null,
                 null));
 
@@ -45,26 +45,27 @@ public final class MusicContainerResourceTest {
                 new MusicRecording("track_id", null, "item1_isrc",
                     new MusicRelease("release_id", null, "r1_icpn"), null),
                 "p1_id",
-                "Google",
                 1),
             new MusicPlaylistItem(
                 new MusicRecording("track_id", null, "item2_isrc",
                     new MusicRelease("release_id", null, "r1_icpn"), null),
                 "p1_id",
-                "Google",
                 2));
 
     ImmutableList<MusicRecording> tracks =
         ImmutableList.of(
-            new MusicRecording("track_id", null, "t1_isrc", new MusicRelease("release_id", null, "r2_icpn"),
+            new MusicRecording("track_id", null, "t1_isrc",
+                new MusicRelease("release_id", null, "r2_icpn"),
                 null),
-            new MusicRecording("track_id", null, "t2_isrc", new MusicRelease("release_id", null, "r3_icpn"),
+            new MusicRecording("track_id", null, "t2_isrc",
+                new MusicRelease("release_id", null, "r3_icpn"),
                 null));
 
     ImmutableList<MusicRelease> releases = ImmutableList.of(
         new MusicRelease("release_id", null, "r4_icpn"));
 
-    ContainerResource data = new MusicContainerResource(playlists, playlistItems, tracks, releases);
+    ContainerResource data = new MusicContainerResource(MusicPlatform.GOOGLE, playlists,
+        playlistItems, tracks, releases);
 
     String serialized = objectMapper.writeValueAsString(data);
 
