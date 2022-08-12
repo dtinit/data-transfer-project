@@ -57,6 +57,7 @@ import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
+import org.datatransferproject.spi.transfer.types.UploadErrorException;
 import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.ImportableItem;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
@@ -222,11 +223,15 @@ public class GooglePhotosImporter
             getInputStreamForUrl(jobId, photo.getFetchableUrl(), photo.isInTempStore());
 
         try (InputStream s = inputStreamBytesPair.getLeft()) {
-          String uploadToken = getOrCreatePhotosInterface(jobId, authData).uploadPhotoContent(s);
+          String uploadToken = getOrCreatePhotosInterface(jobId, authData).uploadPhotoContent(s,
+              photo.getSha1());
           mediaItems.add(new NewMediaItem(cleanDescription(photo.getDescription()), uploadToken));
           uploadTokenToDataId.put(uploadToken, photo);
           size = inputStreamBytesPair.getRight();
           uploadTokenToLength.put(uploadToken, size);
+        } catch (UploadErrorException unused) {
+          monitor.info(
+              () -> format("%s: SHA-1 (%s) mismatch during upload", jobId, photo.getSha1()));
         }
 
         try {
