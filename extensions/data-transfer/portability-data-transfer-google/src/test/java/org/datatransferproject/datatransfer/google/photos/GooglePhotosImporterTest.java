@@ -20,6 +20,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -144,9 +145,9 @@ public class GooglePhotosImporterTest {
     Mockito.when(googlePhotosInterface.uploadPhotoContent(any())).thenReturn("token1", "token2");
     BatchMediaItemResponse batchMediaItemResponse =
         new BatchMediaItemResponse(
-            new NewMediaItemResult[] {
-              buildMediaItemResult("token1", Code.OK_VALUE),
-              buildMediaItemResult("token2", Code.OK_VALUE)
+            new NewMediaItemResult[]{
+                buildMediaItemResult("token1", Code.OK_VALUE),
+                buildMediaItemResult("token2", Code.OK_VALUE)
             });
     Mockito.when(googlePhotosInterface.createPhotos(any(NewMediaItemUpload.class)))
         .thenReturn(batchMediaItemResponse);
@@ -202,9 +203,9 @@ public class GooglePhotosImporterTest {
     Mockito.when(googlePhotosInterface.uploadPhotoContent(any())).thenReturn("token1", "token2");
     BatchMediaItemResponse batchMediaItemResponse =
         new BatchMediaItemResponse(
-            new NewMediaItemResult[] {
-              buildMediaItemResult("token1", Code.OK_VALUE),
-              buildMediaItemResult("token2", Code.UNAUTHENTICATED_VALUE)
+            new NewMediaItemResult[]{
+                buildMediaItemResult("token1", Code.OK_VALUE),
+                buildMediaItemResult("token2", Code.UNAUTHENTICATED_VALUE)
             });
     Mockito.when(googlePhotosInterface.createPhotos(any(NewMediaItemUpload.class)))
         .thenReturn(batchMediaItemResponse);
@@ -308,7 +309,7 @@ public class GooglePhotosImporterTest {
 
     BatchMediaItemResponse batchMediaItemResponse =
         new BatchMediaItemResponse(
-            new NewMediaItemResult[] {buildMediaItemResult("token1", Code.OK_VALUE)});
+            new NewMediaItemResult[]{buildMediaItemResult("token1", Code.OK_VALUE)});
 
     Mockito.when(googlePhotosInterface.createPhotos(any(NewMediaItemUpload.class)))
         .thenReturn(batchMediaItemResponse);
@@ -354,7 +355,7 @@ public class GooglePhotosImporterTest {
 
     BatchMediaItemResponse batchMediaItemResponse =
         new BatchMediaItemResponse(
-            new NewMediaItemResult[] {buildMediaItemResult("token1", Code.OK_VALUE)});
+            new NewMediaItemResult[]{buildMediaItemResult("token1", Code.OK_VALUE)});
 
     Mockito.when(googlePhotosInterface.createPhotos(any(NewMediaItemUpload.class)))
         .thenReturn(batchMediaItemResponse);
@@ -410,7 +411,7 @@ public class GooglePhotosImporterTest {
     assertEquals(0, bytes);
   }
 
-  @Test(expected = IOException.class)
+  @Test
   public void importPhotoCreatePhotosOtherException() throws Exception {
     PhotoModel photoModel =
         new PhotoModel(
@@ -438,11 +439,13 @@ public class GooglePhotosImporterTest {
     GoogleAlbum responseAlbum = new GoogleAlbum();
     Mockito.when(googlePhotosInterface.getAlbum(any())).thenReturn(responseAlbum);
 
-    googlePhotosImporter.importPhotoBatch(
-        uuid,
-        Mockito.mock(TokensAndUrlAuthData.class),
-        Lists.newArrayList(photoModel),
-        executor,
-        NEW_ALBUM_ID);
+    assertThrows(IOException.class, () -> {
+      googlePhotosImporter.importPhotoBatch(
+          uuid,
+          Mockito.mock(TokensAndUrlAuthData.class),
+          Lists.newArrayList(photoModel),
+          executor,
+          NEW_ALBUM_ID);
+    });
   }
 }

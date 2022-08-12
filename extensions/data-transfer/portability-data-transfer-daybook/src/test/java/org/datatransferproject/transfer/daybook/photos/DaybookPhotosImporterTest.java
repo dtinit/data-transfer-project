@@ -47,9 +47,9 @@ import org.datatransferproject.spi.transfer.idempotentexecutor.InMemoryIdempoten
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.junit.Before;
 import org.junit.Rule;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 
@@ -62,9 +62,10 @@ public class DaybookPhotosImporterTest {
   private PhotosContainerResource data;
   private OkHttpClient client;
 
-  @Rule public TemporaryFolder folder = new TemporaryFolder();
+  @Rule
+  public TemporaryFolder folder = new TemporaryFolder();
 
-  @BeforeEach
+  @Before
   public void setUp() {
     monitor = mock(Monitor.class);
     jobStore = mock(TemporaryPerJobDataStore.class);
