@@ -21,16 +21,16 @@ import org.datatransferproject.types.common.models.videos.VideoAlbum;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class KoofrVideosImporterTest {
 
   private KoofrClientFactory clientFactory;
@@ -41,7 +41,7 @@ public class KoofrVideosImporterTest {
   private TokensAndUrlAuthData authData;
   private MockWebServer server;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     server = new MockWebServer();
     server.start();
@@ -65,7 +65,7 @@ public class KoofrVideosImporterTest {
     authData = new TokensAndUrlAuthData("acc", "refresh", "");
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     server.shutdown();
   }
@@ -222,15 +222,15 @@ public class KoofrVideosImporterTest {
     Collection<VideoAlbum> albums = ImmutableList.of();
 
     Collection<VideoModel> videos =
-            ImmutableList.of(
-                    new VideoModel(
-                            "not_found_video_1.mp4",
-                            server.url("/not_found.mp4").toString(),
-                            "Video not founded in CDN",
-                            "video/mp4",
-                            "not_found_video_1",
-                            null,
-                            false));
+        ImmutableList.of(
+            new VideoModel(
+                "not_found_video_1.mp4",
+                server.url("/not_found.mp4").toString(),
+                "Video not founded in CDN",
+                "video/mp4",
+                "not_found_video_1",
+                null,
+                false));
 
     VideosContainerResource resource = spy(new VideosContainerResource(albums, videos));
 
