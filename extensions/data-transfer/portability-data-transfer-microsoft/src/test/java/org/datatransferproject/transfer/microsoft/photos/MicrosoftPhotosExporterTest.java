@@ -16,7 +16,7 @@
 
 package org.datatransferproject.transfer.microsoft.photos;
 
-import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.json.gson.GsonFactory;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -71,7 +71,7 @@ public class MicrosoftPhotosExporterTest {
 
     microsoftPhotosExporter =
         new MicrosoftPhotosExporter(
-            credentialFactory, new JacksonFactory(), photosInterface, monitor);
+            credentialFactory, GsonFactory.getDefaultInstance(), photosInterface, monitor);
 
     when(photosInterface.getDriveItems(any(Optional.class), any(Optional.class)))
         .thenReturn(driveItemsResponse);

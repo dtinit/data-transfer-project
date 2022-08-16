@@ -32,7 +32,6 @@ import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.ArrayMap;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -134,7 +133,7 @@ public class GooglePhotosInterface {
     if (pageToken.isPresent()) {
       params.put(TOKEN_KEY, pageToken.get());
     }
-    HttpContent content = new JsonHttpContent(new JacksonFactory(), params);
+    HttpContent content = new JsonHttpContent(this.jsonFactory, params);
     return makePostRequest(
         BASE_URL + "mediaItems:search", Optional.empty(), content, MediaItemSearchResponse.class);
   }
@@ -168,7 +167,7 @@ public class GooglePhotosInterface {
   BatchMediaItemResponse createPhotos(NewMediaItemUpload newMediaItemUpload)
       throws IOException, InvalidTokenException, PermissionDeniedException {
     HashMap<String, Object> map = createJsonMap(newMediaItemUpload);
-    HttpContent httpContent = new JsonHttpContent(new JacksonFactory(), map);
+    HttpContent httpContent = new JsonHttpContent(this.jsonFactory, map);
 
     return makePostRequest(
         BASE_URL + "mediaItems:batchCreate",
