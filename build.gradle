@@ -79,15 +79,22 @@ configure(sourceProjects()) {
     sourceCompatibility = 11
 
     dependencies {
-        compile "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
-        compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
-        compile "com.google.guava:guava:${guavaVersion}"
+        implementation("com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}")
+        implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}")
+        implementation("com.google.guava:guava:${guavaVersion}")
 
-        testCompile project(":portability-test-utilities")
-        testCompile "com.google.truth:truth:${truthVersion}"
-        testCompile "org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}"
-        testCompile "org.junit.vintage:junit-vintage-engine:${junitJupiterVersion}"
-        testCompile "org.mockito:mockito-core:${mockitoVersion}"
+        testImplementation(project(":portability-test-utilities"))
+        testImplementation("com.google.truth:truth:${truthVersion}")
+        testImplementation("org.junit.vintage:junit-vintage-engine:${junitJupiterVersion}")
+        testImplementation("org.mockito:mockito-core:${mockitoVersion}")
+        testImplementation("org.junit.jupiter:junit-jupiter:${junitJupiterVersion}")
+    }
+
+    test {
+        useJUnitPlatform()
+        testLogging {
+            events "passed", "skipped", "failed"
+        }
     }
 
     task sourcesJar(type: Jar) {
@@ -155,7 +162,7 @@ def configurePublication(Project project) {
                 beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
                 repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2") {
-                        authentication(userName: project.hasProperty('ossrhUsername') ? ossrhUsername : '', password: project.hasProperty('ossrhPassword') ? ossrhPassword : '')
+                    authentication(userName: project.hasProperty('ossrhUsername') ? ossrhUsername : '', password: project.hasProperty('ossrhPassword') ? ossrhPassword : '')
                 }
 
                 snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots") {
@@ -209,4 +216,3 @@ def setGitVersion() {
     def clean = Git.wrap(repo).status().call().isClean()
     ext.gitVersion = version + (clean ? '' : '.modified')
 }
-
