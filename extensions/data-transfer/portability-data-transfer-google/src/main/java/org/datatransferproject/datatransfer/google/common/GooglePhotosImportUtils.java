@@ -17,6 +17,7 @@ package org.datatransferproject.datatransfer.google.common;
 
 import com.google.common.base.Strings;
 
+// TODO(#1144) consider porting this logic to a transmogrify config (and thus deleting this class).
 public class GooglePhotosImportUtils {
 
   public static String cleanAlbumTitle(String originalTitle) {
