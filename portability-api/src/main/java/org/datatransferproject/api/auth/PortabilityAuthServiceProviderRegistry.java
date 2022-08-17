@@ -31,6 +31,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class PortabilityAuthServiceProviderRegistry implements AuthServiceProviderRegistry {
+
   private final ImmutableMap<String, AuthServiceExtension> authServiceProviderMap;
   private final ImmutableSet<String> supportedImportTypes;
   private final ImmutableSet<String> supportedExportTypes;
@@ -123,7 +124,9 @@ public class PortabilityAuthServiceProviderRegistry implements AuthServiceProvid
         .collect(Collectors.toSet());
   }
 
-  /** Returns the set of data types that support both import and export. */
+  /**
+   * Returns the set of data types that support both import and export.
+   */
   @Override
   public Set<String> getTransferDataTypes() {
     return Sets.intersection(supportedExportTypes, supportedImportTypes);
