@@ -117,7 +117,7 @@ final class JobProcessor {
       String exportInfoStr = job.exportInformation();
       Optional<ExportInformation> exportInfo = Optional.empty();
       if (!Strings.isNullOrEmpty(exportInfoStr)) {
-        exportInfo = Optional.of(objectMapper.readValue(exportInfoStr, ExportInformation.class));
+        exportInfo = Optional.ofNullable(objectMapper.readValue(exportInfoStr, ExportInformation.class));
       }
 
       // Copy the data
