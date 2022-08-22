@@ -22,9 +22,11 @@ import org.apache.commons.io.IOUtils;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
+import org.datatransferproject.transfer.koofr.exceptions.KoofrClientIOException;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -602,6 +604,26 @@ public class KoofrClientTest {
         "Got error code: 500 message: Server Error body: Internal error", caughtExc.getMessage());
 
     Assert.assertEquals(1, server.getRequestCount());
+  }
+
+  @Test
+  public void testUploadFileNotFound() {
+    server.enqueue(
+            new MockResponse()
+                    .setResponseCode(404)
+                    .setHeader("Content-Type", "application/json")
+                    .setBody(
+                            "{\"error\":{\"code\":\"NotFound\",\"message\":\"File not found\"},\"requestId\":\"bad2465e-300e-4079-57ad-46b256e74d21\"}"));
+
+    final InputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
+
+    KoofrClientIOException caughtException = Assertions.assertThrows(KoofrClientIOException.class, () -> client.uploadFile("/path/to/folder", "image.jpg", inputStream, "image/jpeg", null, null));
+
+    Assertions.assertNotNull(caughtException);
+    Assertions.assertEquals(404, caughtException.getCode());
+    Assertions.assertEquals("Got error code: 404 message: Client Error body: {\"error\":{\"code\":\"NotFound\",\"message\":\"File not found\"},\"requestId\":\"bad2465e-300e-4079-57ad-46b256e74d21\"}", caughtException.getMessage());
+
+    Assertions.assertEquals(1, server.getRequestCount());
   }
 
   @Test
