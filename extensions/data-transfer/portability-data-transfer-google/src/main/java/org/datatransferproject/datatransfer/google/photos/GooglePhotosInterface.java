@@ -275,7 +275,7 @@ public class GooglePhotosInterface {
    */
   private void handleUploadException(HttpResponseException e) throws UploadErrorException {
     if (e.getStatusCode() == 400 && e.getContent()
-        .contains("data received did not match the hash")) {
+        .contains("Checksum from header does not match received payload content.")) {
       throw new UploadErrorException("Hash mismatch", e);
     }
   }

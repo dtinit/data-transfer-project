@@ -229,9 +229,13 @@ public class GooglePhotosImporter
           uploadTokenToDataId.put(uploadToken, photo);
           size = inputStreamBytesPair.getRight();
           uploadTokenToLength.put(uploadToken, size);
-        } catch (UploadErrorException unused) {
-          monitor.info(
+        } catch (UploadErrorException hashMismatchException) {
+          monitor.severe(
               () -> format("%s: SHA-1 (%s) mismatch during upload", jobId, photo.getSha1()));
+
+          Long finalSize = size;
+          executor.importAndSwallowIOExceptions(
+              photo, p -> ItemImportResult.error(hashMismatchException, finalSize));
         }
 
         try {

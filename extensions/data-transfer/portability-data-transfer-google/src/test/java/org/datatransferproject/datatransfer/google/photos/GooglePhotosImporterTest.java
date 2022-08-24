@@ -255,14 +255,19 @@ public class GooglePhotosImporterTest {
     Mockito.when(googlePhotosInterface.createPhotos(any(NewMediaItemUpload.class)))
         .thenReturn(batchMediaItemResponse);
 
-    // No photo imported.
-    long length = googlePhotosImporter.importPhotoBatch(UUID.randomUUID(),
-        Mockito.mock(TokensAndUrlAuthData.class), Lists.newArrayList(photoModel), executor,
-        NEW_ALBUM_ID);
-    assertEquals(0L, length);
+    // No photo imported and will return a hash mismatch error for investigation.
+    assertThrows(UploadErrorException.class,
+        () -> googlePhotosImporter.importPhotoBatch(UUID.randomUUID(),
+            Mockito.mock(TokensAndUrlAuthData.class), Lists.newArrayList(photoModel), executor,
+            NEW_ALBUM_ID));
+
     String failedDataId = String.format("%s-%s", OLD_ALBUM_ID, "oldPhotoID1");
     assertFalse(executor.isKeyCached(failedDataId));
-    assertFalse(executor.getErrors().iterator().hasNext());
+
+    ErrorDetail errorDetail = executor.getErrors().iterator().next();
+    assertEquals(failedDataId, errorDetail.id());
+    assertThat(
+        errorDetail.exception(), CoreMatchers.containsString("Hash mismatch"));
   }
 
   @Test
