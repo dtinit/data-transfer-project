@@ -1,16 +1,6 @@
 package org.datatransferproject.transfer.koofr.videos;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
-
 import com.google.common.collect.ImmutableList;
-import java.util.Collection;
-import java.util.UUID;
-import java.util.concurrent.Callable;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.datatransferproject.api.launcher.Monitor;
@@ -26,41 +16,53 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Collection;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
+
 @ExtendWith(MockitoExtension.class)
 public class KoofrVideosImporterTest {
-
+  @Mock
   private KoofrClientFactory clientFactory;
+  @Mock
   private KoofrClient client;
+  @Mock
   private Monitor monitor;
-  private KoofrVideosImporter importer;
+  @Mock
   private IdempotentImportExecutor executor;
+  private KoofrVideosImporter importer;
   private TokensAndUrlAuthData authData;
   private MockWebServer server;
+
+  private final AtomicReference<String> capturedResult = new AtomicReference<>();
 
   @BeforeEach
   public void setUp() throws Exception {
     server = new MockWebServer();
     server.start();
 
-    client = mock(KoofrClient.class);
-
-    clientFactory = mock(KoofrClientFactory.class);
     when(clientFactory.create(any())).thenReturn(client);
-
-    monitor = mock(Monitor.class);
 
     importer = new KoofrVideosImporter(clientFactory, monitor);
 
-    executor = mock(IdempotentImportExecutor.class);
     when(executor.executeAndSwallowIOExceptions(any(), any(), any()))
         .then(
             (InvocationOnMock invocation) -> {
               Callable<String> callable = invocation.getArgument(2);
-              return callable.call();
+              String result = callable.call();
+              capturedResult.set(result);
+              return result;
             });
     authData = new TokensAndUrlAuthData("acc", "refresh", "");
   }
@@ -239,5 +241,8 @@ public class KoofrVideosImporterTest {
     InOrder clientInOrder = Mockito.inOrder(client);
 
     clientInOrder.verifyNoMoreInteractions();
+
+    String importResult = capturedResult.get();
+    assertEquals(importResult, "skipped-not_found_video_1");
   }
 }

@@ -39,6 +39,8 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 public class KoofrVideosImporter
     implements Importer<TokensAndUrlAuthData, VideosContainerResource> {
 
+  private static final String SKIPPED_FILE_RESULT_FORMAT = "skipped-%s";
+
   private final KoofrClientFactory koofrClientFactory;
   private final ImageStreamProvider imageStreamProvider;
   private final Monitor monitor;
@@ -141,7 +143,7 @@ public class KoofrVideosImporter
     } catch (FileNotFoundException e) {
       monitor.info(
               () -> String.format("Video resource was missing for id: %s", video.getDataId()), e);
-      return null;
+      return String.format(SKIPPED_FILE_RESULT_FORMAT, video.getDataId());
     }
   }
 }
