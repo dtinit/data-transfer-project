@@ -23,6 +23,7 @@ import org.datatransferproject.types.client.transfer.TransferServices;
 import org.datatransferproject.types.client.transfer.GetTransferServices;
 
 import java.util.Set;
+import org.datatransferproject.types.common.models.DataVertical;
 
 /** Returns the import and export services available for a given data type. */
 public final class GetTransferServicesAction
@@ -43,7 +44,7 @@ public final class GetTransferServicesAction
   /** Lists the services available for export and import for a given data type. */
   @Override
   public TransferServices handle(GetTransferServices request) {
-    String transferDataType = request.getTransferDataType();
+    DataVertical transferDataType = request.getTransferDataType();
     // Validate incoming data type parameter
     if (!ActionUtils.isValidTransferDataType(transferDataType)) {
       throw new IllegalArgumentException("Invalid transferDataType: " + transferDataType);

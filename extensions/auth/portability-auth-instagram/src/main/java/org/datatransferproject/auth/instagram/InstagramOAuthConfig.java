@@ -16,11 +16,14 @@
 
 package org.datatransferproject.auth.instagram;
 
+import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Map;
 import java.util.Set;
 import org.datatransferproject.auth.OAuth2Config;
+import org.datatransferproject.types.common.models.DataVertical;
 
 /**
  * Class that provides Instagram-specific information for OAuth2
@@ -46,13 +49,13 @@ public class InstagramOAuthConfig implements OAuth2Config {
 
   // See https://www.instagram.com/developer/authorization/
   @Override
-  public Map<String, Set<String>> getExportScopes() {
-    return ImmutableMap.of("PHOTOS", ImmutableSet.of("basic"));
+  public Map<DataVertical, Set<String>> getExportScopes() {
+    return ImmutableMap.of(PHOTOS, ImmutableSet.of("basic"));
   }
 
   // Instagram does not provide an API for import; https://help.instagram.com/442418472487929
   @Override
-  public Map<String, Set<String>> getImportScopes() {
+  public Map<DataVertical, Set<String>> getImportScopes() {
     return ImmutableMap.of();
   }
 }

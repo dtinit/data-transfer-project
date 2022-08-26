@@ -16,6 +16,8 @@
 
 package org.datatransferproject.datatransfer.imgur;
 
+import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
+
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
@@ -26,6 +28,7 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.imgur.photos.ImgurPhotosExporter;
 import org.datatransferproject.datatransfer.imgur.photos.ImgurPhotosImporter;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -37,7 +40,7 @@ public class ImgurTransferExtension implements TransferExtension {
 
   private boolean initialized = false;
 
-  private static final ImmutableList<String> SUPPORTED_DATA_TYPES = ImmutableList.of("PHOTOS");
+  private static final ImmutableList<DataVertical> SUPPORTED_DATA_TYPES = ImmutableList.of(PHOTOS);
 
   private ImgurPhotosExporter exporter;
   private ImgurPhotosImporter importer;
@@ -67,7 +70,7 @@ public class ImgurTransferExtension implements TransferExtension {
   }
 
   @Override
-  public Exporter<?, ?> getExporter(String transferDataType) {
+  public Exporter<?, ?> getExporter(DataVertical transferDataType) {
     Preconditions.checkArgument(
         initialized, "ImgurTransferExtension is not initialized. Unable to get Exporter");
     Preconditions.checkArgument(
@@ -77,7 +80,7 @@ public class ImgurTransferExtension implements TransferExtension {
   }
 
   @Override
-  public Importer<?, ?> getImporter(String transferDataType) {
+  public Importer<?, ?> getImporter(DataVertical transferDataType) {
     Preconditions.checkArgument(
         initialized, "ImgurTransferExtension is not initialized. Unable to get Importer");
     Preconditions.checkArgument(

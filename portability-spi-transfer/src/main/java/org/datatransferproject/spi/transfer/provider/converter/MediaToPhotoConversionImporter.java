@@ -21,8 +21,6 @@ import java.util.UUID;
  *
  * This is intended for providers who do not support "MEDIA" as a special case.
  */
-// TODO(#1065) fix primitives-obession causing us to key Providers on "PHOTOS" string rather
-// than underlying file types.
 @Deprecated // prefer AnyToAnyImporter
 public class MediaToPhotoConversionImporter<
     A extends AuthData,

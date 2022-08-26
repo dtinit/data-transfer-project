@@ -19,18 +19,19 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Set;
+import org.datatransferproject.types.common.models.DataVertical;
 
 /** The result of a request to list data types available for export and import. */
 public class DataTypes {
 
-  private final Set<String> dataTypes;
+  private final Set<DataVertical> dataTypes;
 
   @JsonCreator
-  public DataTypes(@JsonProperty("transferDataTypes") Set<String> dataTypes) {
+  public DataTypes(@JsonProperty("transferDataTypes") Set<DataVertical> dataTypes) {
     this.dataTypes = dataTypes;
   }
 
-  public Set<String> getDataTypes() {
+  public Set<DataVertical> getDataTypes() {
     return dataTypes;
   }
 }

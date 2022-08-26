@@ -1,5 +1,7 @@
 package org.datatransferproject.api.action.datatype;
 
+import static org.datatransferproject.types.common.models.DataVertical.CONTACTS;
+import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -10,6 +12,7 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry;
 import org.datatransferproject.types.client.datatype.DataTypes;
 import org.datatransferproject.types.client.datatype.GetDataTypes;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 
@@ -28,7 +31,7 @@ public class DataTypesActionTest {
   @Test
   public void testHandle() {
     AuthServiceProviderRegistry registry = mock(AuthServiceProviderRegistry.class);
-    Set<String> dataTypes = new HashSet<>(Arrays.asList("CONTACTS", "PHOTOS"));
+    Set<DataVertical> dataTypes = new HashSet<>(Arrays.asList(CONTACTS, PHOTOS));
     when(registry.getTransferDataTypes()).thenReturn(dataTypes);
     DataTypesAction dataTypesAction = new DataTypesAction(registry, new Monitor() {});
 

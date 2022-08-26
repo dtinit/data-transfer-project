@@ -17,6 +17,8 @@
 package org.datatransferproject.spi.cloud.types;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
+import static org.datatransferproject.types.common.models.DataVertical.SOCIAL_POSTS;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
@@ -29,6 +31,7 @@ import org.datatransferproject.spi.cloud.types.PortabilityJob.State;
 import org.datatransferproject.spi.cloud.types.PortabilityJob.TransferMode;
 import org.datatransferproject.test.types.ObjectMapperFactory;
 import org.datatransferproject.types.common.ExportInformation;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.junit.jupiter.api.Test;
@@ -41,7 +44,7 @@ public class PortabilityJobTest {
   private static final Map<String, Object> MANDATORY_FIELDS = ImmutableMap.<String, Object>builder()
       .put("EXPORT_SERVICE", "test")
       .put("IMPORT_SERVICE", "test")
-      .put("DATA_TYPE", "test")
+      .put("DATA_TYPE", "SOCIAL-POSTS")
       .put("EXPORT_INFORMATION", "test")
       .put("AUTHORIZATION_STATE", "INITIAL")
       .build();
@@ -63,7 +66,7 @@ public class PortabilityJobTest {
             .setState(State.NEW)
             .setExportService("fooService")
             .setImportService("barService")
-            .setTransferDataType("PHOTOS")
+            .setTransferDataType(PHOTOS)
             .setCreatedTimestamp(date)
             .setLastUpdateTimestamp(date.plusSeconds(120))
             .setJobAuthorization(jobAuthorization)
@@ -95,7 +98,7 @@ public class PortabilityJobTest {
             .setState(State.NEW)
             .setExportService("fooService")
             .setImportService("barService")
-            .setTransferDataType("PHOTOS")
+            .setTransferDataType(PHOTOS)
             .setExportInformation(
                 objectMapper.writeValueAsString(
                     new ExportInformation(
@@ -132,7 +135,7 @@ public class PortabilityJobTest {
             .setState(State.NEW)
             .setExportService("fooService")
             .setImportService("barService")
-            .setTransferDataType("PHOTOS")
+            .setTransferDataType(PHOTOS)
             .setCreatedTimestamp(date)
             .setLastUpdateTimestamp(date.plusSeconds(120))
             .setJobAuthorization(jobAuthorization)
@@ -159,7 +162,7 @@ public class PortabilityJobTest {
             .setState(State.NEW)
             .setExportService("fooService")
             .setImportService("barService")
-            .setTransferDataType("PHOTOS")
+            .setTransferDataType(PHOTOS)
             .setCreatedTimestamp(date)
             .setLastUpdateTimestamp(date.plusSeconds(120))
             .setJobAuthorization(jobAuthorization)

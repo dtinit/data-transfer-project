@@ -16,11 +16,14 @@
 
 package org.datatransferproject.auth.spotify;
 
+import static org.datatransferproject.types.common.models.DataVertical.PLAYLISTS;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Map;
 import java.util.Set;
 import org.datatransferproject.auth.OAuth2Config;
+import org.datatransferproject.types.common.models.DataVertical;
 
 /**
  * Class that supplies Spotify-specific OAuth2 info
@@ -45,16 +48,16 @@ public class SpotifyOAuthConfig implements OAuth2Config {
   }
 
   @Override
-  public Map<String, Set<String>> getExportScopes() {
-    return ImmutableMap.<String, Set<String>>builder()
-        .put("PLAYLISTS", ImmutableSet.of("playlist-read-private"))
+  public Map<DataVertical, Set<String>> getExportScopes() {
+    return ImmutableMap.<DataVertical, Set<String>>builder()
+        .put(PLAYLISTS, ImmutableSet.of("playlist-read-private"))
         .build();
   }
 
   @Override
-  public Map<String, Set<String>> getImportScopes() {
-    return ImmutableMap.<String, Set<String>>builder()
-        .put("PLAYLISTS", ImmutableSet.of("playlist-modify-private"))
+  public Map<DataVertical, Set<String>> getImportScopes() {
+    return ImmutableMap.<DataVertical, Set<String>>builder()
+        .put(PLAYLISTS, ImmutableSet.of("playlist-modify-private"))
         .build();
   }
 
