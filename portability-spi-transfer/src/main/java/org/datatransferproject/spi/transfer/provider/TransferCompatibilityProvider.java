@@ -1,6 +1,11 @@
 package org.datatransferproject.spi.transfer.provider;
 
+import static org.datatransferproject.types.common.models.DataVertical.MEDIA;
+import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
+import static org.datatransferproject.types.common.models.DataVertical.VIDEOS;
+
 import java.util.function.Function;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.converter.AnyToAnyExporter;
 import org.datatransferproject.spi.transfer.provider.converter.AnyToAnyImporter;
@@ -18,11 +23,7 @@ import org.datatransferproject.types.common.models.videos.VideosContainerResourc
  */
 public class TransferCompatibilityProvider {
 
-  private static final String PHOTOS = "PHOTOS";
-  private static final String VIDEOS = "VIDEOS";
-  private static final String MEDIA = "MEDIA";
-
-  public Exporter getCompatibleExporter(TransferExtension extension, String jobType) {
+  public Exporter getCompatibleExporter(TransferExtension extension, DataVertical jobType) {
     Exporter<?, ?> exporter = getExporterOrNull(extension, jobType);
     if (exporter != null) {
       return exporter;
@@ -45,7 +46,7 @@ public class TransferCompatibilityProvider {
     return exporter;
   }
 
-  public Importer getCompatibleImporter(TransferExtension extension, String jobType) {
+  public Importer getCompatibleImporter(TransferExtension extension, DataVertical jobType) {
     Importer<?, ?> importer = getImporterOrNull(extension, jobType);
     if (importer != null) {
       return importer;
@@ -124,7 +125,7 @@ public class TransferCompatibilityProvider {
     return new MediaExporterDecorator(photo, video);
   }
 
-  private Exporter<?, ?> getExporterOrNull(TransferExtension extension, String jobType) {
+  private Exporter<?, ?> getExporterOrNull(TransferExtension extension, DataVertical jobType) {
     // TODO: Don't use exceptions for control flow. Have a way to query supported adapters
     try {
       return extension.getExporter(jobType);
@@ -133,7 +134,7 @@ public class TransferCompatibilityProvider {
     }
   }
 
-  private Importer<?, ?> getImporterOrNull(TransferExtension extension, String jobType) {
+  private Importer<?, ?> getImporterOrNull(TransferExtension extension, DataVertical jobType) {
     try {
       return extension.getImporter(jobType);
     } catch (Exception e) {

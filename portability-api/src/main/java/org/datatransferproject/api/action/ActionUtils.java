@@ -21,6 +21,7 @@ import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 
 import java.util.UUID;
+import org.datatransferproject.types.common.models.DataVertical;
 
 /** Helper functions for validating action related data. */
 public final class ActionUtils {
@@ -36,8 +37,9 @@ public final class ActionUtils {
         Charsets.UTF_8));
   }
 
-  /** Determines whether the current service is a valid service for import. */
-  public static boolean isValidTransferDataType(String transferDataType) {
-    return !Strings.isNullOrEmpty(transferDataType);
+  /** Determines whether the current service is a valid service for import.
+   * @param transferDataType*/
+  public static boolean isValidTransferDataType(DataVertical transferDataType) {
+    return transferDataType != null;
   }
 }

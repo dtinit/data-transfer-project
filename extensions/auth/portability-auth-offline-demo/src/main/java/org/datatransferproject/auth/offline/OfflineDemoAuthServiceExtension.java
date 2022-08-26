@@ -15,13 +15,16 @@
  */
 package org.datatransferproject.auth.offline;
 
+import static org.datatransferproject.types.common.models.DataVertical.OFFLINE_DATA;
+
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
-import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry;
+import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
 
 import java.util.Collections;
 import java.util.List;
+import org.datatransferproject.types.common.models.DataVertical;
 
 /**
  * Provides an extension that demonstrates how import of offline data can be implemented.
@@ -32,7 +35,7 @@ import java.util.List;
 public class OfflineDemoAuthServiceExtension implements AuthServiceExtension {
   private static final String SERVICE_ID = "OFFLINE-DEMO";
 
-  private static final List<String> SUPPORTED_SERVICES = Collections.singletonList("OFFLINE-DATA");
+  private static final List<DataVertical> SUPPORTED_SERVICES = Collections.singletonList(OFFLINE_DATA);
 
   @Override
   public String getServiceId() {
@@ -41,17 +44,17 @@ public class OfflineDemoAuthServiceExtension implements AuthServiceExtension {
 
   @Override
   public AuthDataGenerator getAuthDataGenerator(
-      String type, AuthServiceProviderRegistry.AuthMode mode) {
+      DataVertical type, AuthMode mode) {
     return new OfflineDemoAuthDataGenerator();
   }
 
   @Override
-  public List<String> getImportTypes() {
+  public List<DataVertical> getImportTypes() {
     return SUPPORTED_SERVICES;
   }
 
   @Override
-  public List<String> getExportTypes() {
+  public List<DataVertical> getExportTypes() {
     return SUPPORTED_SERVICES;
   }
 

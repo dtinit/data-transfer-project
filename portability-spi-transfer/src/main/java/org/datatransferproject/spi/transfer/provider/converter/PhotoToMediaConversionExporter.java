@@ -20,9 +20,7 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
  *
  * This is intended for providers who do not support "PHOTOS" as a special case.
  */
-// TODO(#1065) fix primitives-obession causing us to key Providers on "PHOTOS" string rather
-// than underlying file types.
-@Deprecated // prefer AnyToAnyImporter
+@Deprecated // prefer AnyToAnyExporter
 public class PhotoToMediaConversionExporter<
     A extends AuthData,
     PCR extends PhotosContainerResource,

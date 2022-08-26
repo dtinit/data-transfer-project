@@ -16,6 +16,8 @@
 
 package org.datatransferproject.auth.smugmug;
 
+import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.Collections;
@@ -23,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import org.datatransferproject.auth.OAuth1Config;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
+import org.datatransferproject.types.common.models.DataVertical;
 
 /**
  * Class that supplies SmugMug-specific OAuth1 info
@@ -54,19 +57,19 @@ public class SmugMugOAuthConfig implements OAuth1Config {
   }
 
   @Override
-  public List<String> getExportTypes() {
-    return ImmutableList.of("PHOTOS");
+  public List<DataVertical> getExportTypes() {
+    return ImmutableList.of(PHOTOS);
   }
 
   @Override
-  public List<String> getImportTypes() {
-    return ImmutableList.of("PHOTOS");
+  public List<DataVertical> getImportTypes() {
+    return ImmutableList.of(PHOTOS);
   }
 
   public Map<String, String> getAdditionalUrlParameters(
-      String dataType, AuthMode mode, OAuth1Step step) {
+      DataVertical dataType, AuthMode mode, OAuth1Step step) {
 
-    if (dataType.equals("PHOTOS") && step == OAuth1Step.AUTHORIZATION) {
+    if (dataType.equals(PHOTOS) && step == OAuth1Step.AUTHORIZATION) {
       return (mode == AuthMode.EXPORT)
           ? ImmutableMap.of(ACCESS, "Full", PERMISSIONS, "Read")
           : ImmutableMap.of(ACCESS, "Full", PERMISSIONS, "Add");

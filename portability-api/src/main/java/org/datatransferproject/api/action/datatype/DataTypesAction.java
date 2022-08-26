@@ -23,6 +23,7 @@ import org.datatransferproject.types.client.datatype.DataTypes;
 import org.datatransferproject.types.client.datatype.GetDataTypes;
 
 import java.util.Set;
+import org.datatransferproject.types.common.models.DataVertical;
 
 /**
  * An {@link Action} that handles listing data types available for export and import for a given
@@ -46,7 +47,7 @@ public final class DataTypesAction implements Action<GetDataTypes, DataTypes> {
   /** Lists the set of data types that support both import and export. */
   @Override
   public DataTypes handle(GetDataTypes request) {
-    Set<String> transferDataTypes = registry.getTransferDataTypes();
+    Set<DataVertical> transferDataTypes = registry.getTransferDataTypes();
     if (transferDataTypes.isEmpty()) {
       monitor.severe(
           () ->

@@ -19,6 +19,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 
 import java.util.UUID;
+import org.datatransferproject.types.common.models.DataVertical;
 
 /**
  * A class that contains metadata for a transfer worker's job.
@@ -33,7 +34,7 @@ import java.util.UUID;
 public final class JobMetadata {
   private static byte[] encodedPrivateKey = null;
   private static UUID jobId = null;
-  private static String dataType = null;
+  private static DataVertical dataType = null;
   private static String exportService = null;
   private static String importService = null;
   private static Stopwatch stopWatch = null;
@@ -50,7 +51,7 @@ public final class JobMetadata {
   static void init(
       UUID initJobId,
       byte[] initEncodedPrivateKey,
-      String initDataType,
+      DataVertical initDataType,
       String initExportService,
       String initImportService,
       Stopwatch initStopWatch) {
@@ -83,7 +84,7 @@ public final class JobMetadata {
     return jobId;
   }
 
-  public static String getDataType() {
+  public static DataVertical getDataType() {
     Preconditions.checkState(isInitialized(), "JobMetadata must be initialized");
     return dataType;
   }
