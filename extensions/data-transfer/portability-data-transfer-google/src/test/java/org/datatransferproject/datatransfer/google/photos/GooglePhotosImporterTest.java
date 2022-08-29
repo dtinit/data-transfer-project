@@ -272,7 +272,7 @@ public class GooglePhotosImporterTest {
 
   @Test
   public void importAlbumWithITString()
-      throws PermissionDeniedException, InvalidTokenException, IOException {
+      throws PermissionDeniedException, InvalidTokenException, IOException, UploadErrorException {
     String albumId = "Album Id";
     String albumName = "Album Name";
     String albumDescription = "Album Description";
@@ -300,7 +300,7 @@ public class GooglePhotosImporterTest {
 
   @Test
   public void retrieveAlbumStringOnlyOnce()
-      throws PermissionDeniedException, InvalidTokenException, IOException {
+      throws PermissionDeniedException, InvalidTokenException, IOException, UploadErrorException {
     String albumId = "Album Id";
     String albumName = "Album Name";
     String albumDescription = "Album Description";

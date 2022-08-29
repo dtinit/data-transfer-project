@@ -67,6 +67,8 @@ import org.datatransferproject.spi.transfer.types.UploadErrorException;
 
 public class GooglePhotosInterface {
 
+  public static final String ERROR_HASH_MISMATCH = "Hash mismatch";
+
   private static final String BASE_URL = "https://photoslibrary.googleapis.com/v1/";
   private static final int ALBUM_PAGE_SIZE = 20; // TODO
   private static final int MEDIA_PAGE_SIZE = 50; // TODO
@@ -126,7 +128,7 @@ public class GooglePhotosInterface {
   }
 
   MediaItemSearchResponse listMediaItems(Optional<String> albumId, Optional<String> pageToken)
-      throws IOException, InvalidTokenException, PermissionDeniedException {
+      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     Map<String, Object> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(MEDIA_PAGE_SIZE));
     if (albumId.isPresent()) {
@@ -138,26 +140,18 @@ public class GooglePhotosInterface {
       params.put(TOKEN_KEY, pageToken.get());
     }
     HttpContent content = new JsonHttpContent(this.jsonFactory, params);
-    try {
-      return makePostRequest(BASE_URL + "mediaItems:search", Optional.empty(), Optional.empty(),
-          content, MediaItemSearchResponse.class);
-    } catch (UploadErrorException e) {
-      throw new IOException("Unexpected upload error", e);
-    }
+    return makePostRequest(BASE_URL + "mediaItems:search", Optional.empty(), Optional.empty(),
+        content, MediaItemSearchResponse.class);
   }
 
   GoogleAlbum createAlbum(GoogleAlbum googleAlbum)
-          throws IOException, InvalidTokenException, PermissionDeniedException {
+      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     Map<String, Object> albumMap = createJsonMap(googleAlbum);
     Map<String, Object> contentMap = ImmutableMap.of("album", albumMap);
     HttpContent content = new JsonHttpContent(jsonFactory, contentMap);
 
-    try {
-      return makePostRequest(BASE_URL + "albums", Optional.empty(), Optional.empty(), content,
-          GoogleAlbum.class);
-    } catch (UploadErrorException e) {
-      throw new IOException("Unexpected upload error", e);
-    }
+    return makePostRequest(BASE_URL + "albums", Optional.empty(), Optional.empty(), content,
+        GoogleAlbum.class);
   }
 
   String uploadPhotoContent(InputStream inputStream, @Nullable String sha1)
@@ -188,20 +182,12 @@ public class GooglePhotosInterface {
   }
 
   BatchMediaItemResponse createPhotos(NewMediaItemUpload newMediaItemUpload)
-      throws IOException, InvalidTokenException, PermissionDeniedException {
+      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     HashMap<String, Object> map = createJsonMap(newMediaItemUpload);
     HttpContent httpContent = new JsonHttpContent(this.jsonFactory, map);
 
-    try {
-      return makePostRequest(
-          BASE_URL + "mediaItems:batchCreate",
-          Optional.empty(),
-          Optional.empty(),
-          httpContent,
-          BatchMediaItemResponse.class);
-    } catch (UploadErrorException e) {
-      throw new IOException("Unexpected upload error", e);
-    }
+    return makePostRequest(BASE_URL + "mediaItems:batchCreate", Optional.empty(), Optional.empty(),
+        httpContent, BatchMediaItemResponse.class);
   }
 
   private <T> T makeGetRequest(String url, Optional<Map<String, String>> parameters, Class<T> clazz)
@@ -247,7 +233,7 @@ public class GooglePhotosInterface {
     try {
       response = postRequest.execute();
     } catch (HttpResponseException e) {
-      handleUploadException(e);
+      maybeRethrowAsUploadError(e);
 
       response =
           handleHttpResponseException(
@@ -276,7 +262,7 @@ public class GooglePhotosInterface {
   private void maybeRethrowAsUploadError(HttpResponseException e) throws UploadErrorException {
     if (e.getStatusCode() == 400 && e.getContent()
         .contains("Checksum from header does not match received payload content.")) {
-      throw new UploadErrorException("Hash mismatch", e);
+      throw new UploadErrorException(ERROR_HASH_MISMATCH, e);
     }
   }
 

@@ -51,6 +51,7 @@ import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.spi.transfer.types.TempPhotosData;
+import org.datatransferproject.spi.transfer.types.UploadErrorException;
 import org.datatransferproject.types.common.PaginationData;
 import org.datatransferproject.types.common.StringPaginationToken;
 import org.datatransferproject.types.common.models.ContainerResource;
@@ -81,7 +82,8 @@ public class GooglePhotosExporterTest {
   private AlbumListResponse albumListResponse;
 
   @BeforeEach
-  public void setup() throws IOException, InvalidTokenException, PermissionDeniedException {
+  public void setup()
+      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     GoogleCredentialFactory credentialFactory = mock(GoogleCredentialFactory.class);
     jobStore = mock(TemporaryPerJobDataStore.class);
     when(jobStore.getStream(any(), anyString())).thenReturn(mock(InputStreamWrapper.class));
@@ -166,7 +168,8 @@ public class GooglePhotosExporterTest {
   }
 
   @Test
-  public void exportPhotoFirstSet() throws IOException, InvalidTokenException, PermissionDeniedException {
+  public void exportPhotoFirstSet()
+      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     setUpSingleAlbum();
     when(albumListResponse.getNextPageToken()).thenReturn(null);
     GoogleMediaItem mediaItem = setUpSinglePhoto(IMG_URI, PHOTO_ID);
@@ -205,7 +208,8 @@ public class GooglePhotosExporterTest {
   }
 
   @Test
-  public void exportPhotoSubsequentSet() throws IOException, InvalidTokenException, PermissionDeniedException {
+  public void exportPhotoSubsequentSet()
+      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     setUpSingleAlbum();
     when(albumListResponse.getNextPageToken()).thenReturn(null);
     GoogleMediaItem mediaItem = setUpSinglePhoto(IMG_URI, PHOTO_ID);
@@ -233,7 +237,8 @@ public class GooglePhotosExporterTest {
   }
 
   @Test
-  public void populateContainedPhotosList() throws IOException, InvalidTokenException, PermissionDeniedException {
+  public void populateContainedPhotosList()
+      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     // Set up an album with two photos
     setUpSingleAlbum();
     when(albumListResponse.getNextPageToken()).thenReturn(null);
@@ -266,7 +271,8 @@ public class GooglePhotosExporterTest {
   /* Tests that when there is no album information passed along to exportPhotos, only albumless
   photos are exported.
   */
-  public void onlyExportAlbumlessPhoto() throws IOException, InvalidTokenException, PermissionDeniedException {
+  public void onlyExportAlbumlessPhoto()
+      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     // Set up - two photos will be returned by a media item search without an album id, but one of
     // them will have already been put into the list of contained photos
     String containedPhotoUri = "contained photo uri";
