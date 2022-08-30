@@ -203,7 +203,7 @@ public class GooglePhotosImporter
     return bytes;
   }
 
-  long importPhotoBatch(
+  private long importPhotoBatch(
       UUID jobId,
       TokensAndUrlAuthData authData,
       List<PhotoModel> photos,
