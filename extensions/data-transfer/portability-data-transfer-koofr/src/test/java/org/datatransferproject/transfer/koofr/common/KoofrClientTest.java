@@ -177,22 +177,18 @@ public class KoofrClientTest {
   }
 
   @Test
-  public void testFileExistsError() throws Exception {
+  public void testFileExistsError() {
     server.enqueue(new MockResponse().setResponseCode(500).setBody("Internal error"));
 
-    Exception caughtExc = null;
+    KoofrClientIOException caughtExc =
+        Assertions.assertThrows(
+            KoofrClientIOException.class, () -> client.fileExists("/path/to/file"));
 
-    try {
-      client.fileExists("/path/to/file");
-    } catch (Exception exc) {
-      caughtExc = exc;
-    }
-
-    Assert.assertNotNull(caughtExc);
-    Assert.assertEquals(
+    Assertions.assertNotNull(caughtExc);
+    Assertions.assertEquals(
         "Got error code: 500 message: Server Error body: Internal error", caughtExc.getMessage());
 
-    Assert.assertEquals(1, server.getRequestCount());
+    Assertions.assertEquals(1, server.getRequestCount());
   }
 
   @Test
@@ -280,22 +276,18 @@ public class KoofrClientTest {
   }
 
   @Test
-  public void testEnsureFolderError() throws Exception {
+  public void testEnsureFolderError() {
     server.enqueue(new MockResponse().setResponseCode(500).setBody("Internal error"));
 
-    Exception caughtExc = null;
+    KoofrClientIOException caughtExc =
+        Assert.assertThrows(
+            KoofrClientIOException.class, () -> client.ensureFolder("/path/to/folder", "name"));
 
-    try {
-      client.ensureFolder("/path/to/folder", "name");
-    } catch (Exception exc) {
-      caughtExc = exc;
-    }
-
-    Assert.assertNotNull(caughtExc);
-    Assert.assertEquals(
+    Assertions.assertNotNull(caughtExc);
+    Assertions.assertEquals(
         "Got error code: 500 message: Server Error body: Internal error", caughtExc.getMessage());
 
-    Assert.assertEquals(1, server.getRequestCount());
+    Assertions.assertEquals(1, server.getRequestCount());
   }
 
   @Test
@@ -368,22 +360,19 @@ public class KoofrClientTest {
   }
 
   @Test
-  public void testAddDescriptionError() throws Exception {
+  public void testAddDescriptionError() {
     server.enqueue(new MockResponse().setResponseCode(500).setBody("Internal error"));
 
-    Exception caughtExc = null;
+    Exception caughtExc =
+        Assert.assertThrows(
+            KoofrClientIOException.class,
+            () -> client.addDescription("/path/to/folder", "Test description"));
 
-    try {
-      client.addDescription("/path/to/folder", "Test description");
-    } catch (Exception exc) {
-      caughtExc = exc;
-    }
-
-    Assert.assertNotNull(caughtExc);
-    Assert.assertEquals(
+    Assertions.assertNotNull(caughtExc);
+    Assertions.assertEquals(
         "Got error code: 500 message: Server Error body: Internal error", caughtExc.getMessage());
 
-    Assert.assertEquals(1, server.getRequestCount());
+    Assertions.assertEquals(1, server.getRequestCount());
   }
 
   @Test
@@ -395,7 +384,7 @@ public class KoofrClientTest {
             .setBody(
                 "{\"name\":\"image.jpg\",\"type\":\"file\",\"modified\":1591868314156,\"size\":5,\"contentType\":\"image/jpeg\",\"hash\":\"d05374dc381d9b52806446a71c8e79b1\",\"tags\":{}}"));
 
-    final InputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
+    final InputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
     String fullPath =
         client.uploadFile("/path/to/folder", "image.jpg", inputStream, "image/jpeg", null, null);
     Assert.assertEquals("/path/to/folder/image.jpg", fullPath);
@@ -423,7 +412,7 @@ public class KoofrClientTest {
             .setBody(
                 "{\"name\":\"image.jpg\",\"type\":\"file\",\"modified\":1591868314156,\"size\":5,\"contentType\":\"image/jpeg\",\"hash\":\"d05374dc381d9b52806446a71c8e79b1\",\"tags\":{}}"));
 
-    final InputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
+    final InputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
     final Date modified = new Date(1596450052000L);
     String fullPath =
         client.uploadFile(
@@ -453,7 +442,7 @@ public class KoofrClientTest {
             .setBody(
                 "{\"name\":\"image.jpg\",\"type\":\"file\",\"modified\":1591868314156,\"size\":5,\"contentType\":\"image/jpeg\",\"hash\":\"d05374dc381d9b52806446a71c8e79b1\",\"tags\":{}}"));
 
-    final InputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
+    final InputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
     String fullPath =
         client.uploadFile(
             "/path/to/folder", "image.jpg", inputStream, "image/jpeg", null, "Test description");
@@ -482,7 +471,7 @@ public class KoofrClientTest {
             .setBody(
                 "{\"name\":\"image (1).jpg\",\"type\":\"file\",\"modified\":1591868314156,\"size\":5,\"contentType\":\"image/jpeg\",\"hash\":\"d05374dc381d9b52806446a71c8e79b1\",\"tags\":{}}"));
 
-    final InputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
+    final InputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
     String fullPath =
         client.uploadFile("/path/to/folder", "image.jpg", inputStream, "image/jpeg", null, null);
     Assert.assertEquals("/path/to/folder/image (1).jpg", fullPath);
@@ -510,7 +499,7 @@ public class KoofrClientTest {
             .setBody(
                 "{\"error\":{\"code\":\"QuotaExceeded\",\"message\":\"Quota exceeded\"},\"requestId\":\"bad2465e-300e-4079-57ad-46b256e74d21\"}"));
 
-    final InputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
+    final InputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
 
     DestinationMemoryFullException caughtExc = null;
 
@@ -555,7 +544,7 @@ public class KoofrClientTest {
             .setBody(
                 "{\"name\":\"image.jpg\",\"type\":\"file\",\"modified\":1591868314156,\"size\":5,\"contentType\":\"image/jpeg\",\"hash\":\"d05374dc381d9b52806446a71c8e79b1\",\"tags\":{}}"));
 
-    final InputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
+    final InputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
     String fullPath =
         client.uploadFile("/path/to/folder", "image.jpg", inputStream, "image/jpeg", null, null);
     Assert.assertEquals("/path/to/folder/image.jpg", fullPath);
@@ -586,18 +575,17 @@ public class KoofrClientTest {
   }
 
   @Test
-  public void testUploadFileError() throws Exception {
+  public void testUploadFileError() {
     server.enqueue(new MockResponse().setResponseCode(500).setBody("Internal error"));
 
-    final InputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
+    final InputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
 
-    Exception caughtExc = null;
-
-    try {
-      client.uploadFile("/path/to/folder", "image.jpg", inputStream, "image/jpeg", null, null);
-    } catch (Exception exc) {
-      caughtExc = exc;
-    }
+    Exception caughtExc =
+        Assert.assertThrows(
+            KoofrClientIOException.class,
+            () ->
+                client.uploadFile(
+                    "/path/to/folder", "image.jpg", inputStream, "image/jpeg", null, null));
 
     Assert.assertNotNull(caughtExc);
     Assert.assertEquals(
@@ -609,19 +597,26 @@ public class KoofrClientTest {
   @Test
   public void testUploadFileNotFound() {
     server.enqueue(
-            new MockResponse()
-                    .setResponseCode(404)
-                    .setHeader("Content-Type", "application/json")
-                    .setBody(
-                            "{\"error\":{\"code\":\"NotFound\",\"message\":\"File not found\"},\"requestId\":\"bad2465e-300e-4079-57ad-46b256e74d21\"}"));
+        new MockResponse()
+            .setResponseCode(404)
+            .setHeader("Content-Type", "application/json")
+            .setBody(
+                "{\"error\":{\"code\":\"NotFound\",\"message\":\"File not found\"},\"requestId\":\"bad2465e-300e-4079-57ad-46b256e74d21\"}"));
 
-    final InputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
+    final InputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
 
-    KoofrClientIOException caughtException = Assertions.assertThrows(KoofrClientIOException.class, () -> client.uploadFile("/path/to/folder", "image.jpg", inputStream, "image/jpeg", null, null));
+    KoofrClientIOException caughtException =
+        Assertions.assertThrows(
+            KoofrClientIOException.class,
+            () ->
+                client.uploadFile(
+                    "/path/to/folder", "image.jpg", inputStream, "image/jpeg", null, null));
 
     Assertions.assertNotNull(caughtException);
     Assertions.assertEquals(404, caughtException.getCode());
-    Assertions.assertEquals("Got error code: 404 message: Client Error body: {\"error\":{\"code\":\"NotFound\",\"message\":\"File not found\"},\"requestId\":\"bad2465e-300e-4079-57ad-46b256e74d21\"}", caughtException.getMessage());
+    Assertions.assertEquals(
+        "Got error code: 404 message: Client Error body: {\"error\":{\"code\":\"NotFound\",\"message\":\"File not found\"},\"requestId\":\"bad2465e-300e-4079-57ad-46b256e74d21\"}",
+        caughtException.getMessage());
 
     Assertions.assertEquals(1, server.getRequestCount());
   }

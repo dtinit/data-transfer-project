@@ -13,15 +13,18 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
+
 import java.io.ByteArrayInputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 
+import okhttp3.*;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okio.Buffer;
@@ -230,7 +233,7 @@ public class KoofrPhotosImporterTest {
 
   @Test
   public void testImportItemFromJobStore() throws Exception {
-    ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
+    ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
     when(client.ensureRootFolder()).thenReturn("/root");
     when(jobStore.getStream(any(), any())).thenReturn(new InputStreamWrapper(inputStream, 5L));
     doNothing().when(jobStore).removeData(any(), anyString());
@@ -270,7 +273,7 @@ public class KoofrPhotosImporterTest {
 
   @Test
   public void testImportItemFromJobStoreUserTimeZone() throws Exception {
-    ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
+    ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
     when(jobStore.getStream(any(), any())).thenReturn(new InputStreamWrapper(inputStream, 5L));
 
     UUID jobId = UUID.randomUUID();
@@ -308,7 +311,7 @@ public class KoofrPhotosImporterTest {
 
   @Test
   public void testImportItemFromJobStoreUserTimeZoneCalledOnce() throws Exception {
-    ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
+    ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
     when(jobStore.getStream(any(), any())).thenReturn(new InputStreamWrapper(inputStream, 5L));
 
     UUID jobId = UUID.randomUUID();
@@ -363,33 +366,44 @@ public class KoofrPhotosImporterTest {
 
   @Test
   public void testSkipNotFoundAlbum() throws Exception {
-    ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
+    ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
     when(jobStore.getStream(any(), any())).thenReturn(new InputStreamWrapper(inputStream, 5L));
-    when(client.uploadFile(eq("/root/Album 1"), anyString(), any(), anyString(), any(), anyString())).thenThrow(new KoofrClientIOException(404, "Not Found", "no body"));
+    when(client.uploadFile(
+            eq("/root/Album 1"), anyString(), any(), anyString(), any(), anyString()))
+        .thenThrow(new KoofrClientIOException(buildErrorResponse()));
 
     UUID jobId = UUID.randomUUID();
 
     when(executor.getCachedValue(eq("id1"))).thenReturn("/root/Album 1");
 
     Collection<PhotoAlbum> albums =
-            ImmutableList.of(new PhotoAlbum("id1", "Album 1", "This is a fake album"));
+        ImmutableList.of(new PhotoAlbum("id1", "Album 1", "This is a fake album"));
 
     Collection<PhotoModel> photos =
-            ImmutableList.of(
-                    new PhotoModel(
-                            "pic1.jpg",
-                            "http://fake.com/1.jpg",
-                            "A pic",
-                            "image/jpeg",
-                            "p1",
-                            "id1",
-                            true,
-                            null));
+        ImmutableList.of(
+            new PhotoModel(
+                "pic1.jpg",
+                "http://fake.com/1.jpg",
+                "A pic",
+                "image/jpeg",
+                "p1",
+                "id1",
+                true));
 
     PhotosContainerResource resource = spy(new PhotosContainerResource(albums, photos));
     importer.importItem(jobId, executor, authData, resource);
 
     String importResult = capturedResult.get();
     assertEquals(importResult, "skipped-p1");
+  }
+
+  private Response buildErrorResponse() {
+    return new Response.Builder()
+        .code(404)
+        .request(new Request.Builder().url("http://example.com").build())
+        .protocol(Protocol.HTTP_1_1)
+        .message("all good!")
+        .body(ResponseBody.create(MediaType.parse("text/xml"), "<a>Not found!</a>"))
+        .build();
   }
 }
