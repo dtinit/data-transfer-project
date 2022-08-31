@@ -55,8 +55,8 @@ import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * This tests the MicrosoftMediaImporter. As of now, it only tests the number of requests called.
@@ -78,7 +78,7 @@ public class MicrosoftMediaImporterTest {
   IdempotentImportExecutor executor;
   TokensAndUrlAuthData authData;
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException {
     executor = new FakeIdempotentImportExecutor();
     authData = mock(TokensAndUrlAuthData.class);

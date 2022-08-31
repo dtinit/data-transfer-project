@@ -47,8 +47,8 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
@@ -66,7 +66,7 @@ public class FacebookPhotosExporterTest {
   private FacebookPhotosExporter facebookPhotosExporter;
   private UUID uuid = UUID.randomUUID();
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException {
     FacebookPhotosInterface photosInterface = mock(FacebookPhotosInterface.class);
 
