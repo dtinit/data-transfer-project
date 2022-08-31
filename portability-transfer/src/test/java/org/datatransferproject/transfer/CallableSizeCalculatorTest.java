@@ -24,16 +24,15 @@ import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.types.common.DownloadableItem;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.junit.Before;
-import org.junit.Test;
-
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class CallableSizeCalculatorTest {
 
   private UUID jobId;
   private ConnectionProvider connectionProvider;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     jobId = UUID.randomUUID();
     connectionProvider = mock(ConnectionProvider.class);

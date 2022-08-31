@@ -28,6 +28,7 @@ import static org.mockito.Mockito.when;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.UUID;
@@ -47,9 +48,9 @@ import org.datatransferproject.spi.transfer.idempotentexecutor.InMemoryIdempoten
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 
@@ -62,10 +63,10 @@ public class DaybookPhotosImporterTest {
   private PhotosContainerResource data;
   private OkHttpClient client;
 
-  @Rule
-  public TemporaryFolder folder = new TemporaryFolder();
+  @TempDir
+  public Path folder;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     monitor = mock(Monitor.class);
     jobStore = mock(TemporaryPerJobDataStore.class);
@@ -80,7 +81,7 @@ public class DaybookPhotosImporterTest {
     InputStream inputStream = new ByteArrayInputStream(expectedImageData);
     TemporaryPerJobDataStore.InputStreamWrapper inputStreamWrapper =
         new TemporaryPerJobDataStore.InputStreamWrapper(inputStream);
-    File file = folder.newFile();
+    File file = folder.toFile();
     when(jobStore.getTempFileFromInputStream(any(), any(), any())).thenReturn(file);
     when(jobStore.getStream(any(), any())).thenReturn(inputStreamWrapper);
 

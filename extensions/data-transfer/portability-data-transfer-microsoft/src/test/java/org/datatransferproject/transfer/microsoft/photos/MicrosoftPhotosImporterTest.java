@@ -55,8 +55,8 @@ import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 
 /**
@@ -80,7 +80,7 @@ public class MicrosoftPhotosImporterTest {
   TokensAndUrlAuthData authData;
 
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException {
     executor = new FakeIdempotentImportExecutor();
     authData = mock(TokensAndUrlAuthData.class);
