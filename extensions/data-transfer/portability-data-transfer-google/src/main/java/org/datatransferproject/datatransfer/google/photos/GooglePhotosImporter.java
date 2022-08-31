@@ -16,6 +16,7 @@
 package org.datatransferproject.datatransfer.google.photos;
 
 import static java.lang.String.format;
+import static org.datatransferproject.datatransfer.google.photos.GooglePhotosInterface.ERROR_HASH_MISMATCH;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.json.JsonFactory;
@@ -57,6 +58,7 @@ import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
+import org.datatransferproject.spi.transfer.types.UploadErrorException;
 import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.ImportableItem;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
@@ -142,7 +144,7 @@ public class GooglePhotosImporter
 
   @VisibleForTesting
   String importSingleAlbum(UUID jobId, TokensAndUrlAuthData authData, PhotoAlbum inputAlbum)
-      throws IOException, InvalidTokenException, PermissionDeniedException {
+      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     // Set up album
     GoogleAlbum googleAlbum = new GoogleAlbum();
     String title = Strings.nullToEmpty(inputAlbum.getName());
@@ -201,7 +203,7 @@ public class GooglePhotosImporter
     return bytes;
   }
 
-  long importPhotoBatch(
+  private long importPhotoBatch(
       UUID jobId,
       TokensAndUrlAuthData authData,
       List<PhotoModel> photos,
@@ -222,11 +224,20 @@ public class GooglePhotosImporter
             getInputStreamForUrl(jobId, photo.getFetchableUrl(), photo.isInTempStore());
 
         try (InputStream s = inputStreamBytesPair.getLeft()) {
-          String uploadToken = getOrCreatePhotosInterface(jobId, authData).uploadPhotoContent(s);
+          String uploadToken = getOrCreatePhotosInterface(jobId, authData).uploadPhotoContent(s,
+              photo.getSha1());
           mediaItems.add(new NewMediaItem(cleanDescription(photo.getDescription()), uploadToken));
           uploadTokenToDataId.put(uploadToken, photo);
           size = inputStreamBytesPair.getRight();
           uploadTokenToLength.put(uploadToken, size);
+        } catch (UploadErrorException e) {
+          if (e.getMessage().contains(ERROR_HASH_MISMATCH)) {
+            monitor.severe(
+                () -> format("%s: SHA-1 (%s) mismatch during upload", jobId, photo.getSha1()));
+          }
+
+          Long finalSize = size;
+          executor.importAndSwallowIOExceptions(photo, p -> ItemImportResult.error(e, finalSize));
         }
 
         try {
