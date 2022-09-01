@@ -112,7 +112,7 @@ public class BackblazePhotosImporterTest {
         String albumId = "albumId";
         String response = "response";
         UUID jobId = UUID.randomUUID();
-        PhotoModel photoModel = new PhotoModel(title, photoUrl, "", "", dataId, albumId, false, null);
+        PhotoModel photoModel = new PhotoModel(title, photoUrl, "", "", dataId, albumId, false);
         PhotosContainerResource data = new PhotosContainerResource(Collections.emptyList(), Collections.singletonList(photoModel));
 
         when(executor.getCachedValue(albumId)).thenReturn(albumName);
