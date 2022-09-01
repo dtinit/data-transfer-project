@@ -260,9 +260,13 @@ public class GooglePhotosInterface {
    * Note that making this a separate method to avoid polluting throw lists.
    */
   private void maybeRethrowAsUploadError(HttpResponseException e) throws UploadErrorException {
-    if (e.getStatusCode() == 400 && e.getContent()
-        .contains("Checksum from header does not match received payload content.")) {
-      throw new UploadErrorException(ERROR_HASH_MISMATCH, e);
+    if (e.getStatusCode() == 400) {
+      if (e.getContent().contains("Checksum from header does not match received payload content.")
+          || e.getContent()
+          .contains("User-provided checksum does not match received payload content.")) {
+        throw new UploadErrorException(ERROR_HASH_MISMATCH, e);
+      }
+      // Delegate other 400 errors to {@link #handleHttpResponseException}.
     }
   }
 
