@@ -42,9 +42,10 @@ import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
+import org.junit.Before;
 import org.junit.Rule;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
+
 import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 
@@ -57,7 +58,7 @@ public class BackblazePhotosImporterTest {
     TokenSecretAuthData authData;
     BackblazeDataTransferClient client;
 
-    @BeforeEach
+    @Before
     public void setUp() {
         monitor = mock(Monitor.class);
         dataStore = mock(TemporaryPerJobDataStore.class);
@@ -111,7 +112,7 @@ public class BackblazePhotosImporterTest {
         String albumId = "albumId";
         String response = "response";
         UUID jobId = UUID.randomUUID();
-        PhotoModel photoModel = new PhotoModel(title, photoUrl, "", "", dataId, albumId, false, null);
+        PhotoModel photoModel = new PhotoModel(title, photoUrl, "", "", dataId, albumId, false);
         PhotosContainerResource data = new PhotosContainerResource(Collections.emptyList(), Collections.singletonList(photoModel));
 
         when(executor.getCachedValue(albumId)).thenReturn(albumName);

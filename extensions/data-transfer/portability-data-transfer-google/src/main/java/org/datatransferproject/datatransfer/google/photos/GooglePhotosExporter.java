@@ -45,6 +45,7 @@ import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.spi.transfer.types.TempPhotosData;
+import org.datatransferproject.spi.transfer.types.UploadErrorException;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.PaginationData;
 import org.datatransferproject.types.common.StringPaginationToken;
@@ -98,7 +99,7 @@ public class GooglePhotosExporter
   @Override
   public ExportResult<PhotosContainerResource> export(
       UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation)
-      throws IOException, InvalidTokenException, PermissionDeniedException {
+      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     if (!exportInformation.isPresent()) {
       // Make list of photos contained in albums so they are not exported twice later on
       populateContainedPhotosList(jobId, authData);
@@ -233,7 +234,7 @@ public class GooglePhotosExporter
       Optional<IdOnlyContainerResource> albumData,
       Optional<PaginationData> paginationData,
       UUID jobId)
-      throws IOException, InvalidTokenException, PermissionDeniedException {
+      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     Optional<String> albumId = Optional.empty();
     if (albumData.isPresent()) {
       albumId = Optional.of(albumData.get().getId());
@@ -271,7 +272,7 @@ public class GooglePhotosExporter
    */
   @VisibleForTesting
   void populateContainedPhotosList(UUID jobId, TokensAndUrlAuthData authData)
-      throws IOException, InvalidTokenException, PermissionDeniedException {
+      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     // This method is only called once at the beginning of the transfer, so we can start by
     // initializing a new TempPhotosData to be store in the job store.
     TempPhotosData tempPhotosData = new TempPhotosData(jobId);

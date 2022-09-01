@@ -17,8 +17,14 @@
 package org.datatransferproject.transfer.microsoft.photos;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,7 +51,6 @@ import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
-import org.datatransferproject.transfer.microsoft.driveModels.*;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
@@ -140,7 +145,7 @@ public class MicrosoftPhotosImporterTest {
     assertThat(result).isEqualTo(ImportResult.OK);
   }
 
-  @Test(expected = PermissionDeniedException.class)
+  @Test
   public void testImportItemPermissionDenied() throws Exception {
     List<PhotoAlbum> albums =
         ImmutableList.of(new PhotoAlbum("id1", "album1.", "This is a fake albumb"));
@@ -162,7 +167,9 @@ public class MicrosoftPhotosImporterTest {
     when(response.body()).thenReturn(body);
     when(call.execute()).thenReturn(response);
 
-    ImportResult result = importer.importItem(uuid, executor, authData, data);
+    assertThrows(PermissionDeniedException.class, () -> {
+      ImportResult result = importer.importItem(uuid, executor, authData, data);
+    });
   }
 
   @Test

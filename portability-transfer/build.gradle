@@ -44,6 +44,7 @@ dependencies {
     compile("com.google.api-client:google-api-client:${googleApiClient}")
     compile("com.google.inject:guice:${guiceVersion}")
     compile "com.squareup.okhttp3:okhttp:${okHttpVersion}"
+    compile("com.google.http-client:google-http-client-gson:${googleHttpClientVersion}")
 
     testCompile project(':extensions:cloud:portability-cloud-local')
     testCompile project(':extensions:copier:portability-stack-copier')

@@ -39,6 +39,7 @@ dependencies {
     compile("com.google.apis:google-api-services-plus:${googlePlusVersion}")
     compile("com.google.photos.library:google-photos-library-client:1.5.0")
 
+    testCompile("com.google.http-client:google-http-client-gson:${googleHttpClientVersion}")
     testCompile project(':extensions:cloud:portability-cloud-local')
 }
 

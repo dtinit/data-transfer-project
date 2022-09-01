@@ -35,16 +35,16 @@ import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class KoofrPhotosImporterTest {
 
   private KoofrClientFactory clientFactory;
@@ -56,7 +56,7 @@ public class KoofrPhotosImporterTest {
   private TokensAndUrlAuthData authData;
   private MockWebServer server;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     server = new MockWebServer();
     server.start();
@@ -81,7 +81,7 @@ public class KoofrPhotosImporterTest {
     authData = new TokensAndUrlAuthData("acc", "refresh", "");
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     server.shutdown();
   }
@@ -135,8 +135,7 @@ public class KoofrPhotosImporterTest {
                 "image/jpeg",
                 "p1",
                 "id1",
-                false,
-                null),
+                false),
             new PhotoModel(
                 "pic2.png",
                 server.url("/2.png").toString(),
@@ -144,8 +143,7 @@ public class KoofrPhotosImporterTest {
                 "image/png",
                 "p2",
                 "id1",
-                false,
-                null),
+                false),
             new PhotoModel(
                 "pic3.jpg",
                 server.url("/3.jpg").toString(),
@@ -153,8 +151,7 @@ public class KoofrPhotosImporterTest {
                 "image/jpeg",
                 "p3",
                 "id1",
-                false,
-                null),
+                false),
             new PhotoModel(
                 "pic4.jpg",
                 server.url("/4.jpg").toString(),
@@ -171,8 +168,7 @@ public class KoofrPhotosImporterTest {
                 "image/jpeg",
                 "p5",
                 "id2",
-                false,
-                null));
+                false));
 
     PhotosContainerResource resource = spy(new PhotosContainerResource(albums, photos));
 
@@ -226,7 +222,7 @@ public class KoofrPhotosImporterTest {
 
   @Test
   public void testImportItemFromJobStore() throws Exception {
-    ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
+    ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
     when(client.ensureRootFolder()).thenReturn("/root");
     when(jobStore.getStream(any(), any())).thenReturn(new InputStreamWrapper(inputStream, 5L));
     doNothing().when(jobStore).removeData(any(), anyString());
@@ -266,7 +262,7 @@ public class KoofrPhotosImporterTest {
 
   @Test
   public void testImportItemFromJobStoreUserTimeZone() throws Exception {
-    ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
+    ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
     when(jobStore.getStream(any(), any())).thenReturn(new InputStreamWrapper(inputStream, 5L));
 
     UUID jobId = UUID.randomUUID();
@@ -304,7 +300,7 @@ public class KoofrPhotosImporterTest {
 
   @Test
   public void testImportItemFromJobStoreUserTimeZoneCalledOnce() throws Exception {
-    ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
+    ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
     when(jobStore.getStream(any(), any())).thenReturn(new InputStreamWrapper(inputStream, 5L));
 
     UUID jobId = UUID.randomUUID();

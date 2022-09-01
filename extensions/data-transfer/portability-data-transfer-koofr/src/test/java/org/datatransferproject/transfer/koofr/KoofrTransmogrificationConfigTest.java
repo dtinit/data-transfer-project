@@ -6,12 +6,9 @@ import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
-
-@RunWith(MockitoJUnitRunner.class)
+import org.junit.jupiter.api.Test;
 public class KoofrTransmogrificationConfigTest {
+
   @Test
   public void testPhotoTitleName() {
     Collection<PhotoAlbum> albums =
