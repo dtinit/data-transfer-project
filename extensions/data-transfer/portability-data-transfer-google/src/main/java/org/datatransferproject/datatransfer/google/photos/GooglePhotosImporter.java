@@ -41,6 +41,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
+import org.datatransferproject.datatransfer.google.common.GooglePhotosImportUtils;
 import org.datatransferproject.datatransfer.google.mediaModels.BatchMediaItemResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;
@@ -128,12 +129,9 @@ public class GooglePhotosImporter
       return ImportResult.OK;
     }
 
-    // Uploads album metadata
-    if (data.getAlbums() != null && data.getAlbums().size() > 0) {
-      for (PhotoAlbum album : data.getAlbums()) {
-        idempotentImportExecutor.executeAndSwallowIOExceptions(
-            album.getId(), album.getName(), () -> importSingleAlbum(jobId, authData, album));
-      }
+    for (PhotoAlbum album : data.getAlbums()) {
+      idempotentImportExecutor.executeAndSwallowIOExceptions(
+          album.getId(), album.getName(), () -> importSingleAlbum(jobId, authData, album));
     }
 
     long bytes = importPhotos(data.getPhotos(), idempotentImportExecutor, jobId, authData);
@@ -147,14 +145,7 @@ public class GooglePhotosImporter
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     // Set up album
     GoogleAlbum googleAlbum = new GoogleAlbum();
-    String title = Strings.nullToEmpty(inputAlbum.getName());
-
-    // Album titles are restricted to 500 characters
-    // https://developers.google.com/photos/library/guides/manage-albums#creating-new-album
-    if (title.length() > 500) {
-      title = title.substring(0, 497) + "...";
-    }
-    googleAlbum.setTitle(title);
+    googleAlbum.setTitle(GooglePhotosImportUtils.cleanAlbumTitle(inputAlbum.getName()));
 
     GoogleAlbum responseAlbum =
         getOrCreatePhotosInterface(jobId, authData).createAlbum(googleAlbum);
@@ -226,7 +217,8 @@ public class GooglePhotosImporter
         try (InputStream s = inputStreamBytesPair.getLeft()) {
           String uploadToken = getOrCreatePhotosInterface(jobId, authData).uploadPhotoContent(s,
               photo.getSha1());
-          mediaItems.add(new NewMediaItem(cleanDescription(photo.getDescription()), uploadToken));
+          String description = GooglePhotosImportUtils.cleanDescription(photo.getDescription());
+          mediaItems.add(new NewMediaItem(description, uploadToken));
           uploadTokenToDataId.put(uploadToken, photo);
           size = inputStreamBytesPair.getRight();
           uploadTokenToLength.put(uploadToken, size);
@@ -362,17 +354,6 @@ public class GooglePhotosImporter
     HttpURLConnection conn = imageStreamProvider.getConnection(fetchableUrl);
     return Pair.of(
         conn.getInputStream(), conn.getContentLengthLong() != -1 ? conn.getContentLengthLong() : 0);
-  }
-
-  private String cleanDescription(String origDescription) {
-    String description = Strings.isNullOrEmpty(origDescription) ? "" : origDescription;
-
-    // Descriptions are restricted to 1000 characters
-    // https://developers.google.com/photos/library/guides/upload-media#creating-media-item
-    if (description.length() > 1000) {
-      description = description.substring(0, 997) + "...";
-    }
-    return description;
   }
 
   private synchronized GooglePhotosInterface getOrCreatePhotosInterface(
