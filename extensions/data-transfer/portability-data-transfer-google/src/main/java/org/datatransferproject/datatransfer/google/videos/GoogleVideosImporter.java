@@ -40,9 +40,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Multimap;
 import com.google.common.collect.UnmodifiableIterator;
 import com.google.photos.library.v1.PhotosLibraryClient;
 import com.google.photos.library.v1.PhotosLibrarySettings;
@@ -60,7 +58,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -73,6 +70,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GooglePhotosImportUtils;
+import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.ItemImportResult;
@@ -81,7 +79,6 @@ import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.UploadErrorException;
-import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.models.videos.VideoAlbum;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
@@ -91,7 +88,7 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 public class GoogleVideosImporter
     implements Importer<TokensAndUrlAuthData, VideosContainerResource> {
 
-  private final ImageStreamProvider videoStreamProvider;
+  private final ConnectionProvider connectionProvider;
   private final Monitor monitor;
   private final AppCredentials appCredentials;
   private final TemporaryPerJobDataStore dataStore;
@@ -99,7 +96,7 @@ public class GoogleVideosImporter
 
   public GoogleVideosImporter(
       AppCredentials appCredentials, TemporaryPerJobDataStore dataStore, Monitor monitor) {
-    this(appCredentials, dataStore, monitor, new ImageStreamProvider(), new HashMap<>());
+    this(appCredentials, dataStore, monitor, new ConnectionProvider(dataStore), new HashMap<>());
   }
 
   @VisibleForTesting
@@ -107,9 +104,9 @@ public class GoogleVideosImporter
       AppCredentials appCredentials,
       TemporaryPerJobDataStore dataStore,
       Monitor monitor,
-      ImageStreamProvider videoStreamProvider,
+      ConnectionProvider connectionProvider,
       Map<UUID, PhotosLibraryClient> clientsMap) {
-    this.videoStreamProvider = videoStreamProvider;
+    this.connectionProvider = connectionProvider;
     this.monitor = monitor;
     this.appCredentials = appCredentials;
     this.dataStore = dataStore;
@@ -213,7 +210,7 @@ public class GoogleVideosImporter
           uploadTokenToDataId.put(uploadToken, video);
           uploadTokenToLength.put(uploadToken, pair.getRight());
           if (video.isInTempStore()) {
-            dataStore.removeData(jobId, video.getDataId());
+            dataStore.removeData(jobId, video.getFetchableUrl());
           }
         } catch (IOException e) {
           if (e instanceof FileNotFoundException) {
@@ -335,15 +332,9 @@ public class GoogleVideosImporter
   }
 
   private File createTempVideoFile(UUID jobId, VideoModel inputVideo) throws IOException {
-    try (InputStream inputStream = getVideoInputStream(jobId, inputVideo)) {
-      return dataStore.getTempFileFromInputStream(inputStream, inputVideo.getName(), ".mp4");
+    try (InputStream is = connectionProvider.getInputStreamForItem(jobId, inputVideo).getStream()) {
+      return dataStore.getTempFileFromInputStream(is, inputVideo.getName(), ".mp4");
     }
-  }
-
-  private InputStream getVideoInputStream(UUID jobId, VideoModel inputVideo) throws IOException {
-    return inputVideo.isInTempStore() ?
-        dataStore.getStream(jobId, inputVideo.getDataId()).getStream()
-        : videoStreamProvider.getConnection(inputVideo.getContentUrl().toString()).getInputStream();
   }
 
   @VisibleForTesting

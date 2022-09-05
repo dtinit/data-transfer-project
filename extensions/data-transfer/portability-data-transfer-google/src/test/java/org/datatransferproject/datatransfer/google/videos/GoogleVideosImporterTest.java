@@ -45,14 +45,14 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.idempotentexecutor.InMemoryIdempotentImportExecutor;
-import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.models.videos.VideoAlbum;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
@@ -74,7 +74,7 @@ public class GoogleVideosImporterTest {
 
   private GoogleVideosImporter googleVideosImporter;
   private TemporaryPerJobDataStore dataStore;
-  private ImageStreamProvider streamProvider;
+  private ConnectionProvider connectionProvider;
   private PhotosLibraryClient client;
   private UUID jobId;
 
@@ -96,13 +96,14 @@ public class GoogleVideosImporterTest {
             new ByteArrayInputStream("TestingBytes".getBytes())));
     doNothing().when(dataStore).removeData(any(), anyString());
 
-    streamProvider = mock(ImageStreamProvider.class);
-    when(streamProvider.getConnection(any())).thenReturn(mock(HttpURLConnection.class));
+    connectionProvider = mock(ConnectionProvider.class);
+    when(connectionProvider.getInputStreamForItem(any(), any()))
+        .thenReturn(mock(InputStreamWrapper.class));
     client = mock(PhotosLibraryClient.class);
     jobId = UUID.randomUUID();
     googleVideosImporter =
         new GoogleVideosImporter(
-            null, dataStore, mock(Monitor.class), streamProvider, Map.of(jobId, client));
+            null, dataStore, mock(Monitor.class), connectionProvider, Map.of(jobId, client));
   }
 
   @Test
@@ -246,9 +247,8 @@ public class GoogleVideosImporterTest {
   public void skipNotFoundVideo() throws Exception {
     PhotosLibraryClient photosLibraryClient = mock(PhotosLibraryClient.class);
 
-    HttpURLConnection httpURLConnection = mock(HttpURLConnection.class);
-    when(httpURLConnection.getInputStream()).thenThrow(new FileNotFoundException());
-    when(streamProvider.getConnection(any())).thenReturn(httpURLConnection);
+    when(connectionProvider.getInputStreamForItem(any(), any()))
+        .thenThrow(new FileNotFoundException());
     UUID jobId = UUID.randomUUID();
 
     InMemoryIdempotentImportExecutor executor =
@@ -342,7 +342,7 @@ public class GoogleVideosImporterTest {
             executor);
     assertThat(length).isEqualTo(32);
     assertThat(executor.getErrors()).isEmpty();
-    verify(dataStore).removeData(any(), eq(VIDEO_ID));
+    verify(dataStore).removeData(any(), eq(VIDEO_URI));
   }
 
   @Test
@@ -353,6 +353,10 @@ public class GoogleVideosImporterTest {
 
     InMemoryIdempotentImportExecutor executor =
         new InMemoryIdempotentImportExecutor(mock(Monitor.class));
+    ConnectionProvider connectionProvider = new ConnectionProvider(dataStore);
+    GoogleVideosImporter googleVideosImporter =
+        new GoogleVideosImporter(
+            null, dataStore, mock(Monitor.class), connectionProvider, Map.of(jobId, client));
     googleVideosImporter.importVideoBatch(jobId,
         Lists.newArrayList(
             new VideoModel(
@@ -368,6 +372,6 @@ public class GoogleVideosImporterTest {
         executor);
     // should only remove the video from temp store upon success
     verify(dataStore, never()).removeData(any(), anyString());
-    verify(dataStore).getStream(any(), eq(VIDEO_ID));
+    verify(dataStore).getStream(any(), eq(VIDEO_URI));
   }
 }
