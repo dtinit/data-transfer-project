@@ -388,8 +388,10 @@ public class MediaContainerResourceTest {
     List<VideoAlbum> videoAlbums =
         ImmutableList.of(new VideoAlbum("id1", "albumb1", "This:a fake album!"));
     List<VideoModel> videos = ImmutableList.of(
-        new VideoModel("Vid1", "http://fake.com/1.mp4", "A vid", "mediatype", "p1", "id1", false),
-        new VideoModel("Vid3", "http://fake.com/2.mp4", "A vid", "mediatype", "p3", "id1", false));
+        new VideoModel(
+            "Vid1", "http://fake.com/1.mp4", "A vid", "mediatype", "p1", "id1", false, null),
+        new VideoModel(
+            "Vid3", "http://fake.com/2.mp4", "A vid", "mediatype", "p3", "id1", false, null));
     MediaContainerResource data = new MediaContainerResource(mediaAlbums, null, videos);
 
     VideosContainerResource expected = new VideosContainerResource(videoAlbums, videos);
@@ -404,8 +406,10 @@ public class MediaContainerResourceTest {
     List<VideoAlbum> videoAlbums =
         ImmutableList.of(new VideoAlbum("id1", "albumb1", "This:a fake album!"));
     List<VideoModel> videos = ImmutableList.of(
-        new VideoModel("Vid1", "http://fake.com/1.mp4", "A vid", "mediatype", "p1", "id1", false),
-        new VideoModel("Vid3", "http://fake.com/2.mp4", "A vid", "mediatype", "p3", "id1", false));
+        new VideoModel(
+            "Vid1", "http://fake.com/1.mp4", "A vid", "mediatype", "p1", "id1", false, null),
+        new VideoModel(
+            "Vid3", "http://fake.com/2.mp4", "A vid", "mediatype", "p3", "id1", false, null));
     VideosContainerResource data = new VideosContainerResource(videoAlbums, videos);
 
     MediaContainerResource expected = new MediaContainerResource(mediaAlbums, null, videos);

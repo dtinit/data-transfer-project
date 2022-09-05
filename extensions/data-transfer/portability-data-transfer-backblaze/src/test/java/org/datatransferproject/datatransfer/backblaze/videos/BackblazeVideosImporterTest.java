@@ -111,7 +111,7 @@ public class BackblazeVideosImporterTest {
         UUID jobId = UUID.randomUUID();
 
         VideoModel videoObject =
-                new VideoModel(title, videoUrl, description, encodingFormat, dataId, albumId, false);
+                new VideoModel(title, videoUrl, description, encodingFormat, dataId, albumId, false, null);
         ArrayList<VideoModel> videos = new ArrayList<>();
         videos.add(videoObject);
         VideosContainerResource data = mock(VideosContainerResource.class);
