@@ -16,6 +16,7 @@ import org.datatransferproject.types.common.models.TransmogrificationConfig;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.common.models.videos.VideoModel;
+import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 
 @JsonTypeName("MediaContainerResource")
 public class MediaContainerResource extends ContainerResource {
@@ -46,7 +47,7 @@ public class MediaContainerResource extends ContainerResource {
         photosContainer
             .getAlbums()
             .stream()
-            .map(a -> MediaAlbum.photoToMediaAlbum(a))
+            .map(MediaAlbum::photoToMediaAlbum)
             .collect(Collectors.toList()),
         photosContainer.getPhotos(),
         null /*videos*/);
@@ -61,9 +62,38 @@ public class MediaContainerResource extends ContainerResource {
         mediaContainer
             .getAlbums()
             .stream()
-            .map(a -> MediaAlbum.mediaToPhotoAlbum(a))
+            .map(MediaAlbum::mediaToPhotoAlbum)
             .collect(Collectors.toList()),
         mediaContainer.getPhotos());
+  }
+
+  /**
+   * Builds a MediaContainerResource without video by mapping a PhotosContainerResource's fields
+   * 1:1 to MediaContainerResource.
+   */
+  public static MediaContainerResource videoToMedia(VideosContainerResource videosContainer) {
+    return new MediaContainerResource(
+        videosContainer
+            .getAlbums()
+            .stream()
+            .map(MediaAlbum::videoToMediaAlbum)
+            .collect(Collectors.toList()),
+        null,
+        videosContainer.getVideos());
+  }
+
+  /**
+   * Extracts a new VideosContainerResource from the relevant matching fields in a given
+   * MediaContainerResource.
+   */
+  public static VideosContainerResource mediaToVideo(MediaContainerResource mediaContainer) {
+    return new VideosContainerResource(
+        mediaContainer
+            .getAlbums()
+            .stream()
+            .map(MediaAlbum::mediaToVideoAlbum)
+            .collect(Collectors.toList()),
+        mediaContainer.getVideos());
   }
 
   public Collection<MediaAlbum> getAlbums() {

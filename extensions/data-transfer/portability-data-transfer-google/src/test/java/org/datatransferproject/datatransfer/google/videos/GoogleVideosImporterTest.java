@@ -36,6 +36,8 @@ import com.google.photos.library.v1.proto.BatchCreateMediaItemsResponse;
 import com.google.photos.library.v1.proto.NewMediaItem;
 import com.google.photos.library.v1.proto.NewMediaItemResult;
 import com.google.photos.library.v1.upload.UploadMediaItemResponse;
+import com.google.photos.library.v1.util.NewMediaItemFactory;
+import com.google.photos.types.proto.Album;
 import com.google.photos.types.proto.MediaItem;
 import com.google.rpc.Code;
 import com.google.rpc.Status;
@@ -44,12 +46,17 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.InMemoryIdempotentImportExecutor;
 import org.datatransferproject.transfer.ImageStreamProvider;
+import org.datatransferproject.types.common.models.videos.VideoAlbum;
 import org.datatransferproject.types.common.models.videos.VideoModel;
+import org.datatransferproject.types.common.models.videos.VideosContainerResource;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -63,10 +70,14 @@ public class GoogleVideosImporterTest {
   private static final String VIDEO_URI = "https://www.example.com/video.mp4";
   private static final String MP4_MEDIA_TYPE = "video/mp4";
   private static final String VIDEO_ID = "myId";
+  private static final String ALBUM_ID = "album1";
 
   private GoogleVideosImporter googleVideosImporter;
   private TemporaryPerJobDataStore dataStore;
   private ImageStreamProvider streamProvider;
+  private PhotosLibraryClient client;
+  private UUID jobId;
+
 
   @BeforeEach
   public void setUp() throws Exception {
@@ -87,16 +98,21 @@ public class GoogleVideosImporterTest {
 
     streamProvider = mock(ImageStreamProvider.class);
     when(streamProvider.getConnection(any())).thenReturn(mock(HttpURLConnection.class));
+    client = mock(PhotosLibraryClient.class);
+    jobId = UUID.randomUUID();
     googleVideosImporter =
-        new GoogleVideosImporter(null, dataStore, mock(Monitor.class), streamProvider);
+        new GoogleVideosImporter(
+            null, dataStore, mock(Monitor.class), streamProvider, Map.of(jobId, client));
   }
 
   @Test
-  public void importTwoVideos() throws Exception {
-    PhotosLibraryClient photosLibraryClient = mock(PhotosLibraryClient.class);
+  public void importTwoVideosInDifferentAlbums() throws Exception {
+    String googleAlbumId = "googleId";
+    Album expected = Album.newBuilder().setId(googleAlbumId).setTitle("albumName").build();
+    when(client.createAlbum(anyString())).thenReturn(expected);
 
     // Mock uploads
-    when(photosLibraryClient.uploadMediaItem(any()))
+    when(client.uploadMediaItem(any()))
         .thenReturn(
             UploadMediaItemResponse.newBuilder().setUploadToken("token1").build(),
             UploadMediaItemResponse.newBuilder().setUploadToken("token2").build());
@@ -105,47 +121,59 @@ public class GoogleVideosImporterTest {
     final NewMediaItemResult newMediaItemResult =
         NewMediaItemResult.newBuilder()
             .setStatus(Status.newBuilder().setCode(Code.OK_VALUE).build())
-            .setMediaItem(MediaItem.newBuilder().setId("RESULT_ID_1").build())
             .setUploadToken("token1")
             .build();
     final NewMediaItemResult newMediaItemResult2 =
         NewMediaItemResult.newBuilder()
             .setStatus(Status.newBuilder().setCode(Code.OK_VALUE).build())
-            .setMediaItem(MediaItem.newBuilder().setId("RESULT_ID_2").build())
             .setUploadToken("token2")
             .build();
     BatchCreateMediaItemsResponse response =
         BatchCreateMediaItemsResponse.newBuilder()
             .addNewMediaItemResults(newMediaItemResult)
+            .build();
+    BatchCreateMediaItemsResponse response2 =
+        BatchCreateMediaItemsResponse.newBuilder()
             .addNewMediaItemResults(newMediaItemResult2)
             .build();
-    when(photosLibraryClient.batchCreateMediaItems(ArgumentMatchers.anyList()))
+    NewMediaItem mediaItem = NewMediaItemFactory.createNewMediaItem("token1", VIDEO_DESCRIPTION);
+    NewMediaItem mediaItem2 = NewMediaItemFactory.createNewMediaItem("token2", VIDEO_DESCRIPTION);
+    when(client.batchCreateMediaItems(eq(googleAlbumId), eq(List.of(mediaItem))))
         .thenReturn(response);
-    UUID jobId = UUID.randomUUID();
+    when(client.batchCreateMediaItems(eq(List.of(mediaItem2))))
+        .thenReturn(response2);
 
     InMemoryIdempotentImportExecutor executor =
         new InMemoryIdempotentImportExecutor(mock(Monitor.class));
     long length =
-        googleVideosImporter.importVideoBatch(jobId,
-            Lists.newArrayList(
-                new VideoModel(
-                    VIDEO_TITLE,
-                    VIDEO_URI,
-                    VIDEO_DESCRIPTION,
-                    MP4_MEDIA_TYPE,
-                    VIDEO_ID,
-                    null,
-                    false),
-                new VideoModel(
-                    VIDEO_TITLE,
-                    VIDEO_URI,
-                    VIDEO_DESCRIPTION,
-                    MP4_MEDIA_TYPE,
-                    "myId2",
-                    null,
-                    false)),
-            photosLibraryClient,
-            executor);
+        googleVideosImporter
+            .importItem(
+                jobId,
+                executor,
+                mock(TokensAndUrlAuthData.class),
+                new VideosContainerResource(
+                    List.of(new VideoAlbum(ALBUM_ID, "name", null)),
+                    List.of(
+                        new VideoModel(
+                            VIDEO_TITLE,
+                            VIDEO_URI,
+                            VIDEO_DESCRIPTION,
+                            MP4_MEDIA_TYPE,
+                            VIDEO_ID,
+                            ALBUM_ID,
+                            false,
+                            null),
+                        new VideoModel(
+                            VIDEO_TITLE,
+                            VIDEO_URI,
+                            VIDEO_DESCRIPTION,
+                            MP4_MEDIA_TYPE,
+                            "myId2",
+                            null,
+                            false,
+                            null))))
+            .getBytes()
+            .get();
     assertEquals("Expected the number of bytes to be the two files of 32L.", 64L, length);
     assertEquals("Expected executor to have no errors.", 0, executor.getErrors().size());
   }
@@ -193,7 +221,8 @@ public class GoogleVideosImporterTest {
                     MP4_MEDIA_TYPE,
                     VIDEO_ID,
                     null,
-                    false),
+                    false,
+                    null),
                 new VideoModel(
                     VIDEO_TITLE,
                     VIDEO_URI,
@@ -201,7 +230,8 @@ public class GoogleVideosImporterTest {
                     MP4_MEDIA_TYPE,
                     "myId2",
                     null,
-                    false)),
+                    false,
+                    null)),
             photosLibraryClient,
             executor);
 
@@ -234,7 +264,8 @@ public class GoogleVideosImporterTest {
                     MP4_MEDIA_TYPE,
                     VIDEO_ID,
                     null,
-                    false)),
+                    false,
+                    null)),
             photosLibraryClient,
             executor);
     assertEquals("Expected the number of bytes to be 0L.", 0L, length);
@@ -258,7 +289,7 @@ public class GoogleVideosImporterTest {
             + "7890";
     final VideoModel videoModel =
         new VideoModel(
-            VIDEO_TITLE, VIDEO_URI, videoDescriptionOver1k, MP4_MEDIA_TYPE, VIDEO_ID, null, false);
+            VIDEO_TITLE, VIDEO_URI, videoDescriptionOver1k, MP4_MEDIA_TYPE, VIDEO_ID, null, false, null);
 
     String uploadToken = "token";
     NewMediaItem newMediaItemResult = googleVideosImporter.buildMediaItem(videoModel, uploadToken);
@@ -305,7 +336,8 @@ public class GoogleVideosImporterTest {
                     MP4_MEDIA_TYPE,
                     VIDEO_ID,
                     null,
-                    true)),
+                    true,
+                    null)),
             photosLibraryClient,
             executor);
     assertThat(length).isEqualTo(32);
@@ -330,7 +362,8 @@ public class GoogleVideosImporterTest {
                 MP4_MEDIA_TYPE,
                 VIDEO_ID,
                 null,
-                true)),
+                true,
+                null)),
         mock(PhotosLibraryClient.class),
         executor);
     // should only remove the video from temp store upon success

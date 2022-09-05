@@ -1,5 +1,14 @@
 package org.datatransferproject.datatransfer.google;
 
+import static org.datatransferproject.types.common.models.DataVertical.BLOBS;
+import static org.datatransferproject.types.common.models.DataVertical.CALENDAR;
+import static org.datatransferproject.types.common.models.DataVertical.CONTACTS;
+import static org.datatransferproject.types.common.models.DataVertical.MAIL;
+import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
+import static org.datatransferproject.types.common.models.DataVertical.SOCIAL_POSTS;
+import static org.datatransferproject.types.common.models.DataVertical.TASKS;
+import static org.datatransferproject.types.common.models.DataVertical.VIDEOS;
+
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.base.Preconditions;
@@ -26,6 +35,7 @@ import org.datatransferproject.datatransfer.google.videos.GoogleVideosExporter;
 import org.datatransferproject.datatransfer.google.videos.GoogleVideosImporter;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -38,11 +48,11 @@ import org.datatransferproject.types.transfer.auth.AppCredentials;
 public class GoogleTransferExtension implements TransferExtension {
   public static final String SERVICE_ID = "google";
   // TODO: centralized place, or enum type for these
-  private static final ImmutableList<String> SUPPORTED_SERVICES =
+  private static final ImmutableList<DataVertical> SUPPORTED_SERVICES =
       ImmutableList.of(
-          "BLOBS", "CALENDAR", "CONTACTS", "MAIL", "PHOTOS", "SOCIAL-POSTS", "TASKS", "VIDEOS");
-  private ImmutableMap<String, Importer> importerMap;
-  private ImmutableMap<String, Exporter> exporterMap;
+          BLOBS, CALENDAR, CONTACTS, MAIL, PHOTOS, SOCIAL_POSTS, TASKS, VIDEOS);
+  private ImmutableMap<DataVertical, Importer> importerMap;
+  private ImmutableMap<DataVertical, Exporter> exporterMap;
   private boolean initialized = false;
 
   @Override
@@ -51,14 +61,14 @@ public class GoogleTransferExtension implements TransferExtension {
   }
 
   @Override
-  public Exporter<?, ?> getExporter(String transferDataType) {
+  public Exporter<?, ?> getExporter(DataVertical transferDataType) {
     Preconditions.checkArgument(initialized);
     Preconditions.checkArgument(SUPPORTED_SERVICES.contains(transferDataType));
     return exporterMap.get(transferDataType);
   }
 
   @Override
-  public Importer<?, ?> getImporter(String transferDataType) {
+  public Importer<?, ?> getImporter(DataVertical transferDataType) {
     Preconditions.checkArgument(initialized);
     Preconditions.checkArgument(SUPPORTED_SERVICES.contains(transferDataType));
     return importerMap.get(transferDataType);
@@ -95,33 +105,33 @@ public class GoogleTransferExtension implements TransferExtension {
     GoogleCredentialFactory credentialFactory =
         new GoogleCredentialFactory(httpTransport, jsonFactory, appCredentials, monitor);
 
-    ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
-    importerBuilder.put("BLOBS", new DriveImporter(credentialFactory, jobStore, monitor));
-    importerBuilder.put("CONTACTS", new GoogleContactsImporter(credentialFactory));
-    importerBuilder.put("CALENDAR", new GoogleCalendarImporter(credentialFactory));
-    importerBuilder.put("MAIL", new GoogleMailImporter(credentialFactory, monitor));
-    importerBuilder.put("TASKS", new GoogleTasksImporter(credentialFactory));
+    ImmutableMap.Builder<DataVertical, Importer> importerBuilder = ImmutableMap.builder();
+    importerBuilder.put(BLOBS, new DriveImporter(credentialFactory, jobStore, monitor));
+    importerBuilder.put(CONTACTS, new GoogleContactsImporter(credentialFactory));
+    importerBuilder.put(CALENDAR, new GoogleCalendarImporter(credentialFactory));
+    importerBuilder.put(MAIL, new GoogleMailImporter(credentialFactory, monitor));
+    importerBuilder.put(TASKS, new GoogleTasksImporter(credentialFactory));
     importerBuilder.put(
-        "PHOTOS",
+        PHOTOS,
         new GooglePhotosImporter(
             credentialFactory,
             jobStore,
             jsonFactory,
             monitor,
             context.getSetting("googleWritesPerSecond", 1.0)));
-    importerBuilder.put("VIDEOS", new GoogleVideosImporter(appCredentials, jobStore, monitor));
+    importerBuilder.put(VIDEOS, new GoogleVideosImporter(appCredentials, jobStore, monitor));
     importerMap = importerBuilder.build();
 
-    ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();
-    exporterBuilder.put("BLOBS", new DriveExporter(credentialFactory, jobStore, monitor));
-    exporterBuilder.put("CONTACTS", new GoogleContactsExporter(credentialFactory));
-    exporterBuilder.put("CALENDAR", new GoogleCalendarExporter(credentialFactory));
-    exporterBuilder.put("MAIL", new GoogleMailExporter(credentialFactory));
-    exporterBuilder.put("SOCIAL-POSTS", new GooglePlusExporter(credentialFactory));
-    exporterBuilder.put("TASKS", new GoogleTasksExporter(credentialFactory, monitor));
+    ImmutableMap.Builder<DataVertical, Exporter> exporterBuilder = ImmutableMap.builder();
+    exporterBuilder.put(BLOBS, new DriveExporter(credentialFactory, jobStore, monitor));
+    exporterBuilder.put(CONTACTS, new GoogleContactsExporter(credentialFactory));
+    exporterBuilder.put(CALENDAR, new GoogleCalendarExporter(credentialFactory));
+    exporterBuilder.put(MAIL, new GoogleMailExporter(credentialFactory));
+    exporterBuilder.put(SOCIAL_POSTS, new GooglePlusExporter(credentialFactory));
+    exporterBuilder.put(TASKS, new GoogleTasksExporter(credentialFactory, monitor));
     exporterBuilder.put(
-        "PHOTOS", new GooglePhotosExporter(credentialFactory, jobStore, jsonFactory, monitor));
-    exporterBuilder.put("VIDEOS", new GoogleVideosExporter(credentialFactory, jsonFactory));
+        PHOTOS, new GooglePhotosExporter(credentialFactory, jobStore, jsonFactory, monitor));
+    exporterBuilder.put(VIDEOS, new GoogleVideosExporter(credentialFactory, jsonFactory));
 
     exporterMap = exporterBuilder.build();
 

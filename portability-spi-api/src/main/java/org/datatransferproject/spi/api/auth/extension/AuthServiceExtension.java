@@ -4,6 +4,7 @@ import java.util.List;
 import org.datatransferproject.api.launcher.AbstractExtension;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
+import org.datatransferproject.types.common.models.DataVertical;
 
 /**
  * Factory responsible for providing {@link AuthDataGenerator} implementations.
@@ -21,19 +22,19 @@ public interface AuthServiceExtension extends AbstractExtension{
    *
    * @param transferDataType the data type
    */
-  AuthDataGenerator getAuthDataGenerator(String transferDataType, AuthMode mode);
+  AuthDataGenerator getAuthDataGenerator(DataVertical transferDataType, AuthMode mode);
 
   /**
    * get supported import types
    *
    * @return The list of types that are supported for IMPORT AuthMode
    */
-  List<String> getImportTypes();
+  List<DataVertical> getImportTypes();
 
   /**
    * get supported export types
    *
    * @return The list of types that are supported for EXPORT AuthMode
    */
-  List<String> getExportTypes();
+  List<DataVertical> getExportTypes();
 }

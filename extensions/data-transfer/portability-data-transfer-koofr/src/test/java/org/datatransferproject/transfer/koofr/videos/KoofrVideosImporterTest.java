@@ -104,7 +104,8 @@ public class KoofrVideosImporterTest {
                 "video/mp4",
                 "video1",
                 "id1",
-                false),
+                false,
+                null),
             new VideoModel(
                 "video2.mp4",
                 server.url("/2.mp4").toString(),
@@ -112,7 +113,8 @@ public class KoofrVideosImporterTest {
                 "video/mp4",
                 "video2",
                 "id1",
-                false),
+                false,
+                null),
             new VideoModel(
                 "video3.mp4",
                 server.url("/3.mp4").toString(),
@@ -120,7 +122,8 @@ public class KoofrVideosImporterTest {
                 "video/mp4",
                 "video3",
                 "id2",
-                false));
+                false,
+                null));
 
     VideosContainerResource resource = spy(new VideosContainerResource(albums, videos));
 
@@ -176,7 +179,8 @@ public class KoofrVideosImporterTest {
                 "video/mp4",
                 "video1",
                 null,
-                false),
+                false,
+                null),
             new VideoModel(
                 "video2.mp4",
                 server.url("/2.mp4").toString(),
@@ -184,7 +188,8 @@ public class KoofrVideosImporterTest {
                 "video/mp4",
                 "video2",
                 null,
-                false));
+                false,
+                null));
 
     VideosContainerResource resource = spy(new VideosContainerResource(albums, videos));
 
@@ -224,15 +229,16 @@ public class KoofrVideosImporterTest {
     Collection<VideoAlbum> albums = ImmutableList.of();
 
     Collection<VideoModel> videos =
-        ImmutableList.of(
-            new VideoModel(
-                "not_found_video_1.mp4",
-                server.url("/not_found.mp4").toString(),
-                "Video not founded in CDN",
-                "video/mp4",
-                "not_found_video_1",
-                null,
-                false));
+            ImmutableList.of(
+                    new VideoModel(
+                            "not_found_video_1.mp4",
+                            server.url("/not_found.mp4").toString(),
+                            "Video not founded in CDN",
+                            "video/mp4",
+                            "not_found_video_1",
+                            null,
+                            false,
+                            null));
 
     VideosContainerResource resource = spy(new VideosContainerResource(albums, videos));
 

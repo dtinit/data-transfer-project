@@ -16,6 +16,7 @@
 package org.datatransferproject.api.launcher;
 
 import java.time.Duration;
+import org.datatransferproject.types.common.models.DataVertical;
 
 /**
  * Interface to log metrics about a DTP job.
@@ -30,44 +31,44 @@ public interface DtpInternalMetricRecorder {
   // Metrics related to DTP internals
 
   /** A DTP job started. **/
-  void startedJob(String dataType, String exportService, String importService);
+  void startedJob(DataVertical dataType, String exportService, String importService);
   /** A DTP job finished **/
   void finishedJob(
-      String dataType,
+      DataVertical dataType,
       String exportService,
       String importService,
       boolean success,
       Duration duration);
   /** A DTP job cancelled **/
   void cancelledJob(
-      String dataType,
+      DataVertical dataType,
       String exportService,
       String importService,
       Duration duration);
 
   /** An single attempt to export a page of data finished. **/
   void exportPageAttemptFinished(
-      String dataType,
+      DataVertical dataType,
       String service,
       boolean success,
       Duration duration);
 
   /** An attempt to export a page of data finished including all retires. **/
-  void exportPageFinished(String dataType, String service, boolean success, Duration duration);
+  void exportPageFinished(DataVertical dataType, String service, boolean success, Duration duration);
 
   /** An single attempt to import a page of data finished. **/
   void importPageAttemptFinished(
-      String dataType,
+      DataVertical dataType,
       String service,
       boolean success,
       Duration duration);
 
   /** An attempt to import a page of data finished including all retires. **/
-  void importPageFinished(String dataType, String service, boolean success, Duration duration);
+  void importPageFinished(DataVertical dataType, String service, boolean success, Duration duration);
 
   // Metrics from {@link MetricRecorder}
-  void recordGenericMetric(String dataType, String service, String tag);
-  void recordGenericMetric(String dataType, String service, String tag, boolean bool);
-  void recordGenericMetric(String dataType, String service, String tag, Duration duration);
-  void recordGenericMetric(String dataType, String service, String tag, int value);
+  void recordGenericMetric(DataVertical dataType, String service, String tag);
+  void recordGenericMetric(DataVertical dataType, String service, String tag, boolean bool);
+  void recordGenericMetric(DataVertical dataType, String service, String tag, Duration duration);
+  void recordGenericMetric(DataVertical dataType, String service, String tag, int value);
 }

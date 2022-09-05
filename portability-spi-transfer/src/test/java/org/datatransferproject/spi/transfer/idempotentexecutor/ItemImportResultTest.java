@@ -11,7 +11,7 @@ public class ItemImportResultTest {
 
   @Test
   public void testNullBytesIsOk() {
-    ItemImportResult<String> result = ItemImportResult.success("blabla", null);
+    ItemImportResult<String> result = ItemImportResult.success("blabla");
     assertEquals(SUCCESS, result.getStatus());
     assertFalse(result.hasBytes());
   }

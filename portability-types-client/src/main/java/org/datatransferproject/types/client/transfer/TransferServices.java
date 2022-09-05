@@ -21,16 +21,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
 
 import java.util.Set;
+import org.datatransferproject.types.common.models.DataVertical;
 
 /** Export and import services that support the provided data type. */
 public class TransferServices {
-  private final String transferDataType;
+  private final DataVertical transferDataType;
   private final Set<String> exportServices;
   private final Set<String> importServices;
 
   @JsonCreator
   public TransferServices(
-      @JsonProperty(value = "transferDataType", required = true) String transferDataType,
+      @JsonProperty(value = "transferDataType", required = true) DataVertical transferDataType,
       @JsonProperty(value = "exportServices", required = true) Set<String> exportServices,
       @JsonProperty(value = "importServices", required = true) Set<String> importServices) {
     this.transferDataType = transferDataType;
@@ -49,7 +50,7 @@ public class TransferServices {
   }
 
   @ApiModelProperty
-  public String getTransferDataType() {
+  public DataVertical getTransferDataType() {
     return this.transferDataType;
   }
 }

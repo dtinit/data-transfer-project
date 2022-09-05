@@ -135,8 +135,7 @@ public class KoofrPhotosImporterTest {
                 "image/jpeg",
                 "p1",
                 "id1",
-                false,
-                null),
+                false),
             new PhotoModel(
                 "pic2.png",
                 server.url("/2.png").toString(),
@@ -144,8 +143,7 @@ public class KoofrPhotosImporterTest {
                 "image/png",
                 "p2",
                 "id1",
-                false,
-                null),
+                false),
             new PhotoModel(
                 "pic3.jpg",
                 server.url("/3.jpg").toString(),
@@ -153,8 +151,7 @@ public class KoofrPhotosImporterTest {
                 "image/jpeg",
                 "p3",
                 "id1",
-                false,
-                null),
+                false),
             new PhotoModel(
                 "pic4.jpg",
                 server.url("/4.jpg").toString(),
@@ -171,8 +168,7 @@ public class KoofrPhotosImporterTest {
                 "image/jpeg",
                 "p5",
                 "id2",
-                false,
-                null));
+                false));
 
     PhotosContainerResource resource = spy(new PhotosContainerResource(albums, photos));
 

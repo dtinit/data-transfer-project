@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
+import org.datatransferproject.types.common.models.DataVertical;
 
 /**
  * Interface for providing information necessary to run OAuth1 flow
@@ -50,13 +51,15 @@ public interface OAuth1Config {
 
   /**
    * Returns a list of export data types (e.g., PHOTOS, CALENDAR) this config is designed to support.
+   * @return
    */
-  List<String> getExportTypes();
+  List<DataVertical> getExportTypes();
 
   /**
    * Returns a list of import data types (e.g., PHOTOS, CALENDAR) this config is designed to support.
+   * @return
    */
-  List<String> getImportTypes();
+  List<DataVertical> getImportTypes();
 
   /**
    * Return a map of parameters that will be added to the OAuth request.
@@ -68,7 +71,7 @@ public interface OAuth1Config {
    * privilege for the given mode (EXPORT, IMPORT) should be used.
    */
   default Map<String, String> getAdditionalUrlParameters(
-      String dataType, AuthMode mode, OAuth1Step step) {
+      DataVertical dataType, AuthMode mode, OAuth1Step step) {
     return Collections.emptyMap();
   }
 

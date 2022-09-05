@@ -2,6 +2,7 @@ package org.datatransferproject.spi.api.auth;
 
 import java.util.Set;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
+import org.datatransferproject.types.common.models.DataVertical;
 
 /** Manages {@link AuthServiceExtension}s registered in the system. */
 public interface AuthServiceProviderRegistry {
@@ -15,24 +16,25 @@ public interface AuthServiceProviderRegistry {
    * @return An AuthDataGenerator from the specified AuthServiceExtension for the type and mode
    *     requested.
    */
-  AuthDataGenerator getAuthDataGenerator(String serviceId, String transferDataType, AuthMode mode);
+  AuthDataGenerator getAuthDataGenerator(String serviceId, DataVertical transferDataType, AuthMode mode);
 
   /**
    * Returns the set of service ids that can import the given {@code transferDataType}.
    *
    * @param transferDataType the transfer data type
    */
-  Set<String> getImportServices(String transferDataType);
+  Set<String> getImportServices(DataVertical transferDataType);
 
   /**
    * Returns the set of service ids that can export the given {@code transferDataType}.
    *
    * @param transferDataType the transfer data type
    */
-  Set<String> getExportServices(String transferDataType);
+  Set<String> getExportServices(DataVertical transferDataType);
 
-  /** Returns the set of data types that support both import and export. */
-  Set<String> getTransferDataTypes();
+  /** Returns the set of data types that support both import and export.
+   * @return*/
+  Set<DataVertical> getTransferDataTypes();
 
   /**
    * The AuthorizationMode to use for lookups. IMPORT specifies an authorization that allows you to

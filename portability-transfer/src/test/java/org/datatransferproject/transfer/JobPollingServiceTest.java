@@ -34,6 +34,7 @@ import org.datatransferproject.spi.transfer.security.SecurityException;
 import org.datatransferproject.spi.transfer.security.TransferKeyGenerator;
 import org.datatransferproject.spi.transfer.security.TransferKeyGenerator.WorkerKeyPair;
 
+import org.datatransferproject.types.common.models.DataVertical;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -115,7 +116,7 @@ public class JobPollingServiceTest {
     // API inserts an job in initial authorization state
     job =
         PortabilityJob.builder()
-            .setTransferDataType("photo")
+            .setTransferDataType(DataVertical.PHOTOS)
             .setExportService("DummyExportService")
             .setImportService("DummyImportService")
             .setAndValidateJobAuthorization(

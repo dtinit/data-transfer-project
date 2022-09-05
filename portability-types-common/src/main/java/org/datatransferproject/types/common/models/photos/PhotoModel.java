@@ -36,6 +36,7 @@ public class PhotoModel implements DownloadableFile {
   private String albumId;
   private final boolean inTempStore;
   private String dataId;
+  @Nullable private String sha1;  // SHA-1 hash in Hex (base16).
   private Date uploadedTime;
 
   @JsonCreator
@@ -47,6 +48,7 @@ public class PhotoModel implements DownloadableFile {
       @JsonProperty("dataId") String dataId,
       @JsonProperty("albumId") String albumId,
       @JsonProperty("inTempStore") boolean inTempStore,
+      @Nullable @JsonProperty("sha1") String sha1,
       @JsonProperty("uploadedTime") Date uploadedTime) {
     this.title = title;
     this.fetchableUrl = fetchableUrl;
@@ -58,7 +60,29 @@ public class PhotoModel implements DownloadableFile {
     this.dataId = dataId;
     this.albumId = albumId;
     this.inTempStore = inTempStore;
+    this.sha1 = sha1;
     this.uploadedTime = uploadedTime;
+  }
+
+  public PhotoModel(
+      String title,
+      String fetchableUrl,
+      String description,
+      String mediaType,
+      String dataId,
+      String albumId,
+      boolean inTempStore,
+      Date uploadedTime) {
+    this(
+        title,
+        fetchableUrl,
+        description,
+        mediaType,
+        dataId,
+        albumId,
+        inTempStore,
+        /* sha1= */ null,
+        uploadedTime);
   }
 
   public PhotoModel(
@@ -77,7 +101,29 @@ public class PhotoModel implements DownloadableFile {
         dataId,
         albumId,
         inTempStore,
-        null  /*uploadedTime*/);
+        /* sha1= */ null,
+        /* uploadedTime= */ null);
+  }
+
+  public PhotoModel(
+      String title,
+      String fetchableUrl,
+      String description,
+      String mediaType,
+      String dataId,
+      String albumId,
+      boolean inTempStore,
+      String sha1) {
+    this(
+        title,
+        fetchableUrl,
+        description,
+        mediaType,
+        dataId,
+        albumId,
+        inTempStore,
+        sha1,
+        /*uploadedTime=*/ null);
   }
 
   // TODO(zacsh) convert all callers to ImportableItem#getName() which is an interface guarantee of this class's
@@ -125,6 +171,11 @@ public class PhotoModel implements DownloadableFile {
     return uploadedTime;
   }
 
+  @Nullable
+  public String getSha1() {
+    return sha1;
+  }
+
   // remove all forbidden characters
   public void cleanTitle(String forbiddenCharacters, char replacementCharacter, int maxLength) {
     title = title.chars()
@@ -151,6 +202,7 @@ public class PhotoModel implements DownloadableFile {
         .add("dataId", dataId)
         .add("albumId", albumId)
         .add("inTempStore", inTempStore)
+        .add("sha1", sha1)
         .add("uploadedTime", uploadedTime)
         .toString();
   }
@@ -166,6 +218,7 @@ public class PhotoModel implements DownloadableFile {
             Objects.equal(getMediaType(), that.getMediaType()) &&
             Objects.equal(getDataId(), that.getDataId()) &&
             Objects.equal(getAlbumId(), that.getAlbumId()) &&
+            Objects.equal(getSha1(), that.getSha1()) &&
             Objects.equal(getUploadedTime(), that.getUploadedTime());
   }
 
