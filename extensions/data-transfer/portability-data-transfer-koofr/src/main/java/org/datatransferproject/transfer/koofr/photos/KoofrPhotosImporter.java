@@ -41,6 +41,7 @@ import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.transfer.koofr.KoofrTransmogrificationConfig;
 import org.datatransferproject.transfer.koofr.common.KoofrClient;
 import org.datatransferproject.transfer.koofr.common.KoofrClientFactory;
+import org.datatransferproject.transfer.koofr.exceptions.KoofrClientIOException;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
@@ -52,6 +53,7 @@ import static java.lang.String.format;
 public class KoofrPhotosImporter
     implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
+  private static final String SKIPPED_FILE_RESULT_FORMAT = "skipped-%s";
   private static final String TITLE_DATE_FORMAT = "yyyy-MM-dd HH.mm.ss ";
   private final KoofrClientFactory koofrClientFactory;
   private final JobStore jobStore;
@@ -168,8 +170,20 @@ public class KoofrPhotosImporter
 
       final ByteArrayInputStream inMemoryInputStream = new ByteArrayInputStream(bytes);
 
-      String response = koofrClient.uploadFile(
-          parentPath, title, inMemoryInputStream, photo.getMediaType(), dateCreated, description);
+      String response;
+
+      try {
+        response = koofrClient.uploadFile(
+                parentPath, title, inMemoryInputStream, photo.getMediaType(), dateCreated, description);
+      } catch (KoofrClientIOException e) {
+        if (e.getCode() == 404) {
+          monitor.info(() -> String.format("Can't find album during importSingleItem for id: %s", photo.getDataId()), e);
+          response = "skipped-"+photo.getDataId();
+        }
+        else {
+          throw e;
+        }
+      }
 
       try {
         if (photo.isInTempStore()) {
