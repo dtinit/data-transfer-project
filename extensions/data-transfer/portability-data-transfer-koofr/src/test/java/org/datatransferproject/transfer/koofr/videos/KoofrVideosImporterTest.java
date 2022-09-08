@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.transfer.koofr.common.KoofrClient;
 import org.datatransferproject.transfer.koofr.common.KoofrClientFactory;
@@ -28,6 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
@@ -54,7 +56,7 @@ public class KoofrVideosImporterTest {
 
     when(clientFactory.create(any())).thenReturn(client);
 
-    importer = new KoofrVideosImporter(clientFactory, monitor);
+    importer = new KoofrVideosImporter(clientFactory, monitor, mock(JobStore.class));
 
     when(executor.executeAndSwallowIOExceptions(any(), any(), any()))
         .then(

@@ -24,7 +24,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.net.HttpURLConnection;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.UUID;
@@ -32,11 +31,12 @@ import org.apache.commons.io.IOUtils;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.backblaze.common.BackblazeDataTransferClient;
 import org.datatransferproject.datatransfer.backblaze.common.BackblazeDataTransferClientFactory;
+import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.ImportFunction;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
-import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
@@ -49,7 +49,7 @@ public class BackblazeVideosImporterTest {
 
   Monitor monitor;
   TemporaryPerJobDataStore dataStore;
-  ImageStreamProvider streamProvider;
+  ConnectionProvider streamProvider;
   BackblazeDataTransferClientFactory clientFactory;
   IdempotentImportExecutor executor;
   TokenSecretAuthData authData;
@@ -61,7 +61,7 @@ public class BackblazeVideosImporterTest {
   public void setUp() {
     monitor = mock(Monitor.class);
     dataStore = mock(TemporaryPerJobDataStore.class);
-    streamProvider = mock(ImageStreamProvider.class);
+    streamProvider = mock(ConnectionProvider.class);
     clientFactory = mock(BackblazeDataTransferClientFactory.class);
     executor = mock(IdempotentImportExecutor.class);
     authData = mock(TokenSecretAuthData.class);
@@ -119,9 +119,8 @@ public class BackblazeVideosImporterTest {
 
     when(executor.getCachedValue(albumId)).thenReturn(albumName);
 
-    HttpURLConnection connection = mock(HttpURLConnection.class);
-    when(connection.getInputStream()).thenReturn(IOUtils.toInputStream("video content", "UTF-8"));
-    when(streamProvider.getConnection(videoUrl)).thenReturn(connection);
+    when(streamProvider.getInputStreamForItem(jobId, videoObject))
+        .thenReturn(new InputStreamWrapper(IOUtils.toInputStream("video content", "UTF-8")));
 
     when(dataStore.getTempFileFromInputStream(any(), any(), any())).thenReturn(folder.toFile());
     when(client.uploadFile(eq("Video Transfer/dataId.mp4"), any())).thenReturn(response);
