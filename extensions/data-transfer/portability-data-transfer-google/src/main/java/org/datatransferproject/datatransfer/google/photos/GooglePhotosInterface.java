@@ -68,6 +68,8 @@ import org.datatransferproject.spi.transfer.types.UploadErrorException;
 public class GooglePhotosInterface {
 
   public static final String ERROR_HASH_MISMATCH = "Hash mismatch";
+  private static final String GOOG_ERROR_HASH_MISMATCH_LEGACY = "Checksum from header does not match received payload content.";
+  private static final String GOOG_ERROR_HASH_MISMATCH_UNIFIED = "User-provided checksum does not match received payload content.";
 
   private static final String BASE_URL = "https://photoslibrary.googleapis.com/v1/";
   private static final int ALBUM_PAGE_SIZE = 20; // TODO
@@ -261,12 +263,11 @@ public class GooglePhotosInterface {
    */
   private void maybeRethrowAsUploadError(HttpResponseException e) throws UploadErrorException {
     if (e.getStatusCode() == 400) {
-      if (e.getContent().contains("Checksum from header does not match received payload content.")
-          || e.getContent()
-          .contains("User-provided checksum does not match received payload content.")) {
+      if (e.getContent().contains(GOOG_ERROR_HASH_MISMATCH_LEGACY) || e.getContent()
+          .contains(GOOG_ERROR_HASH_MISMATCH_UNIFIED)) {
         throw new UploadErrorException(ERROR_HASH_MISMATCH, e);
       }
-      // Delegate other 400 errors to {@link #handleHttpResponseException}.
+      // Delegate other 400 errors and non-400 errors to {@link #handleHttpResponseException}.
     }
   }
 
