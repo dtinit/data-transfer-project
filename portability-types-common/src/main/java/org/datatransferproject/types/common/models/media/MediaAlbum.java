@@ -13,6 +13,7 @@ import org.datatransferproject.types.common.ImportableItem;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 
 import javax.annotation.Nonnull;
+import org.datatransferproject.types.common.models.videos.VideoAlbum;
 
 public class MediaAlbum implements ImportableItem {
   private final String id;
@@ -45,6 +46,20 @@ public class MediaAlbum implements ImportableItem {
    */
   public static PhotoAlbum mediaToPhotoAlbum(MediaAlbum mediaAlbum) {
     return new PhotoAlbum(mediaAlbum.getId(), mediaAlbum.getName(), mediaAlbum.getDescription());
+  }
+
+  /**
+   * Extracts videos-specific data from a MediaAlbum
+   */
+  public static VideoAlbum mediaToVideoAlbum(MediaAlbum mediaAlbum) {
+    return new VideoAlbum(mediaAlbum.getId(), mediaAlbum.getName(), mediaAlbum.getDescription());
+  }
+
+  /**
+   * Converts a VideoAlbum to MediaAlbum
+   */
+  public static MediaAlbum videoToMediaAlbum(VideoAlbum videoAlbum) {
+    return new MediaAlbum(videoAlbum.getId(), videoAlbum.getName(), videoAlbum.getDescription());
   }
 
   @JsonIgnore(false)

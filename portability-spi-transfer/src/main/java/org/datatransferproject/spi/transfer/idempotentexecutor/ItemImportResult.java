@@ -29,6 +29,10 @@ public class ItemImportResult<T> {
     return new ItemImportResult<>(data, sizeInBytes, Status.SUCCESS, null);
   }
 
+  public static <T extends Serializable> ItemImportResult<T> success(T data) {
+    return success(data, null);
+  }
+
   public static <T extends Serializable> ItemImportResult<T> error(
       Exception exception, Long sizeInBytes) {
     Preconditions.checkNotNull(exception);

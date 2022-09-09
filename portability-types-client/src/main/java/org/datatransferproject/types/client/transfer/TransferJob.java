@@ -17,6 +17,8 @@ package org.datatransferproject.types.client.transfer;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.datatransferproject.types.common.models.DataVertical;
+
 import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
 
 /**
@@ -35,7 +37,7 @@ public class TransferJob {
     private final String id;
     private final String exportService;
     private final String importService;
-    private final String dataType;
+    private final DataVertical dataType;
     private final State state = State.CREATED;
     private final String exportUrl;
     private final String importUrl;
@@ -49,7 +51,7 @@ public class TransferJob {
             @JsonProperty(value = "id", required = true) String id,
             @JsonProperty(value = "exportService", required = true) String exportService,
             @JsonProperty(value = "importService", required = true) String importService,
-            @JsonProperty(value = "dataType", required = true) String dataType,
+            @JsonProperty(value = "dataType", required = true) DataVertical dataType,
             @JsonProperty(value = "exportUrl", required = true) String exportUrl,
             @JsonProperty(value = "importUrl", required = true) String importUrl,
             @JsonProperty(value = "exportTokenUrl", required = true) String exportTokenUrl,
@@ -80,7 +82,7 @@ public class TransferJob {
         return importService;
     }
 
-    public String getDataType() {
+    public DataVertical getDataType() {
         return dataType;
     }
 

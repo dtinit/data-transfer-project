@@ -15,6 +15,8 @@
  */
 package org.datatransferproject.transfer.instagram;
 
+import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
+
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpTransport;
@@ -22,6 +24,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -31,7 +34,7 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 
 public class InstagramTransferExtension implements TransferExtension {
-  private static final ImmutableList<String> SUPPORTED_DATA_TYPES = ImmutableList.of("PHOTOS");
+  private static final ImmutableList<DataVertical> SUPPORTED_DATA_TYPES = ImmutableList.of(PHOTOS);
 
   private Exporter<TokensAndUrlAuthData, PhotosContainerResource> exporter;
 
@@ -43,7 +46,7 @@ public class InstagramTransferExtension implements TransferExtension {
   }
 
   @Override
-  public Exporter<?, ?> getExporter(String transferDataType) {
+  public Exporter<?, ?> getExporter(DataVertical transferDataType) {
     Preconditions.checkArgument(
         initialized, "InstagramTransferExtension not initialized. Unable to get Exporter");
     Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(transferDataType));
@@ -51,7 +54,7 @@ public class InstagramTransferExtension implements TransferExtension {
   }
 
   @Override
-  public Importer<?, ?> getImporter(String transferDataType) {
+  public Importer<?, ?> getImporter(DataVertical transferDataType) {
     Preconditions.checkArgument(
         initialized, "InstagramTransferExtension not initialized. Unable to get Importer");
     Preconditions.checkArgument(false, "Instagram does not support import");

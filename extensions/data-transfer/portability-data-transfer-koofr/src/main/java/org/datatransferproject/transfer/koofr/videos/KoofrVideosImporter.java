@@ -15,18 +15,18 @@
  */
 package org.datatransferproject.transfer.koofr.videos;
 
-import java.io.BufferedInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.HttpURLConnection;
+import java.io.InputStream;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
-import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.transfer.koofr.KoofrTransmogrificationConfig;
 import org.datatransferproject.transfer.koofr.common.KoofrClient;
 import org.datatransferproject.transfer.koofr.common.KoofrClientFactory;
@@ -35,19 +35,22 @@ import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-/** Imports albums and videos to Koofr. */
+/**
+ * Imports videos and their albums to Koofr.
+ */
 public class KoofrVideosImporter
     implements Importer<TokensAndUrlAuthData, VideosContainerResource> {
 
   private static final String SKIPPED_FILE_RESULT_FORMAT = "skipped-%s";
 
   private final KoofrClientFactory koofrClientFactory;
-  private final ImageStreamProvider imageStreamProvider;
+  private final ConnectionProvider connectionProvider;
   private final Monitor monitor;
 
-  public KoofrVideosImporter(KoofrClientFactory koofrClientFactory, Monitor monitor) {
+  public KoofrVideosImporter(KoofrClientFactory koofrClientFactory, Monitor monitor,
+      JobStore jobStore) {
     this.koofrClientFactory = koofrClientFactory;
-    this.imageStreamProvider = new ImageStreamProvider();
+    this.connectionProvider = new ConnectionProvider(jobStore);
     this.monitor = monitor;
   }
 
@@ -117,9 +120,8 @@ public class KoofrVideosImporter
       throws IOException, InvalidTokenException, DestinationMemoryFullException {
     monitor.debug(() -> String.format("Import single video %s", video.getName()));
 
-    HttpURLConnection conn = imageStreamProvider.getConnection(video.getContentUrl().toString());
-
-    try (BufferedInputStream inputStream = new BufferedInputStream(conn.getInputStream())) {
+    try (InputStream inputStream =
+        connectionProvider.getInputStreamForItem(jobId, video).getStream()) {
       String parentPath;
       if (video.getAlbumId() == null) {
         parentPath = koofrClient.ensureVideosFolder();

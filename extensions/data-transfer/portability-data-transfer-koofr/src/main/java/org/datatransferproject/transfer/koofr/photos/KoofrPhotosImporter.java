@@ -18,6 +18,7 @@ package org.datatransferproject.transfer.koofr.photos;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -31,16 +32,17 @@ import org.apache.commons.imaging.formats.tiff.TiffImageMetadata;
 import org.apache.commons.imaging.formats.tiff.constants.ExifTagConstants;
 import org.apache.commons.io.IOUtils;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
-import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.transfer.koofr.KoofrTransmogrificationConfig;
 import org.datatransferproject.transfer.koofr.common.KoofrClient;
 import org.datatransferproject.transfer.koofr.common.KoofrClientFactory;
+import org.datatransferproject.transfer.koofr.exceptions.KoofrClientIOException;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
@@ -52,10 +54,11 @@ import static java.lang.String.format;
 public class KoofrPhotosImporter
     implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
+  private static final String SKIPPED_FILE_RESULT_FORMAT = "skipped-%s";
   private static final String TITLE_DATE_FORMAT = "yyyy-MM-dd HH.mm.ss ";
   private final KoofrClientFactory koofrClientFactory;
   private final JobStore jobStore;
-  private final ImageStreamProvider imageStreamProvider;
+  private final ConnectionProvider connectionProvider;
   private final Monitor monitor;
   private final KoofrTransmogrificationConfig transmogrificationConfig =
       new KoofrTransmogrificationConfig();
@@ -67,7 +70,7 @@ public class KoofrPhotosImporter
   public KoofrPhotosImporter(
       KoofrClientFactory koofrClientFactory, Monitor monitor, JobStore jobStore) {
     this.koofrClientFactory = koofrClientFactory;
-    this.imageStreamProvider = new ImageStreamProvider();
+    this.connectionProvider = new ConnectionProvider(jobStore);
     this.monitor = monitor;
     this.jobStore = jobStore;
   }
@@ -137,19 +140,8 @@ public class KoofrPhotosImporter
       throws IOException, InvalidTokenException, DestinationMemoryFullException {
     monitor.debug(() -> String.format("Import single photo %s", photo.getTitle()));
 
-    BufferedInputStream inputStream = null;
-    try {
-      if (photo.isInTempStore()) {
-        inputStream =
-            new BufferedInputStream(jobStore.getStream(jobId, photo.getFetchableUrl()).getStream());
-      } else if (photo.getFetchableUrl() != null) {
-        HttpURLConnection conn = imageStreamProvider.getConnection(photo.getFetchableUrl());
-        inputStream = new BufferedInputStream(conn.getInputStream());
-      } else {
-        throw new IllegalStateException(
-            "Don't know how to get the inputStream for " + photo.getTitle());
-      }
-
+    try (InputStream inputStream =
+        connectionProvider.getInputStreamForItem(jobId, photo).getStream()) {
       final byte[] bytes = IOUtils.toByteArray(inputStream);
 
       Date dateCreated = getDateCreated(photo, bytes);
@@ -168,8 +160,20 @@ public class KoofrPhotosImporter
 
       final ByteArrayInputStream inMemoryInputStream = new ByteArrayInputStream(bytes);
 
-      String response = koofrClient.uploadFile(
-          parentPath, title, inMemoryInputStream, photo.getMediaType(), dateCreated, description);
+      String response;
+
+      try {
+        response = koofrClient.uploadFile(
+                parentPath, title, inMemoryInputStream, photo.getMediaType(), dateCreated, description);
+      } catch (KoofrClientIOException e) {
+        if (e.getCode() == 404) {
+          monitor.info(() -> String.format("Can't find album during importSingleItem for id: %s", photo.getDataId()), e);
+          response = "skipped-"+photo.getDataId();
+        }
+        else {
+          throw e;
+        }
+      }
 
       try {
         if (photo.isInTempStore()) {
@@ -183,10 +187,6 @@ public class KoofrPhotosImporter
       }
 
       return response;
-    } finally {
-      if (inputStream != null) {
-        inputStream.close();
-      }
     }
   }
 

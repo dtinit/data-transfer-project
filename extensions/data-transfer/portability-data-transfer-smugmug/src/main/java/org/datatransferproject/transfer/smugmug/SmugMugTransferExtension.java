@@ -17,7 +17,6 @@
 package org.datatransferproject.transfer.smugmug;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import org.datatransferproject.api.launcher.ExtensionContext;
@@ -25,6 +24,7 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -35,10 +35,11 @@ import org.datatransferproject.types.transfer.auth.AppCredentials;
 import java.io.IOException;
 
 import static java.lang.String.format;
+import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
 
 public class SmugMugTransferExtension implements TransferExtension {
 
-  private static final ImmutableList<String> SUPPORTED_TYPES = ImmutableList.of("PHOTOS");
+  private static final ImmutableList<DataVertical> SUPPORTED_TYPES = ImmutableList.of(PHOTOS);
   private static final String SMUGMUG_KEY = "SMUGMUG_KEY";
   private static final String SMUGMUG_SECRET = "SMUGMUG_SECRET";
 
@@ -52,7 +53,7 @@ public class SmugMugTransferExtension implements TransferExtension {
   }
 
   @Override
-  public Exporter<?, ?> getExporter(String transferDataType) {
+  public Exporter<?, ?> getExporter(DataVertical transferDataType) {
     Preconditions.checkArgument(
         initialized, "Trying to call getExporter before initalizing SmugMugTransferExtension");
     Preconditions.checkArgument(
@@ -62,7 +63,7 @@ public class SmugMugTransferExtension implements TransferExtension {
   }
 
   @Override
-  public Importer<?, ?> getImporter(String transferDataType) {
+  public Importer<?, ?> getImporter(DataVertical transferDataType) {
     Preconditions.checkArgument(
         initialized, "Trying to call getImporter before initalizing SmugMugTransferExtension");
     Preconditions.checkArgument(

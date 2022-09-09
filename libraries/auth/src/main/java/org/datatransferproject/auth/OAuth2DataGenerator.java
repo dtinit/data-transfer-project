@@ -35,6 +35,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 import org.datatransferproject.spi.api.types.AuthFlowConfiguration;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.AuthData;
 
@@ -52,7 +53,7 @@ public class OAuth2DataGenerator implements AuthDataGenerator {
 
   OAuth2DataGenerator(OAuth2Config config, AppCredentials appCredentials,
       HttpTransport httpTransport,
-      String dataType, AuthMode authMode) {
+      DataVertical dataType, AuthMode authMode) {
     this.config = config;
     validateConfig();
     this.clientId = appCredentials.getKey();

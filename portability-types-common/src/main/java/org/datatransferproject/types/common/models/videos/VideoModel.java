@@ -21,26 +21,28 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
+import java.util.Date;
+import java.util.stream.Collectors;
 import org.datatransferproject.types.common.DownloadableFile;
 import org.datatransferproject.types.common.models.MediaObject;
-
-import java.util.stream.Collectors;
 
 public class VideoModel extends MediaObject implements DownloadableFile {
 
   private String dataId;
   private String albumId;
   private boolean inTempStore;
+  private Date uploadedTime;
 
   @JsonCreator
   public VideoModel(
-          @JsonProperty("name") String name,
-          @JsonProperty("contentUrl") String contentUrl,
-          @JsonProperty("description") String description,
-          @JsonProperty("encodingFormat") String encodingFormat,
-          @JsonProperty("dataId") String dataId,
-          @JsonProperty("albumId") String albumId,
-          @JsonProperty("inTempStore") boolean inTempStore) {
+      @JsonProperty("name") String name,
+      @JsonProperty("contentUrl") String contentUrl,
+      @JsonProperty("description") String description,
+      @JsonProperty("encodingFormat") String encodingFormat,
+      @JsonProperty("dataId") String dataId,
+      @JsonProperty("albumId") String albumId,
+      @JsonProperty("inTempStore") boolean inTempStore,
+      @JsonProperty("uploadedTime") Date uploadedTime) {
     super(dataId);
     setName(name);
     setContentUrl(contentUrl);
@@ -49,6 +51,7 @@ public class VideoModel extends MediaObject implements DownloadableFile {
     this.dataId = dataId;
     this.albumId = albumId;
     this.inTempStore = inTempStore;
+    this.uploadedTime = uploadedTime;
   }
 
   // TODO(zacsh) remove this in favor of getFolderId
@@ -90,36 +93,46 @@ public class VideoModel extends MediaObject implements DownloadableFile {
     return super.getName();
   }
 
+  public Date getUploadedTime() {
+    return uploadedTime;
+  }
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-            .add("name", getName())
-            .add("contentUrl", getContentUrl())
-            .add("description", getDescription())
-            .add("encodingFormat", getEncodingFormat())
-            .add("dataId", dataId)
-            .add("albumId", albumId)
-            .add("inTempStore", inTempStore)
-            .toString();
+        .add("name", getName())
+        .add("contentUrl", getContentUrl())
+        .add("description", getDescription())
+        .add("encodingFormat", getEncodingFormat())
+        .add("dataId", dataId)
+        .add("albumId", albumId)
+        .add("inTempStore", inTempStore)
+        .add("uploadedTime", uploadedTime)
+        .toString();
   }
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
     VideoModel that = (VideoModel) o;
     return Objects.equal(getName(), that.getName()) &&
-            Objects.equal(getContentUrl(), that.getContentUrl()) &&
-            Objects.equal(getDescription(), that.getDescription()) &&
-            Objects.equal(getEncodingFormat(), that.getEncodingFormat()) &&
-            Objects.equal(getDataId(), that.getDataId()) &&
-            Objects.equal(getAlbumId(), that.getAlbumId());
+        Objects.equal(getContentUrl(), that.getContentUrl()) &&
+        Objects.equal(getDescription(), that.getDescription()) &&
+        Objects.equal(getEncodingFormat(), that.getEncodingFormat()) &&
+        Objects.equal(getDataId(), that.getDataId()) &&
+        Objects.equal(getAlbumId(), that.getAlbumId()) &&
+        Objects.equal(getUploadedTime(), that.getUploadedTime());
   }
 
   // Assign this video to a different album. Used in cases where an album is too large and
   // needs to be divided into smaller albums, the videos will each get reassigned to new
   // albumnIds.
-  public void reassignToAlbum(String newAlbum){
+  public void reassignToAlbum(String newAlbum) {
     this.albumId = newAlbum;
   }
 
