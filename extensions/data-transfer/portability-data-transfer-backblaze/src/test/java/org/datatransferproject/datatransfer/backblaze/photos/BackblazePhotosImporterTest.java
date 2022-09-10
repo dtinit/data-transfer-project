@@ -25,7 +25,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
-import java.net.HttpURLConnection;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,11 +33,12 @@ import org.apache.commons.io.IOUtils;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.backblaze.common.BackblazeDataTransferClient;
 import org.datatransferproject.datatransfer.backblaze.common.BackblazeDataTransferClientFactory;
+import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.ImportFunction;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
-import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
@@ -49,20 +49,19 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 
 public class BackblazePhotosImporterTest {
-
-  Monitor monitor;
-  TemporaryPerJobDataStore dataStore;
-  ImageStreamProvider streamProvider;
-  BackblazeDataTransferClientFactory clientFactory;
-  IdempotentImportExecutor executor;
-  TokenSecretAuthData authData;
-  BackblazeDataTransferClient client;
+    Monitor monitor;
+    TemporaryPerJobDataStore dataStore;
+    ConnectionProvider streamProvider;
+    BackblazeDataTransferClientFactory clientFactory;
+    IdempotentImportExecutor executor;
+    TokenSecretAuthData authData;
+    BackblazeDataTransferClient client;
 
   @BeforeEach
   public void setUp() {
     monitor = mock(Monitor.class);
     dataStore = mock(TemporaryPerJobDataStore.class);
-    streamProvider = mock(ImageStreamProvider.class);
+    streamProvider = mock(ConnectionProvider.class);
     clientFactory = mock(BackblazeDataTransferClientFactory.class);
     executor = mock(IdempotentImportExecutor.class);
     authData = mock(TokenSecretAuthData.class);
@@ -119,9 +118,8 @@ public class BackblazePhotosImporterTest {
 
     when(executor.getCachedValue(albumId)).thenReturn(albumName);
 
-    HttpURLConnection connection = mock(HttpURLConnection.class);
-    when(connection.getInputStream()).thenReturn(IOUtils.toInputStream("photo content", "UTF-8"));
-    when(streamProvider.getConnection(photoUrl)).thenReturn(connection);
+    when(streamProvider.getInputStreamForItem(jobId, photoModel))
+        .thenReturn(new InputStreamWrapper(IOUtils.toInputStream("photo content", "UTF-8")));
 
     when(client.uploadFile(eq("Photo Transfer/albumName/dataId.jpg"), any())).thenReturn(response);
     when(clientFactory.getOrCreateB2Client(jobId, authData)).thenReturn(client);

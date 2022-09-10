@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+@Deprecated // prefer ConnectionProvider
 public class ImageStreamProvider {
 
   /** Gets an HttpURLConnection to an image, given its URL. */

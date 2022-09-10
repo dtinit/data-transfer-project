@@ -117,7 +117,7 @@ public class KoofrTransferExtension implements TransferExtension {
 
     ImmutableMap.Builder<DataVertical, Importer> importBuilder = ImmutableMap.builder();
     importBuilder.put(PHOTOS, new KoofrPhotosImporter(koofrClientFactory, monitor, jobStore));
-    importBuilder.put(VIDEOS, new KoofrVideosImporter(koofrClientFactory, monitor));
+    importBuilder.put(VIDEOS, new KoofrVideosImporter(koofrClientFactory, monitor, jobStore));
     importerMap = importBuilder.build();
 
     ImmutableMap.Builder<DataVertical, Exporter> exportBuilder = ImmutableMap.builder();

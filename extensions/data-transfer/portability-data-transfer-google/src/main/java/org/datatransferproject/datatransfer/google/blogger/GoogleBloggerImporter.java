@@ -34,15 +34,13 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
+import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.models.social.SocialActivityActor;
 import org.datatransferproject.types.common.models.social.SocialActivityAttachment;
 import org.datatransferproject.types.common.models.social.SocialActivityAttachmentType;
@@ -54,7 +52,6 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 public class GoogleBloggerImporter
     implements Importer<TokensAndUrlAuthData, SocialActivityContainerResource> {
   private final GoogleCredentialFactory credentialFactory;
-  private final ImageStreamProvider imageStreamProvider;
   // Don't access this directly, instead access via getOrCreateBloggerService.
   private Blogger blogger;
   // Don't access this directly, instead access via getOrCreateDriveService.
@@ -64,7 +61,6 @@ public class GoogleBloggerImporter
   public GoogleBloggerImporter(GoogleCredentialFactory credentialFactory) {
     this.credentialFactory = credentialFactory;
 
-    this.imageStreamProvider = new ImageStreamProvider();
     // lazily initialized for the given request
     this.blogger = null;
     this.driveInterface = null;
@@ -208,7 +204,7 @@ public class GoogleBloggerImporter
     String description =
         imageObject.getName() != null ? imageObject.getName() : ("Imported photo from: " + url);
 
-    HttpURLConnection conn = imageStreamProvider.getConnection(url);
+    HttpURLConnection conn = ConnectionProvider.getConnection(url);
     InputStream inputStream = conn.getInputStream();
     File driveFile = new File().setName(description).setParents(ImmutableList.of(parentFolderId));
     InputStreamContent content = new InputStreamContent(null, inputStream);
