@@ -16,58 +16,57 @@
 
 package org.datatransferproject.types.common.models.music;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import java.util.Objects;
-import org.datatransferproject.types.common.models.CreativeWork;
 
-/** POJO for https://schema.org/MusicRelease */
-public class MusicRelease extends CreativeWork {
-    private final String icpnCode;
+/**
+ * POJO for https://schema.org/MusicRelease
+ */
+public class MusicRelease {
 
-    @JsonCreator
-    public MusicRelease(
-            @JsonProperty("identifier") String identifier,
-            @JsonProperty("headline") String headline,
-            @JsonProperty("icpnCode") String icpnCode) {
-        super(identifier);
-        setHeadline(headline);
-        if (isNullOrEmpty(icpnCode)) {
-            throw new IllegalArgumentException("icpnCode must be set for MusicRelease");
-        }
-        this.icpnCode = icpnCode;
+  private final String icpnCode;
+  private final String title;
+
+  @JsonCreator
+  public MusicRelease(
+      @JsonProperty("icpnCode") String icpnCode,
+      @JsonProperty("title") String title) {
+    this.icpnCode = icpnCode;
+    this.title = title;
+  }
+
+  public String getIcpnCode() {
+    return icpnCode;
+  }
+
+  public String getTitle() {
+    return title;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("icpnCode", getIcpnCode())
+        .add("title", getTitle())
+        .toString();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
     }
-
-    public String getIcpnCode() {
-        return icpnCode;
+    if (!(o instanceof MusicRelease)) {
+      return false;
     }
+    MusicRelease that = (MusicRelease) o;
+    return Objects.equals(icpnCode, that.icpnCode) && Objects.equals(title, that.title);
+  }
 
-    @Override
-    public String toString() {
-        return MoreObjects.toStringHelper(this)
-                .add("identifier", getIdentifier())
-                .add("headline", getHeadline())
-                .add("icpnCode", getIcpnCode())
-                .toString();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof MusicRelease)) {
-            return false;
-        }
-        MusicRelease that = (MusicRelease) o;
-        return Objects.equals(icpnCode, that.icpnCode);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(icpnCode);
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(icpnCode, title);
+  }
 }

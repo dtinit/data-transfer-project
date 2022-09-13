@@ -20,21 +20,24 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 
-/** POJO for https://schema.org/MusicGroup */
+/**
+ * POJO for https://schema.org/MusicGroup
+ */
 public class MusicGroup {
-    private final String name;
 
-    @JsonCreator
-    public MusicGroup(@JsonProperty("name") String name) {
-        this.name = name;
-    }
+  private final String name;
 
-    public String getName() {
-        return name;
-    }
+  @JsonCreator
+  public MusicGroup(@JsonProperty("name") String name) {
+    this.name = name;
+  }
 
-    @Override
-    public String toString() {
-        return MoreObjects.toStringHelper(this).add("name", getName()).toString();
-    }
+  public String getName() {
+    return name;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this).add("name", getName()).toString();
+  }
 }

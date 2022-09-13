@@ -53,7 +53,8 @@ public class MusicContainerResource extends ContainerResource {
       @JsonProperty("playlistItems") List<MusicPlaylistItem> playlistItems,
       @JsonProperty("tracks") Collection<MusicRecording> tracks,
       @JsonProperty("releases") Collection<MusicRelease> releases) {
-    Preconditions.checkNotNull(originalPlatform, "originalPlatform must be set for MusicContainerResource");
+    Preconditions.checkNotNull(originalPlatform,
+        "originalPlatform must be set for MusicContainerResource");
     this.originalPlatform = originalPlatform;
     this.playlists = playlists == null ? ImmutableList.of() : playlists;
     this.playlistItems = playlistItems == null ? ImmutableList.of() : playlistItems;

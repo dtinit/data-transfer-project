@@ -24,63 +24,66 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import java.util.Objects;
 
-/** POJO for MusicPlaylistItem */
+/**
+ * POJO for MusicPlaylistItem
+ */
 public class MusicPlaylistItem {
-    private final MusicRecording track;
-    private final String playlistId;
-    private final int order;
 
-    @JsonCreator
-    public MusicPlaylistItem(
-            @JsonProperty("track") MusicRecording track,
-            @JsonProperty("playlistId") String playlistId,
-            @JsonProperty("order") int order) {
-        Preconditions.checkNotNull(track, "track must be set for MusicPlaylistItem");
-        this.track = track;
-        if (isNullOrEmpty(playlistId)) {
-            throw new IllegalArgumentException("playlistId must be set for MusicPlaylistItem");
-        }
-        this.playlistId = playlistId;
-        this.order = order;
-    }
+  private final MusicRecording track;
+  private final String playlistId;
+  private final int order;
 
-    public MusicRecording getTrack() {
-        return track;
+  @JsonCreator
+  public MusicPlaylistItem(
+      @JsonProperty("track") MusicRecording track,
+      @JsonProperty("playlistId") String playlistId,
+      @JsonProperty("order") int order) {
+    Preconditions.checkNotNull(track, "track must be set for MusicPlaylistItem");
+    this.track = track;
+    if (isNullOrEmpty(playlistId)) {
+      throw new IllegalArgumentException("playlistId must be set for MusicPlaylistItem");
     }
+    this.playlistId = playlistId;
+    this.order = order;
+  }
 
-    public String getPlaylistId() {
-        return playlistId;
-    }
+  public MusicRecording getTrack() {
+    return track;
+  }
 
-    public int getOrder() {
-        return order;
-    }
+  public String getPlaylistId() {
+    return playlistId;
+  }
 
-    @Override
-    public String toString() {
-        return MoreObjects.toStringHelper(this)
-                .add("track", getTrack())
-                .add("playlistId", getPlaylistId())
-                .add("order", getOrder())
-                .toString();
-    }
+  public int getOrder() {
+    return order;
+  }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof MusicPlaylistItem)) {
-            return false;
-        }
-        MusicPlaylistItem that = (MusicPlaylistItem) o;
-        return Objects.equals(track, that.track)
-                && Objects.equals(playlistId, that.playlistId)
-                && order == that.order;
-    }
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("track", getTrack())
+        .add("playlistId", getPlaylistId())
+        .add("order", getOrder())
+        .toString();
+  }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(track, playlistId, order);
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
     }
+    if (!(o instanceof MusicPlaylistItem)) {
+      return false;
+    }
+    MusicPlaylistItem that = (MusicPlaylistItem) o;
+    return Objects.equals(track, that.track)
+        && Objects.equals(playlistId, that.playlistId)
+        && order == that.order;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(track, playlistId, order);
+  }
 }
