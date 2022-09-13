@@ -86,7 +86,7 @@ configure(sourceProjects()) {
         testImplementation(project(":portability-test-utilities"))
         testImplementation("com.google.truth:truth:${truthVersion}")
         testImplementation("org.junit.vintage:junit-vintage-engine:${junitJupiterVersion}")
-        testImplementation("org.mockito:mockito-core:${mockitoVersion}")
+        testImplementation("org.mockito:mockito-inline:${mockitoVersion}")
         testImplementation("org.junit.jupiter:junit-jupiter:${junitJupiterVersion}")
         testImplementation("org.mockito:mockito-junit-jupiter:${mockitoVersion}")
     }

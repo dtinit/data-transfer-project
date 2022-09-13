@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableList;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -30,6 +31,7 @@ import java.io.IOException;
 import java.util.List;
 
 import static java.lang.String.format;
+import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
 
 /**
  * Extension to allow Twitter content to be transferred.
@@ -39,7 +41,7 @@ import static java.lang.String.format;
  * <p>In the future if a social vertical gets defined support should be added for that.
  */
 public class TwitterTransferExtension implements TransferExtension {
-  private static final List<String> SUPPORTED_TYPES = ImmutableList.of("PHOTOS");
+  private static final List<DataVertical> SUPPORTED_TYPES = ImmutableList.of(PHOTOS);
   private static final String TWITTER_KEY = "TWITTER_KEY";
   private static final String TWITTER_SECRET = "TWITTER_SECRET";
 
@@ -53,7 +55,7 @@ public class TwitterTransferExtension implements TransferExtension {
   }
 
   @Override
-  public Exporter<?, ?> getExporter(String transferDataType) {
+  public Exporter<?, ?> getExporter(DataVertical transferDataType) {
     Preconditions.checkArgument(
         initialized, "Trying to call getExporter before initalizing TwitterTransferExtension");
     Preconditions.checkArgument(
@@ -63,7 +65,7 @@ public class TwitterTransferExtension implements TransferExtension {
   }
 
   @Override
-  public Importer<?, ?> getImporter(String transferDataType) {
+  public Importer<?, ?> getImporter(DataVertical transferDataType) {
     Preconditions.checkArgument(
         initialized, "Trying to call getImporter before initalizing TwitterTransferExtension");
     Preconditions.checkArgument(

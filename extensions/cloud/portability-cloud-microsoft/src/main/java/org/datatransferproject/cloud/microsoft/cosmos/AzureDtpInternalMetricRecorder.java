@@ -21,6 +21,7 @@ import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.api.launcher.Monitor;
 
 import java.time.Duration;
+import org.datatransferproject.types.common.models.DataVertical;
 
 /**
  * A placeholder {@link DtpInternalMetricRecorder} that simply logs metrics
@@ -35,7 +36,7 @@ class AzureDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
   }
 
   @Override
-  public void startedJob(String dataType, String exportService, String importService) {
+  public void startedJob(DataVertical dataType, String exportService, String importService) {
     monitor.debug(
         () ->
             format(
@@ -45,7 +46,7 @@ class AzureDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
 
   @Override
   public void exportPageAttemptFinished(
-      String dataType,
+      DataVertical dataType,
       String service,
       boolean success,
       Duration duration) {
@@ -59,7 +60,7 @@ class AzureDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
 
   @Override
   public void exportPageFinished(
-      String dataType,
+      DataVertical dataType,
       String service,
       boolean success,
       Duration duration) {
@@ -72,7 +73,7 @@ class AzureDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
 
   @Override
   public void importPageAttemptFinished(
-      String dataType,
+      DataVertical dataType,
       String service,
       boolean success,
       Duration duration) {
@@ -86,7 +87,7 @@ class AzureDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
 
   @Override
   public void importPageFinished(
-      String dataType,
+      DataVertical dataType,
       String service,
       boolean success,
       Duration duration) {
@@ -99,7 +100,7 @@ class AzureDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
 
   @Override
   public void finishedJob(
-      String dataType,
+      DataVertical dataType,
       String exportService,
       String importService,
       boolean success,
@@ -112,7 +113,7 @@ class AzureDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
   }
 
   @Override
-  public void cancelledJob(String dataType, String exportService, String importService, Duration duration) {
+  public void cancelledJob(DataVertical dataType, String exportService, String importService, Duration duration) {
     monitor.debug(
          () ->
              format("Metric: cancelledJob, data type: %s, from: %s, to: %s, duration: %s",
@@ -121,14 +122,14 @@ class AzureDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
   }
 
   @Override
-  public void recordGenericMetric(String dataType, String service, String tag) {
+  public void recordGenericMetric(DataVertical dataType, String service, String tag) {
     monitor.debug(
         () ->
             format("Metric: Generic, data type: %s, service: %s, tag: %s", dataType, service, tag));
   }
 
   @Override
-  public void recordGenericMetric(String dataType, String service, String tag, boolean bool) {
+  public void recordGenericMetric(DataVertical dataType, String service, String tag, boolean bool) {
     monitor.debug(
         () ->
             format(
@@ -137,7 +138,7 @@ class AzureDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
   }
 
   @Override
-  public void recordGenericMetric(String dataType, String service, String tag, Duration duration) {
+  public void recordGenericMetric(DataVertical dataType, String service, String tag, Duration duration) {
     monitor.debug(
         () ->
             format(
@@ -146,7 +147,7 @@ class AzureDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
   }
 
   @Override
-  public void recordGenericMetric(String dataType, String service, String tag, int value) {
+  public void recordGenericMetric(DataVertical dataType, String service, String tag, int value) {
     monitor.debug(
         () ->
             format(

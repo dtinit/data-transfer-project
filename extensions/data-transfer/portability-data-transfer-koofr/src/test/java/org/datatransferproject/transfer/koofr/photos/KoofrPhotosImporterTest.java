@@ -1,5 +1,6 @@
 package org.datatransferproject.transfer.koofr.photos;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -12,13 +13,18 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
+
 import java.io.ByteArrayInputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
+
+import okhttp3.*;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okio.Buffer;
@@ -31,6 +37,7 @@ import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportE
 import org.datatransferproject.transfer.koofr.KoofrTransmogrificationConfig;
 import org.datatransferproject.transfer.koofr.common.KoofrClient;
 import org.datatransferproject.transfer.koofr.common.KoofrClientFactory;
+import org.datatransferproject.transfer.koofr.exceptions.KoofrClientIOException;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
@@ -56,6 +63,8 @@ public class KoofrPhotosImporterTest {
   private TokensAndUrlAuthData authData;
   private MockWebServer server;
 
+  private final AtomicReference<String> capturedResult = new AtomicReference<>();
+
   @BeforeEach
   public void setUp() throws Exception {
     server = new MockWebServer();
@@ -76,7 +85,9 @@ public class KoofrPhotosImporterTest {
         .then(
             (InvocationOnMock invocation) -> {
               Callable<String> callable = invocation.getArgument(2);
-              return callable.call();
+              String result = callable.call();
+              capturedResult.set(result);
+              return result;
             });
     authData = new TokensAndUrlAuthData("acc", "refresh", "");
   }
@@ -222,7 +233,7 @@ public class KoofrPhotosImporterTest {
 
   @Test
   public void testImportItemFromJobStore() throws Exception {
-    ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
+    ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
     when(client.ensureRootFolder()).thenReturn("/root");
     when(jobStore.getStream(any(), any())).thenReturn(new InputStreamWrapper(inputStream, 5L));
     doNothing().when(jobStore).removeData(any(), anyString());
@@ -262,7 +273,7 @@ public class KoofrPhotosImporterTest {
 
   @Test
   public void testImportItemFromJobStoreUserTimeZone() throws Exception {
-    ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
+    ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
     when(jobStore.getStream(any(), any())).thenReturn(new InputStreamWrapper(inputStream, 5L));
 
     UUID jobId = UUID.randomUUID();
@@ -300,7 +311,7 @@ public class KoofrPhotosImporterTest {
 
   @Test
   public void testImportItemFromJobStoreUserTimeZoneCalledOnce() throws Exception {
-    ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[]{0, 1, 2, 3, 4});
+    ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
     when(jobStore.getStream(any(), any())).thenReturn(new InputStreamWrapper(inputStream, 5L));
 
     UUID jobId = UUID.randomUUID();
@@ -351,5 +362,48 @@ public class KoofrPhotosImporterTest {
     }
 
     verify(jobStore, atMostOnce()).findJob(jobId);
+  }
+
+  @Test
+  public void testSkipNotFoundAlbum() throws Exception {
+    ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
+    when(jobStore.getStream(any(), any())).thenReturn(new InputStreamWrapper(inputStream, 5L));
+    when(client.uploadFile(
+            eq("/root/Album 1"), anyString(), any(), anyString(), any(), anyString()))
+        .thenThrow(new KoofrClientIOException(buildErrorResponse()));
+
+    UUID jobId = UUID.randomUUID();
+
+    when(executor.getCachedValue(eq("id1"))).thenReturn("/root/Album 1");
+
+    Collection<PhotoAlbum> albums =
+        ImmutableList.of(new PhotoAlbum("id1", "Album 1", "This is a fake album"));
+
+    Collection<PhotoModel> photos =
+        ImmutableList.of(
+            new PhotoModel(
+                "pic1.jpg",
+                "http://fake.com/1.jpg",
+                "A pic",
+                "image/jpeg",
+                "p1",
+                "id1",
+                true));
+
+    PhotosContainerResource resource = spy(new PhotosContainerResource(albums, photos));
+    importer.importItem(jobId, executor, authData, resource);
+
+    String importResult = capturedResult.get();
+    assertEquals(importResult, "skipped-p1");
+  }
+
+  private Response buildErrorResponse() {
+    return new Response.Builder()
+        .code(404)
+        .request(new Request.Builder().url("http://example.com").build())
+        .protocol(Protocol.HTTP_1_1)
+        .message("all good!")
+        .body(ResponseBody.create(MediaType.parse("text/xml"), "<a>Not found!</a>"))
+        .build();
   }
 }

@@ -45,6 +45,7 @@ import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.hooks.JobHooks;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorLoader;
+import org.datatransferproject.spi.transfer.provider.TransferCompatibilityProvider;
 import org.datatransferproject.spi.transfer.security.SecurityExtension;
 import org.datatransferproject.spi.transfer.security.SecurityExtensionLoader;
 
@@ -123,7 +124,8 @@ public class WorkerMain {
                   securityExtension,
                   idempotentImportExecutor,
                   symmetricKeyGenerator,
-                  jobHooks));
+                  jobHooks,
+                  new TransferCompatibilityProvider()));
     } catch (Exception e) {
       monitor.severe(() -> "Unable to initialize Guice in Worker", e);
       throw e;

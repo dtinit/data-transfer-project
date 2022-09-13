@@ -124,7 +124,8 @@ public class GoogleVideosExporter
             mediaItem.getMimeType(),
             mediaItem.getId(),
             null,
-            false);
+            false,
+            null);
   }
 
   private synchronized GoogleVideosInterface getOrCreateVideosInterface(

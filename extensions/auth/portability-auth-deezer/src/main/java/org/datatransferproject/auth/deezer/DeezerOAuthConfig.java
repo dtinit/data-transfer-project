@@ -16,9 +16,8 @@
 
 package org.datatransferproject.auth.deezer;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.datatransferproject.types.common.models.DataVertical.PLAYLISTS;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
@@ -27,7 +26,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.datatransferproject.auth.OAuth2Config;
-import org.datatransferproject.auth.OAuth2TokenResponse;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 /**
@@ -56,16 +55,16 @@ public class DeezerOAuthConfig implements OAuth2Config {
 
   // For descriptions of scopes see: https://developers.deezer.com/api/permissions
   @Override
-  public Map<String, Set<String>> getExportScopes() {
-    return ImmutableMap.<String, Set<String>>builder()
-        .put("PLAYLISTS", ImmutableSet.of("offline_access,manage_library"))
+  public Map<DataVertical, Set<String>> getExportScopes() {
+    return ImmutableMap.<DataVertical, Set<String>>builder()
+        .put(PLAYLISTS, ImmutableSet.of("offline_access,manage_library"))
         .build();
   }
 
   @Override
-  public Map<String, Set<String>> getImportScopes() {
-    return ImmutableMap.<String, Set<String>>builder()
-        .put("PLAYLISTS", ImmutableSet.of("offline_access,manage_library"))
+  public Map<DataVertical, Set<String>> getImportScopes() {
+    return ImmutableMap.<DataVertical, Set<String>>builder()
+        .put(PLAYLISTS, ImmutableSet.of("offline_access,manage_library"))
         .build();
   }
 

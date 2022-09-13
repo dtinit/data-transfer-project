@@ -17,6 +17,7 @@
 package org.datatransferproject.datatransfer.flickr;
 
 import static java.lang.String.format;
+import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
@@ -27,6 +28,7 @@ import org.datatransferproject.datatransfer.flickr.photos.FlickrPhotosExporter;
 import org.datatransferproject.datatransfer.flickr.photos.FlickrPhotosImporter;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -38,7 +40,7 @@ public class FlickrTransferExtension implements TransferExtension {
   private static final String FLICKR_KEY = "FLICKR_KEY";
   private static final String FLICKR_SECRET = "FLICKR_SECRET";
 
-  private final Set<String> supportedServices = ImmutableSet.of("PHOTOS");
+  private final Set<DataVertical> supportedServices = ImmutableSet.of(PHOTOS);
 
   private Importer importer;
   private Exporter exporter;
@@ -52,14 +54,14 @@ public class FlickrTransferExtension implements TransferExtension {
   }
 
   @Override
-  public Exporter<?, ?> getExporter(String transferDataType) {
+  public Exporter<?, ?> getExporter(DataVertical transferDataType) {
     Preconditions.checkArgument(initialized);
     Preconditions.checkArgument(supportedServices.contains(transferDataType));
     return exporter;
   }
 
   @Override
-  public Importer<?, ?> getImporter(String transferDataType) {
+  public Importer<?, ?> getImporter(DataVertical transferDataType) {
     Preconditions.checkArgument(initialized);
     Preconditions.checkArgument(supportedServices.contains(transferDataType));
     return importer;
