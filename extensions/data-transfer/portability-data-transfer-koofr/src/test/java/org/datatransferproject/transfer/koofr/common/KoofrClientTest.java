@@ -1,5 +1,10 @@
 package org.datatransferproject.transfer.koofr.common;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -24,7 +29,7 @@ import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.transfer.koofr.exceptions.KoofrClientIOException;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.junit.Assert;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -78,17 +83,16 @@ public class KoofrClientTest {
     server.enqueue(new MockResponse().setResponseCode(200));
 
     boolean exists = client.fileExists("/path/to/file");
-
-    Assert.assertTrue(exists);
-    Assert.assertEquals(1, server.getRequestCount());
+    assertTrue(exists);
+    assertEquals(1, server.getRequestCount());
 
     final RecordedRequest recordedRequest = server.takeRequest();
 
-    Assert.assertEquals("GET", recordedRequest.getMethod());
-    Assert.assertEquals(
+    assertEquals("GET", recordedRequest.getMethod());
+    assertEquals(
         "/api/v2/mounts/primary/files/info?path=%2Fpath%2Fto%2Ffile", recordedRequest.getPath());
-    Assert.assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
-    Assert.assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
+    assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
+    assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
   }
 
   @Test
@@ -97,16 +101,16 @@ public class KoofrClientTest {
 
     boolean exists = client.fileExists("/path/to/file");
 
-    Assert.assertFalse(exists);
-    Assert.assertEquals(1, server.getRequestCount());
+    assertFalse(exists);
+    assertEquals(1, server.getRequestCount());
 
     final RecordedRequest recordedRequest = server.takeRequest();
 
-    Assert.assertEquals("GET", recordedRequest.getMethod());
-    Assert.assertEquals(
+    assertEquals("GET", recordedRequest.getMethod());
+    assertEquals(
         "/api/v2/mounts/primary/files/info?path=%2Fpath%2Fto%2Ffile", recordedRequest.getPath());
-    Assert.assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
-    Assert.assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
+    assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
+    assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
   }
 
   @Test
@@ -124,24 +128,24 @@ public class KoofrClientTest {
 
     boolean exists = client.fileExists("/path/to/file");
 
-    Assert.assertTrue(exists);
-    Assert.assertEquals(2, server.getRequestCount());
+    assertTrue(exists);
+    assertEquals(2, server.getRequestCount());
 
     RecordedRequest recordedRequest = server.takeRequest();
 
-    Assert.assertEquals("GET", recordedRequest.getMethod());
-    Assert.assertEquals(
+    assertEquals("GET", recordedRequest.getMethod());
+    assertEquals(
         "/api/v2/mounts/primary/files/info?path=%2Fpath%2Fto%2Ffile", recordedRequest.getPath());
-    Assert.assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
-    Assert.assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
+    assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
+    assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
 
     recordedRequest = server.takeRequest();
 
-    Assert.assertEquals("GET", recordedRequest.getMethod());
-    Assert.assertEquals(
+    assertEquals("GET", recordedRequest.getMethod());
+    assertEquals(
         "/api/v2/mounts/primary/files/info?path=%2Fpath%2Fto%2Ffile", recordedRequest.getPath());
-    Assert.assertEquals("Bearer acc1", recordedRequest.getHeader("Authorization"));
-    Assert.assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
+    assertEquals("Bearer acc1", recordedRequest.getHeader("Authorization"));
+    assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
   }
 
   @Test
@@ -162,18 +166,18 @@ public class KoofrClientTest {
       caughtExc = exc;
     }
 
-    Assert.assertNotNull(caughtExc);
-    Assert.assertEquals("Unable to refresh token.", caughtExc.getMessage());
+    assertNotNull(caughtExc);
+    assertEquals("Unable to refresh token.", caughtExc.getMessage());
 
-    Assert.assertEquals(1, server.getRequestCount());
+    assertEquals(1, server.getRequestCount());
 
     RecordedRequest recordedRequest = server.takeRequest();
 
-    Assert.assertEquals("GET", recordedRequest.getMethod());
-    Assert.assertEquals(
+    assertEquals("GET", recordedRequest.getMethod());
+    assertEquals(
         "/api/v2/mounts/primary/files/info?path=%2Fpath%2Fto%2Ffile", recordedRequest.getPath());
-    Assert.assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
-    Assert.assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
+    assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
+    assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
   }
 
   @Test
@@ -181,14 +185,14 @@ public class KoofrClientTest {
     server.enqueue(new MockResponse().setResponseCode(500).setBody("Internal error"));
 
     KoofrClientIOException caughtExc =
-        Assertions.assertThrows(
+        assertThrows(
             KoofrClientIOException.class, () -> client.fileExists("/path/to/file"));
 
-    Assertions.assertNotNull(caughtExc);
-    Assertions.assertEquals(
+    assertNotNull(caughtExc);
+    assertEquals(
         "Got error code: 500 message: Server Error body: Internal error", caughtExc.getMessage());
 
-    Assertions.assertEquals(1, server.getRequestCount());
+    assertEquals(1, server.getRequestCount());
   }
 
   @Test
@@ -197,19 +201,19 @@ public class KoofrClientTest {
 
     client.ensureFolder("/path/to/folder", "name");
 
-    Assert.assertEquals(1, server.getRequestCount());
+    assertEquals(1, server.getRequestCount());
 
     final RecordedRequest recordedRequest = server.takeRequest();
 
-    Assert.assertEquals("POST", recordedRequest.getMethod());
-    Assert.assertEquals(
+    assertEquals("POST", recordedRequest.getMethod());
+    assertEquals(
         "/api/v2/mounts/primary/files/folder?path=%2Fpath%2Fto%2Ffolder",
         recordedRequest.getPath());
-    Assert.assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
-    Assert.assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
-    Assert.assertEquals(
+    assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
+    assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
+    assertEquals(
         "application/json; charset=utf-8", recordedRequest.getHeader("Content-Type"));
-    Assert.assertEquals("{\"name\":\"name\"}", recordedRequest.getBody().readUtf8());
+    assertEquals("{\"name\":\"name\"}", recordedRequest.getBody().readUtf8());
   }
 
   @Test
@@ -218,19 +222,19 @@ public class KoofrClientTest {
 
     client.ensureFolder("/path/to/folder", "name");
 
-    Assert.assertEquals(1, server.getRequestCount());
+    assertEquals(1, server.getRequestCount());
 
     final RecordedRequest recordedRequest = server.takeRequest();
 
-    Assert.assertEquals("POST", recordedRequest.getMethod());
-    Assert.assertEquals(
+    assertEquals("POST", recordedRequest.getMethod());
+    assertEquals(
         "/api/v2/mounts/primary/files/folder?path=%2Fpath%2Fto%2Ffolder",
         recordedRequest.getPath());
-    Assert.assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
-    Assert.assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
-    Assert.assertEquals(
+    assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
+    assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
+    assertEquals(
         "application/json; charset=utf-8", recordedRequest.getHeader("Content-Type"));
-    Assert.assertEquals("{\"name\":\"name\"}", recordedRequest.getBody().readUtf8());
+    assertEquals("{\"name\":\"name\"}", recordedRequest.getBody().readUtf8());
   }
 
   @Test
@@ -248,31 +252,31 @@ public class KoofrClientTest {
 
     client.ensureFolder("/path/to/folder", "name");
 
-    Assert.assertEquals(2, server.getRequestCount());
+    assertEquals(2, server.getRequestCount());
 
     RecordedRequest recordedRequest = server.takeRequest();
 
-    Assert.assertEquals("POST", recordedRequest.getMethod());
-    Assert.assertEquals(
+    assertEquals("POST", recordedRequest.getMethod());
+    assertEquals(
         "/api/v2/mounts/primary/files/folder?path=%2Fpath%2Fto%2Ffolder",
         recordedRequest.getPath());
-    Assert.assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
-    Assert.assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
-    Assert.assertEquals(
+    assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
+    assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
+    assertEquals(
         "application/json; charset=utf-8", recordedRequest.getHeader("Content-Type"));
-    Assert.assertEquals("{\"name\":\"name\"}", recordedRequest.getBody().readUtf8());
+    assertEquals("{\"name\":\"name\"}", recordedRequest.getBody().readUtf8());
 
     recordedRequest = server.takeRequest();
 
-    Assert.assertEquals("POST", recordedRequest.getMethod());
-    Assert.assertEquals(
+    assertEquals("POST", recordedRequest.getMethod());
+    assertEquals(
         "/api/v2/mounts/primary/files/folder?path=%2Fpath%2Fto%2Ffolder",
         recordedRequest.getPath());
-    Assert.assertEquals("Bearer acc1", recordedRequest.getHeader("Authorization"));
-    Assert.assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
-    Assert.assertEquals(
+    assertEquals("Bearer acc1", recordedRequest.getHeader("Authorization"));
+    assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
+    assertEquals(
         "application/json; charset=utf-8", recordedRequest.getHeader("Content-Type"));
-    Assert.assertEquals("{\"name\":\"name\"}", recordedRequest.getBody().readUtf8());
+    assertEquals("{\"name\":\"name\"}", recordedRequest.getBody().readUtf8());
   }
 
   @Test
@@ -280,14 +284,14 @@ public class KoofrClientTest {
     server.enqueue(new MockResponse().setResponseCode(500).setBody("Internal error"));
 
     KoofrClientIOException caughtExc =
-        Assert.assertThrows(
+        assertThrows(
             KoofrClientIOException.class, () -> client.ensureFolder("/path/to/folder", "name"));
 
-    Assertions.assertNotNull(caughtExc);
-    Assertions.assertEquals(
+    assertNotNull(caughtExc);
+    assertEquals(
         "Got error code: 500 message: Server Error body: Internal error", caughtExc.getMessage());
 
-    Assertions.assertEquals(1, server.getRequestCount());
+    assertEquals(1, server.getRequestCount());
   }
 
   @Test
@@ -296,19 +300,19 @@ public class KoofrClientTest {
 
     client.addDescription("/path/to/folder", "Test description");
 
-    Assert.assertEquals(1, server.getRequestCount());
+    assertEquals(1, server.getRequestCount());
 
     final RecordedRequest recordedRequest = server.takeRequest();
 
-    Assert.assertEquals("POST", recordedRequest.getMethod());
-    Assert.assertEquals(
+    assertEquals("POST", recordedRequest.getMethod());
+    assertEquals(
         "/api/v2/mounts/primary/files/tags/add?path=%2Fpath%2Fto%2Ffolder",
         recordedRequest.getPath());
-    Assert.assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
-    Assert.assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
-    Assert.assertEquals(
+    assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
+    assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
+    assertEquals(
         "application/json; charset=utf-8", recordedRequest.getHeader("Content-Type"));
-    Assert.assertEquals(
+    assertEquals(
         "{\"tags\":{\"description\":[\"Test description\"]}}",
         recordedRequest.getBody().readUtf8());
   }
@@ -328,33 +332,33 @@ public class KoofrClientTest {
 
     client.addDescription("/path/to/folder", "Test description");
 
-    Assert.assertEquals(2, server.getRequestCount());
+    assertEquals(2, server.getRequestCount());
 
     RecordedRequest recordedRequest = server.takeRequest();
 
-    Assert.assertEquals("POST", recordedRequest.getMethod());
-    Assert.assertEquals(
+    assertEquals("POST", recordedRequest.getMethod());
+    assertEquals(
         "/api/v2/mounts/primary/files/tags/add?path=%2Fpath%2Fto%2Ffolder",
         recordedRequest.getPath());
-    Assert.assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
-    Assert.assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
-    Assert.assertEquals(
+    assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
+    assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
+    assertEquals(
         "application/json; charset=utf-8", recordedRequest.getHeader("Content-Type"));
-    Assert.assertEquals(
+    assertEquals(
         "{\"tags\":{\"description\":[\"Test description\"]}}",
         recordedRequest.getBody().readUtf8());
 
     recordedRequest = server.takeRequest();
 
-    Assert.assertEquals("POST", recordedRequest.getMethod());
-    Assert.assertEquals(
+    assertEquals("POST", recordedRequest.getMethod());
+    assertEquals(
         "/api/v2/mounts/primary/files/tags/add?path=%2Fpath%2Fto%2Ffolder",
         recordedRequest.getPath());
-    Assert.assertEquals("Bearer acc1", recordedRequest.getHeader("Authorization"));
-    Assert.assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
-    Assert.assertEquals(
+    assertEquals("Bearer acc1", recordedRequest.getHeader("Authorization"));
+    assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
+    assertEquals(
         "application/json; charset=utf-8", recordedRequest.getHeader("Content-Type"));
-    Assert.assertEquals(
+    assertEquals(
         "{\"tags\":{\"description\":[\"Test description\"]}}",
         recordedRequest.getBody().readUtf8());
   }
@@ -364,15 +368,15 @@ public class KoofrClientTest {
     server.enqueue(new MockResponse().setResponseCode(500).setBody("Internal error"));
 
     Exception caughtExc =
-        Assert.assertThrows(
+        assertThrows(
             KoofrClientIOException.class,
             () -> client.addDescription("/path/to/folder", "Test description"));
 
-    Assertions.assertNotNull(caughtExc);
-    Assertions.assertEquals(
+    assertNotNull(caughtExc);
+    assertEquals(
         "Got error code: 500 message: Server Error body: Internal error", caughtExc.getMessage());
 
-    Assertions.assertEquals(1, server.getRequestCount());
+    assertEquals(1, server.getRequestCount());
   }
 
   @Test
@@ -387,20 +391,20 @@ public class KoofrClientTest {
     final InputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
     String fullPath =
         client.uploadFile("/path/to/folder", "image.jpg", inputStream, "image/jpeg", null, null);
-    Assert.assertEquals("/path/to/folder/image.jpg", fullPath);
+    assertEquals("/path/to/folder/image.jpg", fullPath);
 
-    Assert.assertEquals(1, server.getRequestCount());
+    assertEquals(1, server.getRequestCount());
 
     final RecordedRequest recordedRequest = server.takeRequest();
 
-    Assert.assertEquals("POST", recordedRequest.getMethod());
-    Assert.assertEquals(
+    assertEquals("POST", recordedRequest.getMethod());
+    assertEquals(
         "/content/api/v2/mounts/primary/files/put?path=%2Fpath%2Fto%2Ffolder&filename=image.jpg&autorename=true&info=true",
         recordedRequest.getPath());
-    Assert.assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
-    Assert.assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
-    Assert.assertEquals("image/jpeg", recordedRequest.getHeader("Content-Type"));
-    Assert.assertEquals(5, recordedRequest.getBodySize());
+    assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
+    assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
+    assertEquals("image/jpeg", recordedRequest.getHeader("Content-Type"));
+    assertEquals(5, recordedRequest.getBodySize());
   }
 
   @Test
@@ -417,20 +421,20 @@ public class KoofrClientTest {
     String fullPath =
         client.uploadFile(
             "/path/to/folder", "image.jpg", inputStream, "image/jpeg", modified, null);
-    Assert.assertEquals("/path/to/folder/image.jpg", fullPath);
+    assertEquals("/path/to/folder/image.jpg", fullPath);
 
-    Assert.assertEquals(1, server.getRequestCount());
+    assertEquals(1, server.getRequestCount());
 
     final RecordedRequest recordedRequest = server.takeRequest();
 
-    Assert.assertEquals("POST", recordedRequest.getMethod());
-    Assert.assertEquals(
+    assertEquals("POST", recordedRequest.getMethod());
+    assertEquals(
         "/content/api/v2/mounts/primary/files/put?path=%2Fpath%2Fto%2Ffolder&filename=image.jpg&autorename=true&info=true&modified=1596450052000",
         recordedRequest.getPath());
-    Assert.assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
-    Assert.assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
-    Assert.assertEquals("image/jpeg", recordedRequest.getHeader("Content-Type"));
-    Assert.assertEquals(5, recordedRequest.getBodySize());
+    assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
+    assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
+    assertEquals("image/jpeg", recordedRequest.getHeader("Content-Type"));
+    assertEquals(5, recordedRequest.getBodySize());
   }
 
   @Test
@@ -446,20 +450,20 @@ public class KoofrClientTest {
     String fullPath =
         client.uploadFile(
             "/path/to/folder", "image.jpg", inputStream, "image/jpeg", null, "Test description");
-    Assert.assertEquals("/path/to/folder/image.jpg", fullPath);
+    assertEquals("/path/to/folder/image.jpg", fullPath);
 
-    Assert.assertEquals(1, server.getRequestCount());
+    assertEquals(1, server.getRequestCount());
 
     final RecordedRequest recordedRequest = server.takeRequest();
 
-    Assert.assertEquals("POST", recordedRequest.getMethod());
-    Assert.assertEquals(
+    assertEquals("POST", recordedRequest.getMethod());
+    assertEquals(
         "/content/api/v2/mounts/primary/files/put?path=%2Fpath%2Fto%2Ffolder&filename=image.jpg&autorename=true&info=true&tags=description%3DTest+description",
         recordedRequest.getPath());
-    Assert.assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
-    Assert.assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
-    Assert.assertEquals("image/jpeg", recordedRequest.getHeader("Content-Type"));
-    Assert.assertEquals(5, recordedRequest.getBodySize());
+    assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
+    assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
+    assertEquals("image/jpeg", recordedRequest.getHeader("Content-Type"));
+    assertEquals(5, recordedRequest.getBodySize());
   }
 
   @Test
@@ -474,20 +478,20 @@ public class KoofrClientTest {
     final InputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
     String fullPath =
         client.uploadFile("/path/to/folder", "image.jpg", inputStream, "image/jpeg", null, null);
-    Assert.assertEquals("/path/to/folder/image (1).jpg", fullPath);
+    assertEquals("/path/to/folder/image (1).jpg", fullPath);
 
-    Assert.assertEquals(1, server.getRequestCount());
+    assertEquals(1, server.getRequestCount());
 
     final RecordedRequest recordedRequest = server.takeRequest();
 
-    Assert.assertEquals("POST", recordedRequest.getMethod());
-    Assert.assertEquals(
+    assertEquals("POST", recordedRequest.getMethod());
+    assertEquals(
         "/content/api/v2/mounts/primary/files/put?path=%2Fpath%2Fto%2Ffolder&filename=image.jpg&autorename=true&info=true",
         recordedRequest.getPath());
-    Assert.assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
-    Assert.assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
-    Assert.assertEquals("image/jpeg", recordedRequest.getHeader("Content-Type"));
-    Assert.assertEquals(5, recordedRequest.getBodySize());
+    assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
+    assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
+    assertEquals("image/jpeg", recordedRequest.getHeader("Content-Type"));
+    assertEquals(5, recordedRequest.getBodySize());
   }
 
   @Test
@@ -509,21 +513,21 @@ public class KoofrClientTest {
       caughtExc = exc;
     }
 
-    Assert.assertNotNull(caughtExc);
-    Assert.assertEquals("Koofr quota exceeded", caughtExc.getMessage());
+    assertNotNull(caughtExc);
+    assertEquals("Koofr quota exceeded", caughtExc.getMessage());
 
-    Assert.assertEquals(1, server.getRequestCount());
+    assertEquals(1, server.getRequestCount());
 
     final RecordedRequest recordedRequest = server.takeRequest();
 
-    Assert.assertEquals("POST", recordedRequest.getMethod());
-    Assert.assertEquals(
+    assertEquals("POST", recordedRequest.getMethod());
+    assertEquals(
         "/content/api/v2/mounts/primary/files/put?path=%2Fpath%2Fto%2Ffolder&filename=image.jpg&autorename=true&info=true",
         recordedRequest.getPath());
-    Assert.assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
-    Assert.assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
-    Assert.assertEquals("image/jpeg", recordedRequest.getHeader("Content-Type"));
-    Assert.assertEquals(5, recordedRequest.getBodySize());
+    assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
+    assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
+    assertEquals("image/jpeg", recordedRequest.getHeader("Content-Type"));
+    assertEquals(5, recordedRequest.getBodySize());
   }
 
   @Test
@@ -547,31 +551,31 @@ public class KoofrClientTest {
     final InputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
     String fullPath =
         client.uploadFile("/path/to/folder", "image.jpg", inputStream, "image/jpeg", null, null);
-    Assert.assertEquals("/path/to/folder/image.jpg", fullPath);
+    assertEquals("/path/to/folder/image.jpg", fullPath);
 
-    Assert.assertEquals(2, server.getRequestCount());
+    assertEquals(2, server.getRequestCount());
 
     RecordedRequest recordedRequest = server.takeRequest();
 
-    Assert.assertEquals("POST", recordedRequest.getMethod());
-    Assert.assertEquals(
+    assertEquals("POST", recordedRequest.getMethod());
+    assertEquals(
         "/content/api/v2/mounts/primary/files/put?path=%2Fpath%2Fto%2Ffolder&filename=image.jpg&autorename=true&info=true",
         recordedRequest.getPath());
-    Assert.assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
-    Assert.assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
-    Assert.assertEquals("image/jpeg", recordedRequest.getHeader("Content-Type"));
-    Assert.assertEquals(5, recordedRequest.getBodySize());
+    assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
+    assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
+    assertEquals("image/jpeg", recordedRequest.getHeader("Content-Type"));
+    assertEquals(5, recordedRequest.getBodySize());
 
     recordedRequest = server.takeRequest();
 
-    Assert.assertEquals("POST", recordedRequest.getMethod());
-    Assert.assertEquals(
+    assertEquals("POST", recordedRequest.getMethod());
+    assertEquals(
         "/content/api/v2/mounts/primary/files/put?path=%2Fpath%2Fto%2Ffolder&filename=image.jpg&autorename=true&info=true",
         recordedRequest.getPath());
-    Assert.assertEquals("Bearer acc1", recordedRequest.getHeader("Authorization"));
-    Assert.assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
-    Assert.assertEquals("image/jpeg", recordedRequest.getHeader("Content-Type"));
-    Assert.assertEquals(5, recordedRequest.getBodySize());
+    assertEquals("Bearer acc1", recordedRequest.getHeader("Authorization"));
+    assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
+    assertEquals("image/jpeg", recordedRequest.getHeader("Content-Type"));
+    assertEquals(5, recordedRequest.getBodySize());
   }
 
   @Test
@@ -581,17 +585,17 @@ public class KoofrClientTest {
     final InputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
 
     Exception caughtExc =
-        Assert.assertThrows(
+        assertThrows(
             KoofrClientIOException.class,
             () ->
                 client.uploadFile(
                     "/path/to/folder", "image.jpg", inputStream, "image/jpeg", null, null));
 
-    Assert.assertNotNull(caughtExc);
-    Assert.assertEquals(
+    assertNotNull(caughtExc);
+    assertEquals(
         "Got error code: 500 message: Server Error body: Internal error", caughtExc.getMessage());
 
-    Assert.assertEquals(1, server.getRequestCount());
+    assertEquals(1, server.getRequestCount());
   }
 
   @Test
@@ -606,7 +610,7 @@ public class KoofrClientTest {
     final InputStream inputStream = new ByteArrayInputStream(new byte[] {0, 1, 2, 3, 4});
 
     KoofrClientIOException caughtException =
-        Assertions.assertThrows(
+        assertThrows(
             KoofrClientIOException.class,
             () ->
                 client.uploadFile(
@@ -635,7 +639,7 @@ public class KoofrClientTest {
 
     List<FilesListRecursiveItem> items = client.listRecursive("/Data transfer");
 
-    Assert.assertEquals(Fixtures.listRecursiveItems, items);
+    assertEquals(Fixtures.listRecursiveItems, items);
   }
 
   @Test
@@ -649,7 +653,7 @@ public class KoofrClientTest {
 
     List<FilesListRecursiveItem> items = client.listRecursive("/Data transfer");
 
-    Assert.assertEquals(ImmutableList.of(), items);
+    assertEquals(ImmutableList.of(), items);
   }
 
   @Test
@@ -663,7 +667,7 @@ public class KoofrClientTest {
 
     String link = client.fileLink("/Data transfer/Videos/Video 1.mp4");
 
-    Assert.assertEquals(
+    assertEquals(
         "https://app-1.koofr.net/content/files/get/Video+1.mp4?base=TESTBASE", link);
   }
 
@@ -673,49 +677,49 @@ public class KoofrClientTest {
 
     client.ensureRootFolder();
 
-    Assert.assertEquals(1, server.getRequestCount());
+    assertEquals(1, server.getRequestCount());
 
     final RecordedRequest recordedRequest = server.takeRequest();
 
-    Assert.assertEquals("POST", recordedRequest.getMethod());
-    Assert.assertEquals("/api/v2/mounts/primary/files/folder?path=%2F", recordedRequest.getPath());
-    Assert.assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
-    Assert.assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
-    Assert.assertEquals(
+    assertEquals("POST", recordedRequest.getMethod());
+    assertEquals("/api/v2/mounts/primary/files/folder?path=%2F", recordedRequest.getPath());
+    assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
+    assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
+    assertEquals(
         "application/json; charset=utf-8", recordedRequest.getHeader("Content-Type"));
-    Assert.assertEquals("{\"name\":\"Data transfer\"}", recordedRequest.getBody().readUtf8());
+    assertEquals("{\"name\":\"Data transfer\"}", recordedRequest.getBody().readUtf8());
 
     client.ensureRootFolder();
 
-    Assert.assertEquals(1, server.getRequestCount());
+    assertEquals(1, server.getRequestCount());
   }
 
   @Test
   public void testEnsureVideosFolder() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(200));
     client.ensureRootFolder();
-    Assert.assertEquals(1, server.getRequestCount());
+    assertEquals(1, server.getRequestCount());
     server.takeRequest();
 
     server.enqueue(new MockResponse().setResponseCode(200));
 
     client.ensureVideosFolder();
 
-    Assert.assertEquals(2, server.getRequestCount());
+    assertEquals(2, server.getRequestCount());
 
     final RecordedRequest recordedRequest = server.takeRequest();
 
-    Assert.assertEquals("POST", recordedRequest.getMethod());
-    Assert.assertEquals(
+    assertEquals("POST", recordedRequest.getMethod());
+    assertEquals(
         "/api/v2/mounts/primary/files/folder?path=%2FData+transfer", recordedRequest.getPath());
-    Assert.assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
-    Assert.assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
-    Assert.assertEquals(
+    assertEquals("Bearer acc", recordedRequest.getHeader("Authorization"));
+    assertEquals("2.1", recordedRequest.getHeader("X-Koofr-Version"));
+    assertEquals(
         "application/json; charset=utf-8", recordedRequest.getHeader("Content-Type"));
-    Assert.assertEquals("{\"name\":\"Videos\"}", recordedRequest.getBody().readUtf8());
+    assertEquals("{\"name\":\"Videos\"}", recordedRequest.getBody().readUtf8());
 
     client.ensureVideosFolder();
 
-    Assert.assertEquals(2, server.getRequestCount());
+    assertEquals(2, server.getRequestCount());
   }
 }

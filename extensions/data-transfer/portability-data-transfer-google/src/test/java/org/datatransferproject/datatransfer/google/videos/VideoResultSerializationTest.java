@@ -1,8 +1,6 @@
 package org.datatransferproject.datatransfer.google.videos;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.junit.Assert.assertThat;
+import static com.google.common.truth.Truth.assertThat;
 
 import java.io.*;
 import org.junit.jupiter.api.Test;
@@ -18,9 +16,9 @@ public class VideoResultSerializationTest {
 
     ByteArrayInputStream bais = new ByteArrayInputStream(out.toByteArray());
     Object readObject = new ObjectInputStream(bais).readObject();
-    assertThat(readObject, instanceOf(VideoResult.class));
+    assertThat(readObject).isInstanceOf(VideoResult.class);
     VideoResult deserialized = (VideoResult) readObject;
-    assertThat(deserialized.getId(), equalTo(videoId));
-    assertThat(deserialized.getBytes(), equalTo(bytes));
+    assertThat(deserialized.getId()).isEqualTo(videoId);
+    assertThat(deserialized.getBytes()).isEqualTo(bytes);
   }
 }

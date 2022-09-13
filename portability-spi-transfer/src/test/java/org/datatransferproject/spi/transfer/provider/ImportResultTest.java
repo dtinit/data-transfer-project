@@ -1,7 +1,7 @@
 package org.datatransferproject.spi.transfer.provider;
 
 import static org.datatransferproject.spi.transfer.provider.ImportResult.OK;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Map;
 import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;

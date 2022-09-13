@@ -1,9 +1,11 @@
 package org.datatransferproject.spi.transfer.types;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.datatransferproject.types.common.IntPaginationToken;
 import org.datatransferproject.types.common.models.IdOnlyContainerResource;
-import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 
 /** */
@@ -22,9 +24,9 @@ public class ContinuationDataTest {
 
     ContinuationData deserialized = objectMapper.readValue(serialized, ContinuationData.class);
 
-    Assert.assertNotNull(deserialized);
-    Assert.assertEquals(100, ((IntPaginationToken) deserialized.getPaginationData()).getStart());
-    Assert.assertEquals(
+    assertNotNull(deserialized);
+    assertEquals(100, ((IntPaginationToken) deserialized.getPaginationData()).getStart());
+    assertEquals(
         "123", ((IdOnlyContainerResource) deserialized.getContainerResources().get(0)).getId());
   }
 }

@@ -1,6 +1,6 @@
 package org.datatransferproject.spi.transfer.provider.converter;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
 import org.datatransferproject.spi.transfer.provider.ImportResult;

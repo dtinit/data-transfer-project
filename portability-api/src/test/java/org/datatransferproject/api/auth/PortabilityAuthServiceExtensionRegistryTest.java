@@ -18,6 +18,8 @@ package org.datatransferproject.api.auth;
 
 import static org.datatransferproject.types.common.models.DataVertical.CONTACTS;
 import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -31,7 +33,6 @@ import org.datatransferproject.spi.api.auth.AuthDataGenerator;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
 import org.datatransferproject.types.common.models.DataVertical;
-import org.junit.Assert;
 import org.junit.Rule;
 
 import org.junit.Test;
@@ -83,7 +84,7 @@ public class PortabilityAuthServiceExtensionRegistryTest {
     final DataVertical[] services = new DataVertical[] {PHOTOS, CONTACTS};
     Set<DataVertical> expected = new HashSet<>(Arrays.asList(services));
 
-    Assert.assertEquals(actual, expected);
+    assertEquals(actual, expected);
   }
 
   @Test
@@ -105,7 +106,7 @@ public class PortabilityAuthServiceExtensionRegistryTest {
     final String[] services = new String[]{"mockAuthProvider1", "mockAuthProvider2"};
     Set<String> expected = new HashSet<>(Arrays.asList(services));
 
-    Assert.assertEquals(actual, expected);
+    assertEquals(actual, expected);
   }
 
   @Test
@@ -127,7 +128,7 @@ public class PortabilityAuthServiceExtensionRegistryTest {
     final String[] services = new String[] {"mockAuthProvider1"};
     Set<String> expected = new HashSet<>(Arrays.asList(services));
 
-    Assert.assertEquals(actual, expected);
+    assertEquals(actual, expected);
   }
 
   @Test
@@ -148,7 +149,7 @@ public class PortabilityAuthServiceExtensionRegistryTest {
     final String[] services = new String[]{"mockAuthProvider1", "mockAuthProvider2"};
     Set<String> expected = new HashSet<>(Arrays.asList(services));
 
-    Assert.assertEquals(actual, expected);
+    assertEquals(actual, expected);
   }
 
   @Test
@@ -170,7 +171,7 @@ public class PortabilityAuthServiceExtensionRegistryTest {
     final String[] services = new String[] {"mockAuthProvider1"};
     Set<String> expected = new HashSet<>(Arrays.asList(services));
 
-    Assert.assertEquals(actual, expected);
+    assertEquals(actual, expected);
   }
 
   @Test
@@ -190,6 +191,6 @@ public class PortabilityAuthServiceExtensionRegistryTest {
     AuthDataGenerator actual = registry.getAuthDataGenerator(
         "mockServiceProvider", CONTACTS, AuthServiceProviderRegistry.AuthMode.EXPORT);
 
-    Assert.assertNotNull(actual);
+    assertNotNull(actual);
   }
 }
