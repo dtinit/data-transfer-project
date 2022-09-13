@@ -16,7 +16,10 @@
 
 package org.datatransferproject.types.client.transfer;
 
+import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 
@@ -34,7 +37,7 @@ public class CreateTransferJobTest {
                 "testDestination",
                 "https://localhost:3000/callback/testSource",
                 "https://localhost:3000/callback/testDestination",
-                "PHOTOS",
+                PHOTOS,
                 null,
                 "cleartext"));
 
@@ -46,6 +49,6 @@ public class CreateTransferJobTest {
         "https://localhost:3000/callback/testSource", deserialized.getExportCallbackUrl());
     Assert.assertEquals(
         "https://localhost:3000/callback/testDestination", deserialized.getImportCallbackUrl());
-    Assert.assertEquals("PHOTOS", deserialized.getDataType());
+    Assert.assertEquals(PHOTOS, deserialized.getDataType());
   }
 }

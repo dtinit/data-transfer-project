@@ -42,7 +42,7 @@ public class FacebookVideosImporterTest {
     importer.importSingleVideo(
         client,
         new VideoModel(
-            "title", VIDEO_URL, VIDEO_DESCRIPTION, "video/mp4", "videoId", null, false));
+            "title", VIDEO_URL, VIDEO_DESCRIPTION, "video/mp4", "videoId", null, false, null));
 
     Parameter[] params = {
         Parameter.with("file_url", VIDEO_URL), Parameter.with("description", VIDEO_DESCRIPTION)

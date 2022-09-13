@@ -100,7 +100,8 @@ public class FacebookVideosExporter
                 "video/mp4",
                 fbid,
                 null,
-                false));
+                false,
+                video.getCreatedTime()));
       }
 
       String token = videoConnection.getAfterCursor();

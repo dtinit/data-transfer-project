@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableList;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -31,9 +32,10 @@ import org.datatransferproject.types.transfer.auth.AppCredentials;
 import java.io.IOException;
 
 import static java.lang.String.format;
+import static org.datatransferproject.types.common.models.DataVertical.TASKS;
 
 public class RememberTheMilkTransferExtension implements TransferExtension {
-  private static final ImmutableList<String> SUPPORTED_DATA_TYPES = ImmutableList.of("TASKS");
+  private static final ImmutableList<DataVertical> SUPPORTED_DATA_TYPES = ImmutableList.of(TASKS);
   private static final String RTM_KEY = "RTM_KEY";
   private static final String RTM_SECRET = "RTM_SECRET";
   private RememberTheMilkTasksExporter exporter;
@@ -46,7 +48,7 @@ public class RememberTheMilkTransferExtension implements TransferExtension {
   }
 
   @Override
-  public Exporter<?, ?> getExporter(String transferDataType) {
+  public Exporter<?, ?> getExporter(DataVertical transferDataType) {
     Preconditions.checkArgument(
         initialized, "RememberTheMilkTransferExtension not initialized. Unable to get Exporter");
     Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(transferDataType));
@@ -54,7 +56,7 @@ public class RememberTheMilkTransferExtension implements TransferExtension {
   }
 
   @Override
-  public Importer<?, ?> getImporter(String transferDataType) {
+  public Importer<?, ?> getImporter(DataVertical transferDataType) {
     Preconditions.checkArgument(
         initialized, "RememberTheMilkTransferExtension not initialized. Unable to get Importer");
     Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(transferDataType));

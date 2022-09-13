@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.transfer.koofr.common.KoofrClient;
 import org.datatransferproject.transfer.koofr.common.KoofrClientFactory;
@@ -28,6 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
@@ -54,7 +56,7 @@ public class KoofrVideosImporterTest {
 
     when(clientFactory.create(any())).thenReturn(client);
 
-    importer = new KoofrVideosImporter(clientFactory, monitor);
+    importer = new KoofrVideosImporter(clientFactory, monitor, mock(JobStore.class));
 
     when(executor.executeAndSwallowIOExceptions(any(), any(), any()))
         .then(
@@ -104,7 +106,8 @@ public class KoofrVideosImporterTest {
                 "video/mp4",
                 "video1",
                 "id1",
-                false),
+                false,
+                null),
             new VideoModel(
                 "video2.mp4",
                 server.url("/2.mp4").toString(),
@@ -112,7 +115,8 @@ public class KoofrVideosImporterTest {
                 "video/mp4",
                 "video2",
                 "id1",
-                false),
+                false,
+                null),
             new VideoModel(
                 "video3.mp4",
                 server.url("/3.mp4").toString(),
@@ -120,7 +124,8 @@ public class KoofrVideosImporterTest {
                 "video/mp4",
                 "video3",
                 "id2",
-                false));
+                false,
+                null));
 
     VideosContainerResource resource = spy(new VideosContainerResource(albums, videos));
 
@@ -176,7 +181,8 @@ public class KoofrVideosImporterTest {
                 "video/mp4",
                 "video1",
                 null,
-                false),
+                false,
+                null),
             new VideoModel(
                 "video2.mp4",
                 server.url("/2.mp4").toString(),
@@ -184,7 +190,8 @@ public class KoofrVideosImporterTest {
                 "video/mp4",
                 "video2",
                 null,
-                false));
+                false,
+                null));
 
     VideosContainerResource resource = spy(new VideosContainerResource(albums, videos));
 
@@ -224,15 +231,16 @@ public class KoofrVideosImporterTest {
     Collection<VideoAlbum> albums = ImmutableList.of();
 
     Collection<VideoModel> videos =
-        ImmutableList.of(
-            new VideoModel(
-                "not_found_video_1.mp4",
-                server.url("/not_found.mp4").toString(),
-                "Video not founded in CDN",
-                "video/mp4",
-                "not_found_video_1",
-                null,
-                false));
+            ImmutableList.of(
+                    new VideoModel(
+                            "not_found_video_1.mp4",
+                            server.url("/not_found.mp4").toString(),
+                            "Video not founded in CDN",
+                            "video/mp4",
+                            "not_found_video_1",
+                            null,
+                            false,
+                            null));
 
     VideosContainerResource resource = spy(new VideosContainerResource(albums, videos));
 

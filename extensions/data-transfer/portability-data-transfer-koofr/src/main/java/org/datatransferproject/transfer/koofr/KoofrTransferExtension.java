@@ -1,6 +1,8 @@
 package org.datatransferproject.transfer.koofr;
 
 import static java.lang.String.format;
+import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
+import static org.datatransferproject.types.common.models.DataVertical.VIDEOS;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpTransport;
@@ -15,6 +17,7 @@ import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -29,15 +32,13 @@ import org.datatransferproject.types.transfer.auth.AppCredentials;
 /** Bootstraps the Koofr data transfer services. */
 public class KoofrTransferExtension implements TransferExtension {
   public static final String SERVICE_ID = "koofr";
-  private static final String PHOTOS = "PHOTOS";
-  private static final String VIDEOS = "VIDEOS";
-  private static final ImmutableList<String> SUPPORTED_IMPORT_SERVICES =
+  private static final ImmutableList<DataVertical> SUPPORTED_IMPORT_SERVICES =
       ImmutableList.of(PHOTOS, VIDEOS);
-  private static final ImmutableList<String> SUPPORTED_EXPORT_SERVICES =
+  private static final ImmutableList<DataVertical> SUPPORTED_EXPORT_SERVICES =
       ImmutableList.of(PHOTOS, VIDEOS);
   private static final String BASE_API_URL = "https://app.koofr.net";
-  private ImmutableMap<String, Importer> importerMap;
-  private ImmutableMap<String, Exporter> exporterMap;
+  private ImmutableMap<DataVertical, Importer> importerMap;
+  private ImmutableMap<DataVertical, Exporter> exporterMap;
   private boolean initialized = false;
 
   // Needed for ServiceLoader to load this class.
@@ -49,14 +50,14 @@ public class KoofrTransferExtension implements TransferExtension {
   }
 
   @Override
-  public Exporter<?, ?> getExporter(String transferDataType) {
+  public Exporter<?, ?> getExporter(DataVertical transferDataType) {
     Preconditions.checkState(initialized);
     Preconditions.checkArgument(SUPPORTED_EXPORT_SERVICES.contains(transferDataType));
     return exporterMap.get(transferDataType);
   }
 
   @Override
-  public Importer<?, ?> getImporter(String transferDataType) {
+  public Importer<?, ?> getImporter(DataVertical transferDataType) {
     Preconditions.checkState(initialized);
     Preconditions.checkArgument(SUPPORTED_IMPORT_SERVICES.contains(transferDataType));
     return importerMap.get(transferDataType);
@@ -114,12 +115,12 @@ public class KoofrTransferExtension implements TransferExtension {
         new KoofrClientFactory(
             BASE_API_URL, client, fileUploadClient, mapper, monitor, credentialFactory);
 
-    ImmutableMap.Builder<String, Importer> importBuilder = ImmutableMap.builder();
+    ImmutableMap.Builder<DataVertical, Importer> importBuilder = ImmutableMap.builder();
     importBuilder.put(PHOTOS, new KoofrPhotosImporter(koofrClientFactory, monitor, jobStore));
-    importBuilder.put(VIDEOS, new KoofrVideosImporter(koofrClientFactory, monitor));
+    importBuilder.put(VIDEOS, new KoofrVideosImporter(koofrClientFactory, monitor, jobStore));
     importerMap = importBuilder.build();
 
-    ImmutableMap.Builder<String, Exporter> exportBuilder = ImmutableMap.builder();
+    ImmutableMap.Builder<DataVertical, Exporter> exportBuilder = ImmutableMap.builder();
     exportBuilder.put(PHOTOS, new KoofrPhotosExporter(koofrClientFactory, monitor));
     exportBuilder.put(VIDEOS, new KoofrVideosExporter(koofrClientFactory, monitor));
     exporterMap = exportBuilder.build();

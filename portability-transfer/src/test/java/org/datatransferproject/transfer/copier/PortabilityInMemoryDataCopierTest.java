@@ -16,6 +16,12 @@
 
 package org.datatransferproject.transfer.copier;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.Stack;
+import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.copier.stack.PortabilityStackInMemoryDataCopier;
 import org.datatransferproject.spi.cloud.storage.JobStore;
@@ -27,23 +33,15 @@ import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.PaginationData;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.transfer.auth.AuthData;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InOrder;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.Stack;
-import java.util.UUID;
-
-@RunWith(Parameterized.class)
 public class PortabilityInMemoryDataCopierTest {
+
   private UUID jobId;
   private String jobIdPrefix;
   private ExportInformation exportInfo;
@@ -51,10 +49,10 @@ public class PortabilityInMemoryDataCopierTest {
   private ContinuationData continuationData;
   private AuthData exportAuthData;
   private AuthData importAuthData;
-  private PortabilityAbstractInMemoryDataCopier inMemoryDataCopier;
   private PortabilityStackInMemoryDataCopier stackInMemoryDataCopier;
 
   private static class TestPortabilityInMemoryDataCopier extends PortabilityInMemoryDataCopier {
+
     public TestPortabilityInMemoryDataCopier() {
       super(
           null,
@@ -80,6 +78,7 @@ public class PortabilityInMemoryDataCopierTest {
 
   private static class TestPortabilityStackInMemoryDataCopier
       extends PortabilityStackInMemoryDataCopier {
+
     public TestPortabilityStackInMemoryDataCopier() {
       super(
           null,
@@ -103,20 +102,15 @@ public class PortabilityInMemoryDataCopierTest {
     }
   }
 
-  @Parameterized.Parameters
   public static Iterable<PortabilityAbstractInMemoryDataCopier> data() {
     return Arrays.asList(
-        (new PortabilityAbstractInMemoryDataCopier[] {
-          Mockito.spy(new TestPortabilityInMemoryDataCopier()),
-          Mockito.spy(new TestPortabilityStackInMemoryDataCopier())
+        (new PortabilityAbstractInMemoryDataCopier[]{
+            Mockito.spy(new TestPortabilityInMemoryDataCopier()),
+            Mockito.spy(new TestPortabilityStackInMemoryDataCopier())
         }));
   }
 
-  public PortabilityInMemoryDataCopierTest(PortabilityAbstractInMemoryDataCopier copier) {
-    inMemoryDataCopier = copier;
-  }
-
-  @Before
+  @BeforeEach
   public void setUp() throws CopyException, IOException {
     importAuthData = exportAuthData = Mockito.mock(AuthData.class);
     jobId = UUID.randomUUID();
@@ -125,46 +119,43 @@ public class PortabilityInMemoryDataCopierTest {
     initialExportResult = Mockito.mock(ExportResult.class);
     continuationData = Mockito.mock(ContinuationData.class);
     stackInMemoryDataCopier = Mockito.spy(new TestPortabilityStackInMemoryDataCopier());
-    inMemoryDataCopier.resetCopyIterationCounter();
     stackInMemoryDataCopier.resetCopyIterationCounter();
   }
 
-  @Test
-  public void initialExportInfoIsNull() throws CopyException, IOException {
-
-    // Arrange
+  @ParameterizedTest
+  @MethodSource("data")
+  public void initialExportInfoIsNull(PortabilityAbstractInMemoryDataCopier inMemoryDataCopier)
+      throws CopyException, IOException {
+    inMemoryDataCopier.resetCopyIterationCounter();
     Optional<ExportInformation> initialExportInfo = Optional.empty();
 
-    // Act
     inMemoryDataCopier.copy(exportAuthData, importAuthData, jobId, initialExportInfo);
 
-    // Assert
     Mockito.verify(inMemoryDataCopier)
         .copyIteration(jobId, exportAuthData, importAuthData, initialExportInfo, jobIdPrefix, 1);
   }
 
-  @Test
-  public void continuationDataIsNull() throws CopyException, IOException {
-
-    // Arrange
+  @ParameterizedTest
+  @MethodSource("data")
+  public void continuationDataIsNull(PortabilityAbstractInMemoryDataCopier inMemoryDataCopier)
+      throws CopyException, IOException {
+    inMemoryDataCopier.resetCopyIterationCounter();
     Mockito.when(initialExportResult.getContinuationData()).thenReturn(null);
     Mockito.doReturn(initialExportResult)
         .when(inMemoryDataCopier)
         .copyIteration(
             jobId, exportAuthData, importAuthData, Optional.of(exportInfo), jobIdPrefix, 1);
-    // Act
     inMemoryDataCopier.copy(exportAuthData, importAuthData, jobId, Optional.of(exportInfo));
-
-    // Assert copyIteration only called once
     Mockito.verify(inMemoryDataCopier)
         .copyIteration(
             jobId, exportAuthData, importAuthData, Optional.of(exportInfo), jobIdPrefix, 1);
   }
 
-  @Test
-  public void continuationDataWithPaginationData() throws CopyException, IOException {
-
-    // Arrange
+  @ParameterizedTest
+  @MethodSource("data")
+  public void continuationDataWithPaginationData(
+      PortabilityAbstractInMemoryDataCopier inMemoryDataCopier) throws CopyException, IOException {
+    inMemoryDataCopier.resetCopyIterationCounter();
     PaginationData paginationData = Mockito.mock(PaginationData.class);
     ExportInformation paginationExportInfo = new ExportInformation(paginationData, null);
 
@@ -175,10 +166,8 @@ public class PortabilityInMemoryDataCopierTest {
         .copyIteration(
             jobId, exportAuthData, importAuthData, Optional.of(exportInfo), jobIdPrefix, 1);
 
-    // Act
     inMemoryDataCopier.copy(exportAuthData, importAuthData, jobId, Optional.of(exportInfo));
 
-    // Assert
     InOrder orderVerifier = Mockito.inOrder(inMemoryDataCopier);
     orderVerifier.verify(inMemoryDataCopier)
         .copyIteration(
@@ -193,10 +182,11 @@ public class PortabilityInMemoryDataCopierTest {
             2);
   }
 
-  @Test
-  public void continuationDataWithEmptySubResourceList() throws CopyException, IOException {
-
-    // Arrange
+  @ParameterizedTest
+  @MethodSource("data")
+  public void continuationDataWithEmptySubResourceList(
+      PortabilityAbstractInMemoryDataCopier inMemoryDataCopier) throws CopyException, IOException {
+    inMemoryDataCopier.resetCopyIterationCounter();
     Mockito.when(continuationData.getContainerResources()).thenReturn(new ArrayList<>());
     Mockito.when(initialExportResult.getContinuationData()).thenReturn(continuationData);
     Mockito.doReturn(initialExportResult)
@@ -204,19 +194,18 @@ public class PortabilityInMemoryDataCopierTest {
         .copyIteration(
             jobId, exportAuthData, importAuthData, Optional.of(exportInfo), jobIdPrefix, 1);
 
-    // Act
     inMemoryDataCopier.copy(exportAuthData, importAuthData, jobId, Optional.of(exportInfo));
 
-    // Assert
     Mockito.verify(inMemoryDataCopier)
         .copyIteration(
             jobId, exportAuthData, importAuthData, Optional.of(exportInfo), jobIdPrefix, 1);
   }
 
-  @Test
-  public void continuationDataWithSingleSubResource() throws CopyException, IOException {
-
-    // Arrange
+  @ParameterizedTest
+  @MethodSource("data")
+  public void continuationDataWithSingleSubResource(
+      PortabilityAbstractInMemoryDataCopier inMemoryDataCopier) throws CopyException, IOException {
+    inMemoryDataCopier.resetCopyIterationCounter();
     ContainerResource subResource = Mockito.mock(ContainerResource.class);
 
     ExportInformation subResourceExportInfo = new ExportInformation(null, subResource);
@@ -228,10 +217,8 @@ public class PortabilityInMemoryDataCopierTest {
         .copyIteration(
             jobId, exportAuthData, importAuthData, Optional.of(exportInfo), jobIdPrefix, 1);
 
-    // Act
     inMemoryDataCopier.copy(exportAuthData, importAuthData, jobId, Optional.of(exportInfo));
 
-    // Assert
     InOrder orderVerifier = Mockito.inOrder(inMemoryDataCopier);
     orderVerifier.verify(inMemoryDataCopier)
         .copyIteration(
@@ -246,10 +233,11 @@ public class PortabilityInMemoryDataCopierTest {
             2);
   }
 
-  @Test
-  public void continuationDataWithMultipleSubResources() throws CopyException, IOException {
-
-    // Arrange
+  @ParameterizedTest
+  @MethodSource("data")
+  public void continuationDataWithMultipleSubResources(
+      PortabilityAbstractInMemoryDataCopier inMemoryDataCopier) throws CopyException, IOException {
+    inMemoryDataCopier.resetCopyIterationCounter();
     ContainerResource subResource1 = Mockito.mock(ContainerResource.class);
     ContainerResource subResource2 = Mockito.mock(ContainerResource.class);
 
@@ -264,10 +252,8 @@ public class PortabilityInMemoryDataCopierTest {
         .copyIteration(
             jobId, exportAuthData, importAuthData, Optional.of(exportInfo), jobIdPrefix, 1);
 
-    // Act
     inMemoryDataCopier.copy(exportAuthData, importAuthData, jobId, Optional.of(exportInfo));
 
-    // Assert
     InOrder orderVerifier = Mockito.inOrder(inMemoryDataCopier);
     orderVerifier.verify(inMemoryDataCopier)
         .copyIteration(
@@ -290,11 +276,12 @@ public class PortabilityInMemoryDataCopierTest {
             3);
   }
 
-  @Test
-  public void continuationDataWithPaginationDataAndMultipleSubResources()
+  @ParameterizedTest
+  @MethodSource("data")
+  public void continuationDataWithPaginationDataAndMultipleSubResources(
+      PortabilityAbstractInMemoryDataCopier inMemoryDataCopier)
       throws CopyException, IOException {
-
-    // Arrange
+    inMemoryDataCopier.resetCopyIterationCounter();
     PaginationData paginationData = Mockito.mock(PaginationData.class);
     ContainerResource subResource1 = Mockito.mock(ContainerResource.class);
     ContainerResource subResource2 = Mockito.mock(ContainerResource.class);
@@ -312,10 +299,8 @@ public class PortabilityInMemoryDataCopierTest {
         .copyIteration(
             jobId, exportAuthData, importAuthData, Optional.of(exportInfo), jobIdPrefix, 1);
 
-    // Act
     inMemoryDataCopier.copy(exportAuthData, importAuthData, jobId, Optional.of(exportInfo));
 
-    // Assert
     InOrder orderVerifier = Mockito.inOrder(inMemoryDataCopier);
     orderVerifier.verify(inMemoryDataCopier)
         .copyIteration(
@@ -346,11 +331,12 @@ public class PortabilityInMemoryDataCopierTest {
             4);
   }
 
-  @Test
-  public void continuationDataWithPaginationDataAndNestedSubResource()
+  @ParameterizedTest
+  @MethodSource("data")
+  public void continuationDataWithPaginationDataAndNestedSubResource(
+      PortabilityAbstractInMemoryDataCopier inMemoryDataCopier)
       throws CopyException, IOException {
-
-    // Arrange
+    inMemoryDataCopier.resetCopyIterationCounter();
     PaginationData paginationData = Mockito.mock(PaginationData.class);
     ContinuationData paginationContinuationData = Mockito.mock(ContinuationData.class);
     ExportResult<?> paginationExportResult = Mockito.mock(ExportResult.class);
@@ -386,10 +372,8 @@ public class PortabilityInMemoryDataCopierTest {
             jobIdPrefix,
             2);
 
-    // Act
     inMemoryDataCopier.copy(exportAuthData, importAuthData, jobId, Optional.of(exportInfo));
 
-    // Assert
     InOrder orderVerifier = Mockito.inOrder(inMemoryDataCopier);
     orderVerifier.verify(inMemoryDataCopier)
         .copyIteration(
@@ -423,10 +407,8 @@ public class PortabilityInMemoryDataCopierTest {
   @Test
   public void loadStackFromJobStoreAtStartOfTransfer() throws CopyException, IOException {
 
-    // Act
     stackInMemoryDataCopier.copy(exportAuthData, importAuthData, jobId, Optional.of(exportInfo));
 
-    // Assert
     Mockito.verify(stackInMemoryDataCopier.jobStore).loadJobStack(jobId);
   }
 
@@ -434,7 +416,6 @@ public class PortabilityInMemoryDataCopierTest {
   public void storeStackContainingPaginationDataAndMultipleSubResourcesInJobStore()
       throws CopyException, IOException {
 
-    // Arrange
     PaginationData paginationData = Mockito.mock(PaginationData.class);
     ContainerResource subResource1 = Mockito.mock(ContainerResource.class);
     ContainerResource subResource2 = Mockito.mock(ContainerResource.class);
@@ -457,10 +438,8 @@ public class PortabilityInMemoryDataCopierTest {
         .copyIteration(
             jobId, exportAuthData, importAuthData, Optional.of(exportInfo), jobIdPrefix, 1);
 
-    // Act
     stackInMemoryDataCopier.copy(exportAuthData, importAuthData, jobId, Optional.of(exportInfo));
 
-    // Assert
     InOrder orderVerifier = Mockito.inOrder(stackInMemoryDataCopier.jobStore);
     orderVerifier.verify(stackInMemoryDataCopier.jobStore).storeJobStack(jobId, jobStack);
     jobStack.pop();
@@ -472,16 +451,14 @@ public class PortabilityInMemoryDataCopierTest {
   }
 
   @Test
-  public void doNotPerformAdditionalCopyingIfLoadingEmptyStackFromJobStore() throws CopyException, IOException {
+  public void doNotPerformAdditionalCopyingIfLoadingEmptyStackFromJobStore()
+      throws CopyException, IOException {
 
-    // Arrange
     Mockito.when(stackInMemoryDataCopier.jobStore.loadJobStack(jobId))
         .thenReturn(Optional.of(new Stack<ExportInformation>()));
 
-    // Act
     stackInMemoryDataCopier.copy(exportAuthData, importAuthData, jobId, Optional.of(exportInfo));
 
-    // Assert
     Mockito.verify(stackInMemoryDataCopier, Mockito.never())
         .copyIteration(
             Mockito.any(UUID.class),

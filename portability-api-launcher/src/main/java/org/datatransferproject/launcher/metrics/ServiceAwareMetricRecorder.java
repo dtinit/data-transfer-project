@@ -19,6 +19,7 @@ import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.api.launcher.MetricRecorder;
 
 import java.time.Duration;
+import org.datatransferproject.types.common.models.DataVertical;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -37,22 +38,22 @@ public class ServiceAwareMetricRecorder implements MetricRecorder {
     this.metricRecorder = checkNotNull(metricRecorder, "metricRecorder can't be null");
   }
   @Override
-  public void recordMetric(String dataType, String tag) {
+  public void recordMetric(DataVertical dataType, String tag) {
     metricRecorder.recordGenericMetric(dataType, service, tag);
   }
 
   @Override
-  public void recordMetric(String dataType, String tag, boolean bool) {
+  public void recordMetric(DataVertical dataType, String tag, boolean bool) {
     metricRecorder.recordGenericMetric(dataType, service, tag, bool);
   }
 
   @Override
-  public void recordMetric(String dataType, String tag, Duration duration) {
+  public void recordMetric(DataVertical dataType, String tag, Duration duration) {
     metricRecorder.recordGenericMetric(dataType, service, tag, duration);
   }
 
   @Override
-  public void recordMetric(String dataType, String tag, int value) {
+  public void recordMetric(DataVertical dataType, String tag, int value) {
     metricRecorder.recordGenericMetric(dataType, service, tag, value);
   }
 }

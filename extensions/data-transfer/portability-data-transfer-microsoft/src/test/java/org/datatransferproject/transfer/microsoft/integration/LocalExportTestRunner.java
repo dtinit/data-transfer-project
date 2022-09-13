@@ -1,5 +1,7 @@
 package org.datatransferproject.transfer.microsoft.integration;
 
+import static org.datatransferproject.types.common.models.DataVertical.CONTACTS;
+
 import java.util.Optional;
 import org.datatransferproject.auth.microsoft.harness.AuthTestDriver;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
@@ -22,7 +24,7 @@ public class LocalExportTestRunner {
     TokenAuthData token = authTestDriver.getOAuthTokenCode();
 
     Exporter<TokenAuthData, ContactsModelWrapper> contacts =
-        (Exporter<TokenAuthData, ContactsModelWrapper>) serviceProvider.getExporter("CONTACTS");
+        (Exporter<TokenAuthData, ContactsModelWrapper>) serviceProvider.getExporter(CONTACTS);
     ExportResult<ContactsModelWrapper> wrapper = contacts.export(UUID.randomUUID(), token,
         Optional.empty());
   }
