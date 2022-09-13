@@ -19,6 +19,7 @@ package org.datatransferproject.types.common.models.music;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -28,13 +29,16 @@ public class MusicRelease {
 
   private final String icpnCode;
   private final String title;
+  private List<MusicGroup> byArtists;
 
   @JsonCreator
   public MusicRelease(
       @JsonProperty("icpnCode") String icpnCode,
-      @JsonProperty("title") String title) {
+      @JsonProperty("title") String title,
+      @JsonProperty("byArtists") List<MusicGroup> byArtists) {
     this.icpnCode = icpnCode;
     this.title = title;
+    this.byArtists = byArtists;
   }
 
   public String getIcpnCode() {
@@ -45,11 +49,16 @@ public class MusicRelease {
     return title;
   }
 
+  public List<MusicGroup> getByArtists() {
+    return byArtists;
+  }
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("icpnCode", getIcpnCode())
         .add("title", getTitle())
+        .add("byArtists", getByArtists())
         .toString();
   }
 
@@ -62,11 +71,12 @@ public class MusicRelease {
       return false;
     }
     MusicRelease that = (MusicRelease) o;
-    return Objects.equals(icpnCode, that.icpnCode) && Objects.equals(title, that.title);
+    return Objects.equals(icpnCode, that.icpnCode) && Objects.equals(title, that.title)
+        && Objects.equals(byArtists, that.byArtists);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(icpnCode, title);
+    return Objects.hash(icpnCode, title, byArtists);
   }
 }

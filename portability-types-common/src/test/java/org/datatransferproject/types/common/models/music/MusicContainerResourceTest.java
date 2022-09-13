@@ -42,27 +42,27 @@ public final class MusicContainerResourceTest {
     ImmutableList<MusicPlaylistItem> playlistItems =
         ImmutableList.of(
             new MusicPlaylistItem(
-                new MusicRecording( "item1_isrc", null,
-                    new MusicRelease("r1_icpn", null ), null),
+                new MusicRecording("item1_isrc", null, 180000L,
+                    new MusicRelease("r1_icpn", null, null), null),
                 "p1_id",
                 1),
             new MusicPlaylistItem(
-                new MusicRecording("item2_isrc", null,
-                    new MusicRelease("r1_icpn", null), null),
+                new MusicRecording("item2_isrc", null, 180000L,
+                    new MusicRelease("r1_icpn", null, null), null),
                 "p1_id",
                 2));
 
     ImmutableList<MusicRecording> tracks =
         ImmutableList.of(
-            new MusicRecording("t1_isrc", null,
-                new MusicRelease("r2_icpn", null),
+            new MusicRecording("t1_isrc", null, 180000L,
+                new MusicRelease("r2_icpn", null, null),
                 null),
-            new MusicRecording("t2_isrc",null,
-                new MusicRelease("r3_icpn", null),
+            new MusicRecording("t2_isrc", null, 180000L,
+                new MusicRelease("r3_icpn", null, null),
                 null));
 
     ImmutableList<MusicRelease> releases = ImmutableList.of(
-        new MusicRelease("r4_icpn", null));
+        new MusicRelease("r4_icpn", null, null));
 
     ContainerResource data = new MusicContainerResource(MusicPlatform.GOOGLE, playlists,
         playlistItems, tracks, releases);

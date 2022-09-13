@@ -16,11 +16,10 @@
 
 package org.datatransferproject.types.common.models.music;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -30,19 +29,22 @@ public class MusicRecording {
 
   private final String isrcCode;
   private final String title;
+  private final long durationMillis;
   private final MusicRelease musicRelease;
-  private final MusicGroup byArtist;
+  private final List<MusicGroup> byArtists;
 
   @JsonCreator
   public MusicRecording(
       @JsonProperty("isrcCode") String isrcCode,
       @JsonProperty("title") String title,
+      @JsonProperty("durationMillis") long durationMillis,
       @JsonProperty("musicRelease") MusicRelease musicRelease,
-      @JsonProperty("byArtist") MusicGroup byArtist) {
+      @JsonProperty("byArtists") List<MusicGroup> byArtists) {
     this.isrcCode = isrcCode;
     this.title = title;
+    this.durationMillis = durationMillis;
     this.musicRelease = musicRelease;
-    this.byArtist = byArtist;
+    this.byArtists = byArtists;
   }
 
   public String getIsrcCode() {
@@ -53,12 +55,16 @@ public class MusicRecording {
     return title;
   }
 
+  public long getDurationMillis() {
+    return durationMillis;
+  }
+
   public MusicRelease getMusicRelease() {
     return musicRelease;
   }
 
-  public MusicGroup getByArtist() {
-    return byArtist;
+  public List<MusicGroup> getByArtists() {
+    return byArtists;
   }
 
   @Override
@@ -66,8 +72,9 @@ public class MusicRecording {
     return MoreObjects.toStringHelper(this)
         .add("isrcCode", getIsrcCode())
         .add("title", getTitle())
+        .add("durationMillis", getDurationMillis())
         .add("musicRelease", getMusicRelease())
-        .add("byArtist", getByArtist())
+        .add("byArtists", getByArtists())
         .toString();
   }
 
@@ -82,12 +89,13 @@ public class MusicRecording {
     MusicRecording that = (MusicRecording) o;
     return Objects.equals(isrcCode, that.isrcCode)
         && Objects.equals(title, that.title)
+        && Objects.equals(durationMillis, that.durationMillis)
         && Objects.equals(musicRelease, that.musicRelease)
-        && Objects.equals(byArtist, that.byArtist);
+        && Objects.equals(byArtists, that.byArtists);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(isrcCode, title, musicRelease, byArtist);
+    return Objects.hash(isrcCode, title, durationMillis, musicRelease, byArtists);
   }
 }
