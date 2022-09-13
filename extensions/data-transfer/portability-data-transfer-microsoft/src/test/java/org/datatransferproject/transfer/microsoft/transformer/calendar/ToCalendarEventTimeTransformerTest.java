@@ -15,11 +15,12 @@
  */
 package org.datatransferproject.transfer.microsoft.transformer.calendar;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.util.HashMap;
 import java.util.Map;
 import org.datatransferproject.transfer.microsoft.helper.TestTransformerContext;
 import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
-import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 
 public class ToCalendarEventTimeTransformerTest {
@@ -33,8 +34,8 @@ public class ToCalendarEventTimeTransformerTest {
     CalendarEventModel.CalendarEventTime time =
         transformer.apply(map, new TestTransformerContext());
 
-    Assert.assertEquals(18, time.getDateTime().getHour());
-    Assert.assertEquals(2018, time.getDateTime().getYear());
-    Assert.assertEquals(14, time.getDateTime().getDayOfMonth());
+    assertEquals(18, time.getDateTime().getHour());
+    assertEquals(2018, time.getDateTime().getYear());
+    assertEquals(14, time.getDateTime().getDayOfMonth());
   }
 }
