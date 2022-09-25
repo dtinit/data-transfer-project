@@ -32,24 +32,32 @@ public class MusicPlaylist {
   private final String id;
   private final String title;
   private final String description;
-  private final Instant createTime;
-  private final Instant updateTime;
+
+  /**
+   * The same as https://schema.org/dateCreated but of uses java.time.Instant for arbitrary granularity usage
+   */
+  private final Instant timeCreated;
+
+  /**
+   * The same as https://schema.org/dateModified but of uses java.time.Instant for arbitrary granularity usage
+   */
+  private final Instant timeUpdated;
 
   @JsonCreator
   public MusicPlaylist(
       @JsonProperty("id") String id,
       @JsonProperty("title") String title,
       @JsonProperty("description") String description,
-      @JsonProperty("createTime") Instant createTime,
-      @JsonProperty("updateTime") Instant updateTime) {
+      @JsonProperty("timeCreated") Instant timeCreated,
+      @JsonProperty("timeUpdated") Instant timeUpdated) {
     if (isNullOrEmpty(id)) {
       throw new IllegalArgumentException("id must be for MusicPlaylist");
     }
     this.id = id;
     this.title = title;
     this.description = description;
-    this.createTime = createTime;
-    this.updateTime = updateTime;
+    this.timeCreated = timeCreated;
+    this.timeUpdated = timeUpdated;
   }
 
   public String getId() {
@@ -64,12 +72,12 @@ public class MusicPlaylist {
     return description;
   }
 
-  public Instant getCreateTime() {
-    return createTime;
+  public Instant getTimeCreated() {
+    return timeCreated;
   }
 
-  public Instant getUpdateTime() {
-    return updateTime;
+  public Instant getTimeUpdated() {
+    return timeUpdated;
   }
 
   @Override
@@ -78,8 +86,8 @@ public class MusicPlaylist {
         .add("id", getId())
         .add("title", getTitle())
         .add("description", getDescription())
-        .add("createTime", getCreateTime())
-        .add("updateTime", getUpdateTime())
+        .add("timeCreated", getTimeCreated())
+        .add("timeUpdated", getTimeUpdated())
         .toString();
   }
 

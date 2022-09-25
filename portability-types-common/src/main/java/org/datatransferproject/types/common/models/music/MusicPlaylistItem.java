@@ -29,8 +29,21 @@ import java.util.Objects;
  */
 public class MusicPlaylistItem {
 
+  /**
+   * The MusicRecording belongs to the playlist item. Required.
+   */
   private final MusicRecording track;
+
+  /**
+   * The playlist id of the playlist item. It can be used to backtrack which playlist to add the
+   * playlist item. Required.
+   */
   private final String playlistId;
+
+  /**
+   * The index of track inside the playlist. Best efforts to make sure the correct order of playlist
+   * items. Optional.
+   */
   private final int order;
 
   @JsonCreator
