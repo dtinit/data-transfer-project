@@ -18,8 +18,8 @@ package org.datatransferproject.transfer.facebook.photos;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.datatransferproject.transfer.facebook.photos.FacebookPhotosExporter.PHOTO_TOKEN_PREFIX;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;

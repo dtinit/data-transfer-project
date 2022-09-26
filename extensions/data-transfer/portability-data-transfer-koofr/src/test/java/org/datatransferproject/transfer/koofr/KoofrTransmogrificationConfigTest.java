@@ -1,11 +1,12 @@
 package org.datatransferproject.transfer.koofr;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import com.google.common.collect.ImmutableList;
 import java.util.Collection;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
-import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 public class KoofrTransmogrificationConfigTest {
 
@@ -32,21 +33,21 @@ public class KoofrTransmogrificationConfigTest {
     PhotoAlbum[] albumsArray = container.getAlbums().toArray(new PhotoAlbum[0]);
     PhotoModel[] photosArray = container.getPhotos().toArray(new PhotoModel[0]);
 
-    Assert.assertEquals(1, albumsArray.length);
-    Assert.assertEquals("Album _______________1", albumsArray[0].getName());
+    assertEquals(1, albumsArray.length);
+    assertEquals("Album _______________1", albumsArray[0].getName());
 
-    Assert.assertEquals(2, photosArray.length);
-    Assert.assertEquals("pic1_______________.jpg", photosArray[0].getTitle());
-    Assert.assertEquals("pic2_______________.jpg", photosArray[1].getTitle());
+    assertEquals(2, photosArray.length);
+    assertEquals("pic1_______________.jpg", photosArray[0].getTitle());
+    assertEquals("pic2_______________.jpg", photosArray[1].getTitle());
   }
 
   @Test
   public void testGetAlbumName() {
     KoofrTransmogrificationConfig config = new KoofrTransmogrificationConfig();
 
-    Assert.assertEquals("Valid name", config.getAlbumName("Valid name"));
-    Assert.assertEquals("Album", config.getAlbumName(""));
-    Assert.assertEquals("Album .", config.getAlbumName("."));
-    Assert.assertEquals("Album ..", config.getAlbumName(".."));
+    assertEquals("Valid name", config.getAlbumName("Valid name"));
+    assertEquals("Album", config.getAlbumName(""));
+    assertEquals("Album .", config.getAlbumName("."));
+    assertEquals("Album ..", config.getAlbumName(".."));
   }
 }
