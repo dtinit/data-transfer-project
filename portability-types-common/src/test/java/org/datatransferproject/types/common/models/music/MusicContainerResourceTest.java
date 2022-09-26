@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Truth;
 import org.datatransferproject.types.common.models.ContainerResource;
-import org.datatransferproject.types.common.models.music.MusicContainerResource.MusicPlatform;
 import org.junit.jupiter.api.Test;
 
 public final class MusicContainerResourceTest {
@@ -64,7 +63,7 @@ public final class MusicContainerResourceTest {
     ImmutableList<MusicRelease> releases = ImmutableList.of(
         new MusicRelease("r4_icpn", null, null));
 
-    ContainerResource data = new MusicContainerResource(MusicPlatform.GOOGLE, playlists,
+    ContainerResource data = new MusicContainerResource(playlists,
         playlistItems, tracks, releases);
 
     String serialized = objectMapper.writeValueAsString(data);

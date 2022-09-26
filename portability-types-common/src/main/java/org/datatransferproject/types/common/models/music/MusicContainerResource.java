@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import java.util.Collection;
@@ -34,13 +33,6 @@ import org.datatransferproject.types.common.models.ContainerResource;
 @JsonTypeName("MusicContainerResource")
 public class MusicContainerResource extends ContainerResource {
 
-  public enum MusicPlatform {
-    UNSPECIFIED,
-    APPLE,
-    GOOGLE
-  }
-
-  private MusicPlatform originalPlatform;
   private final Collection<MusicPlaylist> playlists;
   private final List<MusicPlaylistItem> playlistItems;
   private final Collection<MusicRecording> tracks;
@@ -48,22 +40,14 @@ public class MusicContainerResource extends ContainerResource {
 
   @JsonCreator
   public MusicContainerResource(
-      @JsonProperty("originalPlatform") MusicPlatform originalPlatform,
       @JsonProperty("playlists") Collection<MusicPlaylist> playlists,
       @JsonProperty("playlistItems") List<MusicPlaylistItem> playlistItems,
       @JsonProperty("tracks") Collection<MusicRecording> tracks,
       @JsonProperty("releases") Collection<MusicRelease> releases) {
-    Preconditions.checkNotNull(originalPlatform,
-        "originalPlatform must be set for MusicContainerResource");
-    this.originalPlatform = originalPlatform;
     this.playlists = playlists == null ? ImmutableList.of() : playlists;
     this.playlistItems = playlistItems == null ? ImmutableList.of() : playlistItems;
     this.tracks = tracks == null ? ImmutableList.of() : tracks;
     this.releases = releases == null ? ImmutableList.of() : releases;
-  }
-
-  public MusicPlatform getOriginalPlatform() {
-    return originalPlatform;
   }
 
   public Collection<MusicPlaylist> getPlaylists() {
@@ -91,8 +75,7 @@ public class MusicContainerResource extends ContainerResource {
       return false;
     }
     MusicContainerResource that = (MusicContainerResource) o;
-    return Objects.equals(getOriginalPlatform(), that.getOriginalPlatform())
-        && Iterables.elementsEqual(getPlaylists(), that.getPlaylists())
+    return Iterables.elementsEqual(getPlaylists(), that.getPlaylists())
         && Objects.equals(getPlaylistItems(), that.getPlaylistItems())
         && Iterables.elementsEqual(getTracks(), that.getTracks())
         && Iterables.elementsEqual(getReleases(), that.getReleases());
@@ -106,7 +89,6 @@ public class MusicContainerResource extends ContainerResource {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-        .add("originalPlatform", getOriginalPlatform())
         .add("playlists", getPlaylists())
         .add("playlistItems", getPlaylistItems())
         .add("tracks", getTracks())
