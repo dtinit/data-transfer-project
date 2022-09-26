@@ -16,6 +16,9 @@
 package org.datatransferproject.transfer.microsoft.transformer.calendar;
 
 import static org.datatransferproject.transfer.microsoft.transformer.TransformConstants.CALENDAR_ID;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -23,7 +26,6 @@ import java.util.Map;
 import org.datatransferproject.transfer.microsoft.helper.TestTransformerContext;
 import org.datatransferproject.types.common.models.calendar.CalendarAttendeeModel;
 import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
-import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -108,23 +110,23 @@ public class ToCalendarEventModelTransformerTest {
 
     CalendarEventModel event = transformer.apply(rawEvent, context);
 
-    Assert.assertEquals("123", event.getCalendarId());
+    assertEquals("123", event.getCalendarId());
 
-    Assert.assertEquals("Some Place", event.getLocation());
-    Assert.assertEquals("Test Appointment 1", event.getTitle());
-    Assert.assertTrue(event.getNotes().length() > 5);
-    Assert.assertEquals(1, event.getAttendees().size());
+    assertEquals("Some Place", event.getLocation());
+    assertEquals("Test Appointment 1", event.getTitle());
+    assertTrue(event.getNotes().length() > 5);
+    assertEquals(1, event.getAttendees().size());
 
     CalendarAttendeeModel attendee = event.getAttendees().get(0);
-    Assert.assertEquals("Test Test1", attendee.getDisplayName());
-    Assert.assertEquals("foo@foo.com", attendee.getEmail());
-    Assert.assertFalse(attendee.getOptional());
+    assertEquals("Test Test1", attendee.getDisplayName());
+    assertEquals("foo@foo.com", attendee.getEmail());
+    assertFalse(attendee.getOptional());
 
-    Assert.assertEquals(18, event.getStartTime().getDateTime().getHour());
-    Assert.assertEquals(0, event.getStartTime().getDateTime().getMinute());
+    assertEquals(18, event.getStartTime().getDateTime().getHour());
+    assertEquals(0, event.getStartTime().getDateTime().getMinute());
 
-    Assert.assertEquals(18, event.getEndTime().getDateTime().getHour());
-    Assert.assertEquals(30, event.getEndTime().getDateTime().getMinute());
+    assertEquals(18, event.getEndTime().getDateTime().getHour());
+    assertEquals(30, event.getEndTime().getDateTime().getMinute());
   }
 
   @BeforeEach
