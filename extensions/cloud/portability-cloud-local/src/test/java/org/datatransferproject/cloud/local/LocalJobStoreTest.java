@@ -16,7 +16,7 @@
 
 package org.datatransferproject.cloud.local;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.truth.Truth;

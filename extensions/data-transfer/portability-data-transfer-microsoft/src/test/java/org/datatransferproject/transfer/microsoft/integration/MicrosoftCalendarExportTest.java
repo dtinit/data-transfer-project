@@ -15,6 +15,9 @@
  */
 package org.datatransferproject.transfer.microsoft.integration;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.mockwebserver.MockResponse;
@@ -27,7 +30,6 @@ import org.datatransferproject.transfer.microsoft.calendar.MicrosoftCalendarExpo
 import org.datatransferproject.transfer.microsoft.transformer.TransformerServiceImpl;
 import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -239,15 +241,15 @@ public class MicrosoftCalendarExportTest {
 
     CalendarContainerResource calendarResource = resource.getExportedData();
 
-    Assert.assertEquals(2, calendarResource.getCalendars().size());
-    Assert.assertFalse(
+    assertEquals(2, calendarResource.getCalendars().size());
+    assertFalse(
         calendarResource
             .getCalendars()
             .stream()
             .anyMatch(c -> "Calendar1".equals(c.getId()) && "Calendar2".equals(c.getId())));
 
-    Assert.assertEquals(2, calendarResource.getEvents().size());
-    Assert.assertFalse(
+    assertEquals(2, calendarResource.getEvents().size());
+    assertFalse(
         calendarResource
             .getEvents()
             .stream()

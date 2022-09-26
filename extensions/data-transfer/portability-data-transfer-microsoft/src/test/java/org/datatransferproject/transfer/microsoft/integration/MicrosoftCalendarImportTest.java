@@ -17,6 +17,8 @@ package org.datatransferproject.transfer.microsoft.integration;
 
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.squareup.okhttp.HttpUrl;
@@ -38,7 +40,6 @@ import org.datatransferproject.types.common.models.calendar.CalendarContainerRes
 import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
 import org.datatransferproject.types.common.models.calendar.CalendarModel;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
-import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -220,7 +221,7 @@ public class MicrosoftCalendarImportTest {
 
     ImportResult result = importer.importItem(JOB_ID, executor, token, resource);
 
-    Assert.assertEquals(ImportResult.ResultType.OK, result.getType());
+    assertEquals(ImportResult.ResultType.OK, result.getType());
 
     // verify the batch calendar request
     RecordedRequest calendarBatch = server.takeRequest();
@@ -230,21 +231,21 @@ public class MicrosoftCalendarImportTest {
     List<Map<String, Object>> calendarRequests =
         (List<Map<String, Object>>) calendarBody.get("requests");
 
-    Assert.assertNotNull(calendarRequests);
-    Assert.assertEquals(1, calendarRequests.size());
+    assertNotNull(calendarRequests);
+    assertEquals(1, calendarRequests.size());
 
     Map<String, Object> calendarRequest = calendarRequests.get(0);
 
-    Assert.assertNotNull(calendarRequest.get("headers"));
-    Assert.assertEquals("POST", calendarRequest.get("method"));
-    Assert.assertEquals("/v1.0/me/calendars", calendarRequest.get("url"));
+    assertNotNull(calendarRequest.get("headers"));
+    assertEquals("POST", calendarRequest.get("method"));
+    assertEquals("/v1.0/me/calendars", calendarRequest.get("url"));
 
     Map<String, Object> calendarRequestBody = (Map<String, Object>) calendarRequest.get("body");
-    Assert.assertNotNull(calendarRequestBody);
-    Assert.assertEquals("name", calendarRequestBody.get("name"));
+    assertNotNull(calendarRequestBody);
+    assertEquals("name", calendarRequestBody.get("name"));
 
     // verify the calendar id mapping from old id to new id was saved
-    Assert.assertEquals("NewId1", executor.getCachedValue("OldId1"));
+    assertEquals("NewId1", executor.getCachedValue("OldId1"));
 
     // verify the batch event request
     RecordedRequest eventBatch = server.takeRequest();
@@ -253,41 +254,41 @@ public class MicrosoftCalendarImportTest {
     Map<String, Object> eventRequest =
         (Map<String, Object>) ((List<Map<String, Object>>) eventRequests.get("requests")).get(0);
 
-    Assert.assertNotNull(eventRequest.get("headers"));
-    Assert.assertEquals("POST", eventRequest.get("method"));
-    Assert.assertEquals(
+    assertNotNull(eventRequest.get("headers"));
+    assertEquals("POST", eventRequest.get("method"));
+    assertEquals(
         "/v1.0/me/calendars/NewId1/events",
         eventRequest.get("url")); // verify the URL is contructed correctly with NewId
 
     Map<String, Object> eventRequestBody = (Map<String, Object>) eventRequest.get("body");
-    Assert.assertNotNull(eventRequestBody);
-    Assert.assertEquals("Event1", eventRequestBody.get("subject"));
+    assertNotNull(eventRequestBody);
+    assertEquals("Event1", eventRequestBody.get("subject"));
 
     Map<String, Object> location = (Map<String, Object>) eventRequestBody.get("location");
-    Assert.assertEquals("Location1", location.get("displayName"));
-    Assert.assertEquals("Default", location.get("locationType"));
+    assertEquals("Location1", location.get("displayName"));
+    assertEquals("Default", location.get("locationType"));
 
     Map<String, Object> body = (Map<String, Object>) eventRequestBody.get("body");
-    Assert.assertEquals("Test Notes", body.get("content"));
-    Assert.assertEquals("HTML", body.get("contentType"));
+    assertEquals("Test Notes", body.get("content"));
+    assertEquals("HTML", body.get("contentType"));
 
     List<Map<String, Object>> attendees =
         (List<Map<String, Object>>) eventRequestBody.get("attendees");
-    Assert.assertEquals(1, attendees.size());
+    assertEquals(1, attendees.size());
     Map<String, Object> attendee = (Map<String, Object>) attendees.get(0);
-    Assert.assertEquals("required", attendee.get("type"));
+    assertEquals("required", attendee.get("type"));
     Map<String, Object> emailAddress = (Map<String, Object>) attendee.get("emailAddress");
-    Assert.assertEquals("test@test.com", emailAddress.get("address"));
-    Assert.assertEquals("Test Attendee", emailAddress.get("name"));
+    assertEquals("test@test.com", emailAddress.get("address"));
+    assertEquals("Test Attendee", emailAddress.get("name"));
 
     // verify dates
     Map<String, Object> startDate = (Map<String, Object>) eventRequestBody.get("start");
-    Assert.assertNotNull(startDate.get("dateTime"));
-    Assert.assertEquals("UTC", startDate.get("timeZone"));
+    assertNotNull(startDate.get("dateTime"));
+    assertEquals("UTC", startDate.get("timeZone"));
 
     Map<String, Object> endDate = (Map<String, Object>) eventRequestBody.get("end");
-    Assert.assertNotNull(endDate.get("dateTime"));
-    Assert.assertEquals("UTC", endDate.get("timeZone"));
+    assertNotNull(endDate.get("dateTime"));
+    assertEquals("UTC", endDate.get("timeZone"));
   }
 
   @BeforeEach

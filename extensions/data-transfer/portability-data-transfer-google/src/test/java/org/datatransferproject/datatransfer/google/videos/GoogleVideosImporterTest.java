@@ -17,9 +17,9 @@
 package org.datatransferproject.datatransfer.google.videos;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -175,8 +175,8 @@ public class GoogleVideosImporterTest {
                             null))))
             .getBytes()
             .get();
-    assertEquals("Expected the number of bytes to be the two files of 32L.", 64L, length);
-    assertEquals("Expected executor to have no errors.", 0, executor.getErrors().size());
+    assertEquals(64L, length,"Expected the number of bytes to be the two files of 32L.");
+    assertEquals(0, executor.getErrors().size(),"Expected executor to have no errors.");
   }
 
   @Test
@@ -236,8 +236,8 @@ public class GoogleVideosImporterTest {
             photosLibraryClient,
             executor);
 
-    assertEquals("Expected the number of bytes to be the one files of 32L.", 32L, length);
-    assertEquals("Expected executor to have one error.", 1, executor.getErrors().size());
+    assertEquals(32L, length,"Expected the number of bytes to be the one files of 32L.");
+    assertEquals(1, executor.getErrors().size(),"Expected executor to have one error.");
     ErrorDetail errorDetail = executor.getErrors().iterator().next();
     assertEquals("myId2", errorDetail.id());
     assertThat(errorDetail.exception()).contains("Video item could not be created.");
@@ -268,8 +268,8 @@ public class GoogleVideosImporterTest {
                     null)),
             photosLibraryClient,
             executor);
-    assertEquals("Expected the number of bytes to be 0L.", 0L, length);
-    assertEquals("Expected executor to have no errors.", 0, executor.getErrors().size());
+    assertEquals(0L, length,"Expected the number of bytes to be 0L.");
+    assertEquals(0, executor.getErrors().size(),"Expected executor to have no errors.");
   }
 
   @Test
@@ -294,11 +294,9 @@ public class GoogleVideosImporterTest {
     String uploadToken = "token";
     NewMediaItem newMediaItemResult = googleVideosImporter.buildMediaItem(videoModel, uploadToken);
     assertFalse(
-        "Expected the length of the description to be truncated to 1000 chars.",
-        (newMediaItemResult.getDescription().length() > 1000));
+        (newMediaItemResult.getDescription().length() > 1000),"Expected the length of the description to be truncated to 1000 chars.");
     assertTrue(
-        "Expected a truncated description to terminate with \"...\"",
-        newMediaItemResult.getDescription().endsWith("..."));
+        newMediaItemResult.getDescription().endsWith("..."),"Expected a truncated description to terminate with \"...\"");
   }
 
   @Test

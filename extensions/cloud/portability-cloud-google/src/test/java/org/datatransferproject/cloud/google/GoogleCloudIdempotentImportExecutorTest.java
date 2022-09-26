@@ -1,5 +1,9 @@
 package org.datatransferproject.cloud.google;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.Transaction;
 import com.google.cloud.datastore.testing.LocalDatastoreHelper;
@@ -12,7 +16,7 @@ import org.mockito.Mockito;
 import java.io.IOException;
 import java.util.UUID;
 
-import static org.junit.Assert.*;
+
 
 public class GoogleCloudIdempotentImportExecutorTest {
 
