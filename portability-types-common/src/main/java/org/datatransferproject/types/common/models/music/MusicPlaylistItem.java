@@ -53,7 +53,7 @@ public class MusicPlaylistItem {
       @JsonProperty("track") MusicRecording track,
       @JsonProperty("playlistId") String playlistId,
       @JsonProperty("order") int order) {
-    Preconditions.checkNotNull(track, "track must be set for MusicPlaylistItem");
+    Preconditions.checkArgument(track != null, "track must be set for MusicPlaylistItem");
     this.track = track;
     Preconditions.checkArgument(!isNullOrEmpty(playlistId),
         "non-empty playlistId must be set for MusicPlaylistItem");
