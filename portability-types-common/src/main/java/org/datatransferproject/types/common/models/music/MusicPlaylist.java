@@ -51,7 +51,7 @@ public class MusicPlaylist {
       @JsonProperty("timeCreated") Instant timeCreated,
       @JsonProperty("timeUpdated") Instant timeUpdated) {
     if (isNullOrEmpty(id)) {
-      throw new IllegalArgumentException("id must be for MusicPlaylist");
+      throw new IllegalArgumentException("non-empty id required for MusicPlaylist");
     }
     this.id = id;
     this.title = title;

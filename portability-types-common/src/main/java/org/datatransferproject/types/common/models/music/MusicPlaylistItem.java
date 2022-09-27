@@ -36,8 +36,8 @@ public class MusicPlaylistItem {
 
   /**
    * The playlist id of playlist item. Required. This ID should be unique within the upstream system
-   * from which the data originated. No particular format is guaranteed (eg: it might like a
-   * URI "music.acme.co/playlists/23d89fea", a plain ID "28921", or anything else really).
+   * from which the data originated. No particular format is guaranteed (eg: it might like a URI
+   * "music.acme.co/playlists/23d89fea", a plain ID "28921", or anything else really).
    */
   private final String playlistId;
 
@@ -55,9 +55,8 @@ public class MusicPlaylistItem {
       @JsonProperty("order") int order) {
     Preconditions.checkNotNull(track, "track must be set for MusicPlaylistItem");
     this.track = track;
-    if (isNullOrEmpty(playlistId)) {
-      throw new IllegalArgumentException("playlistId must be set for MusicPlaylistItem");
-    }
+    Preconditions.checkArgument(!isNullOrEmpty(playlistId),
+        "non-empty playlistId must be set for MusicPlaylistItem");
     this.playlistId = playlistId;
     this.order = order;
   }
