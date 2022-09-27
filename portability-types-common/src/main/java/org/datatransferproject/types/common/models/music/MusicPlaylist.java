@@ -21,6 +21,7 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
 import java.time.Instant;
 import java.util.Objects;
 
@@ -50,9 +51,8 @@ public class MusicPlaylist {
       @JsonProperty("description") String description,
       @JsonProperty("timeCreated") Instant timeCreated,
       @JsonProperty("timeUpdated") Instant timeUpdated) {
-    if (isNullOrEmpty(id)) {
-      throw new IllegalArgumentException("non-empty id required for MusicPlaylist");
-    }
+    Preconditions.checkArgument(!isNullOrEmpty(id),
+        "non-empty id required for MusicPlaylist");
     this.id = id;
     this.title = title;
     this.description = description;
