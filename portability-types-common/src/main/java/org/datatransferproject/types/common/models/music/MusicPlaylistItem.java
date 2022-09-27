@@ -35,14 +35,16 @@ public class MusicPlaylistItem {
   private final MusicRecording track;
 
   /**
-   * The playlist id of the playlist item. It can be used to backtrack which playlist to add the
-   * playlist item. Required.
+   * The playlist id of playlist item. Required. This ID should be unique within the upstream system
+   * from which the data originated. No particular format is guaranteed (eg: it might like a
+   * URI "music.acme.co/playlists/23d89fea", a plain ID "28921", or anything else really).
    */
   private final String playlistId;
 
   /**
    * The index of track inside the playlist. Best efforts to make sure the correct order of playlist
-   * items. Optional.
+   * items. Optional. Any int is valid - these numbers are meant purely to be relative to other
+   * MusicPlaylistItem {@code order} values
    */
   private final int order;
 
