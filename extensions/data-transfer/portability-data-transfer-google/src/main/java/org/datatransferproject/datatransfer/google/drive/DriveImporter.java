@@ -60,27 +60,23 @@ public final class DriveImporter
               data.getName(),
               () -> importSingleFolder(driveInterface, "MigratedContent", null));
     } else {
-      parentId = idempotentExecutor.getCachedValue(ROOT_FOLDER_ID);
+      parentId = idempotentExecutor.getCachedValue(data.getId());
     }
 
-    // Uploads album metadata
-    if (data.getFolders() != null && data.getFolders().size() > 0) {
-      for (BlobbyStorageContainerResource folder : data.getFolders()) {
-        idempotentExecutor.executeAndSwallowIOExceptions(
-            folder.getId(),
-            folder.getName(),
-            () -> importSingleFolder(driveInterface, folder.getName(), parentId));
-      }
+    // Uploads folder metadata
+    for (BlobbyStorageContainerResource folder : data.getFolders()) {
+      idempotentExecutor.executeAndSwallowIOExceptions(
+          folder.getId(),
+          folder.getName(),
+          () -> importSingleFolder(driveInterface, folder.getName(), parentId));
     }
 
-    // Uploads photos
-    if (data.getFiles() != null && data.getFiles().size() > 0) {
-      for (DigitalDocumentWrapper file : data.getFiles()) {
-        idempotentExecutor.executeAndSwallowIOExceptions(
-            Integer.toString(file.hashCode()),
-            file.getDtpDigitalDocument().getName(),
-            () -> importSingleFile(jobId, driveInterface, file, parentId));
-      }
+    // Uploads files
+    for (DigitalDocumentWrapper file : data.getFiles()) {
+      idempotentExecutor.executeAndSwallowIOExceptions(
+          Integer.toString(file.hashCode()),
+          file.getDtpDigitalDocument().getName(),
+          () -> importSingleFile(jobId, driveInterface, file, parentId));
     }
 
     return ImportResult.OK;
