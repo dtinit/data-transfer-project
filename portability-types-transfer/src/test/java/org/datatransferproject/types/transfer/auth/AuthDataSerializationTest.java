@@ -1,6 +1,7 @@
 package org.datatransferproject.types.transfer.auth;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
@@ -32,11 +33,11 @@ public class AuthDataSerializationTest {
     final String s = objectMapper.writeValueAsString(authData);
     final AuthData readValue = objectMapper.readValue(s, AuthData.class);
     assertTrue(
-        "The read AuthData should be an instance of CookiesAndUrlAuthData",
-        readValue instanceof CookiesAndUrlAuthData);
+        readValue instanceof CookiesAndUrlAuthData,
+        "The read AuthData should be an instance of CookiesAndUrlAuthData");
     final CookiesAndUrlAuthData readAuthData = (CookiesAndUrlAuthData) readValue;
-    assertEquals("Expect cookies to be the same", cookies, readAuthData.getCookies());
-    assertEquals("Expect url to be the same", url, readAuthData.getUrl());
+    assertEquals(cookies, readAuthData.getCookies(), "Expect cookies to be the same");
+    assertEquals(url, readAuthData.getUrl(), "Expect url to be the same");
   }
 
   @Test
@@ -47,10 +48,10 @@ public class AuthDataSerializationTest {
     final String s = objectMapper.writeValueAsString(authData);
     final AuthData readValue = objectMapper.readValue(s, AuthData.class);
     assertTrue(
-        "The read AuthData should be an instance of TokenAuthData",
-        readValue instanceof TokenAuthData);
+        readValue instanceof TokenAuthData,
+        "The read AuthData should be an instance of TokenAuthData");
     final TokenAuthData readAuthData = (TokenAuthData) readValue;
-    assertEquals("Expect token to be the same", token, readAuthData.getToken());
+    assertEquals(token, readAuthData.getToken(), "Expect token to be the same");
   }
 
   @Test
@@ -63,13 +64,13 @@ public class AuthDataSerializationTest {
     final String s = objectMapper.writeValueAsString(authData);
     final AuthData readValue = objectMapper.readValue(s, AuthData.class);
     assertTrue(
-        "The read AuthData should be an instance of TokenAuthData",
-        readValue instanceof TokensAndUrlAuthData);
+        readValue instanceof TokensAndUrlAuthData,
+        "The read AuthData should be an instance of TokenAuthData");
     final TokensAndUrlAuthData readAuthData = (TokensAndUrlAuthData) readValue;
-    assertEquals("Expect access token to be the same", accessToken, readAuthData.getAccessToken());
+    assertEquals(accessToken, readAuthData.getAccessToken(), "Expect access token to be the same");
     assertEquals(
-        "Expect refresh token to be the same", refreshToken, readAuthData.getRefreshToken());
-    assertEquals("Expect url to be the same", url, readAuthData.getTokenServerEncodedUrl());
+        refreshToken, readAuthData.getRefreshToken(), "Expect refresh token to be the same");
+    assertEquals(url, readAuthData.getTokenServerEncodedUrl(), "Expect url to be the same");
   }
 
   @Test
@@ -81,10 +82,10 @@ public class AuthDataSerializationTest {
     final String s = objectMapper.writeValueAsString(authData);
     final AuthData readValue = objectMapper.readValue(s, AuthData.class);
     assertTrue(
-        "The read AuthData should be an instance of TokenAuthData",
-        readValue instanceof TokenSecretAuthData);
+        readValue instanceof TokenSecretAuthData,
+        "The read AuthData should be an instance of TokenAuthData");
     final TokenSecretAuthData readAuthData = (TokenSecretAuthData) readValue;
-    assertEquals("Expect token to be the same", token, readAuthData.getToken());
-    assertEquals("Expect secret to be the same", secret, readAuthData.getSecret());
+    assertEquals(token, readAuthData.getToken(), "Expect token to be the same");
+    assertEquals(secret, readAuthData.getSecret(), "Expect secret to be the same");
   }
 }

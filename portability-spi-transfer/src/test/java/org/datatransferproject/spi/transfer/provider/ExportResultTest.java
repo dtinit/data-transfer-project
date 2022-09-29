@@ -3,7 +3,7 @@ package org.datatransferproject.spi.transfer.provider;
 import static org.datatransferproject.spi.transfer.provider.ExportResult.ResultType.CONTINUE;
 import static org.datatransferproject.spi.transfer.provider.ExportResult.ResultType.END;
 import static org.datatransferproject.spi.transfer.provider.ExportResult.ResultType.ERROR;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.junit.jupiter.api.Test;
