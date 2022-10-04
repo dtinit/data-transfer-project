@@ -17,6 +17,7 @@
 package org.datatransferproject.types.transfer.retry;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import java.util.Arrays;
 
 /**
@@ -48,10 +49,15 @@ public class RetryMapping {
   }
 
   public boolean matchesThrowable(Throwable throwable) {
-    // TODO: examine entire throwable, not just toString
     String input = throwable.toString();
     for (String regex : regexes) {
       if (input.matches(regex)) {
+        return true;
+      }
+    }
+    String stacktrace = ExceptionUtils.getStackTrace(throwable);
+    for (String regex : regexes) {
+      if (stacktrace.matches(regex)) {
         return true;
       }
     }
