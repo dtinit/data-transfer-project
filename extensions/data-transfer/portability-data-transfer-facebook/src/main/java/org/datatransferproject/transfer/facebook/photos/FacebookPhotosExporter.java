@@ -44,12 +44,12 @@ import org.apache.commons.imaging.formats.tiff.write.TiffOutputDirectory;
 import org.apache.commons.imaging.formats.tiff.write.TiffOutputSet;
 import org.apache.commons.io.IOUtils;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
-import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.PaginationData;
 import org.datatransferproject.types.common.StringPaginationToken;
@@ -68,7 +68,6 @@ public class FacebookPhotosExporter
   static final String PHOTO_TOKEN_PREFIX = "media:";
   private final Monitor monitor;
   private final TemporaryPerJobDataStore store;
-  private final ImageStreamProvider imageStreamProvider;
 
   private AppCredentials appCredentials;
   private FacebookPhotosInterface photosInterface;
@@ -81,7 +80,6 @@ public class FacebookPhotosExporter
     this.appCredentials = appCredentials;
     this.monitor = monitor;
     this.store = store;
-    imageStreamProvider = new ImageStreamProvider();
   }
 
   @VisibleForTesting
@@ -89,13 +87,11 @@ public class FacebookPhotosExporter
       AppCredentials appCredentials,
       FacebookPhotosInterface photosInterface,
       Monitor monitor,
-      TemporaryPerJobDataStore store,
-      ImageStreamProvider imageStreamProvider) {
+      TemporaryPerJobDataStore store) {
     this.appCredentials = appCredentials;
     this.photosInterface = photosInterface;
     this.monitor = monitor;
     this.store = store;
-    this.imageStreamProvider = imageStreamProvider;
   }
 
   @Override
@@ -259,16 +255,16 @@ public class FacebookPhotosExporter
    * This method fetches the image from the specified URL, modifies the EXIF to include the created
    * date, and then stores the modified photo via the store on the local filesystem.
    *
-   * @param jobId Id for the current transfer
-   * @param photo The photo model returned from the API
-   * @param url The source url for the photo
+   * @param jobId          Id for the current transfer
+   * @param photo          The photo model returned from the API
+   * @param url            The source url for the photo
    * @param blindedPhotoId The blinded Id we will share with the importer
    * @return True if we should skip this photo because it is empty
    * @throws IOException If there is an issue with modifying the exif data
    */
   private boolean modifyExifAndStorePhoto(
       UUID jobId, Photo photo, String url, String blindedPhotoId) throws IOException {
-    try (InputStream inputStream = imageStreamProvider.getConnection(url).getInputStream()) {
+    try (InputStream inputStream = ConnectionProvider.getConnection(url).getInputStream()) {
       final byte[] bytes = IOUtils.toByteArray(inputStream);
       if (bytes.length == 0) {
         // We should not upload an empty photo and Google cannot handle it.

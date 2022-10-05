@@ -18,9 +18,9 @@ package org.datatransferproject.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 /**
@@ -46,14 +46,16 @@ public interface OAuth2Config {
   /**
    * Returns a map of scopes needed for export, keyed by data type (e.g., PHOTOS, CALENDAR) as
    * defined in the auth data generator or elsewhere
+   * @return
    */
-  Map<String, Set<String>> getExportScopes();
+  Map<DataVertical, Set<String>> getExportScopes();
 
   /**
    * Returns a map of scopes needed for import, keyed by data type (e.g., PHOTOS, CALENDAR) as
    * defined in the auth data generator or elsewhere
+   * @return
    */
-  Map<String, Set<String>> getImportScopes();
+  Map<DataVertical, Set<String>> getImportScopes();
 
   /**
    * Returns a map of any additional parameters necessary for this service

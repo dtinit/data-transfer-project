@@ -15,6 +15,8 @@
  */
 package org.datatransferproject.transfer.microsoft.integration;
 
+import static org.datatransferproject.types.common.models.DataVertical.CONTACTS;
+
 import ezvcard.VCard;
 import ezvcard.io.json.JCardWriter;
 import ezvcard.property.StructuredName;
@@ -40,7 +42,7 @@ public class LocalImportTestRunner {
     TokenAuthData token = authTestDriver.getOAuthTokenCode();
 
     Importer<TokenAuthData, ContactsModelWrapper> contacts =
-        (Importer<TokenAuthData, ContactsModelWrapper>) serviceProvider.getImporter("CONTACTS");
+        (Importer<TokenAuthData, ContactsModelWrapper>) serviceProvider.getImporter(CONTACTS);
 
     ContactsModelWrapper wrapper = new ContactsModelWrapper(createCards());
     FakeIdempotentImportExecutor executor = new FakeIdempotentImportExecutor();

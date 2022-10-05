@@ -16,6 +16,9 @@
 
 package org.datatransferproject.datatransfer.backblaze;
 
+import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
+import static org.datatransferproject.types.common.models.DataVertical.VIDEOS;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -25,17 +28,18 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.backblaze.common.BackblazeDataTransferClientFactory;
 import org.datatransferproject.datatransfer.backblaze.photos.BackblazePhotosImporter;
 import org.datatransferproject.datatransfer.backblaze.videos.BackblazeVideosImporter;
+import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.transfer.ImageStreamProvider;
 
 public class BackblazeTransferExtension implements TransferExtension {
   public static final String SERVICE_ID = "Backblaze";
-  private static final List<String> SUPPORTED_TYPES = ImmutableList.of("PHOTOS", "VIDEOS");
+  private static final List<DataVertical> SUPPORTED_TYPES = ImmutableList.of(PHOTOS, VIDEOS);
 
-  private ImmutableMap<String, Importer> importerMap;
+  private ImmutableMap<DataVertical, Importer> importerMap;
   private boolean initialized = false;
 
   @Override
@@ -44,13 +48,13 @@ public class BackblazeTransferExtension implements TransferExtension {
   }
 
   @Override
-  public Exporter<?, ?> getExporter(String transferDataType) {
+  public Exporter<?, ?> getExporter(DataVertical transferDataType) {
     //TODO: Implement exporters as per https://github.com/google/data-transfer-project/issues/960
     throw new IllegalArgumentException();
   }
 
   @Override
-  public Importer<?, ?> getImporter(String transferDataType) {
+  public Importer<?, ?> getImporter(DataVertical transferDataType) {
     Preconditions.checkArgument(
         initialized, "Trying to call getImporter before initalizing BackblazeTransferExtension");
     Preconditions.checkArgument(
@@ -70,17 +74,17 @@ public class BackblazeTransferExtension implements TransferExtension {
 
     TemporaryPerJobDataStore jobStore = context.getService(TemporaryPerJobDataStore.class);
 
-    ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
+    ImmutableMap.Builder<DataVertical, Importer> importerBuilder = ImmutableMap.builder();
     BackblazeDataTransferClientFactory backblazeDataTransferClientFactory =
             new BackblazeDataTransferClientFactory(monitor);
-    ImageStreamProvider isProvider = new ImageStreamProvider();
+    ConnectionProvider isProvider = new ConnectionProvider(jobStore);
 
     importerBuilder.put(
-            "PHOTOS",
+            PHOTOS,
             new BackblazePhotosImporter(
                     monitor, jobStore, isProvider, backblazeDataTransferClientFactory));
     importerBuilder.put(
-            "VIDEOS",
+            VIDEOS,
             new BackblazeVideosImporter(
                     monitor, jobStore, isProvider, backblazeDataTransferClientFactory));
     importerMap = importerBuilder.build();

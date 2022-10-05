@@ -27,6 +27,7 @@ import org.datatransferproject.spi.api.types.AuthFlowConfiguration;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.client.transfer.CreateTransferJob;
 import org.datatransferproject.types.client.transfer.TransferJob;
 import org.datatransferproject.types.common.ExportInformation;
@@ -66,7 +67,7 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
 
   @Override
   public TransferJob handle(CreateTransferJob request) {
-    String dataType = request.getDataType();
+    DataVertical dataType = request.getDataType();
     String exportService = request.getExportService();
     String importService = request.getImportService();
     Optional<ExportInformation> exportInformation = Optional
@@ -191,7 +192,7 @@ public class CreateTransferJobAction implements Action<CreateTransferJob, Transf
    */
   private PortabilityJob createJob(
       String encodedSessionKey,
-      String dataType,
+      DataVertical dataType,
       String exportService,
       String importService,
       Optional<ExportInformation> exportInformation,

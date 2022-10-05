@@ -39,7 +39,9 @@ import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.cloud.local.LocalJobStore;
 import org.datatransferproject.datatransfer.flickr.FlickrTestUtils;
+import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
@@ -48,11 +50,12 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.scribe.model.Token;
 
 public class FlickrPhotosImporterTest {
+
   private static final String ALBUM_ID = "Album ID";
   private static final String ALBUM_NAME = "Album name";
   private static final String ALBUM_DESCRIPTION = "Album description";
@@ -74,8 +77,7 @@ public class FlickrPhotosImporterTest {
   private PhotosetsInterface photosetsInterface = mock(PhotosetsInterface.class);
   private Uploader uploader = mock(Uploader.class);
   private TemporaryPerJobDataStore jobStore = new LocalJobStore();
-  private FlickrPhotosImporter.ImageStreamProvider imageStreamProvider =
-      mock(FlickrPhotosImporter.ImageStreamProvider.class);
+  private ConnectionProvider connectionProvider = mock(ConnectionProvider.class);
 
   private User user = mock(User.class);
   private Auth auth = new Auth(Permission.WRITE, user);
@@ -99,7 +101,8 @@ public class FlickrPhotosImporterTest {
     when(flickr.getPhotosetsInterface()).thenReturn(photosetsInterface);
     when(flickr.getUploader()).thenReturn(uploader);
     when(flickr.getAuthInterface()).thenReturn(authInterface);
-    when(imageStreamProvider.get(FETCHABLE_URL)).thenReturn(bufferedInputStream);
+    when(connectionProvider.getInputStreamForItem(eq(jobId), eq(PHOTO_MODEL)))
+        .thenReturn(new InputStreamWrapper(bufferedInputStream));
     when(uploader.upload(any(BufferedInputStream.class), any(UploadMetaData.class)))
         .thenReturn(FLICKR_PHOTO_ID);
 
@@ -114,7 +117,7 @@ public class FlickrPhotosImporterTest {
         new FlickrPhotosImporter(
             flickr,
             jobStore,
-            imageStreamProvider,
+            connectionProvider,
             monitor,
             TransferServiceConfig.getDefaultInstance());
     ImportResult result =
@@ -123,7 +126,7 @@ public class FlickrPhotosImporterTest {
 
     // Verify that the image stream provider got the correct URL and that the correct info was
     // uploaded
-    verify(imageStreamProvider).get(FETCHABLE_URL);
+    verify(connectionProvider).getInputStreamForItem(eq(jobId), eq(PHOTO_MODEL));
     ArgumentCaptor<UploadMetaData> uploadMetaDataArgumentCaptor =
         ArgumentCaptor.forClass(UploadMetaData.class);
     verify(uploader).upload(eq(bufferedInputStream), uploadMetaDataArgumentCaptor.capture());

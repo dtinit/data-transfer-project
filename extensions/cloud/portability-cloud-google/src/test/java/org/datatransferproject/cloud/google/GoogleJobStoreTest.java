@@ -16,8 +16,8 @@
 
 package org.datatransferproject.cloud.google;
 
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.datastore.Datastore;
@@ -27,24 +27,26 @@ import com.google.common.truth.Truth;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class GoogleJobStoreTest {
 
   private static final String ITEM_NAME = "item1";
   private static final UUID JOB_ID = UUID.randomUUID();
   private static LocalDatastoreHelper localDatastoreHelper;
   private static Datastore datastore;
-  private static GoogleTempFileStore tempFileStore = Mockito.mock(GoogleTempFileStore.class);
+
+  @Mock
+  private static GoogleTempFileStore tempFileStore;
   private static GoogleJobStore googleJobStore;
 
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException, InterruptedException {
     localDatastoreHelper = LocalDatastoreHelper.create();
     localDatastoreHelper.start();

@@ -23,7 +23,7 @@ import static org.datatransferproject.spi.transfer.hooks.JobHooksLoader.loadJobH
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.json.gson.GsonFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.UncaughtExceptionHandlers;
@@ -45,6 +45,7 @@ import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.hooks.JobHooks;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorLoader;
+import org.datatransferproject.spi.transfer.provider.TransferCompatibilityProvider;
 import org.datatransferproject.spi.transfer.security.SecurityExtension;
 import org.datatransferproject.spi.transfer.security.SecurityExtensionLoader;
 
@@ -77,7 +78,7 @@ public class WorkerMain {
     // TODO this should be moved into a service extension
     extensionContext.registerService(HttpTransport.class, new NetHttpTransport());
     extensionContext.registerService(OkHttpClient.class, new OkHttpClient.Builder().build());
-    extensionContext.registerService(JsonFactory.class, new JacksonFactory());
+    extensionContext.registerService(JsonFactory.class, GsonFactory.getDefaultInstance());
 
     ServiceLoader.load(ServiceExtension.class)
         .iterator()
@@ -123,7 +124,8 @@ public class WorkerMain {
                   securityExtension,
                   idempotentImportExecutor,
                   symmetricKeyGenerator,
-                  jobHooks));
+                  jobHooks,
+                  new TransferCompatibilityProvider()));
     } catch (Exception e) {
       monitor.severe(() -> "Unable to initialize Guice in Worker", e);
       throw e;

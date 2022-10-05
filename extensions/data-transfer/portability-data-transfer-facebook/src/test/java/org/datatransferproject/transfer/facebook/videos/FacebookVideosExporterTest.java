@@ -16,13 +16,14 @@
 
 package org.datatransferproject.transfer.facebook.videos;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.restfb.Connection;
 import com.restfb.types.Video;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
@@ -32,19 +33,20 @@ import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class FacebookVideosExporterTest {
 
   private static final String VIDEO_ID = "937644721";
   private static final String VIDEO_SOURCE = "https://www.example.com/video.mp4";
   private static final String VIDEO_NAME = "Example video";
+  private static final Date VIDEO_TIME = new Date(1234567890123L);
 
   private FacebookVideosExporter facebookVideosExporter;
   private UUID uuid = UUID.randomUUID();
 
-  @Before
+  @BeforeEach
   public void setUp() throws CopyExceptionWithFailureReason {
     FacebookVideosInterface videosInterface = mock(FacebookVideosInterface.class);
 
@@ -53,6 +55,7 @@ public class FacebookVideosExporterTest {
     video.setId(VIDEO_ID);
     video.setSource(VIDEO_SOURCE);
     video.setDescription(VIDEO_NAME);
+    video.setCreatedTime(VIDEO_TIME);
 
     ArrayList<Video> videos = new ArrayList<>();
     videos.add(video);
@@ -69,6 +72,9 @@ public class FacebookVideosExporterTest {
 
   @Test
   public void testExportVideo() throws CopyExceptionWithFailureReason {
+    VideoModel expectedVideo = new VideoModel(VIDEO_ID + ".mp4", VIDEO_SOURCE, VIDEO_NAME,
+        "video/mp4", VIDEO_ID, null, false, VIDEO_TIME);
+
     ExportResult<VideosContainerResource> result =
         facebookVideosExporter.export(
             uuid,
@@ -78,9 +84,6 @@ public class FacebookVideosExporterTest {
     assertEquals(ExportResult.ResultType.END, result.getType());
     VideosContainerResource exportedData = result.getExportedData();
     assertEquals(1, exportedData.getVideos().size());
-    assertEquals(
-        new VideoModel(
-            VIDEO_ID + ".mp4", VIDEO_SOURCE, VIDEO_NAME, "video/mp4", VIDEO_ID, null, false),
-        exportedData.getVideos().toArray()[0]);
+    assertEquals(expectedVideo, exportedData.getVideos().toArray()[0]);
   }
 }

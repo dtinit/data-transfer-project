@@ -179,7 +179,7 @@ public class MicrosoftMediaExporter
 
     VideoModel video =
         new VideoModel(driveItem.name, driveItem.downloadUrl, driveItem.description,
-            driveItem.file.mimeType, driveItem.id, albumId.orElse(null), false /*inTempStore*/);
+            driveItem.file.mimeType, driveItem.id, albumId.orElse(null), false /*inTempStore*/, null);
     monitor.debug(
         () -> String.format("%s: Microsoft OneDrive exporting video: %s", jobId, video));
     return video;

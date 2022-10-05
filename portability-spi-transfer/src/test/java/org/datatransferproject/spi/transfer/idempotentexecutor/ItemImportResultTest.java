@@ -1,8 +1,9 @@
 package org.datatransferproject.spi.transfer.idempotentexecutor;
 
 import static org.datatransferproject.spi.transfer.idempotentexecutor.ItemImportResult.Status.SUCCESS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.Test;
 
@@ -10,28 +11,36 @@ public class ItemImportResultTest {
 
   @Test
   public void testNullBytesIsOk() {
-    ItemImportResult<String> result = ItemImportResult.success("blabla", null);
+    ItemImportResult<String> result = ItemImportResult.success("blabla");
     assertEquals(SUCCESS, result.getStatus());
     assertFalse(result.hasBytes());
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void testNullBytesThrowOnGet() {
-    ItemImportResult.success("blabla", null).getBytes();
+    assertThrows(IllegalStateException.class, () -> {
+      ItemImportResult.success("blabla", null).getBytes();
+    });
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void testSuccessWithNoData() {
-    ItemImportResult.success(null, 0L);
+    assertThrows(NullPointerException.class, () -> {
+      ItemImportResult.success(null, 0L);
+    });
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testFailWithIncorrectBytes() {
-    ItemImportResult.success("blabla", -1L);
+    assertThrows(IllegalArgumentException.class, () -> {
+      ItemImportResult.success("blabla", -1L);
+    });
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void testErrorWithNoException() {
-    ItemImportResult.error(null, 10L);
+    assertThrows(NullPointerException.class, () -> {
+      ItemImportResult.error(null, 10L);
+    });
   }
 }

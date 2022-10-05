@@ -1,7 +1,10 @@
 package org.datatransferproject.spi.transfer.provider;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /** The result of an item import operation, after retries. */
 public class ImportResult {
@@ -52,6 +55,33 @@ public class ImportResult {
     this.bytes = bytes;
   }
 
+  /** Returns a new result that's a combination of the two given results. */
+  public static ImportResult merge(ImportResult ir1, ImportResult ir2) {
+    if (ir1.getType() == ResultType.ERROR) {
+      return ir1;
+    }
+    if (ir2.getType() == ResultType.ERROR) {
+      return ir2;
+    }
+    ImportResult res = new ImportResult(ResultType.OK);
+    res.bytes = Stream.of(ir1.getBytes(), ir2.getBytes())
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .reduce(Long::sum);
+    res.counts = mergeCounts(ir1, ir2);
+    return res;
+  }
+
+  private static Optional<Map<String, Integer>> mergeCounts(ImportResult ir1, ImportResult ir2) {
+    if (ir1.counts.isPresent() && ir2.counts.isPresent()) {
+      Map<String, Integer> map = new HashMap<>(ir1.counts.get());
+      ir2.counts.get().forEach((k, v) -> map.merge(k, v, Integer::sum));
+      return Optional.of(map);
+    } else {
+      return ir1.counts.isPresent() ? ir1.counts : ir2.counts;
+    }
+  }
+
   /** Returns the type of result. */
   public ResultType getType() {
     return type;
@@ -89,6 +119,26 @@ public class ImportResult {
    */
   public ImportResult copyWithBytes(Long bytes) {
     return new ImportResult(type, throwable, counts, Optional.ofNullable(bytes));
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof ImportResult)) {
+      return false;
+    }
+    ImportResult that = (ImportResult) o;
+    return type == that.type &&
+        Objects.equals(throwable, that.throwable) &&
+        Objects.equals(counts, that.counts) &&
+        Objects.equals(bytes, that.bytes);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(type, throwable, counts, bytes);
   }
 
   /** Result types. */
