@@ -141,7 +141,12 @@ public class KoofrVideosImporter
       }
 
       return koofrClient.uploadFile(
-              parentPath, name, inputStream, video.getEncodingFormat(), null, description);
+          parentPath,
+          name,
+          inputStream,
+          video.getEncodingFormat(),
+          video.getUploadedTime(),
+          description);
     } catch (FileNotFoundException e) {
       monitor.info(
               () -> String.format("Video resource was missing for id: %s", video.getDataId()), e);
