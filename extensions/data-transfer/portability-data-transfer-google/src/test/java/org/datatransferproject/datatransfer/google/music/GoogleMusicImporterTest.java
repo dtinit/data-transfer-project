@@ -59,7 +59,7 @@ import org.mockito.Mockito;
 public final class GoogleMusicImporterTest {
   private final UUID uuid = UUID.randomUUID();
   private GoogleMusicImporter googleMusicImporter;
-  private GoogleMusicInterface googleMusicInterface;
+  private GoogleMusicHttpApi googleMusicHttpApi;
   private IdempotentImportExecutor executor;
   private Monitor monitor;
   private TemporaryPerJobDataStore dataStore;
@@ -67,7 +67,7 @@ public final class GoogleMusicImporterTest {
   @BeforeEach
   public void setUp() {
     GoogleCredentialFactory credentialFactory = mock(GoogleCredentialFactory.class);
-    googleMusicInterface = Mockito.mock(GoogleMusicInterface.class);
+    googleMusicHttpApi = Mockito.mock(GoogleMusicHttpApi.class);
     monitor = Mockito.mock(Monitor.class);
     executor = new InMemoryIdempotentImportExecutor(monitor);
     dataStore = mock(TemporaryPerJobDataStore.class);
@@ -76,7 +76,7 @@ public final class GoogleMusicImporterTest {
         new GoogleMusicImporter(
             credentialFactory,
             GsonFactory.getDefaultInstance(),
-            googleMusicInterface,
+            googleMusicHttpApi,
             null,
             dataStore,
             monitor,
@@ -93,7 +93,7 @@ public final class GoogleMusicImporterTest {
     GooglePlaylist responsePlaylist = new GooglePlaylist();
     responsePlaylist.setTitle("p1_title");
     responsePlaylist.setToken("p1_token");
-    when(googleMusicInterface.createPlaylist(any(GooglePlaylist.class), any(String.class)))
+    when(googleMusicHttpApi.createPlaylist(any(GooglePlaylist.class), any(String.class)))
         .thenReturn(responsePlaylist);
 
     // Run test
@@ -103,7 +103,7 @@ public final class GoogleMusicImporterTest {
     ArgumentCaptor<GooglePlaylist> playlistArgumentCaptor =
         ArgumentCaptor.forClass(GooglePlaylist.class);
     ArgumentCaptor<String> playlistIdArgumentCaptor = ArgumentCaptor.forClass(String.class);
-    verify(googleMusicInterface)
+    verify(googleMusicHttpApi)
         .createPlaylist(playlistArgumentCaptor.capture(), playlistIdArgumentCaptor.capture());
     assertEquals("p1_title", playlistArgumentCaptor.getValue().getTitle());
     assertEquals("p1_id", playlistIdArgumentCaptor.getValue());
@@ -149,9 +149,9 @@ public final class GoogleMusicImporterTest {
             new NewPlaylistItemResult[] {
               buildPlaylistItemResult("item1_isrc", "r1_icpn", Code.OK_VALUE)
             });
-    when(googleMusicInterface.createPlaylistItems(eq(batchPlaylistItemRequest1)))
+    when(googleMusicHttpApi.createPlaylistItems(eq(batchPlaylistItemRequest1)))
         .thenReturn(batchPlaylistItemResponse);
-    when(googleMusicInterface.createPlaylistItems(eq(batchPlaylistItemRequest2)))
+    when(googleMusicHttpApi.createPlaylistItems(eq(batchPlaylistItemRequest2)))
         .thenReturn(batchPlaylistItemResponse);
 
     // Run test
@@ -202,9 +202,9 @@ public final class GoogleMusicImporterTest {
             new NewPlaylistItemResult[] {
               buildPlaylistItemResult("item1_isrc", "r1_icpn", Code.INVALID_ARGUMENT_VALUE)
             });
-    when(googleMusicInterface.createPlaylistItems(eq(batchPlaylistItemRequest1)))
+    when(googleMusicHttpApi.createPlaylistItems(eq(batchPlaylistItemRequest1)))
         .thenReturn(batchPlaylistItemResponse1);
-    when(googleMusicInterface.createPlaylistItems(eq(batchPlaylistItemRequest2)))
+    when(googleMusicHttpApi.createPlaylistItems(eq(batchPlaylistItemRequest2)))
         .thenReturn(batchPlaylistItemResponse2);
 
     // Run test
@@ -272,7 +272,7 @@ public final class GoogleMusicImporterTest {
         new BatchPlaylistItemRequest(
             Lists.newArrayList(googlePlaylistItem1, googlePlaylistItem2), "p1_id", "p1_token");
 
-    when(googleMusicInterface.createPlaylistItems(eq(batchPlaylistItemRequest)))
+    when(googleMusicHttpApi.createPlaylistItems(eq(batchPlaylistItemRequest)))
         .thenThrow(new IOException("skippable failure"));
 
     // Run test

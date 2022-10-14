@@ -55,12 +55,13 @@ import org.datatransferproject.types.common.models.music.MusicPlaylistItem;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, MusicContainerResource> {
+  // TODO(critical WIP-feature step): fine tune the batch size when inserting playlist items
   private static final int PLAYLIST_ITEM_BATCH_SIZE = 49;
 
   private final GoogleCredentialFactory credentialFactory;
   private final JsonFactory jsonFactory;
-  private volatile GoogleMusicInterface musicInterface;
-  private final Map<UUID, GoogleMusicInterface> musicInterfacesMap;
+  private volatile GoogleMusicHttpApi musicHttpApi;
+  private final Map<UUID, GoogleMusicHttpApi> musicHttpApisMap;
   private final TemporaryPerJobDataStore dataStore;
 
   private final Monitor monitor;
@@ -80,15 +81,15 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
   GoogleMusicImporter(
       GoogleCredentialFactory credentialFactory,
       JsonFactory jsonFactory,
-      GoogleMusicInterface musicInterface,
-      Map<UUID, GoogleMusicInterface> musicInterfacesMap,
+      GoogleMusicHttpApi musicHttpApi,
+      Map<UUID, GoogleMusicHttpApi> musicHttpApisMap,
       TemporaryPerJobDataStore dataStore,
       Monitor monitor,
       double writesPerSecond) {
     this.credentialFactory = credentialFactory;
     this.jsonFactory = jsonFactory;
-    this.musicInterface = musicInterface;
-    this.musicInterfacesMap = musicInterfacesMap;
+    this.musicHttpApi = musicHttpApi;
+    this.musicHttpApisMap = musicHttpApisMap;
     this.dataStore = dataStore;
     this.monitor = monitor;
     this.writesPerSecond = writesPerSecond;
@@ -210,7 +211,7 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
       for (int i = 0; i < responsePlaylistItem.getResults().length; i++) {
         NewPlaylistItemResult playlistItemResult = responsePlaylistItem.getResults()[i];
         // playlistItemResult should be success or skippable failure.
-        // TODO: Replace it with skippable failure support.
+        // TODO(critical WIP-feature step): Replace it with skippable failure support.
         executor.executeAndSwallowIOExceptions(
             playlistItems.get(i).toString(),
             playlistItems.get(i).toString(),
@@ -219,11 +220,11 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
     } catch (IOException e) {
       if (StringUtils.contains(e.getMessage(), "permanent failure")) {
         // Permanent Failure: terminate the transfer job and notify the end user
-        // TODO: Add permanent failures.
+        // TODO(critical WIP-feature step): Add permanent failures.
         throw new CopyException("Permanent Failure:", e);
       } else if (StringUtils.contains(e.getMessage(), "skippable failure")) {
         // Skippable Failure: we skip this batch and log some data to understand it better
-        // TODO: Add skippable failures.
+        // TODO(critical WIP-feature step): Add skippable failures.
         monitor.info(() -> "Skippable Failure:", e);
       } else {
         // Retryable Failure: retry the batch
@@ -285,26 +286,26 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
     dataStore.create(jobId, playlistId, new GoogleTempPlaylistToken(playlist.getToken()));
   }
 
-  private synchronized GoogleMusicInterface getOrCreateMusicInterface(
+  private synchronized GoogleMusicHttpApi getOrCreateMusicInterface(
       UUID jobId, TokensAndUrlAuthData authData) {
 
-    if (musicInterface != null) {
-      return musicInterface;
+    if (musicHttpApi != null) {
+      return musicHttpApi;
     }
 
-    if (musicInterfacesMap.containsKey(jobId)) {
-      return musicInterfacesMap.get(jobId);
+    if (musicHttpApisMap.containsKey(jobId)) {
+      return musicHttpApisMap.get(jobId);
     }
 
-    GoogleMusicInterface newInterface = makeMusicInterface(authData);
-    musicInterfacesMap.put(jobId, newInterface);
+    GoogleMusicHttpApi newMusicHttpApi = makeMusicHttpApi(authData);
+    musicHttpApisMap.put(jobId, newMusicHttpApi);
 
-    return newInterface;
+    return newMusicHttpApi;
   }
 
-  private synchronized GoogleMusicInterface makeMusicInterface(TokensAndUrlAuthData authData) {
+  private synchronized GoogleMusicHttpApi makeMusicHttpApi(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
-    return new GoogleMusicInterface(
+    return new GoogleMusicHttpApi(
         credential, jsonFactory, monitor, credentialFactory, writesPerSecond);
   }
 }

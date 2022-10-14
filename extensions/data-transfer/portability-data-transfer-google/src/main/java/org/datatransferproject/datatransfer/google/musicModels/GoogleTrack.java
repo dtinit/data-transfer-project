@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Arrays;
 import java.util.Objects;
 
-/** Class representing a track as returned by the Google Music API. */
+/** Represents a track (eg: a song) as returned by the Google Music API. */
 public class GoogleTrack {
 
   @JsonProperty("isrc")

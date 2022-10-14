@@ -18,7 +18,10 @@ package org.datatransferproject.datatransfer.google.musicModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/** Information about whether a request was successful, used by {@link NewPlaylistItemResult}. */
+/**
+ * Information about whether a request was successful, used by {@link NewPlaylistItemResult}.
+ * TODO(critical WIP-feature step): Add Google Music API documentation link
+ */
 public class Status {
 
   @JsonProperty("code")

@@ -21,6 +21,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -66,7 +67,7 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
 
   private final GoogleCredentialFactory credentialFactory;
   private final JsonFactory jsonFactory;
-  private volatile GoogleMusicInterface musicInterface;
+  private volatile GoogleMusicHttpApi musicHttpApi;
 
   private final Monitor monitor;
 
@@ -81,11 +82,11 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
   GoogleMusicExporter(
       GoogleCredentialFactory credentialFactory,
       JsonFactory jsonFactory,
-      GoogleMusicInterface musicInterface,
+      GoogleMusicHttpApi musicHttpApi,
       Monitor monitor) {
     this.credentialFactory = credentialFactory;
     this.jsonFactory = jsonFactory;
-    this.musicInterface = musicInterface;
+    this.musicHttpApi = musicHttpApi;
     this.monitor = monitor;
   }
 
@@ -95,7 +96,7 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
       throws IOException, InvalidTokenException, PermissionDeniedException {
 
     if (exportInformation.get().getContainerResource() instanceof IdOnlyContainerResource) {
-      // if ExportInformation is an id only container, this is a request to export playlis items.
+      // if ExportInformation is an id only container, this is a request to export playlist items.
       return exportPlaylistItems(
           authData,
           (IdOnlyContainerResource) exportInformation.get().getContainerResource(),
@@ -127,19 +128,19 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
       TokensAndUrlAuthData authData, Optional<PaginationData> paginationData, UUID jobId)
       throws IOException, InvalidTokenException, PermissionDeniedException {
     Optional<String> paginationToken = Optional.empty();
-    String prefixToken = "";
+    String pageTokenPrefix = "";
     if (paginationData.isPresent()) {
       String token = ((StringPaginationToken) paginationData.get()).getToken();
       Preconditions.checkArgument(
           token.startsWith(PLAYLIST_TOKEN_PREFIX), "Invalid pagination token %s", token);
-      prefixToken = token.substring(0, getTokenPrefixLength(token));
+      pageTokenPrefix = token.substring(0, getTokenPrefixLength(token));
       if (getTokenPrefixLength(token) < token.length()) {
         paginationToken = Optional.of(token.substring(getTokenPrefixLength(token)));
       }
     }
 
     PlaylistListResponse playlistListResponse =
-        getOrCreateMusicInterface(authData).listPlaylists(paginationToken);
+        getOrCreateMusicHttpApi(authData).listPlaylists(paginationToken);
 
     PaginationData nextPageData;
     String token = playlistListResponse.getNextPageToken();
@@ -148,9 +149,9 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
 
     if (Strings.isNullOrEmpty(token)) {
       nextPageData =
-          new StringPaginationToken(prefixToken.substring(PLAYLIST_TOKEN_PREFIX.length()));
+          new StringPaginationToken(pageTokenPrefix.substring(PLAYLIST_TOKEN_PREFIX.length()));
     } else {
-      nextPageData = new StringPaginationToken(prefixToken + token);
+      nextPageData = new StringPaginationToken(pageTokenPrefix + token);
     }
     ContinuationData continuationData = new ContinuationData(nextPageData);
 
@@ -193,7 +194,7 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
         paginationData.map((PaginationData value) -> ((StringPaginationToken) value).getToken());
 
     PlaylistItemListResponse playlistItemListResponse =
-        getOrCreateMusicInterface(authData).listPlaylistItems(playlistId, paginationToken);
+        getOrCreateMusicHttpApi(authData).listPlaylistItems(playlistId, paginationToken);
 
     PaginationData nextPageData = null;
     if (!Strings.isNullOrEmpty(playlistItemListResponse.getNextPageToken())) {
@@ -215,26 +216,20 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
   }
 
   private int getTokenPrefixLength(String token) {
-    if (token.startsWith(PLAYLIST_TRACK_RELEASE_TOKEN_PREFIX)) {
-      return PLAYLIST_TRACK_RELEASE_TOKEN_PREFIX.length();
-    }
-    if (token.startsWith(PLAYLIST_TRACK_TOKEN_PREFIX)) {
-      return PLAYLIST_TRACK_TOKEN_PREFIX.length();
-    }
-    if (token.startsWith(PLAYLIST_RELEASE_TOKEN_PREFIX)) {
-      return PLAYLIST_RELEASE_TOKEN_PREFIX.length();
-    }
-    if (token.startsWith(PLAYLIST_TOKEN_PREFIX)) {
-      return PLAYLIST_TOKEN_PREFIX.length();
-    }
-    if (token.startsWith(TRACK_RELEASE_TOKEN_PREFIX)) {
-      return TRACK_RELEASE_TOKEN_PREFIX.length();
-    }
-    if (token.startsWith(TRACK_TOKEN_PREFIX)) {
-      return TRACK_TOKEN_PREFIX.length();
-    }
-    if (token.startsWith(RELEASE_TOKEN_PREFIX)) {
-      return RELEASE_TOKEN_PREFIX.length();
+    final ImmutableList<String> knownPrefixes =
+        ImmutableList.of(
+            PLAYLIST_TRACK_RELEASE_TOKEN_PREFIX,
+            PLAYLIST_TRACK_TOKEN_PREFIX,
+            PLAYLIST_RELEASE_TOKEN_PREFIX,
+            PLAYLIST_TOKEN_PREFIX,
+            TRACK_RELEASE_TOKEN_PREFIX,
+            TRACK_TOKEN_PREFIX,
+            RELEASE_TOKEN_PREFIX);
+
+    for (String prefix : knownPrefixes) {
+      if (token.startsWith(prefix)) {
+        return prefix.length();
+      }
     }
     return 0;
   }
@@ -268,14 +263,13 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
         googlePlaylistItem.getOrder());
   }
 
-  private synchronized GoogleMusicInterface getOrCreateMusicInterface(
-      TokensAndUrlAuthData authData) {
-    return musicInterface == null ? makeMusicInterface(authData) : musicInterface;
+  private synchronized GoogleMusicHttpApi getOrCreateMusicHttpApi(TokensAndUrlAuthData authData) {
+    return musicHttpApi == null ? makeMusicHttpApi(authData) : musicHttpApi;
   }
 
-  private synchronized GoogleMusicInterface makeMusicInterface(TokensAndUrlAuthData authData) {
+  private synchronized GoogleMusicHttpApi makeMusicHttpApi(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
-    return new GoogleMusicInterface(
+    return new GoogleMusicHttpApi(
         credential, jsonFactory, monitor, credentialFactory, /* arbitrary writesPerSecond */ 1.0);
   }
 }

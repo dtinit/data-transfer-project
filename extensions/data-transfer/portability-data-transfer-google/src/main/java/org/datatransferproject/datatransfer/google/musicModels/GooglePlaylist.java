@@ -35,6 +35,7 @@ public class GooglePlaylist {
   @JsonProperty("updateTime")
   private long updateTime;
 
+  // TODO(critical WIP-feature step): Rename the playlist token after we have final decision
   @JsonProperty("token")
   private String token;
 

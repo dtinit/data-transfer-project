@@ -23,6 +23,9 @@ import org.datatransferproject.types.common.models.DataModel;
 
 /**
  * Class representing a temporary Google Playlist Token which will be stored in each job's memory.
+ * This token is used by Google Music public API to search the playlist easily when inserting
+ * playlist items. This token should be unique within the upstream system from which the data
+ * originated. No particular format is guaranteed.
  */
 @JsonTypeName("org.dataportability:GoogleTempPlaylistToken")
 public class GoogleTempPlaylistToken extends DataModel {

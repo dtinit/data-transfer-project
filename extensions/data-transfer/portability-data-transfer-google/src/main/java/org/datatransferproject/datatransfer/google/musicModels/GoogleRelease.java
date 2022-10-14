@@ -20,7 +20,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Arrays;
 import java.util.Objects;
 
-/** Class representing a release as returned by the Google Music API. */
+/**
+ * Class representing a release as returned by the Google Music API. A release is a variation of an
+ * Album, e.g. Clean, Explicit, Deluxe, Remastered, etc. that contains a list of Tracks.
+ */
 public class GoogleRelease {
 
   @JsonProperty("icpn")

@@ -57,9 +57,18 @@ import org.datatransferproject.datatransfer.google.musicModels.PlaylistListRespo
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 
-public class GoogleMusicInterface {
-  private static final String BASE_URL =
-      "https://musiclibrary.googleapis.com/v1/"; // TODO: Update endpoint when available
+/**
+ * GoogleMusicHttpApi makes HTTP requests to read and write to the public Google Music's "Music
+ * Library" APIs, following its documentation at https://musiclibrary.googleapis.com/DO NOT
+ * SUBMIT/TODO(critical WIP-feature step): update the URL when available.
+ *
+ * <p>Note that this is the lowest level of Google Music interaction - that is, you probably don't
+ * want to use this class and are better off using something like a bit higher level like the Google
+ * Music DTP Exporter and Importer instead.
+ */
+public class GoogleMusicHttpApi {
+  // TODO(critical WIP-feature step): Update endpoint when available
+  private static final String BASE_URL = "https://musiclibrary.googleapis.com/v1/";
   private static final int PLAYLIST_PAGE_SIZE = 20;
   private static final int PLAYLIST_ITEM_PAGE_SIZE = 50;
 
@@ -78,7 +87,7 @@ public class GoogleMusicInterface {
   private final GoogleCredentialFactory credentialFactory;
   private final RateLimiter writeRateLimiter;
 
-  GoogleMusicInterface(
+  GoogleMusicHttpApi(
       Credential credential,
       JsonFactory jsonFactory,
       Monitor monitor,
@@ -132,12 +141,13 @@ public class GoogleMusicInterface {
         BASE_URL + "playlistItems", Optional.empty(), content, BatchPlaylistItemResponse.class);
   }
 
-  private <T> T makeGetRequest(String url, Optional<Map<String, String>> parameters, Class<T> clazz)
+  private <T> T makeGetRequest(
+      String baseUrl, Optional<Map<String, String>> parameters, Class<T> clazz)
       throws IOException, InvalidTokenException, PermissionDeniedException {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
     HttpRequest getRequest =
         requestFactory.buildGetRequest(
-            new GenericUrl(url + "?" + generateParamsString(parameters)));
+            new GenericUrl(baseUrl + "?" + generateParamsString(parameters)));
 
     HttpResponse response;
     try {
@@ -147,7 +157,7 @@ public class GoogleMusicInterface {
           handleHttpResponseException(
               () ->
                   requestFactory.buildGetRequest(
-                      new GenericUrl(url + "?" + generateParamsString(parameters))),
+                      new GenericUrl(baseUrl + "?" + generateParamsString(parameters))),
               e);
     }
 
@@ -158,7 +168,10 @@ public class GoogleMusicInterface {
 
   @SuppressWarnings("unchecked")
   private <T> T makePostRequest(
-      String url, Optional<Map<String, String>> parameters, HttpContent httpContent, Class<T> clazz)
+      String baseUrl,
+      Optional<Map<String, String>> parameters,
+      HttpContent httpContent,
+      Class<T> clazz)
       throws IOException, InvalidTokenException, PermissionDeniedException {
     // Wait for write permit before making request
     writeRateLimiter.acquire();
@@ -166,7 +179,7 @@ public class GoogleMusicInterface {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
     HttpRequest postRequest =
         requestFactory.buildPostRequest(
-            new GenericUrl(url + "?" + generateParamsString(parameters)), httpContent);
+            new GenericUrl(baseUrl + "?" + generateParamsString(parameters)), httpContent);
     postRequest.setReadTimeout(2 * 60000); // 2 minutes read timeout
     HttpResponse response;
 
@@ -177,7 +190,8 @@ public class GoogleMusicInterface {
           handleHttpResponseException(
               () ->
                   requestFactory.buildPostRequest(
-                      new GenericUrl(url + "?" + generateParamsString(parameters)), httpContent),
+                      new GenericUrl(baseUrl + "?" + generateParamsString(parameters)),
+                      httpContent),
               e);
     }
 
@@ -192,7 +206,10 @@ public class GoogleMusicInterface {
 
   @SuppressWarnings("unchecked")
   private <T> T makePutRequest(
-      String url, Optional<Map<String, String>> parameters, HttpContent httpContent, Class<T> clazz)
+      String baseUrl,
+      Optional<Map<String, String>> parameters,
+      HttpContent httpContent,
+      Class<T> clazz)
       throws IOException, InvalidTokenException, PermissionDeniedException {
     // Wait for write permit before making request
     writeRateLimiter.acquire();
@@ -200,7 +217,7 @@ public class GoogleMusicInterface {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
     HttpRequest putRequest =
         requestFactory.buildPutRequest(
-            new GenericUrl(url + "?" + generateParamsString(parameters)), httpContent);
+            new GenericUrl(baseUrl + "?" + generateParamsString(parameters)), httpContent);
     putRequest.setReadTimeout(2 * 60000); // 2 minutes read timeout
     HttpResponse response;
 
@@ -211,7 +228,8 @@ public class GoogleMusicInterface {
           handleHttpResponseException(
               () ->
                   requestFactory.buildPutRequest(
-                      new GenericUrl(url + "?" + generateParamsString(parameters)), httpContent),
+                      new GenericUrl(baseUrl + "?" + generateParamsString(parameters)),
+                      httpContent),
               e);
     }
 
