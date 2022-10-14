@@ -22,17 +22,18 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.datatransferproject.types.common.models.DataModel;
 
 /**
- * Class representing a temporary Google Playlist Token which will be stored in each job's memory.
- * This token is used by Google Music public API to search the playlist easily when inserting
- * playlist items. This token should be unique within the upstream system from which the data
- * originated. No particular format is guaranteed.
+ * Class representing a Google Playlist Token (short-lived) which is from the response of
+ * UpdatePlaylist API and stored in each job's memory (only used in @{GoogleMusicImporter}). This
+ * token is used by Google Music public API to search the playlist easily when inserting playlist
+ * items. This token should be unique within the upstream system from which the data originated. No
+ * particular format is guaranteed.
  */
-@JsonTypeName("org.dataportability:GoogleTempPlaylistToken")
-public class GoogleTempPlaylistToken extends DataModel {
+@JsonTypeName("org.dataportability:GooglePlaylistInsertionToken")
+public class GooglePlaylistInsertionToken extends DataModel {
   private final String token;
 
   @JsonCreator
-  public GoogleTempPlaylistToken(@JsonProperty("token") String token) {
+  public GooglePlaylistInsertionToken(@JsonProperty("token") String token) {
     this.token = token;
   }
 

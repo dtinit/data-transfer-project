@@ -111,20 +111,20 @@ public final class GoogleMusicImporterTest {
     assertEquals(importResult, ImportResult.OK);
 
     // Check contents of job store
-    ArgumentCaptor<GoogleTempPlaylistToken> playlistTokenArgumentCaptor =
-        ArgumentCaptor.forClass(GoogleTempPlaylistToken.class);
+    ArgumentCaptor<GooglePlaylistInsertionToken> playlistTokenArgumentCaptor =
+        ArgumentCaptor.forClass(GooglePlaylistInsertionToken.class);
     verify(dataStore).create(eq(uuid), eq("p1_id"), playlistTokenArgumentCaptor.capture());
     assertEquals("p1_token", playlistTokenArgumentCaptor.getValue().getToken());
   }
 
   @Test
   public void importTwoPlaylistItemsInDifferentPlaylist() throws Exception {
-    GoogleTempPlaylistToken playlistToken1 = new GoogleTempPlaylistToken("p1_token");
-    GoogleTempPlaylistToken playlistToken2 = new GoogleTempPlaylistToken("p2_token");
+    GooglePlaylistInsertionToken playlistToken1 = new GooglePlaylistInsertionToken("p1_token");
+    GooglePlaylistInsertionToken playlistToken2 = new GooglePlaylistInsertionToken("p2_token");
 
-    when(dataStore.findData(uuid, "p1_id", GoogleTempPlaylistToken.class))
+    when(dataStore.findData(uuid, "p1_id", GooglePlaylistInsertionToken.class))
         .thenReturn(playlistToken1);
-    when(dataStore.findData(uuid, "p2_id", GoogleTempPlaylistToken.class))
+    when(dataStore.findData(uuid, "p2_id", GooglePlaylistInsertionToken.class))
         .thenReturn(playlistToken2);
 
     MusicPlaylistItem playlistItem1 =
@@ -167,12 +167,12 @@ public final class GoogleMusicImporterTest {
 
   @Test
   public void failOnePlaylistItem() throws Exception {
-    GoogleTempPlaylistToken playlistToken1 = new GoogleTempPlaylistToken("p1_token");
-    GoogleTempPlaylistToken playlistToken2 = new GoogleTempPlaylistToken("p2_token");
+    GooglePlaylistInsertionToken playlistToken1 = new GooglePlaylistInsertionToken("p1_token");
+    GooglePlaylistInsertionToken playlistToken2 = new GooglePlaylistInsertionToken("p2_token");
 
-    when(dataStore.findData(uuid, "p1_id", GoogleTempPlaylistToken.class))
+    when(dataStore.findData(uuid, "p1_id", GooglePlaylistInsertionToken.class))
         .thenReturn(playlistToken1);
-    when(dataStore.findData(uuid, "p2_id", GoogleTempPlaylistToken.class))
+    when(dataStore.findData(uuid, "p2_id", GooglePlaylistInsertionToken.class))
         .thenReturn(playlistToken2);
 
     MusicPlaylistItem playlistItem1 =
@@ -248,9 +248,9 @@ public final class GoogleMusicImporterTest {
 
   @Test
   public void importPlaylistItemsSkippableFauilre() throws Exception {
-    GoogleTempPlaylistToken playlistToken1 = new GoogleTempPlaylistToken("p1_token");
+    GooglePlaylistInsertionToken playlistToken1 = new GooglePlaylistInsertionToken("p1_token");
 
-    when(dataStore.findData(uuid, "p1_id", GoogleTempPlaylistToken.class))
+    when(dataStore.findData(uuid, "p1_id", GooglePlaylistInsertionToken.class))
         .thenReturn(playlistToken1);
 
     MusicPlaylistItem playlistItem1 =

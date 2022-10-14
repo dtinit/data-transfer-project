@@ -123,6 +123,8 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
     }
   }
 
+  // TODO(@jzacsh): Replace pageTokenPrefix and paginationToken with simplified and general class or
+  // functions.
   @VisibleForTesting
   ExportResult<MusicContainerResource> exportPlaylists(
       TokensAndUrlAuthData authData, Optional<PaginationData> paginationData, UUID jobId)
@@ -146,12 +148,14 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
     String token = playlistListResponse.getNextPageToken();
     List<MusicPlaylist> playlists = new ArrayList<>();
     GooglePlaylist[] googlePlaylists = playlistListResponse.getPlaylists();
+    ResultType resultType = ResultType.END;
 
     if (Strings.isNullOrEmpty(token)) {
       nextPageData =
           new StringPaginationToken(pageTokenPrefix.substring(PLAYLIST_TOKEN_PREFIX.length()));
     } else {
       nextPageData = new StringPaginationToken(pageTokenPrefix + token);
+      resultType = ResultType.CONTINUE;
     }
     ContinuationData continuationData = new ContinuationData(nextPageData);
 
@@ -175,8 +179,6 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
         continuationData.addContainerResource(new IdOnlyContainerResource(musicPlaylist.getId()));
       }
     }
-
-    ResultType resultType = ResultType.CONTINUE;
 
     MusicContainerResource containerResource =
         new MusicContainerResource(playlists, null, null, null);

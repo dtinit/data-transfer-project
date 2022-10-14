@@ -182,8 +182,8 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
       throws Exception {
     // Note this be null if the playlist create failed, which is what we want
     // because that will also mark this batch of playlist items as being failed.
-    GoogleTempPlaylistToken playlistToken =
-        dataStore.findData(jobId, playlistId, GoogleTempPlaylistToken.class);
+    GooglePlaylistInsertionToken playlistToken =
+        dataStore.findData(jobId, playlistId, GooglePlaylistInsertionToken.class);
     if (playlistToken == null) {
       for (MusicPlaylistItem playlistItem : playlistItems) {
         executor.executeAndSwallowIOExceptions(
@@ -283,7 +283,7 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
   // items later.
   private void storePlaylistToken(UUID jobId, String playlistId, GooglePlaylist playlist)
       throws IOException {
-    dataStore.create(jobId, playlistId, new GoogleTempPlaylistToken(playlist.getToken()));
+    dataStore.create(jobId, playlistId, new GooglePlaylistInsertionToken(playlist.getToken()));
   }
 
   private synchronized GoogleMusicHttpApi getOrCreateMusicInterface(
