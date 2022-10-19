@@ -23,7 +23,6 @@ dependencies {
     compile project(':portability-spi-cloud')
     compile project(':portability-spi-transfer')
     compile project(':portability-transfer')
-    compile project(':libraries:transfer')
 
     compile('software.amazon.awssdk:s3:2.15.24')
     compile('org.apache.commons:commons-lang3:3.11')

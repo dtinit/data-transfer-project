@@ -21,7 +21,6 @@ plugins {
 dependencies {
     compile project(':portability-spi-cloud')
     compile project(':portability-spi-transfer')
-    compile project(':libraries:transfer')
 
     compile("com.squareup.okhttp3:logging-interceptor:${okHttpVersion}")
     compile("com.squareup.okhttp3:okhttp:${okHttpVersion}")

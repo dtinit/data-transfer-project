@@ -2,7 +2,7 @@ rootProject.name = 'org.datatransferproject'
 
 include ':portability-types-client', ':portability-types-transfer', ':portability-types-common'
 include ':portability-spi-service', ':portability-spi-api', ':portability-spi-cloud', ':portability-spi-transfer'
-include ':libraries:security', ':libraries:config', ':libraries:auth', ':libraries:transfer'
+include ':libraries:security', ':libraries:config', ':libraries:auth'
 include ':portability-test-utilities'
 include ':portability-api-launcher'
 
