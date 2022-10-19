@@ -1,6 +1,8 @@
 package org.datatransferproject.transfer.koofr.videos;
 
 import com.google.common.collect.ImmutableList;
+import java.time.Instant;
+import java.util.Date;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.datatransferproject.api.launcher.Monitor;
@@ -97,6 +99,7 @@ public class KoofrVideosImporterTest {
             new VideoAlbum("id1", "Album 1", "This is a fake album"),
             new VideoAlbum("id2", "", description1001));
 
+    Date uploadedTime = Date.from(Instant.parse("2020-09-04T12:40:57.741Z"));
     Collection<VideoModel> videos =
         ImmutableList.of(
             new VideoModel(
@@ -107,7 +110,7 @@ public class KoofrVideosImporterTest {
                 "video1",
                 "id1",
                 false,
-                null),
+                uploadedTime),
             new VideoModel(
                 "video2.mp4",
                 server.url("/2.mp4").toString(),
@@ -146,7 +149,7 @@ public class KoofrVideosImporterTest {
             eq("video1.mp4"),
             any(),
             eq("video/mp4"),
-            isNull(),
+            eq(uploadedTime),
             eq("A video 1"));
     clientInOrder.verify(client).fileExists(eq("/root/Album 1/video2.mp4"));
     clientInOrder.verify(client).fileExists(eq("/root/Album/video3.mp4"));
