@@ -21,7 +21,6 @@ plugins {
 dependencies {
     compile project(':portability-spi-cloud')
     compile project(':portability-spi-transfer')
-    compile project(':libraries:transfer')
 
     compile("com.google.gdata:core:${gdataVersion}") {
         exclude(module: 'jetty-util')

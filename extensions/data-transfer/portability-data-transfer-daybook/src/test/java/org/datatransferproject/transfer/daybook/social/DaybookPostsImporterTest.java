@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.UUID;
@@ -46,10 +47,9 @@ import org.datatransferproject.types.common.models.social.SocialActivityLocation
 import org.datatransferproject.types.common.models.social.SocialActivityModel;
 import org.datatransferproject.types.common.models.social.SocialActivityType;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.junit.Rule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 
 public class DaybookPostsImporterTest {
@@ -59,7 +59,8 @@ public class DaybookPostsImporterTest {
   private TokensAndUrlAuthData authData;
   private OkHttpClient client;
 
-  @Rule public TemporaryFolder folder = new TemporaryFolder();
+  @TempDir
+  public Path folder;
 
   @BeforeEach
   public void setUp() {
