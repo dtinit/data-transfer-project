@@ -18,6 +18,7 @@ package org.datatransferproject.types.common.models;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.datatransferproject.types.common.models.blob.BlobbyStorageContainerResource;
 import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
 import org.datatransferproject.types.common.models.mail.MailContainerResource;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
@@ -46,6 +47,7 @@ import org.datatransferproject.types.common.models.videos.VideosContainerResourc
   @JsonSubTypes.Type(SocialActivityContainerResource.class),
   @JsonSubTypes.Type(IdOnlyContainerResource.class),
   @JsonSubTypes.Type(DateRangeContainerResource.class),
-  @JsonSubTypes.Type(MusicContainerResource.class)
+  @JsonSubTypes.Type(MusicContainerResource.class),
+  @JsonSubTypes.Type(BlobbyStorageContainerResource.class)
 })
 public abstract class ContainerResource extends DataModel {}
