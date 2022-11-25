@@ -39,7 +39,9 @@ import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 
-/** Implementation of {@link InMemoryDataCopier}. */
+/**
+ * Implementation of {@link InMemoryDataCopier}.
+ */
 public class PortabilityStackInMemoryDataCopier extends PortabilityAbstractInMemoryDataCopier {
 
   private static final AtomicInteger COPY_ITERATION_COUNTER = new AtomicInteger();
@@ -78,7 +80,7 @@ public class PortabilityStackInMemoryDataCopier extends PortabilityAbstractInMem
    *
    * @param exportAuthData The auth data for the export
    * @param importAuthData The auth data for the import
-   * @param exportInfo Any pagination or resource information to use for subsequent calls.
+   * @param exportInfo     Any pagination or resource information to use for subsequent calls.
    */
   @Override
   public void copy(
@@ -96,40 +98,33 @@ public class PortabilityStackInMemoryDataCopier extends PortabilityAbstractInMem
       // load stack from partially completed transfer
       exportInfoStack = maybeLoadedStack.get();
     } else {
-      // start new transfer
-      int initialCopyIteration = COPY_ITERATION_COUNTER.incrementAndGet();
-      ExportResult<?> initialExportResult =
-          copyIteration(
-              jobId, exportAuthData, importAuthData, exportInfo, jobIdPrefix, initialCopyIteration);
-      // Import and Export were successful, determine what to do next
-      ContainerResource exportContainerResource =
-          exportInfo.map(ExportInformation::getContainerResource).orElse(null);
-      updateStackAfterCopyIteration(
-          jobId,
-          jobIdPrefix,
-          exportContainerResource,
-          initialCopyIteration,
-          initialExportResult.getContinuationData());
+      copyAndUpdateStack(exportAuthData, importAuthData, jobId, jobIdPrefix, exportInfo);
     }
+
     while (!exportInfoStack.isEmpty()) {
-      int copyIteration = COPY_ITERATION_COUNTER.incrementAndGet();
-      ExportInformation currentExportInfo = exportInfoStack.pop();
-      ExportResult<?> exportResult =
-          copyIteration(
-              jobId,
-              exportAuthData,
-              importAuthData,
-              Optional.of(currentExportInfo),
-              jobIdPrefix,
-              copyIteration);
-      // Import and Export were successful, determine what to do next
-      updateStackAfterCopyIteration(
-          jobId,
-          jobIdPrefix,
-          currentExportInfo.getContainerResource(),
-          copyIteration,
-          exportResult.getContinuationData());
+      Optional<ExportInformation> nextInfo = Optional.of(exportInfoStack.pop());
+      copyAndUpdateStack(exportAuthData, importAuthData, jobId, jobIdPrefix, nextInfo);
     }
+  }
+
+  private void copyAndUpdateStack(AuthData exportAuthData, AuthData importAuthData, UUID jobId,
+      String jobIdPrefix, Optional<ExportInformation> exportInfo) throws CopyException {
+    int copyIteration = COPY_ITERATION_COUNTER.incrementAndGet();
+    ExportResult<?> exportResult =
+        copyIteration(
+            jobId,
+            exportAuthData,
+            importAuthData,
+            exportInfo,
+            jobIdPrefix,
+            copyIteration);
+    // Import and Export were successful, determine what to do next
+    updateStackAfterCopyIteration(
+        jobId,
+        jobIdPrefix,
+        exportInfo.map(ei -> ei.getContainerResource()).orElse(null),
+        copyIteration,
+        exportResult.getContinuationData());
   }
 
   private void updateStackAfterCopyIteration(
