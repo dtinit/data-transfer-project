@@ -22,7 +22,6 @@ plugins {
 dependencies {
     compile project(":portability-spi-cloud")
     compile project(":portability-spi-transfer")
-    compile project(":libraries:transfer")
 
     compile("com.restfb:restfb:2.14.0")
     compile("commons-io:commons-io:2.6")

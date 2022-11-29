@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Data Transfer Project Authors.
+ * Copyright 2022 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,27 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.transfer;
+package org.datatransferproject.datatransfer.google.musicModels;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-@Deprecated // prefer ConnectionProvider
-public class ImageStreamProvider {
+/**
+ * Information about whether a request was successful, used by {@link NewPlaylistItemResult}.
+ * TODO(critical WIP-feature step): Add Google Music API documentation link
+ */
+public class Status {
 
-  /** Gets an HttpURLConnection to an image, given its URL. */
-  public HttpURLConnection getConnection(String urlStr) throws IOException {
-    URL url = new URL(urlStr);
-    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-    conn.connect();
-    return conn;
+  @JsonProperty("code")
+  private int code;
+
+  @JsonProperty("message")
+  private String message;
+
+  public int getCode() {
+    return code;
+  }
+
+  public String getMessage() {
+    return message;
   }
 }
