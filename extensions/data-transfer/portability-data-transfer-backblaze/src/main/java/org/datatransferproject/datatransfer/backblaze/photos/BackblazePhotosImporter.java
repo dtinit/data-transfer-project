@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
+import java.util.concurrent.atomic.LongAdder;
+
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.backblaze.common.BackblazeDataTransferClient;
 import org.datatransferproject.datatransfer.backblaze.common.BackblazeDataTransferClientFactory;
@@ -47,10 +49,10 @@ public class BackblazePhotosImporter
   private final BackblazeDataTransferClientFactory b2ClientFactory;
 
   public BackblazePhotosImporter(
-      Monitor monitor,
-      TemporaryPerJobDataStore jobStore,
-      ConnectionProvider connectionProvider,
-      BackblazeDataTransferClientFactory b2ClientFactory) {
+          Monitor monitor,
+          TemporaryPerJobDataStore jobStore,
+          ConnectionProvider connectionProvider,
+          BackblazeDataTransferClientFactory b2ClientFactory) {
     this.monitor = monitor;
     this.jobStore = jobStore;
     this.connectionProvider = connectionProvider;
@@ -59,11 +61,11 @@ public class BackblazePhotosImporter
 
   @Override
   public ImportResult importItem(
-      UUID jobId,
-      IdempotentImportExecutor idempotentExecutor,
-      TokenSecretAuthData authData,
-      PhotosContainerResource data)
-      throws Exception {
+          UUID jobId,
+          IdempotentImportExecutor idempotentExecutor,
+          TokenSecretAuthData authData,
+          PhotosContainerResource data)
+          throws Exception {
     if (data == null) {
       // Nothing to do
       return ImportResult.OK;
@@ -74,28 +76,36 @@ public class BackblazePhotosImporter
     if (data.getAlbums() != null && data.getAlbums().size() > 0) {
       for (PhotoAlbum album : data.getAlbums()) {
         idempotentExecutor.executeAndSwallowIOExceptions(
-            album.getId(),
-            String.format("Caching album name for album '%s'", album.getId()),
-            () -> album.getName());
+                album.getId(),
+                String.format("Caching album name for album '%s'", album.getId()),
+                () -> album.getName());
       }
     }
 
+    final LongAdder totalImportedFilesSizes = new LongAdder();
     if (data.getPhotos() != null && data.getPhotos().size() > 0) {
       for (PhotoModel photo : data.getPhotos()) {
         idempotentExecutor.importAndSwallowIOExceptions(
-            photo, p -> importSinglePhoto(idempotentExecutor, b2Client, jobId, p));
+                photo, p -> {
+                  ItemImportResult<String> fileImportResult =
+                          importSinglePhoto(idempotentExecutor, b2Client, jobId, p);
+                  if (fileImportResult.hasBytes()) {
+                    totalImportedFilesSizes.add(fileImportResult.getBytes());
+                  }
+                  return fileImportResult;
+                });
       }
     }
 
-    return ImportResult.OK;
+    return ImportResult.OK.copyWithBytes(totalImportedFilesSizes.longValue());
   }
 
   private ItemImportResult<String> importSinglePhoto(
-      IdempotentImportExecutor idempotentExecutor,
-      BackblazeDataTransferClient b2Client,
-      UUID jobId,
-      PhotoModel photo)
-      throws IOException {
+          IdempotentImportExecutor idempotentExecutor,
+          BackblazeDataTransferClient b2Client,
+          UUID jobId,
+          PhotoModel photo)
+          throws IOException {
     String albumName = idempotentExecutor.getCachedValue(photo.getAlbumId());
 
     File file;
@@ -103,9 +113,9 @@ public class BackblazePhotosImporter
       file = jobStore.getTempFileFromInputStream(is, photo.getDataId(), ".jpg");
     }
     String response =
-        b2Client.uploadFile(
-            String.format("%s/%s/%s.jpg", PHOTO_TRANSFER_MAIN_FOLDER, albumName, photo.getDataId()),
-            file);
+            b2Client.uploadFile(
+                    String.format("%s/%s/%s.jpg", PHOTO_TRANSFER_MAIN_FOLDER, albumName, photo.getDataId()),
+                    file);
     long size = file.length();
 
     try {
@@ -115,8 +125,8 @@ public class BackblazePhotosImporter
     } catch (Exception e) {
       // Swallow the exception caused by Remove data so that existing flows continue
       monitor.info(
-          () -> format("Exception swallowed while removing data for jobId %s, localPath %s",
-              jobId, photo.getFetchableUrl()), e);
+              () -> format("Exception swallowed while removing data for jobId %s, localPath %s",
+                      jobId, photo.getFetchableUrl()), e);
     }
 
     return ItemImportResult.success(response, size);
