@@ -19,10 +19,14 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
+import java.util.concurrent.atomic.LongAdder;
+
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.ItemImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
@@ -77,19 +81,20 @@ public class KoofrVideosImporter
           album.getId(), album.getName(), () -> createAlbumFolder(album, koofrClient));
     }
 
+    final LongAdder totalImportedFilesSizes = new LongAdder();
     for (VideoModel videoModel : resource.getVideos()) {
-      String id;
-      if (videoModel.getAlbumId() == null) {
-        id = videoModel.getDataId();
-      } else {
-        id = videoModel.getAlbumId() + "-" + videoModel.getDataId();
-      }
-      idempotentImportExecutor.executeAndSwallowIOExceptions(
-          id,
-          videoModel.getName(),
-          () -> importSingleVideo(videoModel, jobId, idempotentImportExecutor, koofrClient));
+      idempotentImportExecutor.importAndSwallowIOExceptions(
+              videoModel,
+           video -> {
+             ItemImportResult<String> fileImportResult =
+              importSingleVideo(videoModel, jobId, idempotentImportExecutor, koofrClient);
+             if (fileImportResult.hasBytes()) {
+               totalImportedFilesSizes.add(fileImportResult.getBytes());
+             }
+             return fileImportResult;
+           });
     }
-    return ImportResult.OK;
+    return ImportResult.OK.copyWithBytes(totalImportedFilesSizes.longValue());
   }
 
   private String createAlbumFolder(VideoAlbum album, KoofrClient koofrClient)
@@ -112,7 +117,7 @@ public class KoofrVideosImporter
     return fullPath;
   }
 
-  private String importSingleVideo(
+  private ItemImportResult<String> importSingleVideo(
       VideoModel video,
       UUID jobId,
       IdempotentImportExecutor idempotentImportExecutor,
@@ -120,37 +125,48 @@ public class KoofrVideosImporter
       throws IOException, InvalidTokenException, DestinationMemoryFullException {
     monitor.debug(() -> String.format("Import single video %s", video.getName()));
 
-    try (InputStream inputStream =
-        connectionProvider.getInputStreamForItem(jobId, video).getStream()) {
-      String parentPath;
-      if (video.getAlbumId() == null) {
-        parentPath = koofrClient.ensureVideosFolder();
-      } else {
-        parentPath = idempotentImportExecutor.getCachedValue(video.getAlbumId());
+    try {
+      InputStreamWrapper inputStreamWrapper =
+              connectionProvider.getInputStreamForItem(jobId, video);
+      ItemImportResult<String> response;
+      try (InputStream inputStream = inputStreamWrapper.getStream()) {
+        String parentPath;
+        if (video.getAlbumId() == null) {
+          parentPath = koofrClient.ensureVideosFolder();
+        } else {
+          parentPath = idempotentImportExecutor.getCachedValue(video.getAlbumId());
+        }
+
+        String name = video.getName();
+        String description = KoofrClient.trimDescription(video.getDescription());
+
+        String fullPath = parentPath + "/" + name;
+
+        if (koofrClient.fileExists(fullPath)) {
+          monitor.debug(() -> String.format("Video already exists %s", video.getName()));
+
+          return ItemImportResult.success(fullPath);
+        }
+
+        long inputStreamBytes = inputStreamWrapper.getBytes();
+        String responseResult = koofrClient.uploadFile(
+                parentPath,
+                name,
+                inputStream,
+                video.getEncodingFormat(),
+                video.getUploadedTime(),
+                description);
+        if (responseResult != null && !responseResult.isEmpty()) {
+          response = ItemImportResult.success(responseResult, inputStreamBytes);
+        } else {
+          response = ItemImportResult.success(String.format(SKIPPED_FILE_RESULT_FORMAT, video.getDataId()));
+        }
       }
-
-      String name = video.getName();
-      String description = KoofrClient.trimDescription(video.getDescription());
-
-      String fullPath = parentPath + "/" + name;
-
-      if (koofrClient.fileExists(fullPath)) {
-        monitor.debug(() -> String.format("Video already exists %s", video.getName()));
-
-        return fullPath;
-      }
-
-      return koofrClient.uploadFile(
-          parentPath,
-          name,
-          inputStream,
-          video.getEncodingFormat(),
-          video.getUploadedTime(),
-          description);
+      return response;
     } catch (FileNotFoundException e) {
       monitor.info(
               () -> String.format("Video resource was missing for id: %s", video.getDataId()), e);
-      return String.format(SKIPPED_FILE_RESULT_FORMAT, video.getDataId());
+      return ItemImportResult.success(String.format(SKIPPED_FILE_RESULT_FORMAT, video.getDataId()));
     }
   }
 }

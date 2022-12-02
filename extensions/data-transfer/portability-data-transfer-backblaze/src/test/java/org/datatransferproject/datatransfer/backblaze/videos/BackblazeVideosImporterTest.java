@@ -84,7 +84,7 @@ public class BackblazeVideosImporterTest {
     BackblazeVideosImporter sut =
         new BackblazeVideosImporter(monitor, dataStore, streamProvider, clientFactory);
     ImportResult result = sut.importItem(UUID.randomUUID(), executor, authData, data);
-    assertEquals(ImportResult.OK, result);
+    assertEquals(ImportResult.ResultType.OK, result.getType());
   }
 
   @Test
@@ -95,7 +95,7 @@ public class BackblazeVideosImporterTest {
     BackblazeVideosImporter sut =
         new BackblazeVideosImporter(monitor, dataStore, streamProvider, clientFactory);
     ImportResult result = sut.importItem(UUID.randomUUID(), executor, authData, data);
-    assertEquals(ImportResult.OK, result);
+    assertEquals(ImportResult.ResultType.OK, result.getType());
   }
 
   @Test

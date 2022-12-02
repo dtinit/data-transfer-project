@@ -68,6 +68,8 @@ public class KoofrVideosImporterTest {
               capturedResult.set(result);
               return result;
             });
+    when(executor.importAndSwallowIOExceptions(any(), any()))
+            .thenCallRealMethod();
     authData = new TokensAndUrlAuthData("acc", "refresh", "");
   }
 
