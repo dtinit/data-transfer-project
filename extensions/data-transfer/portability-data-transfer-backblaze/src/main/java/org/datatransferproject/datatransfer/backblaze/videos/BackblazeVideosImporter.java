@@ -21,6 +21,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
+import java.util.concurrent.atomic.LongAdder;
+
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.backblaze.common.BackblazeDataTransferClient;
 import org.datatransferproject.datatransfer.backblaze.common.BackblazeDataTransferClientFactory;
@@ -45,10 +47,10 @@ public class BackblazeVideosImporter
   private final BackblazeDataTransferClientFactory b2ClientFactory;
 
   public BackblazeVideosImporter(
-      Monitor monitor,
-      TemporaryPerJobDataStore jobStore,
-      ConnectionProvider connectionProvider,
-      BackblazeDataTransferClientFactory b2ClientFactory) {
+          Monitor monitor,
+          TemporaryPerJobDataStore jobStore,
+          ConnectionProvider connectionProvider,
+          BackblazeDataTransferClientFactory b2ClientFactory) {
     this.monitor = monitor;
     this.jobStore = jobStore;
     this.connectionProvider = connectionProvider;
@@ -57,11 +59,11 @@ public class BackblazeVideosImporter
 
   @Override
   public ImportResult importItem(
-      UUID jobId,
-      IdempotentImportExecutor idempotentExecutor,
-      TokenSecretAuthData authData,
-      VideosContainerResource data)
-      throws Exception {
+          UUID jobId,
+          IdempotentImportExecutor idempotentExecutor,
+          TokenSecretAuthData authData,
+          VideosContainerResource data)
+          throws Exception {
     if (data == null) {
       // Nothing to do
       return ImportResult.OK;
@@ -69,33 +71,40 @@ public class BackblazeVideosImporter
 
     BackblazeDataTransferClient b2Client = b2ClientFactory.getOrCreateB2Client(jobId, authData);
 
+    final LongAdder totalImportedFilesSizes = new LongAdder();
     if (data.getVideos() != null && data.getVideos().size() > 0) {
       for (VideoModel video : data.getVideos()) {
         idempotentExecutor.importAndSwallowIOExceptions(
-            video,
-            v -> importSingleVideo(jobId, b2Client, v));
+                video,
+                v -> {
+                  ItemImportResult<String> fileImportResult = importSingleVideo(jobId, b2Client, v);
+                  if (fileImportResult.hasBytes()) {
+                    totalImportedFilesSizes.add(fileImportResult.getBytes());
+                  }
+                  return fileImportResult;
+                });
       }
     }
 
-    return ImportResult.OK;
+    return ImportResult.OK.copyWithBytes(totalImportedFilesSizes.longValue());
   }
 
   private ItemImportResult<String> importSingleVideo(
-      UUID jobId,
-      BackblazeDataTransferClient b2Client,
-      VideoModel video)
-      throws IOException {
+          UUID jobId,
+          BackblazeDataTransferClient b2Client,
+          VideoModel video)
+          throws IOException {
     try (InputStream videoFileStream =
-        connectionProvider.getInputStreamForItem(jobId, video).getStream()) {
+                 connectionProvider.getInputStreamForItem(jobId, video).getStream()) {
       File file = jobStore
-          .getTempFileFromInputStream(videoFileStream, video.getDataId(), ".mp4");
+              .getTempFileFromInputStream(videoFileStream, video.getDataId(), ".mp4");
       String res = b2Client.uploadFile(
-          String.format("%s/%s.mp4", VIDEO_TRANSFER_MAIN_FOLDER, video.getDataId()),
-          file);
+              String.format("%s/%s.mp4", VIDEO_TRANSFER_MAIN_FOLDER, video.getDataId()),
+              file);
       return ItemImportResult.success(res, file.length());
     } catch (FileNotFoundException e) {
       monitor.info(
-          () -> String.format("Video resource was missing for id: %s", video.getDataId()), e);
+              () -> String.format("Video resource was missing for id: %s", video.getDataId()), e);
       return ItemImportResult.error(e, null);
     }
   }
