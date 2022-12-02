@@ -24,6 +24,8 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.Base64;
 import java.util.UUID;
+import java.util.concurrent.atomic.LongAdder;
+
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -84,6 +86,7 @@ public class DaybookPhotosImporter
           album.getId(), album.getName(), () -> importAlbum(album));
     }
 
+    final LongAdder totalImportedFilesSizes = new LongAdder();
     // Import photos
     for (PhotoModel photo : resource.getPhotos()) {
       executor.importAndSwallowIOExceptions(
@@ -95,13 +98,16 @@ public class DaybookPhotosImporter
             } else {
               albumId = executor.getCachedValue(photo.getAlbumId());
             }
-            return importPhoto(photo, jobId, authData, albumId);
+            ItemImportResult<Integer> photoImportResult = importPhoto(photo, jobId, authData, albumId);
+            if (photoImportResult.hasBytes()) {
+              totalImportedFilesSizes.add(photoImportResult.getBytes());
+            }
+            return photoImportResult;
           });
     }
 
     // API to trigger daybook API
-
-    return new ImportResult(ImportResult.ResultType.OK);
+    return ImportResult.OK.copyWithBytes(totalImportedFilesSizes.longValue());
   }
 
   private String importAlbum(PhotoAlbum album) {
