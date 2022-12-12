@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.datatransferproject.types.common.ImportableItem;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 import java.util.Objects;
 
 public class SocialActivityAttachment implements ImportableItem {
@@ -75,7 +75,7 @@ public class SocialActivityAttachment implements ImportableItem {
     return Objects.hash(getType(), getUrl(), getName(), getContent());
   }
 
-  @Nullable
+  @Nonnull
   @Override
-  public String getIdempotentId() { return getUrl(); }
+  public String getIdempotentId() { return url; }
 }

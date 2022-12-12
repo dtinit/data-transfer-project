@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
 import org.datatransferproject.types.common.ImportableItem;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.time.Instant;
 import java.util.Collection;
@@ -117,13 +118,12 @@ public class SocialActivityModel implements ImportableItem {
     return url;
   }
 
-  @Nullable
+  @Nonnull
   @Override
   public String getIdempotentId() {
     return Integer.toString(hashCode());
   }
 
-  @Nullable
   @Override
   public String getName() { return title; }
 }
