@@ -56,6 +56,7 @@ import static java.lang.String.format;
 public class KoofrPhotosImporter
     implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
+  private static final String SKIPPED_FILE_RESULT_FORMAT = "skipped-%s";
   private static final String TITLE_DATE_FORMAT = "yyyy-MM-dd HH.mm.ss ";
   private final KoofrClientFactory koofrClientFactory;
   private final JobStore jobStore;
@@ -111,7 +112,7 @@ public class KoofrPhotosImporter
           photo -> {
             ItemImportResult<String> fileImportResult =
                     importSinglePhoto(photoModel, jobId, idempotentImportExecutor, koofrClient);
-            if (fileImportResult.hasBytes()) {
+            if (fileImportResult != null && fileImportResult.hasBytes()) {
               totalImportedFilesSizes.add(fileImportResult.getBytes());
             }
             return fileImportResult;
@@ -181,16 +182,15 @@ public class KoofrPhotosImporter
                     stringResult,
                     inputStreamBytes);
           } else {
-            response = ItemImportResult.success("skipped-" + photo.getDataId());
+            response = ItemImportResult.success(String.format(SKIPPED_FILE_RESULT_FORMAT, photo.getDataId()));
           }
           size = inputStreamBytes;
         } catch (KoofrClientIOException exception) {
           if (exception.getCode() == 404) {
             monitor.info(() -> String.format("Can't find album during importSingleItem for id: %s", photo.getDataId()), exception);
-            response = ItemImportResult.success("skipped-" + photo.getDataId());
+            response = ItemImportResult.success(String.format(SKIPPED_FILE_RESULT_FORMAT, photo.getDataId()));
           } else {
-            Long finalSize = size;
-            return ItemImportResult.error(exception, finalSize);
+            return ItemImportResult.error(exception, size);
           }
         }
 
@@ -208,8 +208,7 @@ public class KoofrPhotosImporter
 
       return response;
     } catch (KoofrClientIOException exception) {
-      Long finalSize = size;
-      return ItemImportResult.error(exception, finalSize);
+      return ItemImportResult.error(exception, size);
     }
   }
 

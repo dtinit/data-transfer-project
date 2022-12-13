@@ -88,7 +88,7 @@ public class KoofrVideosImporter
            video -> {
              ItemImportResult<String> fileImportResult =
               importSingleVideo(videoModel, jobId, idempotentImportExecutor, koofrClient);
-             if (fileImportResult.hasBytes()) {
+             if (fileImportResult != null && fileImportResult.hasBytes()) {
                totalImportedFilesSizes.add(fileImportResult.getBytes());
              }
              return fileImportResult;
