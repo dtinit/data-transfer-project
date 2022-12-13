@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableList;
 import org.datatransferproject.types.common.ImportableItem;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Objects;
