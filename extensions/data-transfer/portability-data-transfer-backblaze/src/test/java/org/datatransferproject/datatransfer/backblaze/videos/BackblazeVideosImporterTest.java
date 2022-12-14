@@ -54,8 +54,7 @@ public class BackblazeVideosImporterTest {
   IdempotentImportExecutor executor;
   TokenSecretAuthData authData;
   BackblazeDataTransferClient client;
-  @TempDir
-  public Path folder;
+  @TempDir public Path folder;
 
   @BeforeEach
   public void setUp() {
@@ -130,8 +129,8 @@ public class BackblazeVideosImporterTest {
         new BackblazeVideosImporter(monitor, dataStore, streamProvider, clientFactory);
     sut.importItem(jobId, executor, authData, data);
 
-    ArgumentCaptor<ImportFunction<VideoModel, String>> importCapture = ArgumentCaptor.forClass(
-        ImportFunction.class);
+    ArgumentCaptor<ImportFunction<VideoModel, String>> importCapture =
+        ArgumentCaptor.forClass(ImportFunction.class);
     verify(executor, times(1))
         .importAndSwallowIOExceptions(eq(videoObject), importCapture.capture());
 

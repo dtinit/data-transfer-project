@@ -88,8 +88,7 @@ public class KoofrPhotosImporterTest {
               capturedResult.set(result);
               return result;
             });
-    when(executor.importAndSwallowIOExceptions(any(), any()))
-            .thenCallRealMethod();
+    when(executor.importAndSwallowIOExceptions(any(), any())).thenCallRealMethod();
     authData = new TokensAndUrlAuthData("acc", "refresh", "");
   }
 
@@ -383,13 +382,7 @@ public class KoofrPhotosImporterTest {
     Collection<PhotoModel> photos =
         ImmutableList.of(
             new PhotoModel(
-                "pic1.jpg",
-                "http://fake.com/1.jpg",
-                "A pic",
-                "image/jpeg",
-                "p1",
-                "id1",
-                true));
+                "pic1.jpg", "http://fake.com/1.jpg", "A pic", "image/jpeg", "p1", "id1", true));
 
     PhotosContainerResource resource = spy(new PhotosContainerResource(albums, photos));
     importer.importItem(jobId, executor, authData, resource);

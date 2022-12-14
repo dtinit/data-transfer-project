@@ -111,7 +111,7 @@ public class KoofrPhotosImporter
           photoModel,
           photo -> {
             ItemImportResult<String> fileImportResult =
-                    importSinglePhoto(photoModel, jobId, idempotentImportExecutor, koofrClient);
+                importSinglePhoto(photoModel, jobId, idempotentImportExecutor, koofrClient);
             if (fileImportResult != null && fileImportResult.hasBytes()) {
               totalImportedFilesSizes.add(fileImportResult.getBytes());
             }
@@ -146,12 +146,12 @@ public class KoofrPhotosImporter
       UUID jobId,
       IdempotentImportExecutor idempotentImportExecutor,
       KoofrClient koofrClient)
-          throws IOException, InvalidTokenException, DestinationMemoryFullException {
+      throws IOException, InvalidTokenException, DestinationMemoryFullException {
     monitor.debug(() -> String.format("Import single photo %s", photo.getTitle()));
     Long size = null;
     try {
       InputStreamWrapper inputStreamWrapper =
-              connectionProvider.getInputStreamForItem(jobId, photo);
+          connectionProvider.getInputStreamForItem(jobId, photo);
       ItemImportResult<String> response;
 
       try (InputStream inputStream = inputStreamWrapper.getStream()) {
@@ -175,20 +175,32 @@ public class KoofrPhotosImporter
 
         try {
           long inputStreamBytes = inputStreamWrapper.getBytes();
-          String stringResult = koofrClient.uploadFile(
-                  parentPath, title, inMemoryInputStream, photo.getMediaType(), dateCreated, description);
+          String stringResult =
+              koofrClient.uploadFile(
+                  parentPath,
+                  title,
+                  inMemoryInputStream,
+                  photo.getMediaType(),
+                  dateCreated,
+                  description);
           if (stringResult != null && !stringResult.isEmpty()) {
-            response = ItemImportResult.success(
-                    stringResult,
-                    inputStreamBytes);
+            response = ItemImportResult.success(stringResult, inputStreamBytes);
           } else {
-            response = ItemImportResult.success(String.format(SKIPPED_FILE_RESULT_FORMAT, photo.getDataId()));
+            response =
+                ItemImportResult.success(
+                    String.format(SKIPPED_FILE_RESULT_FORMAT, photo.getDataId()));
           }
           size = inputStreamBytes;
         } catch (KoofrClientIOException exception) {
           if (exception.getCode() == 404) {
-            monitor.info(() -> String.format("Can't find album during importSingleItem for id: %s", photo.getDataId()), exception);
-            response = ItemImportResult.success(String.format(SKIPPED_FILE_RESULT_FORMAT, photo.getDataId()));
+            monitor.info(
+                () ->
+                    String.format(
+                        "Can't find album during importSingleItem for id: %s", photo.getDataId()),
+                exception);
+            response =
+                ItemImportResult.success(
+                    String.format(SKIPPED_FILE_RESULT_FORMAT, photo.getDataId()));
           } else {
             return ItemImportResult.error(exception, size);
           }
@@ -201,8 +213,11 @@ public class KoofrPhotosImporter
         } catch (Exception e) {
           // Swallow the exception caused by Remove data so that existing flows continue
           monitor.info(
-                  () -> format("Exception swallowed while removing data for jobId %s, localPath %s",
-                          jobId, photo.getFetchableUrl()), e);
+              () ->
+                  format(
+                      "Exception swallowed while removing data for jobId %s, localPath %s",
+                      jobId, photo.getFetchableUrl()),
+              e);
         }
       }
 

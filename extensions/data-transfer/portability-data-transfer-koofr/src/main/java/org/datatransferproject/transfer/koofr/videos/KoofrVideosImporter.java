@@ -39,9 +39,7 @@ import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-/**
- * Imports videos and their albums to Koofr.
- */
+/** Imports videos and their albums to Koofr. */
 public class KoofrVideosImporter
     implements Importer<TokensAndUrlAuthData, VideosContainerResource> {
 
@@ -51,8 +49,8 @@ public class KoofrVideosImporter
   private final ConnectionProvider connectionProvider;
   private final Monitor monitor;
 
-  public KoofrVideosImporter(KoofrClientFactory koofrClientFactory, Monitor monitor,
-      JobStore jobStore) {
+  public KoofrVideosImporter(
+      KoofrClientFactory koofrClientFactory, Monitor monitor, JobStore jobStore) {
     this.koofrClientFactory = koofrClientFactory;
     this.connectionProvider = new ConnectionProvider(jobStore);
     this.monitor = monitor;
@@ -84,15 +82,15 @@ public class KoofrVideosImporter
     final LongAdder totalImportedFilesSizes = new LongAdder();
     for (VideoModel videoModel : resource.getVideos()) {
       idempotentImportExecutor.importAndSwallowIOExceptions(
-              videoModel,
-           video -> {
-             ItemImportResult<String> fileImportResult =
-              importSingleVideo(videoModel, jobId, idempotentImportExecutor, koofrClient);
-             if (fileImportResult != null && fileImportResult.hasBytes()) {
-               totalImportedFilesSizes.add(fileImportResult.getBytes());
-             }
-             return fileImportResult;
-           });
+          videoModel,
+          video -> {
+            ItemImportResult<String> fileImportResult =
+                importSingleVideo(videoModel, jobId, idempotentImportExecutor, koofrClient);
+            if (fileImportResult != null && fileImportResult.hasBytes()) {
+              totalImportedFilesSizes.add(fileImportResult.getBytes());
+            }
+            return fileImportResult;
+          });
     }
     return ImportResult.OK.copyWithBytes(totalImportedFilesSizes.longValue());
   }
@@ -127,7 +125,7 @@ public class KoofrVideosImporter
 
     try {
       InputStreamWrapper inputStreamWrapper =
-              connectionProvider.getInputStreamForItem(jobId, video);
+          connectionProvider.getInputStreamForItem(jobId, video);
       ItemImportResult<String> response;
       try (InputStream inputStream = inputStreamWrapper.getStream()) {
         String parentPath;
@@ -149,7 +147,8 @@ public class KoofrVideosImporter
         }
 
         long inputStreamBytes = inputStreamWrapper.getBytes();
-        String responseResult = koofrClient.uploadFile(
+        String responseResult =
+            koofrClient.uploadFile(
                 parentPath,
                 name,
                 inputStream,
@@ -159,13 +158,15 @@ public class KoofrVideosImporter
         if (responseResult != null && !responseResult.isEmpty()) {
           response = ItemImportResult.success(responseResult, inputStreamBytes);
         } else {
-          response = ItemImportResult.success(String.format(SKIPPED_FILE_RESULT_FORMAT, video.getDataId()));
+          response =
+              ItemImportResult.success(
+                  String.format(SKIPPED_FILE_RESULT_FORMAT, video.getDataId()));
         }
       }
       return response;
     } catch (FileNotFoundException e) {
       monitor.info(
-              () -> String.format("Video resource was missing for id: %s", video.getDataId()), e);
+          () -> String.format("Video resource was missing for id: %s", video.getDataId()), e);
       return ItemImportResult.success(String.format(SKIPPED_FILE_RESULT_FORMAT, video.getDataId()));
     }
   }
