@@ -49,13 +49,13 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 
 public class BackblazePhotosImporterTest {
-    Monitor monitor;
-    TemporaryPerJobDataStore dataStore;
-    ConnectionProvider streamProvider;
-    BackblazeDataTransferClientFactory clientFactory;
-    IdempotentImportExecutor executor;
-    TokenSecretAuthData authData;
-    BackblazeDataTransferClient client;
+  Monitor monitor;
+  TemporaryPerJobDataStore dataStore;
+  ConnectionProvider streamProvider;
+  BackblazeDataTransferClientFactory clientFactory;
+  IdempotentImportExecutor executor;
+  TokenSecretAuthData authData;
+  BackblazeDataTransferClient client;
 
   @BeforeEach
   public void setUp() {
@@ -68,8 +68,7 @@ public class BackblazePhotosImporterTest {
     client = mock(BackblazeDataTransferClient.class);
   }
 
-  @TempDir
-  public Path folder;
+  @TempDir public Path folder;
 
   @Test
   public void testNullData() throws Exception {
@@ -88,7 +87,7 @@ public class BackblazePhotosImporterTest {
     BackblazePhotosImporter sut =
         new BackblazePhotosImporter(monitor, dataStore, streamProvider, clientFactory);
     ImportResult result = sut.importItem(UUID.randomUUID(), executor, authData, data);
-    assertEquals(ImportResult.OK, result);
+    assertEquals(ImportResult.ResultType.OK, result.getType());
   }
 
   @Test
@@ -100,7 +99,7 @@ public class BackblazePhotosImporterTest {
     BackblazePhotosImporter sut =
         new BackblazePhotosImporter(monitor, dataStore, streamProvider, clientFactory);
     ImportResult result = sut.importItem(UUID.randomUUID(), executor, authData, data);
-    assertEquals(ImportResult.OK, result);
+    assertEquals(ImportResult.ResultType.OK, result.getType());
   }
 
   @Test
@@ -113,8 +112,8 @@ public class BackblazePhotosImporterTest {
     String response = "response";
     UUID jobId = UUID.randomUUID();
     PhotoModel photoModel = new PhotoModel(title, photoUrl, "", "", dataId, albumId, false);
-    PhotosContainerResource data = new PhotosContainerResource(Collections.emptyList(),
-        Collections.singletonList(photoModel));
+    PhotosContainerResource data =
+        new PhotosContainerResource(Collections.emptyList(), Collections.singletonList(photoModel));
 
     when(executor.getCachedValue(albumId)).thenReturn(albumName);
 
@@ -131,8 +130,8 @@ public class BackblazePhotosImporterTest {
         new BackblazePhotosImporter(monitor, dataStore, streamProvider, clientFactory);
     sut.importItem(jobId, executor, authData, data);
 
-    ArgumentCaptor<ImportFunction<PhotoModel, String>> importCapture = ArgumentCaptor.forClass(
-        ImportFunction.class);
+    ArgumentCaptor<ImportFunction<PhotoModel, String>> importCapture =
+        ArgumentCaptor.forClass(ImportFunction.class);
     verify(executor, times(1))
         .importAndSwallowIOExceptions(eq(photoModel), importCapture.capture());
 
