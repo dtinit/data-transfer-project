@@ -37,14 +37,10 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class KoofrVideosImporterTest {
-  @Mock
-  private KoofrClientFactory clientFactory;
-  @Mock
-  private KoofrClient client;
-  @Mock
-  private Monitor monitor;
-  @Mock
-  private IdempotentImportExecutor executor;
+  @Mock private KoofrClientFactory clientFactory;
+  @Mock private KoofrClient client;
+  @Mock private Monitor monitor;
+  @Mock private IdempotentImportExecutor executor;
   private KoofrVideosImporter importer;
   private TokensAndUrlAuthData authData;
   private MockWebServer server;
@@ -68,6 +64,7 @@ public class KoofrVideosImporterTest {
               capturedResult.set(result);
               return result;
             });
+    when(executor.importAndSwallowIOExceptions(any(), any())).thenCallRealMethod();
     authData = new TokensAndUrlAuthData("acc", "refresh", "");
   }
 
@@ -234,16 +231,16 @@ public class KoofrVideosImporterTest {
     Collection<VideoAlbum> albums = ImmutableList.of();
 
     Collection<VideoModel> videos =
-            ImmutableList.of(
-                    new VideoModel(
-                            "not_found_video_1.mp4",
-                            server.url("/not_found.mp4").toString(),
-                            "Video not founded in CDN",
-                            "video/mp4",
-                            "not_found_video_1",
-                            null,
-                            false,
-                            null));
+        ImmutableList.of(
+            new VideoModel(
+                "not_found_video_1.mp4",
+                server.url("/not_found.mp4").toString(),
+                "Video not founded in CDN",
+                "video/mp4",
+                "not_found_video_1",
+                null,
+                false,
+                null));
 
     VideosContainerResource resource = spy(new VideosContainerResource(albums, videos));
 

@@ -18,7 +18,6 @@ import java.io.ByteArrayInputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
-import java.util.Date;
 import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -85,10 +84,11 @@ public class KoofrPhotosImporterTest {
         .then(
             (InvocationOnMock invocation) -> {
               Callable<String> callable = invocation.getArgument(2);
-              String result = callable.call();
+              var result = callable.call();
               capturedResult.set(result);
               return result;
             });
+    when(executor.importAndSwallowIOExceptions(any(), any())).thenCallRealMethod();
     authData = new TokensAndUrlAuthData("acc", "refresh", "");
   }
 
@@ -382,13 +382,7 @@ public class KoofrPhotosImporterTest {
     Collection<PhotoModel> photos =
         ImmutableList.of(
             new PhotoModel(
-                "pic1.jpg",
-                "http://fake.com/1.jpg",
-                "A pic",
-                "image/jpeg",
-                "p1",
-                "id1",
-                true));
+                "pic1.jpg", "http://fake.com/1.jpg", "A pic", "image/jpeg", "p1", "id1", true));
 
     PhotosContainerResource resource = spy(new PhotosContainerResource(albums, photos));
     importer.importItem(jobId, executor, authData, resource);
