@@ -86,7 +86,8 @@ public class FlickrMediaImporterTest {
                     VIDEO_MEDIA_TYPE,
                     VIDEO_ID,
                     ALBUM_ID,
-                    false);
+                    false,
+                    null);
     private static final UploadMetaData PHOTO_UPLOAD_META_DATA =
             new UploadMetaData()
                     .setAsync(false)
