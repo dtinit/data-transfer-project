@@ -1,11 +1,13 @@
 package org.datatransferproject.datatransfer.google.photos;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.junit.Assert.assertThat;
+import static com.google.common.truth.Truth.assertThat;
 
-import java.io.*;
-import org.junit.Test;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import org.junit.jupiter.api.Test;
 
 public class PhotoResultSerializationTest {
   @Test
@@ -18,9 +20,9 @@ public class PhotoResultSerializationTest {
 
     ByteArrayInputStream bais = new ByteArrayInputStream(out.toByteArray());
     Object readObject = new ObjectInputStream(bais).readObject();
-    assertThat(readObject, instanceOf(PhotoResult.class));
+    assertThat(readObject).isInstanceOf(PhotoResult.class);
     PhotoResult deserialized = (PhotoResult) readObject;
-    assertThat(deserialized.getId(), equalTo(photoId));
-    assertThat(deserialized.getBytes(), equalTo(bytes));
+    assertThat(deserialized.getId()).isEqualTo(photoId);
+    assertThat(deserialized.getBytes()).isEqualTo(bytes);
   }
 }

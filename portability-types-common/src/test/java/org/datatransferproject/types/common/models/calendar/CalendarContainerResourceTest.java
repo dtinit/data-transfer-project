@@ -6,12 +6,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Truth;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.common.models.calendar.CalendarEventModel.CalendarEventTime;
-import org.junit.Test;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
 
 public class CalendarContainerResourceTest {
   @Test

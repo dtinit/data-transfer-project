@@ -42,12 +42,11 @@ plugins {
     id 'java'
     id 'application'
     id 'com.github.johnrengelman.shadow' version '6.1.0'
-    id 'com.bmuschko.docker-remote-api' version '3.2.6'
+    id 'com.bmuschko.docker-remote-api'
 }
 
 repositories {
     mavenCentral()
-    jcenter()
 }
 
 def transportType = project.hasProperty('transportType') ? transportType : "jettyrest"
@@ -132,7 +131,7 @@ shadowJar.dependsOn(createApiFile)
 task createDockerfile(type: Dockerfile) {
     description = 'Builds the Demo Dockerfile, which includes both the frontend served by nginx, and a combined API + transfer worker backend'
     group = 'docker'
-    destFile project.file("${buildDir}/demo/Dockerfile")
+    setDestFile(project.file("${buildDir}/demo/Dockerfile"))
     from "${javaDockerContainer}"
     // Port to open up for the debugger
     exposePort 5005
@@ -186,24 +185,12 @@ task dockerize(type: DockerBuildImage) {
     dependsOn shadowJar, createDockerfile, copyWebApp
     dockerFile = project.file("${buildDir}/demo/Dockerfile")
     inputDir = project.file(".")
-    tag = 'datatransferproject/demo:latest'
+    tags.add('datatransferproject/demo:latest')
 }
 
 task installToolsAndDockerize {
     description = 'Installs required build tools and builds the demo Docker image'
     group = 'docker'
     dependsOn ":client-rest:installTools", dockerize
-}
-
-configurations.all {
-    resolutionStrategy {
-        eachDependency { DependencyResolveDetails details ->
-            if (details.requested.group == 'com.google.guava') {
-                details.useVersion("${guavaVersion}")
-                details.because 'Some dependencies rely on lower version which does not support MoreCollections'
-
-            }
-        }
-    }
 }
 

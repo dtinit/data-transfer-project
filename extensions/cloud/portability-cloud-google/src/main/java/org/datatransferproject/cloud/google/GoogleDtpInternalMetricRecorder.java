@@ -36,6 +36,7 @@ import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 
 import java.io.IOException;
 import java.time.Duration;
+import org.datatransferproject.types.common.models.DataVertical;
 
 /**
  * A {@link DtpInternalMetricRecorder} that writes metrics to Stackdriver.
@@ -211,9 +212,9 @@ class GoogleDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
   }
 
   @Override
-  public void startedJob(String dataType, String exportService, String importService) {
+  public void startedJob(DataVertical dataType, String exportService, String importService) {
     TagContext tctx = tagger.emptyBuilder()
-        .put(KEY_DATA_TYPE, TagValue.create(dataType), TAG_METADATA)
+        .put(KEY_DATA_TYPE, TagValue.create(dataType.getDataType()), TAG_METADATA)
         .put(KEY_EXPORT_SERVICE, TagValue.create(exportService), TAG_METADATA)
         .put(KEY_IMPORT_SERVICE, TagValue.create(importService), TAG_METADATA)
         .build();
@@ -224,12 +225,12 @@ class GoogleDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
 
   @Override
   public void exportPageAttemptFinished(
-      String dataType,
+      DataVertical dataType,
       String service,
       boolean success,
       Duration duration) {
     TagContext tctx = tagger.emptyBuilder()
-        .put(KEY_DATA_TYPE, TagValue.create(dataType), TAG_METADATA)
+        .put(KEY_DATA_TYPE, TagValue.create(dataType.getDataType()), TAG_METADATA)
         .put(KEY_EXPORT_SERVICE, TagValue.create(service), TAG_METADATA)
         .put(KEY_SUCCESS, TagValue.create(Boolean.toString(success)), TAG_METADATA)
         .build();
@@ -243,12 +244,12 @@ class GoogleDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
 
   @Override
   public void exportPageFinished(
-      String dataType,
+      DataVertical dataType,
       String service,
       boolean success,
       Duration duration) {
     TagContext tctx = tagger.emptyBuilder()
-        .put(KEY_DATA_TYPE, TagValue.create(dataType), TAG_METADATA)
+        .put(KEY_DATA_TYPE, TagValue.create(dataType.getDataType()), TAG_METADATA)
         .put(KEY_EXPORT_SERVICE, TagValue.create(service), TAG_METADATA)
         .put(KEY_SUCCESS, TagValue.create(Boolean.toString(success)), TAG_METADATA)
         .build();
@@ -262,12 +263,12 @@ class GoogleDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
 
   @Override
   public void importPageAttemptFinished(
-      String dataType,
+      DataVertical dataType,
       String service,
       boolean success,
       Duration duration) {
     TagContext tctx = tagger.emptyBuilder()
-        .put(KEY_DATA_TYPE, TagValue.create(dataType), TAG_METADATA)
+        .put(KEY_DATA_TYPE, TagValue.create(dataType.getDataType()), TAG_METADATA)
         .put(KEY_IMPORT_SERVICE, TagValue.create(service), TAG_METADATA)
         .put(KEY_SUCCESS, TagValue.create(Boolean.toString(success)), TAG_METADATA)
         .build();
@@ -281,12 +282,12 @@ class GoogleDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
 
   @Override
   public void importPageFinished(
-      String dataType,
+      DataVertical dataType,
       String service,
       boolean success,
       Duration duration) {
     TagContext tctx = tagger.emptyBuilder()
-        .put(KEY_DATA_TYPE, TagValue.create(dataType), TAG_METADATA)
+        .put(KEY_DATA_TYPE, TagValue.create(dataType.getDataType()), TAG_METADATA)
         .put(KEY_IMPORT_SERVICE, TagValue.create(service), TAG_METADATA)
         .put(KEY_SUCCESS, TagValue.create(Boolean.toString(success)), TAG_METADATA)
         .build();
@@ -300,13 +301,13 @@ class GoogleDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
 
   @Override
   public void finishedJob(
-      String dataType,
+      DataVertical dataType,
       String exportService,
       String importService,
       boolean success,
       Duration duration) {
     TagContext tctx = tagger.emptyBuilder()
-        .put(KEY_DATA_TYPE, TagValue.create(dataType), TAG_METADATA)
+        .put(KEY_DATA_TYPE, TagValue.create(dataType.getDataType()), TAG_METADATA)
         .put(KEY_EXPORT_SERVICE, TagValue.create(exportService), TAG_METADATA)
         .put(KEY_IMPORT_SERVICE, TagValue.create(importService), TAG_METADATA)
         .put(KEY_SUCCESS, TagValue.create(Boolean.toString(success)), TAG_METADATA)
@@ -320,19 +321,19 @@ class GoogleDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
   }
 
   @Override
-  public void cancelledJob(String dataType, String exportService, String importService, Duration duration) {
+  public void cancelledJob(DataVertical dataType, String exportService, String importService, Duration duration) {
     // Need Google folks to implement the necessary changes here.
   }
 
   @Override
-  public void recordGenericMetric(String dataType, String service, String tag) {
+  public void recordGenericMetric(DataVertical dataType, String service, String tag) {
     recordGenericMetric(dataType, service, tag, 1);
   }
 
   @Override
-  public void recordGenericMetric(String dataType, String service, String tag, boolean bool) {
+  public void recordGenericMetric(DataVertical dataType, String service, String tag, boolean bool) {
     TagContext tctx = tagger.emptyBuilder()
-        .put(KEY_DATA_TYPE, TagValue.create(dataType), TAG_METADATA)
+        .put(KEY_DATA_TYPE, TagValue.create(dataType.getDataType()), TAG_METADATA)
         .put(KEY_GENERIC_SERVICE, TagValue.create(service), TAG_METADATA)
         .put(KEY_GENERIC_TAG, TagValue.create(tag), TAG_METADATA)
         .put(KEY_GENERIC_BOOL, TagValue.create(Boolean.toString(bool)), TAG_METADATA)
@@ -345,9 +346,9 @@ class GoogleDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
   }
 
   @Override
-  public void recordGenericMetric(String dataType, String service, String tag, Duration duration) {
+  public void recordGenericMetric(DataVertical dataType, String service, String tag, Duration duration) {
     TagContext tctx = tagger.emptyBuilder()
-        .put(KEY_DATA_TYPE, TagValue.create(dataType), TAG_METADATA)
+        .put(KEY_DATA_TYPE, TagValue.create(dataType.getDataType()), TAG_METADATA)
         .put(KEY_GENERIC_SERVICE, TagValue.create(service), TAG_METADATA)
         .put(KEY_GENERIC_TAG, TagValue.create(tag), TAG_METADATA)
         .build();
@@ -359,9 +360,9 @@ class GoogleDtpInternalMetricRecorder implements DtpInternalMetricRecorder {
   }
 
   @Override
-  public void recordGenericMetric(String dataType, String service, String tag, int value) {
+  public void recordGenericMetric(DataVertical dataType, String service, String tag, int value) {
     TagContext tctx = tagger.emptyBuilder()
-        .put(KEY_DATA_TYPE, TagValue.create(dataType), TAG_METADATA)
+        .put(KEY_DATA_TYPE, TagValue.create(dataType.getDataType()), TAG_METADATA)
         .put(KEY_GENERIC_SERVICE, TagValue.create(service), TAG_METADATA)
         .put(KEY_GENERIC_TAG, TagValue.create(tag), TAG_METADATA)
         .build();

@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
@@ -30,6 +31,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.ItemImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.common.models.social.SocialActivityAttachment;
@@ -77,25 +79,32 @@ public class DaybookPostsImporter
     monitor.debug(
         () -> String.format("Number of Posts: %d", resource.getCounts().get("activitiesCount")));
 
+    final LongAdder totalImportedFilesSizes = new LongAdder();
     // Import social activity
     for (SocialActivityModel activity : resource.getActivities()) {
       if (activity.getType() == SocialActivityType.NOTE
           || activity.getType() == SocialActivityType.POST) {
-        executor.executeAndSwallowIOExceptions(
-            Integer.toString(activity.hashCode()),
-            activity.getTitle(),
-            () -> insertActivity(activity, authData));
+        executor.importAndSwallowIOExceptions(
+            activity,
+            currentActivity -> {
+              ItemImportResult<String> insertActivityResult = insertActivity(activity, authData);
+              if (insertActivityResult != null && insertActivityResult.hasBytes()) {
+                totalImportedFilesSizes.add(insertActivityResult.getBytes());
+              }
+              return insertActivityResult;
+            });
       }
     }
 
-    return new ImportResult(ImportResult.ResultType.OK);
+    return ImportResult.OK.copyWithBytes(totalImportedFilesSizes.longValue());
   }
 
-  private String insertActivity(SocialActivityModel activity, TokensAndUrlAuthData authData)
+  private ItemImportResult<String> insertActivity(SocialActivityModel activity, TokensAndUrlAuthData authData)
       throws IOException {
     Map<String, String> imageMap = new HashMap<>();
     Map<String, String> linkMap = new HashMap<>();
 
+    Long size = null;
     String content = activity.getContent() == null ? "" : activity.getContent();
     String title = activity.getTitle() == null ? "" : activity.getTitle();
     String location =
@@ -155,6 +164,7 @@ public class DaybookPostsImporter
 
     FormBody formBody = builder.build();
     requestBuilder.post(formBody);
+    size = formBody.contentLength();
 
     try (Response response = client.newCall(requestBuilder.build()).execute()) {
       int code = response.code();
@@ -165,7 +175,7 @@ public class DaybookPostsImporter
                 "Error occurred in request for adding entry, message: %s", response.message()));
       }
 
-      return response.message();
+      return ItemImportResult.success(response.message(), size);
     }
   }
 }

@@ -15,6 +15,9 @@
  */
 package org.datatransferproject.transfer.microsoft.integration;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.mockwebserver.MockResponse;
@@ -25,12 +28,11 @@ import okhttp3.OkHttpClient;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.transfer.microsoft.calendar.MicrosoftCalendarExporter;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerServiceImpl;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Verifies Calendar export using mock HTTP endpoints that replay responses from the Microsoft Graph
@@ -239,15 +241,15 @@ public class MicrosoftCalendarExportTest {
 
     CalendarContainerResource calendarResource = resource.getExportedData();
 
-    Assert.assertEquals(2, calendarResource.getCalendars().size());
-    Assert.assertFalse(
+    assertEquals(2, calendarResource.getCalendars().size());
+    assertFalse(
         calendarResource
             .getCalendars()
             .stream()
             .anyMatch(c -> "Calendar1".equals(c.getId()) && "Calendar2".equals(c.getId())));
 
-    Assert.assertEquals(2, calendarResource.getEvents().size());
-    Assert.assertFalse(
+    assertEquals(2, calendarResource.getEvents().size());
+    assertFalse(
         calendarResource
             .getEvents()
             .stream()
@@ -257,7 +259,7 @@ public class MicrosoftCalendarExportTest {
                         && "Test Appointment 2".equals(e.getTitle())));
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     client = new OkHttpClient.Builder().build();
     mapper = new ObjectMapper();
@@ -266,7 +268,7 @@ public class MicrosoftCalendarExportTest {
     server = new MockWebServer();
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     server.shutdown();
   }

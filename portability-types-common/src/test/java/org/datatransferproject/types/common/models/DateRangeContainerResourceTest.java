@@ -18,7 +18,7 @@ package org.datatransferproject.types.common.models;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.truth.Truth;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class DateRangeContainerResourceTest {
   @Test

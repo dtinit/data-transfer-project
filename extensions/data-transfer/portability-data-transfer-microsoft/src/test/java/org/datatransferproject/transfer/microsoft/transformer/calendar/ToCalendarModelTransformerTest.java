@@ -15,15 +15,16 @@
  */
 package org.datatransferproject.transfer.microsoft.transformer.calendar;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Map;
 import org.datatransferproject.transfer.microsoft.helper.TestTransformerContext;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerContext;
 import org.datatransferproject.types.common.models.calendar.CalendarModel;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ToCalendarModelTransformerTest {
   private static final String SAMPLE_CALENDAR =
@@ -51,12 +52,12 @@ public class ToCalendarModelTransformerTest {
 
     CalendarModel calendar = transformer.apply(rawEvent, context);
 
-    Assert.assertEquals("123", calendar.getId());
-    Assert.assertEquals("Calendar", calendar.getName());
-    Assert.assertEquals("Calendar", calendar.getDescription());
+    assertEquals("123", calendar.getId());
+    assertEquals("Calendar", calendar.getName());
+    assertEquals("Calendar", calendar.getDescription());
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     transformer = new ToCalendarModelTransformer();
     mapper = new ObjectMapper();

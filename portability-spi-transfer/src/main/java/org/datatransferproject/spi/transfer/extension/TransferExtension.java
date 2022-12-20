@@ -16,6 +16,7 @@
 package org.datatransferproject.spi.transfer.extension;
 
 import org.datatransferproject.api.launcher.AbstractExtension;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 
@@ -25,9 +26,11 @@ public interface TransferExtension extends AbstractExtension {
   /** The key associated with this extension's service. */
   String getServiceId();
 
-  /** Returns initialized extension exporter. */
-  Exporter<?, ?> getExporter(String transferDataType);
+  /** Returns initialized extension exporter.
+   * @param transferDataType*/
+  Exporter<?, ?> getExporter(DataVertical transferDataType);
 
-  /** Returns initialized extension importer. */
-  Importer<?, ?> getImporter(String transferDataType);
+  /** Returns initialized extension importer.
+   * @param transferDataType*/
+  Importer<?, ?> getImporter(DataVertical transferDataType);
 }

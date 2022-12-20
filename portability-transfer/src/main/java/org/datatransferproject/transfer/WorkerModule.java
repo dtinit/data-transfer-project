@@ -47,6 +47,7 @@ import org.datatransferproject.spi.transfer.hooks.JobHooks;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.spi.transfer.provider.TransferCompatibilityProvider;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
 import org.datatransferproject.spi.transfer.security.SecurityExtension;
@@ -65,6 +66,7 @@ final class WorkerModule extends FlagBindingModule {
   private final IdempotentImportExecutor idempotentImportExecutor;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
   private final JobHooks jobHooks;
+  private final TransferCompatibilityProvider compatibilityProvider;
 
   WorkerModule(
       ExtensionContext context,
@@ -73,7 +75,8 @@ final class WorkerModule extends FlagBindingModule {
       SecurityExtension securityExtension,
       IdempotentImportExecutor idempotentImportExecutor,
       SymmetricKeyGenerator symmetricKeyGenerator,
-      JobHooks jobHooks) {
+      JobHooks jobHooks,
+      TransferCompatibilityProvider transferCompatibilityProvider) {
     this.cloudExtension = cloudExtension;
     this.context = context;
     this.transferExtensions = transferExtensions;
@@ -81,6 +84,7 @@ final class WorkerModule extends FlagBindingModule {
     this.idempotentImportExecutor = idempotentImportExecutor;
     this.symmetricKeyGenerator = symmetricKeyGenerator;
     this.jobHooks = jobHooks;
+    this.compatibilityProvider = transferCompatibilityProvider;
   }
 
   @VisibleForTesting
@@ -169,7 +173,8 @@ final class WorkerModule extends FlagBindingModule {
         TransferServiceConfig.class,
         getTransferServiceConfig(extension));
     extension.initialize(serviceSpecificContext);
-    return extension.getExporter(JobMetadata.getDataType());
+
+    return compatibilityProvider.getCompatibleExporter(extension, JobMetadata.getDataType());
   }
 
   @Provides
@@ -187,7 +192,7 @@ final class WorkerModule extends FlagBindingModule {
         TransferServiceConfig.class,
         getTransferServiceConfig(extension));
     extension.initialize(serviceSpecificContext);
-    return extension.getImporter(JobMetadata.getDataType());
+    return compatibilityProvider.getCompatibleImporter(extension, JobMetadata.getDataType());
   }
 
   @Provides
@@ -200,7 +205,7 @@ final class WorkerModule extends FlagBindingModule {
   @Provides
   @Singleton
   RetryStrategyLibrary getRetryStrategyLibrary() {
-      return context.getSetting("retryLibrary", null);
+    return context.getSetting("retryLibrary", null);
   }
 
   @Provides

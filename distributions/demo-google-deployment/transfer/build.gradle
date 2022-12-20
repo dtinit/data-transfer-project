@@ -44,7 +44,7 @@ import com.bmuschko.gradle.docker.tasks.image.Dockerfile
  */
 plugins {
     id 'com.github.johnrengelman.shadow' version '6.1.0'
-    id 'com.bmuschko.docker-remote-api' version '3.2.6'
+    id 'com.bmuschko.docker-remote-api'
     id 'java'
     id 'application'
 }
@@ -110,7 +110,7 @@ shadowJar {
 task createTransferServerDockerfile(type: Dockerfile) {
     description = 'Builds the Transfer Server Dockerfile'
     group = 'docker'
-    destFile project.file("${buildDir}/transfer/Dockerfile")
+    setDestFile(project.file("${buildDir}/transfer/Dockerfile"))
     from "gcr.io/google-appengine/openjdk:11"
     exposePort 8080 // Port the transfer server is accessed from
     copyFile("build/libs/transfer-all.jar", "/app/transfer.jar")
@@ -130,7 +130,7 @@ task dockerize(type: DockerBuildImage) {
     inputDir = project.file(".")
     ext.gcpProject = project.hasProperty('gcpProject') ? gcpProject : 'missing-project-please-specify-one'
     ext.imageVersion = project.hasProperty('imageVersion') ? imageVersion : 'latest'
-    tag = "gcr.io/" + ext.gcpProject + "/portability-transfer:" + ext.imageVersion
+    tags.add("gcr.io/" + ext.gcpProject + "/portability-transfer:" + ext.imageVersion)
 }
 
 // Note: This service acct creds file should be used for local testing only. In production, we use
@@ -146,7 +146,7 @@ task createTransferServerDockerfileLocal(type: Dockerfile) {
     description = 'Builds the Transfer Server Dockerfile for local development'
     group = 'docker'
     dependsOn copyTransferServerDepsLocal
-    destFile project.file("${buildDir}/transfer/Dockerfile")
+    setDestFile(project.file("${buildDir}/transfer/Dockerfile"))
     from "gcr.io/google-appengine/openjdk:11"
     exposePort 8082 // Port the transfer server is accessed from
     copyFile("build/libs/transfer-all.jar", "/app/transfer.jar")
@@ -177,5 +177,5 @@ task dockerizeLocal(type: DockerBuildImage) {
     dockerFile = project.file("${buildDir}/transfer/Dockerfile")
     inputDir = project.file(".")
     ext.gcpProject = project.hasProperty('gcpProject') ? gcpProject : 'missing-project-please-specify-one'
-    tag = "gcr.io/" + ext.gcpProject + "/portability-transfer:latest"
+    tags.add("gcr.io/" + ext.gcpProject + "/portability-transfer:latest")
 }

@@ -16,11 +16,18 @@
 
 package org.datatransferproject.transfer.imgur.photos;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
+import java.io.IOException;
+import java.util.Optional;
+import java.util.UUID;
 import okhttp3.OkHttpClient;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.imgur.photos.ImgurPhotosExporter;
@@ -34,37 +41,32 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.IOException;
-import java.util.Optional;
-import java.util.UUID;
-import org.mockito.junit.MockitoJUnitRunner;
-
-import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ImgurPhotoExporterTest {
 
   private MockWebServer server;
   private OkHttpClient client = new OkHttpClient.Builder().build();
-  private ObjectMapper mapper = new ObjectMapper();;
+  private ObjectMapper mapper = new ObjectMapper();
   private TokensAndUrlAuthData token =
       new TokensAndUrlAuthData("accessToken", "refreshToken", "tokenUrl");
   private JobStore jobStore = mock(JobStore.class);
   private ImgurPhotosExporter exporter;
   private Monitor monitor = mock(Monitor.class);
 
-  private static final PhotoModel ALBUM_PHOTO_1 = new PhotoModel("photo_1_name", "https://i.imgur.com/scGQp3z.jpg",
-          "Photo 1", "image/jpeg", "album1Photo1", "albumId1", true);
-  private static final PhotoModel ALBUM_PHOTO_2 = new PhotoModel(null, "https://i.imgur.com/HIBJYnE.jpg",
-          null, "image/jpeg", "album1Photo2", "albumId1", true);
-  private static final PhotoModel NON_ALBUM_PHOTO = new PhotoModel("non-album-photo-name", "https://i.imgur.com/eUMxy0R.jpg", null, "image/jpeg",
-          "nonAlbumPhoto1", ImgurPhotosExporter.DEFAULT_ALBUM_ID, true);
+  private static final PhotoModel ALBUM_PHOTO_1 = new PhotoModel("photo_1_name",
+      "https://i.imgur.com/scGQp3z.jpg",
+      "Photo 1", "image/jpeg", "album1Photo1", "albumId1", true);
+  private static final PhotoModel ALBUM_PHOTO_2 = new PhotoModel(null,
+      "https://i.imgur.com/HIBJYnE.jpg",
+      null, "image/jpeg", "album1Photo2", "albumId1", true);
+  private static final PhotoModel NON_ALBUM_PHOTO = new PhotoModel("non-album-photo-name",
+      "https://i.imgur.com/eUMxy0R.jpg", null, "image/jpeg",
+      "nonAlbumPhoto1", ImgurPhotosExporter.DEFAULT_ALBUM_ID, true);
 
   // contains albums
   private String albumsResponse;
@@ -93,7 +95,7 @@ public class ImgurPhotoExporterTest {
     }
   }
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException {
     server = new MockWebServer();
     server.start();

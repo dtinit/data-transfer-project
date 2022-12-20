@@ -1,5 +1,7 @@
 package org.datatransferproject.types.common.models.media;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -11,13 +13,16 @@ import org.datatransferproject.types.common.models.TransmogrificationConfig;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.datatransferproject.types.common.models.videos.VideoAlbum;
+import org.datatransferproject.types.common.models.videos.VideoModel;
+import org.datatransferproject.types.common.models.videos.VideosContainerResource;
+import org.junit.jupiter.api.Test;
 
 // TODO(#1060) this code was ported over without unit tests; below is a mostly 1:1-port
 // backfill but the new video handling logic in MediaContainerResource should have test coverage
 // too.
 public class MediaContainerResourceTest {
+
   @Test
   public void verifySerializeDeserialize() throws Exception {
     ObjectMapper objectMapper = new ObjectMapper();
@@ -109,6 +114,7 @@ public class MediaContainerResourceTest {
       public String getAlbumNameForbiddenCharacters() {
         return ":!";
       }
+
       public char getAlbumNameReplacementCharacter() {
         return '?';
       }
@@ -353,25 +359,61 @@ public class MediaContainerResourceTest {
     PhotosContainerResource generatedPhotoData = MediaContainerResource.mediaToPhoto(data);
     Truth
         .assertThat(generatedPhotoData.getAlbums()
-                        .stream()
-                        .map(a -> a.getId())
-                        .collect(Collectors.toList()))
+            .stream()
+            .map(a -> a.getId())
+            .collect(Collectors.toList()))
         .containsExactlyElementsIn(
             albums.stream().map(a -> a.getId()).collect(Collectors.toList()));
     Truth
         .assertThat(generatedPhotoData.getAlbums()
-                        .stream()
-                        .map(a -> a.getName())
-                        .collect(Collectors.toList()))
+            .stream()
+            .map(a -> a.getName())
+            .collect(Collectors.toList()))
         .containsExactlyElementsIn(
             albums.stream().map(a -> a.getName()).collect(Collectors.toList()));
     Truth
         .assertThat(generatedPhotoData.getAlbums()
-                        .stream()
-                        .map(a -> a.getDescription())
-                        .collect(Collectors.toList()))
+            .stream()
+            .map(a -> a.getDescription())
+            .collect(Collectors.toList()))
         .containsExactlyElementsIn(
             albums.stream().map(a -> a.getDescription()).collect(Collectors.toList()));
     Truth.assertThat(generatedPhotoData.getPhotos()).containsExactlyElementsIn(photos);
+  }
+
+  @Test
+  public void verifyMediaToVideoContainer() {
+    List<MediaAlbum> mediaAlbums =
+        ImmutableList.of(new MediaAlbum("id1", "albumb1", "This:a fake album!"));
+    List<VideoAlbum> videoAlbums =
+        ImmutableList.of(new VideoAlbum("id1", "albumb1", "This:a fake album!"));
+    List<VideoModel> videos = ImmutableList.of(
+        new VideoModel(
+            "Vid1", "http://fake.com/1.mp4", "A vid", "mediatype", "p1", "id1", false, null),
+        new VideoModel(
+            "Vid3", "http://fake.com/2.mp4", "A vid", "mediatype", "p3", "id1", false, null));
+    MediaContainerResource data = new MediaContainerResource(mediaAlbums, null, videos);
+
+    VideosContainerResource expected = new VideosContainerResource(videoAlbums, videos);
+    VideosContainerResource actual = MediaContainerResource.mediaToVideo(data);
+    assertEquals(expected, actual);
+  }
+
+  @Test
+  public void verifyVideoToMediaContainer() {
+    List<MediaAlbum> mediaAlbums =
+        ImmutableList.of(new MediaAlbum("id1", "albumb1", "This:a fake album!"));
+    List<VideoAlbum> videoAlbums =
+        ImmutableList.of(new VideoAlbum("id1", "albumb1", "This:a fake album!"));
+    List<VideoModel> videos = ImmutableList.of(
+        new VideoModel(
+            "Vid1", "http://fake.com/1.mp4", "A vid", "mediatype", "p1", "id1", false, null),
+        new VideoModel(
+            "Vid3", "http://fake.com/2.mp4", "A vid", "mediatype", "p3", "id1", false, null));
+    VideosContainerResource data = new VideosContainerResource(videoAlbums, videos);
+
+    MediaContainerResource expected = new MediaContainerResource(mediaAlbums, null, videos);
+    MediaContainerResource actual = MediaContainerResource.videoToMedia(data);
+    assertEquals(expected, actual);
   }
 }

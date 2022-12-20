@@ -12,6 +12,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.TimeZone;
 import javax.annotation.Nullable;
+import org.datatransferproject.types.common.models.DataVertical;
 
 /**
  * A job that will fulfill a transfer request.
@@ -100,11 +101,16 @@ public abstract class PortabilityJob {
             ? TransferMode.valueOf((String) properties.get(TRANSFER_MODE))
             : TransferMode.DATA_TRANSFER;
 
+    DataVertical dataType =
+        properties.containsKey(DATA_TYPE_KEY)
+            ? DataVertical.fromDataType((String) properties.get(DATA_TYPE_KEY))
+            : null;
+
     return PortabilityJob.builder()
         .setState(state)
         .setExportService((String) properties.get(EXPORT_SERVICE_KEY))
         .setImportService((String) properties.get(IMPORT_SERVICE_KEY))
-        .setTransferDataType((String) properties.get(DATA_TYPE_KEY))
+        .setTransferDataType(dataType)
         .setExportInformation((String) properties.get(EXPORT_INFORMATION_KEY))
         .setCreatedTimestamp(now) // TODO: get from DB
         .setLastUpdateTimestamp(now)
@@ -151,7 +157,7 @@ public abstract class PortabilityJob {
   public abstract String importService();
 
   @JsonProperty("transferDataType")
-  public abstract String transferDataType();
+  public abstract DataVertical transferDataType();
 
   @Nullable
   @JsonProperty("exportInformation")
@@ -187,7 +193,7 @@ public abstract class PortabilityJob {
   public Map<String, Object> toMap() {
     ImmutableMap.Builder<String, Object> builder =
         ImmutableMap.<String, Object>builder()
-            .put(DATA_TYPE_KEY, transferDataType())
+            .put(DATA_TYPE_KEY, transferDataType().getDataType())
             .put(EXPORT_SERVICE_KEY, exportService())
             .put(IMPORT_SERVICE_KEY, importService())
             .put(AUTHORIZATION_STATE, jobAuthorization().state().toString())
@@ -289,7 +295,7 @@ public abstract class PortabilityJob {
     public abstract Builder setImportService(String importService);
 
     @JsonProperty("transferDataType")
-    public abstract Builder setTransferDataType(String transferDataType);
+    public abstract Builder setTransferDataType(DataVertical transferDataType);
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("exportInformation")

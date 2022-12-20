@@ -1,12 +1,15 @@
 package org.datatransferproject.transfer.koofr.videos;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,31 +22,28 @@ import org.datatransferproject.types.common.models.videos.VideoAlbum;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class KoofrVideosExporterTest {
 
+  @Mock
   private KoofrClientFactory clientFactory;
+  @Mock
   private KoofrClient client;
+  @Mock
   private Monitor monitor;
   private KoofrVideosExporter exporter;
   private TokensAndUrlAuthData authData;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
-    client = mock(KoofrClient.class);
-
-    clientFactory = mock(KoofrClientFactory.class);
     when(clientFactory.create(any())).thenReturn(client);
-
-    monitor = mock(Monitor.class);
-
     exporter = new KoofrVideosExporter(clientFactory, monitor);
-
     authData = new TokensAndUrlAuthData("acc", "refresh", "");
   }
 
@@ -80,7 +80,8 @@ public class KoofrVideosExporterTest {
                 "video/mp4",
                 "/Album 2 :heart:/Video 1.mp4",
                 "/Album 2 :heart:",
-                false),
+                false,
+                Date.from(Instant.parse("2020-09-04T12:40:57.741Z"))),
             new VideoModel(
                 "Video 2.mp4",
                 "https://app-1.koofr.net/content/files/get/Video+2.mp4?base=TESTBASE",
@@ -88,7 +89,8 @@ public class KoofrVideosExporterTest {
                 "video/mp4",
                 "/Videos/Video 2.mp4",
                 "/Videos",
-                false));
+                false,
+                Date.from(Instant.parse("2020-09-04T12:41:06.949Z"))));
     assertEquals(expectedVideos, exportedData.getVideos());
   }
 }
