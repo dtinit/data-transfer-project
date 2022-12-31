@@ -44,7 +44,7 @@ import org.datatransferproject.spi.service.extension.ServiceExtension;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.hooks.JobHooks;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
-import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorLoader;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentExecutorLoader;
 import org.datatransferproject.spi.transfer.provider.TransferCompatibilityProvider;
 import org.datatransferproject.spi.transfer.security.SecurityExtension;
 import org.datatransferproject.spi.transfer.security.SecurityExtensionLoader;
@@ -104,7 +104,7 @@ public class WorkerMain {
     monitor.info(() -> "Using SecurityExtension: " + securityExtension.getClass().getName());
 
     IdempotentImportExecutor idempotentImportExecutor =
-        IdempotentImportExecutorLoader.load(extensionContext);
+        IdempotentExecutorLoader.load(extensionContext);
     monitor.info(
         () -> "Using IdempotentImportExecutor: " + idempotentImportExecutor.getClass().getName());
 
