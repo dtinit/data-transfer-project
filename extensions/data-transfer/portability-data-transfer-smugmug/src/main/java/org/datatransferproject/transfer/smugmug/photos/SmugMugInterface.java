@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HttpHeaders;
 import org.datatransferproject.transfer.smugmug.photos.model.*;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.scribe.builder.ServiceBuilder;
@@ -145,6 +146,43 @@ public class SmugMugInterface {
         postRequest(
             "https://upload.smugmug.com/",
             ImmutableMap.of(), // No content params for photo upload
+            contentBytes,
+            headersMap,
+            new TypeReference<SmugMugImageUploadResponse>() {});
+
+    Preconditions.checkState(response.getStat().equals("ok"), "Failed to upload image");
+    return Preconditions.checkNotNull(response, "Image upload Response is null");
+  }
+
+  /* Uploads the resource at videoUrl to the albumId provided
+   * The albumId must exist before calling upload, else the request will fail */
+  SmugMugImageUploadResponse uploadVideo(
+      VideoModel videoModel, String albumUri, InputStream inputStream) throws IOException {
+    // Set up photo
+    InputStreamContent content = new InputStreamContent(null, inputStream);
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    content.writeTo(outputStream);
+    byte[] contentBytes = outputStream.toByteArray();
+
+    // Headers from: https://api.smugmug.com/api/v2/doc/reference/upload.html
+    Map<String, String> headersMap = new HashMap<>();
+    headersMap.put("X-Smug-AlbumUri", albumUri);
+    headersMap.put("X-Smug-ResponseType", "JSON");
+    headersMap.put("X-Smug-Version", "v2");
+    headersMap.put("Content-Type", videoModel.getMimeType());
+
+    if (!Strings.isNullOrEmpty(videoModel.getName())) {
+      headersMap.put("X-Smug-Title", cleanHeader(videoModel.getName()));
+    }
+    if (!Strings.isNullOrEmpty(videoModel.getDescription())) {
+      headersMap.put("X-Smug-Caption", cleanHeader(videoModel.getDescription()));
+    }
+
+    // Upload video
+    SmugMugImageUploadResponse response =
+        postRequest(
+            "https://upload.smugmug.com/",
+            ImmutableMap.of(), // No content params for video upload
             contentBytes,
             headersMap,
             new TypeReference<SmugMugImageUploadResponse>() {});
