@@ -71,14 +71,14 @@ public class PortabilityInMemoryDataCopier extends PortabilityAbstractInMemoryDa
 
   /** Kicks off transfer job {@code jobId} from {@code exporter} to {@code importer}. */
   @Override
-  public Collection<ErrorDetail> copy(
+  public void copy(
       AuthData exportAuthData,
       AuthData importAuthData,
       UUID jobId,
       Optional<ExportInformation> exportInfo)
       throws IOException, CopyException {
     idempotentImportExecutor.setJobId(jobId);
-    return copyHelper(exportAuthData, importAuthData, jobId, exportInfo);
+    copyHelper(exportAuthData, importAuthData, jobId, exportInfo);
   }
 
   /**
@@ -91,7 +91,7 @@ public class PortabilityInMemoryDataCopier extends PortabilityAbstractInMemoryDa
    * @param importAuthData The auth data for the import
    * @param exportInfo Any pagination or resource information to use for subsequent calls.
    */
-  private Collection<ErrorDetail> copyHelper(
+  private void copyHelper(
       AuthData exportAuthData,
       AuthData importAuthData,
       UUID jobId,
@@ -147,6 +147,5 @@ public class PortabilityInMemoryDataCopier extends PortabilityAbstractInMemoryDa
         }
       }
     }
-    return idempotentImportExecutor.getErrors();
   }
 }

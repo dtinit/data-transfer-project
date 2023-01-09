@@ -49,7 +49,7 @@ import org.datatransferproject.types.transfer.errors.ErrorDetail;
  * key<br>
  * (2)Run the copy job
  */
-final class JobProcessor {
+class JobProcessor {
   private final JobStore store;
   private final JobHooks hooks;
   private final ObjectMapper objectMapper;
@@ -81,8 +81,6 @@ final class JobProcessor {
     boolean success = false;
     UUID jobId = JobMetadata.getJobId();
     monitor.debug(() -> format("Begin processing jobId: %s", jobId), EventCode.WORKER_JOB_STARTED);
-
-    Collection<ErrorDetail> errors = null;
 
     try {
       markJobStarted(jobId);
@@ -126,11 +124,8 @@ final class JobProcessor {
           JobMetadata.getExportService(),
           JobMetadata.getImportService());
       JobMetadata.getStopWatch().start();
-      errors = copier.copy(exportAuthData, importAuthData, jobId, exportInfo);
-      final int numErrors = errors.size();
-      monitor.debug(
-          () -> format("Finished copy for jobId: %s with %d error(s).", jobId, numErrors));
-      success = errors.isEmpty();
+      copier.copy(exportAuthData, importAuthData, jobId, exportInfo);
+      success = true;
     } catch (CopyExceptionWithFailureReason e) {
       String failureReason = e.getFailureReason();
       if (failureReason.contains(FailureReasons.DESTINATION_FULL.toString())) {
@@ -153,6 +148,11 @@ final class JobProcessor {
     } catch (IOException | CopyException | RuntimeException e) {
       monitor.severe(() -> "Error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
     } finally {
+      final Collection<ErrorDetail> errors = copier.getErrors(jobId);
+      final int numErrors = errors.size();
+      monitor.debug(
+          () -> format("Finished copy for jobId: %s with %d error(s).", jobId, numErrors));
+      success &= errors.isEmpty();
       monitor.debug(() -> "Finished processing jobId: " + jobId, EventCode.WORKER_JOB_FINISHED);
       addErrorsAndMarkJobFinished(jobId, success, errors);
       hooks.jobFinished(jobId, success);
