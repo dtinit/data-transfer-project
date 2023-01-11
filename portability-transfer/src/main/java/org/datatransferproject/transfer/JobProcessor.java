@@ -150,10 +150,11 @@ class JobProcessor {
     } finally {
       final Collection<ErrorDetail> errors = copier.getErrors(jobId);
       final int numErrors = errors.size();
-      monitor.debug(
-          () -> format("Finished copy for jobId: %s with %d error(s).", jobId, numErrors));
+      // success is set to true above if copy returned without throwing
       success &= errors.isEmpty();
-      monitor.debug(() -> "Finished processing jobId: " + jobId, EventCode.WORKER_JOB_FINISHED);
+      monitor.debug(
+          () -> format("Finished processing jobId: %s with %d error(s).", jobId, numErrors),
+          EventCode.WORKER_JOB_FINISHED);
       addErrorsAndMarkJobFinished(jobId, success, errors);
       hooks.jobFinished(jobId, success);
       dtpInternalMetricRecorder.finishedJob(
