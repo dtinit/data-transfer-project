@@ -148,14 +148,16 @@ class JobProcessor {
     } catch (IOException | CopyException | RuntimeException e) {
       monitor.severe(() -> "Error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
     } finally {
-      final Collection<ErrorDetail> errors = copier.getErrors(jobId);
-      final int numErrors = errors.size();
+      // The errors returned by copier.getErrors are those logged by the idempotentImportExecutor
+      // and are distinct from the exceptions thrown by copier.copy
+      final Collection<ErrorDetail> loggedErrors = copier.getErrors(jobId);
+      final int numErrors = loggedErrors.size();
       // success is set to true above if copy returned without throwing
-      success &= errors.isEmpty();
+      success &= loggedErrors.isEmpty();
       monitor.debug(
           () -> format("Finished processing jobId: %s with %d error(s).", jobId, numErrors),
           EventCode.WORKER_JOB_FINISHED);
-      addErrorsAndMarkJobFinished(jobId, success, errors);
+      addErrorsAndMarkJobFinished(jobId, success, loggedErrors);
       hooks.jobFinished(jobId, success);
       dtpInternalMetricRecorder.finishedJob(
           JobMetadata.getDataType(),
