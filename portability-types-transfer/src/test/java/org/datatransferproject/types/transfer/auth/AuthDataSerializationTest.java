@@ -42,7 +42,7 @@ public class AuthDataSerializationTest {
 
   @Test
   public void verifyTokenAuthData() throws IOException {
-    final String token = "my_secret_token";
+    final String token = "Secret_Token";
     final TokenAuthData authData = new TokenAuthData(token);
 
     final String s = objectMapper.writeValueAsString(authData);
