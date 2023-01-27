@@ -32,8 +32,8 @@ import static org.datatransferproject.types.common.models.DataVertical.VIDEOS;
 
 public class PhotobucketOAuthConfig implements OAuth2Config {
     private static final String PB_SERVICE_ID = "Photobucket";
-    private static final String PB_AUTH_URL = "https://auth.photobucket.com/oauth/authorize";
-    private static final String PB_TOKEN_URL = "https://auth.photobucket.com/oauth/token";
+    private static final String PB_AUTH_URL = "https://photobucket.com/api/oauth/authorize";
+    private static final String PB_TOKEN_URL = "https://photobucket.com/api/oauth/token";
 
     private static final Pattern AUTH_TOKEN_PATTERN =
             Pattern.compile(".*\"access_token\":\"([\\w.]+)*\".*");

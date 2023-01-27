@@ -17,7 +17,7 @@
 package org.datatransferproject.transfer.photobucket.data;
 
 public final class PhotobucketConstants {
-  private static final String ENVIRONMENT_URL = "https://app.photobucket.com";
+  private static final String ENVIRONMENT_URL = "https://photobucket.com";
 
   // Configs
   public static boolean IS_OVER_STORAGE_VERIFICATION_ENABLED = false;
@@ -38,7 +38,7 @@ public final class PhotobucketConstants {
   // Clients
   public static final String GQL_URL = ENVIRONMENT_URL + "/api/graphql";
   public static final String UPLOAD_URL = ENVIRONMENT_URL + "/api/uploadMobile";
-  public static final String USER_STATS_URL = "https://auth.photobucket.com/me";
+  public static final String USER_STATS_URL = "https://photobucket.com/api/oauth/me";
 
   // Headers
   public static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
