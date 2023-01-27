@@ -21,7 +21,6 @@ plugins {
 dependencies {
     compile project(':portability-spi-cloud')
     compile project(':portability-spi-transfer')
-    compile project(':libraries:transfer')
 
     compile("com.google.gdata:core:${gdataVersion}") {
         exclude(module: 'jetty-util')
@@ -39,7 +38,7 @@ dependencies {
     compile("com.google.apis:google-api-services-plus:${googlePlusVersion}")
     compile("com.google.photos.library:google-photos-library-client:1.5.0")
 
-    testCompile("org.mockito:mockito-core:${mockitoVersion}")
+    testCompile("com.google.http-client:google-http-client-gson:${googleHttpClientVersion}")
     testCompile project(':extensions:cloud:portability-cloud-local')
 }
 

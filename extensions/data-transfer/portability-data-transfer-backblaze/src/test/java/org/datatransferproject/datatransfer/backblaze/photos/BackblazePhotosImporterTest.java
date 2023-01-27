@@ -24,129 +24,136 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.net.HttpURLConnection;
+import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import org.apache.commons.io.IOUtils;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.backblaze.common.BackblazeDataTransferClient;
 import org.datatransferproject.datatransfer.backblaze.common.BackblazeDataTransferClientFactory;
+import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.ImportFunction;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
-import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 
 public class BackblazePhotosImporterTest {
-    Monitor monitor;
-    TemporaryPerJobDataStore dataStore;
-    ImageStreamProvider streamProvider;
-    BackblazeDataTransferClientFactory clientFactory;
-    IdempotentImportExecutor executor;
-    TokenSecretAuthData authData;
-    BackblazeDataTransferClient client;
+  Monitor monitor;
+  TemporaryPerJobDataStore dataStore;
+  ConnectionProvider streamProvider;
+  BackblazeDataTransferClientFactory clientFactory;
+  IdempotentImportExecutor executor;
+  TokenSecretAuthData authData;
+  BackblazeDataTransferClient client;
 
-    @Before
-    public void setUp() {
-        monitor = mock(Monitor.class);
-        dataStore = mock(TemporaryPerJobDataStore.class);
-        streamProvider = mock(ImageStreamProvider.class);
-        clientFactory = mock(BackblazeDataTransferClientFactory.class);
-        executor = mock(IdempotentImportExecutor.class);
-        authData = mock(TokenSecretAuthData.class);
-        client = mock(BackblazeDataTransferClient.class);
-    }
+  @BeforeEach
+  public void setUp() {
+    monitor = mock(Monitor.class);
+    dataStore = mock(TemporaryPerJobDataStore.class);
+    streamProvider = mock(ConnectionProvider.class);
+    clientFactory = mock(BackblazeDataTransferClientFactory.class);
+    executor = mock(IdempotentImportExecutor.class);
+    authData = mock(TokenSecretAuthData.class);
+    client = mock(BackblazeDataTransferClient.class);
+  }
 
-    @Test
-    public void testNullData() throws Exception {
-        BackblazePhotosImporter sut =
-                new BackblazePhotosImporter(monitor, dataStore, streamProvider, clientFactory);
-        ImportResult result = sut.importItem(UUID.randomUUID(), executor, authData, null);
-        assertEquals(ImportResult.OK, result);
-    }
+  @TempDir public Path folder;
 
-    @Test
-    public void testNullPhotosAndAlbums() throws Exception {
-        PhotosContainerResource data = mock(PhotosContainerResource.class);
-        when(data.getAlbums()).thenReturn(null);
-        when(data.getPhotos()).thenReturn(null);
+  @Test
+  public void testNullData() throws Exception {
+    BackblazePhotosImporter sut =
+        new BackblazePhotosImporter(monitor, dataStore, streamProvider, clientFactory);
+    ImportResult result = sut.importItem(UUID.randomUUID(), executor, authData, null);
+    assertEquals(ImportResult.OK, result);
+  }
 
-        BackblazePhotosImporter sut =
-                new BackblazePhotosImporter(monitor, dataStore, streamProvider, clientFactory);
-        ImportResult result = sut.importItem(UUID.randomUUID(), executor, authData, data);
-        assertEquals(ImportResult.OK, result);
-    }
+  @Test
+  public void testNullPhotosAndAlbums() throws Exception {
+    PhotosContainerResource data = mock(PhotosContainerResource.class);
+    when(data.getAlbums()).thenReturn(null);
+    when(data.getPhotos()).thenReturn(null);
 
-    @Test
-    public void testEmptyPhotosAndAlbums() throws Exception {
-        PhotosContainerResource data = mock(PhotosContainerResource.class);
-        when(data.getAlbums()).thenReturn(new ArrayList<>());
-        when(data.getPhotos()).thenReturn(new ArrayList<>());
+    BackblazePhotosImporter sut =
+        new BackblazePhotosImporter(monitor, dataStore, streamProvider, clientFactory);
+    ImportResult result = sut.importItem(UUID.randomUUID(), executor, authData, data);
+    assertEquals(ImportResult.ResultType.OK, result.getType());
+  }
 
-        BackblazePhotosImporter sut =
-                new BackblazePhotosImporter(monitor, dataStore, streamProvider, clientFactory);
-        ImportResult result = sut.importItem(UUID.randomUUID(), executor, authData, data);
-        assertEquals(ImportResult.OK, result);
-    }
+  @Test
+  public void testEmptyPhotosAndAlbums() throws Exception {
+    PhotosContainerResource data = mock(PhotosContainerResource.class);
+    when(data.getAlbums()).thenReturn(new ArrayList<>());
+    when(data.getPhotos()).thenReturn(new ArrayList<>());
 
-    @Test
-    public void testImportPhoto() throws Exception {
-        String dataId = "dataId";
-        String title = "title";
-        String photoUrl = "photoUrl";
-        String albumName = "albumName";
-        String albumId = "albumId";
-        String response = "response";
+    BackblazePhotosImporter sut =
+        new BackblazePhotosImporter(monitor, dataStore, streamProvider, clientFactory);
+    ImportResult result = sut.importItem(UUID.randomUUID(), executor, authData, data);
+    assertEquals(ImportResult.ResultType.OK, result.getType());
+  }
 
-        PhotoModel photoModel = new PhotoModel(title, photoUrl, "", "", dataId, albumId, false, null);
-        ArrayList<PhotoModel> photos = new ArrayList<>();
-        photos.add(photoModel);
-        PhotosContainerResource data = mock(PhotosContainerResource.class);
-        when(data.getPhotos()).thenReturn(photos);
+  @Test
+  public void testImportPhoto() throws Exception {
+    String dataId = "dataId";
+    String title = "title";
+    String photoUrl = "photoUrl";
+    String albumName = "albumName";
+    String albumId = "albumId";
+    String response = "response";
+    UUID jobId = UUID.randomUUID();
+    PhotoModel photoModel = new PhotoModel(title, photoUrl, "", "", dataId, albumId, false);
+    PhotosContainerResource data =
+        new PhotosContainerResource(Collections.emptyList(), Collections.singletonList(photoModel));
 
-        when(executor.getCachedValue(albumId)).thenReturn(albumName);
+    when(executor.getCachedValue(albumId)).thenReturn(albumName);
 
-        HttpURLConnection connection = mock(HttpURLConnection.class);
-        when(connection.getInputStream()).thenReturn(IOUtils.toInputStream("photo content", "UTF-8"));
-        when(streamProvider.getConnection(photoUrl)).thenReturn(connection);
+    when(streamProvider.getInputStreamForItem(jobId, photoModel))
+        .thenReturn(new InputStreamWrapper(IOUtils.toInputStream("photo content", "UTF-8")));
 
-        when(client.uploadFile(eq("Photo Transfer/albumName/dataId.jpg"), any())).thenReturn(response);
-        when(clientFactory.getOrCreateB2Client(monitor, authData)).thenReturn(client);
+    when(client.uploadFile(eq("Photo Transfer/albumName/dataId.jpg"), any())).thenReturn(response);
+    when(clientFactory.getOrCreateB2Client(jobId, authData)).thenReturn(client);
 
-        BackblazePhotosImporter sut =
-                new BackblazePhotosImporter(monitor, dataStore, streamProvider, clientFactory);
-        sut.importItem(UUID.randomUUID(), executor, authData, data);
+    File file = folder.toFile();
+    when(dataStore.getTempFileFromInputStream(any(), any(), any())).thenReturn(file);
 
-        ArgumentCaptor<Callable<String>> importCapture = ArgumentCaptor.forClass(Callable.class);
-        verify(executor, times(1))
-                .executeAndSwallowIOExceptions(eq(dataId), eq(title), importCapture.capture());
+    BackblazePhotosImporter sut =
+        new BackblazePhotosImporter(monitor, dataStore, streamProvider, clientFactory);
+    sut.importItem(jobId, executor, authData, data);
 
-        String actual = importCapture.getValue().call();
-        assertEquals(response, actual);
-    }
+    ArgumentCaptor<ImportFunction<PhotoModel, String>> importCapture =
+        ArgumentCaptor.forClass(ImportFunction.class);
+    verify(executor, times(1))
+        .importAndSwallowIOExceptions(eq(photoModel), importCapture.capture());
 
-    @Test
-    public void testImportAlbum() throws Exception {
-        String albumId = "albumId";
-        PhotoAlbum album = new PhotoAlbum(albumId, "", "");
-        ArrayList<PhotoAlbum> albums = new ArrayList<>();
-        albums.add(album);
-        PhotosContainerResource data = mock(PhotosContainerResource.class);
-        when(data.getAlbums()).thenReturn(albums);
+    String actual = importCapture.getValue().apply(photoModel).getData();
+    assertEquals(response, actual);
+  }
 
-        BackblazePhotosImporter sut =
-                new BackblazePhotosImporter(monitor, dataStore, streamProvider, clientFactory);
-        sut.importItem(UUID.randomUUID(), executor, authData, data);
+  @Test
+  public void testImportAlbum() throws Exception {
+    String albumId = "albumId";
+    PhotoAlbum album = new PhotoAlbum(albumId, "", "");
+    ArrayList<PhotoAlbum> albums = new ArrayList<>();
+    albums.add(album);
+    PhotosContainerResource data = mock(PhotosContainerResource.class);
+    when(data.getAlbums()).thenReturn(albums);
 
-        verify(executor, times(1))
-                .executeAndSwallowIOExceptions(
-                        eq(albumId), eq("Caching album name for album 'albumId'"), any());
-    }
+    BackblazePhotosImporter sut =
+        new BackblazePhotosImporter(monitor, dataStore, streamProvider, clientFactory);
+    sut.importItem(UUID.randomUUID(), executor, authData, data);
+
+    verify(executor, times(1))
+        .executeAndSwallowIOExceptions(
+            eq(albumId), eq("Caching album name for album 'albumId'"), any());
+  }
 }

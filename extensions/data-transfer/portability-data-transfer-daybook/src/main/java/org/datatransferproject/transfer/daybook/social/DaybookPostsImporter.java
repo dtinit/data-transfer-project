@@ -23,13 +23,17 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
-import okhttp3.*;
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.ItemImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.common.models.social.SocialActivityAttachment;
 import org.datatransferproject.types.common.models.social.SocialActivityAttachmentType;
 import org.datatransferproject.types.common.models.social.SocialActivityContainerResource;
@@ -45,13 +49,19 @@ public class DaybookPostsImporter
   private final ObjectMapper objectMapper;
   private final OkHttpClient client;
   private final String baseUrl;
+  private final String exportService;
 
   public DaybookPostsImporter(
-      Monitor monitor, OkHttpClient client, ObjectMapper objectMapper, String baseUrl) {
+      Monitor monitor,
+      OkHttpClient client,
+      ObjectMapper objectMapper,
+      String baseUrl,
+      String exportService) {
     this.baseUrl = baseUrl;
     this.client = client;
     this.monitor = monitor;
     this.objectMapper = objectMapper;
+    this.exportService = exportService;
   }
 
   @Override
@@ -69,46 +79,51 @@ public class DaybookPostsImporter
     monitor.debug(
         () -> String.format("Number of Posts: %d", resource.getCounts().get("activitiesCount")));
 
+    final LongAdder totalImportedFilesSizes = new LongAdder();
     // Import social activity
     for (SocialActivityModel activity : resource.getActivities()) {
       if (activity.getType() == SocialActivityType.NOTE
           || activity.getType() == SocialActivityType.POST) {
-        executor.executeAndSwallowIOExceptions(
-            Integer.toString(activity.hashCode()),
-            activity.getTitle(),
-            () -> insertActivity(executor, activity, authData));
+        executor.importAndSwallowIOExceptions(
+            activity,
+            currentActivity -> {
+              ItemImportResult<String> insertActivityResult = insertActivity(activity, authData);
+              if (insertActivityResult != null && insertActivityResult.hasBytes()) {
+                totalImportedFilesSizes.add(insertActivityResult.getBytes());
+              }
+              return insertActivityResult;
+            });
       }
     }
 
-    return new ImportResult(ImportResult.ResultType.OK);
+    return ImportResult.OK.copyWithBytes(totalImportedFilesSizes.longValue());
   }
 
-  private String insertActivity(
-      IdempotentImportExecutor executor,
-      SocialActivityModel activity,
-      TokensAndUrlAuthData authData)
+  private ItemImportResult<String> insertActivity(SocialActivityModel activity, TokensAndUrlAuthData authData)
       throws IOException {
     Map<String, String> imageMap = new HashMap<>();
     Map<String, String> linkMap = new HashMap<>();
 
+    Long size = null;
     String content = activity.getContent() == null ? "" : activity.getContent();
     String title = activity.getTitle() == null ? "" : activity.getTitle();
     String location =
         activity.getLocation() == null || activity.getLocation().getName() == null
             ? ""
             : activity.getLocation().getName();
-    String published =
-        activity.getPublished().toString() == null ? "" : activity.getPublished().toString();
+    String published = activity.getPublished().toString();
 
     Request.Builder requestBuilder = new Request.Builder().url(baseUrl);
     requestBuilder.header("token", authData.getAccessToken());
 
-    FormBody.Builder builder = new FormBody.Builder().add("type", "POSTS");
-    builder.add("exporter", JobMetadata.getExportService());
-    builder.add("content", content);
-    builder.add("title", title);
-    builder.add("location", location);
-    builder.add("published", published);
+    FormBody.Builder builder =
+        new FormBody.Builder()
+            .add("type", "POSTS")
+            .add("exporter", exportService)
+            .add("content", content)
+            .add("title", title)
+            .add("location", location)
+            .add("published", published);
 
     Collection<SocialActivityAttachment> linkAttachments =
         activity.getAttachments().stream()
@@ -149,6 +164,7 @@ public class DaybookPostsImporter
 
     FormBody formBody = builder.build();
     requestBuilder.post(formBody);
+    size = formBody.contentLength();
 
     try (Response response = client.newCall(requestBuilder.build()).execute()) {
       int code = response.code();
@@ -159,7 +175,7 @@ public class DaybookPostsImporter
                 "Error occurred in request for adding entry, message: %s", response.message()));
       }
 
-      return response.message();
+      return ItemImportResult.success(response.message(), size);
     }
   }
 }

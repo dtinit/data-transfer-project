@@ -40,13 +40,14 @@ To download our latest demo image, run:
 
 Or, to build it yourself, run:
 
- `./gradlew :distributions:demo-server:dockerize`
+1. `cd client-rest; npm install` (see [First Run/Setup](Developer.md#first-runsetup) for more details)
+2. `./gradlew :distributions:demo-server:dockerize`
 
 This will generate the dockerfile and build an image, copying over local settings (configured in `.gradle/properties.gradle`) and using the local "cloud hosting" extension.
 
 ## Run the Docker image
 
-`docker run --rm -p 3000:443 -p 5005:5005 -p 8080:8080 --env-file distributions/demo-server/env.secrets --name dtp-demo datatransferproject/demo`
+`docker run --rm -p 3000:443 -p 5005:5005 -p 8080:8080 --env-file env.secrets --name dtp-demo datatransferproject/demo`
 
 will run the demo server image from above on `localhost:8080`.
 

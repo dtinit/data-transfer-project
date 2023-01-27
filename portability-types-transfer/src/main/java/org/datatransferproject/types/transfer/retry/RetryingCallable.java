@@ -23,6 +23,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.Callable;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.types.common.models.DataVertical;
 
 /**
  * Class for retrying a {@link Callable} given a {@link RetryStrategyLibrary}.
@@ -35,7 +36,7 @@ public class RetryingCallable<T> implements Callable<T> {
   private final RetryStrategyLibrary retryStrategyLibrary;
   private final Clock clock;
   private final Monitor monitor;
-  private final String dataType;
+  private final DataVertical dataType;
   private final String service;
 
   private volatile int attempts;
@@ -46,7 +47,7 @@ public class RetryingCallable<T> implements Callable<T> {
       RetryStrategyLibrary retryStrategyLibrary,
       Clock clock,
       Monitor monitor,
-      String dataType,
+      DataVertical dataType,
       String service) {
     this.callable = callable;
     this.retryStrategyLibrary = retryStrategyLibrary;

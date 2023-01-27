@@ -36,8 +36,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class GoogleContactsImportConversionTest {
   private VCard defaultVCard;
@@ -61,7 +61,7 @@ public class GoogleContactsImportConversionTest {
     return fields.stream().map(function).collect(Collectors.toList());
   }
 
-  @Before
+  @BeforeEach
   public void setup() {
     defaultVCard = new VCard();
     defaultVCard.setStructuredName(makeStructuredName("Haskell", "Curry", CONTACT_SOURCE_TYPE));

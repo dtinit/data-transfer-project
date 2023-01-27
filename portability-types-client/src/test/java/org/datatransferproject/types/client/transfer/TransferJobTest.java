@@ -18,9 +18,10 @@ package org.datatransferproject.types.client.transfer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.datatransferproject.types.common.PortabilityCommon;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
 
 /* Test for TransferJob */
 public class TransferJobTest {
@@ -34,7 +35,7 @@ public class TransferJobTest {
             "1-2-3",
             "testExportService",
             "testImportService",
-            "PHOTOS",
+            PHOTOS,
             "exportUrl",
             "importUrl",
             "exportTokenUrl",
@@ -49,7 +50,7 @@ public class TransferJobTest {
     assertThat("1-2-3").isEqualTo(deserialized.getId());
     assertThat("testExportService").isEqualTo(deserialized.getExportService());
     assertThat("testImportService").isEqualTo(deserialized.getImportService());
-    assertThat("PHOTOS").isEqualTo(deserialized.getDataType());
+    assertThat(PHOTOS).isEqualTo(deserialized.getDataType());
     assertThat("exportUrl").isEqualTo(deserialized.getExportUrl());
     assertThat("importUrl").isEqualTo(deserialized.getImportUrl());
     assertThat("exportTokenUrl").isEqualTo(deserialized.getExportTokenUrl());

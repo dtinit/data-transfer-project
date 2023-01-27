@@ -29,10 +29,10 @@ dependencies {
     // REVIEW: We could standardize the version in gradle.propertoes but this would mean all dependent extensions must be revved at the same time
     compile 'com.googlecode.ez-vcard:ez-vcard:0.10.3'
 
-    testCompile("org.mockito:mockito-core:${mockitoVersion}")
     testCompile project(':extensions:auth:portability-auth-harness-microsoft')
     testCompile group: 'com.squareup.okhttp', name: 'mockwebserver', version: '2.7.5'
     testCompile group: 'com.squareup.okhttp3', name: 'mockwebserver', version: '3.2.0'
+    testCompile("com.google.http-client:google-http-client-gson:${googleHttpClientVersion}")
     testImplementation "org.mockito:mockito-inline:${mockitoVersion}"
 
 }

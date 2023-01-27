@@ -45,6 +45,10 @@ public class ExportInformation extends PortableType {
     return containerResource;
   }
 
+  public ExportInformation copyWithResource(ContainerResource cr) {
+    return new ExportInformation(getPaginationData(), cr);
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

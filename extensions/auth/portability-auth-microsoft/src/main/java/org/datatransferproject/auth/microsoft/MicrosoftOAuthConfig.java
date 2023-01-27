@@ -16,11 +16,17 @@
 
 package org.datatransferproject.auth.microsoft;
 
+import static org.datatransferproject.types.common.models.DataVertical.CALENDAR;
+import static org.datatransferproject.types.common.models.DataVertical.CONTACTS;
+import static org.datatransferproject.types.common.models.DataVertical.MAIL;
+import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Map;
 import java.util.Set;
 import org.datatransferproject.auth.OAuth2Config;
+import org.datatransferproject.types.common.models.DataVertical;
 
 public class MicrosoftOAuthConfig implements OAuth2Config {
 
@@ -40,22 +46,22 @@ public class MicrosoftOAuthConfig implements OAuth2Config {
   }
 
   @Override
-  public Map<String, Set<String>> getExportScopes() {
-    return ImmutableMap.<String, Set<String>>builder()
-        .put("MAIL", ImmutableSet.of("user.read", "Mail.Read"))
-        .put("CONTACTS", ImmutableSet.of("user.read", "Contacts.Read"))
-        .put("CALENDAR", ImmutableSet.of("user.read", "Calendars.Read"))
-        .put("PHOTOS", ImmutableSet.of("user.read", "Files.Read"))
+  public Map<DataVertical, Set<String>> getExportScopes() {
+    return ImmutableMap.<DataVertical, Set<String>>builder()
+        .put(MAIL, ImmutableSet.of("user.read", "Mail.Read"))
+        .put(CONTACTS, ImmutableSet.of("user.read", "Contacts.Read"))
+        .put(CALENDAR, ImmutableSet.of("user.read", "Calendars.Read"))
+        .put(PHOTOS, ImmutableSet.of("user.read", "Files.Read"))
         .build();
   }
 
   @Override
-  public Map<String, Set<String>> getImportScopes() {
-    return ImmutableMap.<String, Set<String>>builder()
-        .put("MAIL", ImmutableSet.of("user.read", "Mail.ReadWrite"))
-        .put("CONTACTS", ImmutableSet.of("user.read", "Contacts.ReadWrite"))
-        .put("CALENDAR", ImmutableSet.of("user.read", "Calendars.ReadWrite"))
-        .put("PHOTOS", ImmutableSet.of("user.read", "Files.ReadWrite"))
+  public Map<DataVertical, Set<String>> getImportScopes() {
+    return ImmutableMap.<DataVertical, Set<String>>builder()
+        .put(MAIL, ImmutableSet.of("user.read", "Mail.ReadWrite"))
+        .put(CONTACTS, ImmutableSet.of("user.read", "Contacts.ReadWrite"))
+        .put(CALENDAR, ImmutableSet.of("user.read", "Calendars.ReadWrite"))
+        .put(PHOTOS, ImmutableSet.of("user.read", "Files.ReadWrite"))
         .build();
   }
 }

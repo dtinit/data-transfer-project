@@ -16,17 +16,18 @@
 package org.datatransferproject.types.client.transfer;
 
 import java.util.Objects;
+import org.datatransferproject.types.common.models.DataVertical;
 
 /** Request to list services available for export and import for the given type. */
 public class GetTransferServices {
-  private final String transferDataType;
+  private final DataVertical transferDataType;
 
-  public GetTransferServices(String transferDataType) {
+  public GetTransferServices(DataVertical transferDataType) {
     Objects.requireNonNull(transferDataType);
     this.transferDataType = transferDataType;
   }
 
-  public String getTransferDataType() {
+  public DataVertical getTransferDataType() {
     return transferDataType;
   }
 }

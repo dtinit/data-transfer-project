@@ -19,12 +19,14 @@ package org.datatransferproject.types.common.models.social;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
+import org.datatransferproject.types.common.ImportableItem;
 
+import javax.annotation.Nonnull;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Objects;
 
-public class SocialActivityModel {
+public class SocialActivityModel implements ImportableItem {
   private String id;
   private Instant published;
   private SocialActivityType type;
@@ -114,4 +116,13 @@ public class SocialActivityModel {
   public String getUrl() {
     return url;
   }
+
+  @Nonnull
+  @Override
+  public String getIdempotentId() {
+    return Integer.toString(hashCode());
+  }
+
+  @Override
+  public String getName() { return title; }
 }

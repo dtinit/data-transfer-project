@@ -34,10 +34,6 @@ dependencies {
     compile "com.google.http-client:google-http-client-jackson2:${googleHttpClientVersion}"
     compile "com.squareup.okhttp3:okhttp:${okHttpVersion}"
     compile "com.squareup.okhttp3:logging-interceptor:${okHttpVersion}"
-
-    testCompile("com.google.truth:truth:${truthVersion}")
-    testCompile("junit:junit:${junitVersion}")
-    testCompile("org.mockito:mockito-core:${mockitoVersion}")
 }
 
 

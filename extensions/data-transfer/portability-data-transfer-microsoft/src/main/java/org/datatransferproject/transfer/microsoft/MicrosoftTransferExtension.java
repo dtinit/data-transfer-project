@@ -1,5 +1,11 @@
 package org.datatransferproject.transfer.microsoft;
 
+import static org.datatransferproject.types.common.models.DataVertical.CALENDAR;
+import static org.datatransferproject.types.common.models.DataVertical.CONTACTS;
+import static org.datatransferproject.types.common.models.DataVertical.MEDIA;
+import static org.datatransferproject.types.common.models.DataVertical.OFFLINE_DATA;
+import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
+
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,8 +16,8 @@ import okhttp3.OkHttpClient;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
-import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -21,6 +27,8 @@ import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFact
 import org.datatransferproject.transfer.microsoft.contacts.MicrosoftContactsExporter;
 import org.datatransferproject.transfer.microsoft.contacts.MicrosoftContactsImporter;
 import org.datatransferproject.transfer.microsoft.offline.MicrosoftOfflineDataExporter;
+import org.datatransferproject.transfer.microsoft.media.MicrosoftMediaExporter;
+import org.datatransferproject.transfer.microsoft.media.MicrosoftMediaImporter;
 import org.datatransferproject.transfer.microsoft.photos.MicrosoftPhotosExporter;
 import org.datatransferproject.transfer.microsoft.photos.MicrosoftPhotosImporter;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerService;
@@ -32,17 +40,16 @@ import java.io.IOException;
 /** Bootstraps the Microsoft data transfer services. */
 public class MicrosoftTransferExtension implements TransferExtension {
   public static final String SERVICE_ID = "microsoft";
-  // TODO: centralized place, or enum type for these?
-  private static final String CONTACTS = "CONTACTS";
-  private static final String CALENDAR = "CALENDAR";
-  private static final String PHOTOS = "PHOTOS";
-  private static final String OFFLINE_DATA = "OFFLINE-DATA";
-  private static final ImmutableList<String> SUPPORTED_IMPORT_SERVICES =
+
+  // TODO(#1065) don't keep adding here - just have the converters invoked automatically when Media
+  // isn't supported on one or the other side of this equation; this is just a WIP prototype to show
+  // the concept of converters at play.
+  private static final ImmutableList<DataVertical> SUPPORTED_IMPORT_SERVICES =
       ImmutableList.of(CALENDAR, CONTACTS, PHOTOS);
-  private static final ImmutableList<String> SUPPORTED_EXPORT_SERVICES =
-      ImmutableList.of(CALENDAR, CONTACTS, PHOTOS, OFFLINE_DATA);
-  private ImmutableMap<String, Importer> importerMap;
-  private ImmutableMap<String, Exporter> exporterMap;
+  private static final ImmutableList<DataVertical> SUPPORTED_EXPORT_SERVICES =
+      ImmutableList.of(CALENDAR, CONTACTS, PHOTOS, MEDIA, OFFLINE_DATA);
+  private ImmutableMap<DataVertical, Importer> importerMap;
+  private ImmutableMap<DataVertical, Exporter> exporterMap;
 
   private static final String BASE_GRAPH_URL = "https://graph.microsoft.com";
 
@@ -61,7 +68,7 @@ public class MicrosoftTransferExtension implements TransferExtension {
   }
 
   @Override
-  public Exporter<?, ?> getExporter(String transferDataType) {
+  public Exporter<?, ?> getExporter(DataVertical transferDataType) {
     Preconditions.checkState(initialized);
 
     if (!offlineData && transferDataType.equals(OFFLINE_DATA)) {
@@ -76,7 +83,7 @@ public class MicrosoftTransferExtension implements TransferExtension {
   }
 
   @Override
-  public Importer<?, ?> getImporter(String transferDataType) {
+  public Importer<?, ?> getImporter(DataVertical transferDataType) {
     Preconditions.checkState(initialized);
     Preconditions.checkArgument(SUPPORTED_IMPORT_SERVICES.contains(transferDataType));
     return importerMap.get(transferDataType);
@@ -116,7 +123,7 @@ public class MicrosoftTransferExtension implements TransferExtension {
 
     Monitor monitor = context.getMonitor();
 
-    ImmutableMap.Builder<String, Importer> importBuilder = ImmutableMap.builder();
+    ImmutableMap.Builder<DataVertical, Importer> importBuilder = ImmutableMap.builder();
     importBuilder.put(
         CONTACTS,
         new MicrosoftContactsImporter(BASE_GRAPH_URL, client, mapper, transformerService));
@@ -126,17 +133,19 @@ public class MicrosoftTransferExtension implements TransferExtension {
     importBuilder.put(
         PHOTOS, new MicrosoftPhotosImporter(BASE_GRAPH_URL, client, mapper, jobStore, monitor,
           credentialFactory));
+    importBuilder.put(MEDIA, new MicrosoftMediaImporter(BASE_GRAPH_URL, client, mapper, jobStore, monitor,
+          credentialFactory));
     importerMap = importBuilder.build();
 
-    ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();
+    ImmutableMap.Builder<DataVertical, Exporter> exporterBuilder = ImmutableMap.builder();
     exporterBuilder.put(
         CONTACTS,
         new MicrosoftContactsExporter(BASE_GRAPH_URL, client, mapper, transformerService));
     exporterBuilder.put(
         CALENDAR,
         new MicrosoftCalendarExporter(BASE_GRAPH_URL, client, mapper, transformerService));
-    exporterBuilder.put(
-        PHOTOS, new MicrosoftPhotosExporter(credentialFactory, jsonFactory, monitor));
+    exporterBuilder.put(PHOTOS, new MicrosoftPhotosExporter(credentialFactory, jsonFactory, monitor));
+    exporterBuilder.put(MEDIA, new MicrosoftMediaExporter(credentialFactory, jsonFactory, monitor));
     exporterBuilder.put(
         OFFLINE_DATA, new MicrosoftOfflineDataExporter(BASE_GRAPH_URL, client, mapper));
 

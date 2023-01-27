@@ -49,7 +49,7 @@ import org.datatransferproject.types.transfer.errors.ErrorDetail;
  * key<br>
  * (2)Run the copy job
  */
-final class JobProcessor {
+class JobProcessor {
   private final JobStore store;
   private final JobHooks hooks;
   private final ObjectMapper objectMapper;
@@ -81,8 +81,6 @@ final class JobProcessor {
     boolean success = false;
     UUID jobId = JobMetadata.getJobId();
     monitor.debug(() -> format("Begin processing jobId: %s", jobId), EventCode.WORKER_JOB_STARTED);
-
-    Collection<ErrorDetail> errors = null;
 
     try {
       markJobStarted(jobId);
@@ -117,7 +115,7 @@ final class JobProcessor {
       String exportInfoStr = job.exportInformation();
       Optional<ExportInformation> exportInfo = Optional.empty();
       if (!Strings.isNullOrEmpty(exportInfoStr)) {
-        exportInfo = Optional.of(objectMapper.readValue(exportInfoStr, ExportInformation.class));
+        exportInfo = Optional.ofNullable(objectMapper.readValue(exportInfoStr, ExportInformation.class));
       }
 
       // Copy the data
@@ -126,11 +124,8 @@ final class JobProcessor {
           JobMetadata.getExportService(),
           JobMetadata.getImportService());
       JobMetadata.getStopWatch().start();
-      errors = copier.copy(exportAuthData, importAuthData, jobId, exportInfo);
-      final int numErrors = errors.size();
-      monitor.debug(
-          () -> format("Finished copy for jobId: %s with %d error(s).", jobId, numErrors));
-      success = errors.isEmpty();
+      copier.copy(exportAuthData, importAuthData, jobId, exportInfo);
+      success = true;
     } catch (CopyExceptionWithFailureReason e) {
       String failureReason = e.getFailureReason();
       if (failureReason.contains(FailureReasons.DESTINATION_FULL.toString())) {
@@ -153,8 +148,16 @@ final class JobProcessor {
     } catch (IOException | CopyException | RuntimeException e) {
       monitor.severe(() -> "Error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
     } finally {
-      monitor.debug(() -> "Finished processing jobId: " + jobId, EventCode.WORKER_JOB_FINISHED);
-      addErrorsAndMarkJobFinished(jobId, success, errors);
+      // The errors returned by copier.getErrors are those logged by the idempotentImportExecutor
+      // and are distinct from the exceptions thrown by copier.copy
+      final Collection<ErrorDetail> loggedErrors = copier.getErrors(jobId);
+      final int numErrors = loggedErrors.size();
+      // success is set to true above if copy returned without throwing
+      success &= loggedErrors.isEmpty();
+      monitor.debug(
+          () -> format("Finished processing jobId: %s with %d error(s).", jobId, numErrors),
+          EventCode.WORKER_JOB_FINISHED);
+      addErrorsAndMarkJobFinished(jobId, success, loggedErrors);
       hooks.jobFinished(jobId, success);
       dtpInternalMetricRecorder.finishedJob(
           JobMetadata.getDataType(),

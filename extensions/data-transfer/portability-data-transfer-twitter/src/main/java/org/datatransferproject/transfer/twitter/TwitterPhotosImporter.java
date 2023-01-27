@@ -62,7 +62,7 @@ final class TwitterPhotosImporter
         update.media(image.getTitle(), content.getInputStream());
 
         idempotentExecutor.executeAndSwallowIOExceptions(
-            image.getDataId(),
+            image.getIdempotentId(),
             image.getTitle(),
             () -> twitterApi.tweets().updateStatus(update));
       } catch (IOException e) {

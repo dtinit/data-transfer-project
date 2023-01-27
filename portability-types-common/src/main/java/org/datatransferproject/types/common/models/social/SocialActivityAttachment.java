@@ -17,11 +17,14 @@
 package org.datatransferproject.types.common.models.social;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.datatransferproject.types.common.ImportableItem;
 
+import javax.annotation.Nonnull;
 import java.util.Objects;
 
-public class SocialActivityAttachment {
+public class SocialActivityAttachment implements ImportableItem {
   private SocialActivityAttachmentType type;
   private String url;
   private String name;
@@ -43,6 +46,7 @@ public class SocialActivityAttachment {
     return url;
   }
 
+  @JsonIgnore(false)
   public String getName() {
     return name;
   }
@@ -70,4 +74,8 @@ public class SocialActivityAttachment {
   public int hashCode() {
     return Objects.hash(getType(), getUrl(), getName(), getContent());
   }
+
+  @Nonnull
+  @Override
+  public String getIdempotentId() { return url; }
 }

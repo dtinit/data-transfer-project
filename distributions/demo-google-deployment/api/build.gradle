@@ -41,14 +41,14 @@ import com.bmuschko.gradle.docker.tasks.image.Dockerfile
  */
 
 plugins {
-    id 'com.github.johnrengelman.shadow' version '2.0.2'
-    id 'com.bmuschko.docker-remote-api' version '3.2.6'
+    id 'com.github.johnrengelman.shadow' version '6.1.0'
+    id 'com.bmuschko.docker-remote-api'
     id 'java'
     id 'application'
 }
 
 repositories {
-    jcenter()
+    mavenCentral()
 }
 
 dependencies {
@@ -120,8 +120,8 @@ shadowJar {
 task createApiServerDockerfile(type: Dockerfile) {
     description = 'Builds the API Server Dockerfile'
     group = 'docker'
-    destFile project.file("${buildDir}/api/Dockerfile")
-    from "gcr.io/google-appengine/openjdk:8"
+    setDestFile(project.file("${buildDir}/api/Dockerfile"))
+    from "gcr.io/google-appengine/openjdk:11"
     exposePort 8080 // Port the API server is accessed from
     copyFile("build/libs/api-${project.version}-all.jar", "/app/api.jar")
     defaultCommand("java",
@@ -140,7 +140,7 @@ task dockerize(type: DockerBuildImage) {
     inputDir = project.file(".")
     ext.gcpProject = project.hasProperty('gcpProject') ? gcpProject : 'missing-project-please-specify-one'
     ext.imageVersion = project.hasProperty('imageVersion') ? imageVersion : 'latest'
-    tag = "gcr.io/" + ext.gcpProject + "/portability-api:" + ext.imageVersion
+    tags.add("gcr.io/" + ext.gcpProject + "/portability-api:" + ext.imageVersion)
 }
 
 // Note: This service acct creds file should be used for local developmemt only. In production, we
@@ -155,8 +155,8 @@ task createApiServerDockerfileLocal(type: Dockerfile) {
     description = 'Builds the API Server Dockerfile for local development'
     group = 'docker'
     dependsOn copyApiServerDepsLocal
-    destFile project.file("${buildDir}/api/Dockerfile")
-    from "gcr.io/google-appengine/openjdk:8"
+    setDestFile(project.file("${buildDir}/api/Dockerfile"))
+    from "gcr.io/google-appengine/openjdk:11"
     exposePort 8080 // Port the API server is accessed from
     copyFile("build/libs/api-${project.version}-all.jar", "/app/api.jar")
     copyFile("build/libs/service_acct_creds.json", '/service_acct_creds.json')
@@ -185,5 +185,5 @@ task dockerizeLocal(type: DockerBuildImage) {
     dependsOn copyResources, shadowJar, createApiServerDockerfileLocal
     dockerFile = project.file("${buildDir}/api/Dockerfile")
     inputDir = project.file(".")
-    tag = 'dataportability/api:latest'
+    tags.add('dataportability/api:latest')
 }

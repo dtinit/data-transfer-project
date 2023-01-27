@@ -9,6 +9,10 @@ plugins {
     id 'signing'
 }
 
+dependencies {
+    compile project(':portability-types-common')
+}
+
 configurePublication(project)
 
 

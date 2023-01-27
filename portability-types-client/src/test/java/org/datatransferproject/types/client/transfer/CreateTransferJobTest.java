@@ -16,9 +16,11 @@
 
 package org.datatransferproject.types.client.transfer;
 
+import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /* Test for CreateTransferJob */
 public class CreateTransferJobTest {
@@ -34,18 +36,18 @@ public class CreateTransferJobTest {
                 "testDestination",
                 "https://localhost:3000/callback/testSource",
                 "https://localhost:3000/callback/testDestination",
-                "PHOTOS",
+                PHOTOS,
                 null,
                 "cleartext"));
 
     CreateTransferJob deserialized = objectMapper.readValue(serialized, CreateTransferJob.class);
 
-    Assert.assertEquals("testSource", deserialized.getExportService());
-    Assert.assertEquals("testDestination", deserialized.getImportService());
-    Assert.assertEquals(
-        "https://localhost:3000/callback/testSource", deserialized.getExportCallbackUrl());
-    Assert.assertEquals(
-        "https://localhost:3000/callback/testDestination", deserialized.getImportCallbackUrl());
-    Assert.assertEquals("PHOTOS", deserialized.getDataType());
+    assertEquals(deserialized.getExportService(),"testSource");
+    assertEquals(deserialized.getImportService(),"testDestination");
+    assertEquals(
+         deserialized.getExportCallbackUrl(),"https://localhost:3000/callback/testSource");
+    assertEquals(
+         deserialized.getImportCallbackUrl(),"https://localhost:3000/callback/testDestination");
+    assertEquals(PHOTOS, deserialized.getDataType());
   }
 }

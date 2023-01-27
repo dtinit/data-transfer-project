@@ -7,10 +7,7 @@ import com.google.common.truth.Truth;
 
 import java.util.List;
 import org.datatransferproject.types.common.models.ContainerResource;
-import org.datatransferproject.types.common.models.tasks.TaskContainerResource;
-import org.datatransferproject.types.common.models.tasks.TaskListModel;
-import org.datatransferproject.types.common.models.tasks.TaskModel;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class TaskContainerResourceTest {
 

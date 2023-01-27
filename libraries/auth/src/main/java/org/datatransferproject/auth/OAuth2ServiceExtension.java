@@ -24,6 +24,7 @@ import org.datatransferproject.spi.api.auth.AuthDataGenerator;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 
 import java.io.IOException;
@@ -42,8 +43,8 @@ public class OAuth2ServiceExtension implements AuthServiceExtension {
 
   private final OAuth2Config oAuth2Config;
 
-  private volatile Map<String, OAuth2DataGenerator> exportAuthDataGenerators;
-  private volatile Map<String, OAuth2DataGenerator> importAuthDataGenerators;
+  private volatile Map<DataVertical, OAuth2DataGenerator> exportAuthDataGenerators;
+  private volatile Map<DataVertical, OAuth2DataGenerator> importAuthDataGenerators;
 
   private AppCredentials appCredentials;
   private HttpTransport httpTransport;
@@ -60,17 +61,17 @@ public class OAuth2ServiceExtension implements AuthServiceExtension {
   }
 
   @Override
-  public AuthDataGenerator getAuthDataGenerator(String transferDataType, AuthMode mode) {
+  public AuthDataGenerator getAuthDataGenerator(DataVertical transferDataType, AuthMode mode) {
     return getOrCreateAuthDataGenerator(transferDataType, mode);
   }
 
   @Override
-  public List<String> getImportTypes() {
+  public List<DataVertical> getImportTypes() {
     return new ArrayList<>(oAuth2Config.getImportScopes().keySet());
   }
 
   @Override
-  public List<String> getExportTypes() {
+  public List<DataVertical> getExportTypes() {
     return new ArrayList<>(oAuth2Config.getExportScopes().keySet());
   }
 
@@ -106,14 +107,14 @@ public class OAuth2ServiceExtension implements AuthServiceExtension {
   }
 
   private synchronized OAuth2DataGenerator getOrCreateAuthDataGenerator(
-      String transferType, AuthMode mode) {
+      DataVertical transferType, AuthMode mode) {
     Preconditions.checkState(initialized, "Cannot get OAuth2DataGenerator before initialization");
     Preconditions.checkArgument(
         mode == AuthMode.EXPORT
             ? getExportTypes().contains(transferType)
             : getImportTypes().contains(transferType));
 
-    Map<String, OAuth2DataGenerator> generators =
+    Map<DataVertical, OAuth2DataGenerator> generators =
         mode == AuthMode.EXPORT ? exportAuthDataGenerators : importAuthDataGenerators;
 
     if (!generators.containsKey(transferType)) {

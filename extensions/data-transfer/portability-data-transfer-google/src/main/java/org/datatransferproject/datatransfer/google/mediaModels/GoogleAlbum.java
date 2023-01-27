@@ -28,9 +28,19 @@ public class GoogleAlbum {
   @JsonProperty("title")
   private String title;
 
+  @JsonProperty("isWriteable")
+  private boolean isWriteable;
+
+  @JsonProperty("mediaItemsCount")
+  private long mediaItemsCount;
+
   public String getId() { return id; }
 
   public String getTitle() { return title; }
+
+  public boolean getIsWriteable() { return isWriteable; }
+
+  public long getMediaItemsCount() { return mediaItemsCount; }
 
   public void setId(String id) { this.id = id; }
 

@@ -77,7 +77,7 @@ final class DecrypterImpl implements Decrypter {
         | NoSuchAlgorithmException
         | NoSuchPaddingException e) {
       monitor.severe(() -> format("Error decrypting data, length: %s", encrypted.length()), e);
-      throw new RuntimeException(e);
+      throw new RuntimeException("Couldn't decrypt data", e);
     }
   }
 

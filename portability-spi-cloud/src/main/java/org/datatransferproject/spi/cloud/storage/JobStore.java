@@ -135,6 +135,13 @@ public interface JobStore extends TemporaryPerJobDataStore {
    */
   default void addBytes(UUID jobId, Long bytes) throws IOException {}
 
+  /**
+   * Increments the bytes count for downloadable items of the given job.
+   *
+   * @param bytes key is idempotent id of a DownloadableItem
+   */
+  default void addBytes(UUID jobId, Map<String, Long> bytes) {}
+
   /** Provides the total number of bytes transferred. */
   default Long getBytes(UUID jobId) {
     return null;
@@ -153,4 +160,12 @@ public interface JobStore extends TemporaryPerJobDataStore {
    * transfer.
    */
   default void storeJobStack(UUID jobId, Stack<ExportInformation> stack) {}
+
+  /**
+   * Called by a transfer worker when abandoning the job matching {@code jobId}, and do cleanup at their end.
+   * Accepts the {@code reason} for abandoning the job (can be derived from but not limited to {@link State})
+   *
+   * @throws IllegalStateException if failed to successfully abandon the job.
+   */
+  default void abandonJob(UUID jobId, String reason) {}
 }

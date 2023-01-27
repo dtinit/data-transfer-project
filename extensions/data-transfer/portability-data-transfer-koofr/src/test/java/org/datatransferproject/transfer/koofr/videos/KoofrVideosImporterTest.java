@@ -1,19 +1,12 @@
 package org.datatransferproject.transfer.koofr.videos;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
-
 import com.google.common.collect.ImmutableList;
-import java.util.Collection;
-import java.util.UUID;
-import java.util.concurrent.Callable;
+import java.time.Instant;
+import java.util.Date;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.transfer.koofr.common.KoofrClient;
 import org.datatransferproject.transfer.koofr.common.KoofrClientFactory;
@@ -21,51 +14,61 @@ import org.datatransferproject.types.common.models.videos.VideoAlbum;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+import java.util.Collection;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
 public class KoofrVideosImporterTest {
-
-  private KoofrClientFactory clientFactory;
-  private KoofrClient client;
-  private Monitor monitor;
+  @Mock private KoofrClientFactory clientFactory;
+  @Mock private KoofrClient client;
+  @Mock private Monitor monitor;
+  @Mock private IdempotentImportExecutor executor;
   private KoofrVideosImporter importer;
-  private IdempotentImportExecutor executor;
   private TokensAndUrlAuthData authData;
   private MockWebServer server;
 
-  @Before
+  private final AtomicReference<String> capturedResult = new AtomicReference<>();
+
+  @BeforeEach
   public void setUp() throws Exception {
     server = new MockWebServer();
     server.start();
 
-    client = mock(KoofrClient.class);
-
-    clientFactory = mock(KoofrClientFactory.class);
     when(clientFactory.create(any())).thenReturn(client);
 
-    monitor = mock(Monitor.class);
+    importer = new KoofrVideosImporter(clientFactory, monitor, mock(JobStore.class));
 
-    importer = new KoofrVideosImporter(clientFactory, monitor);
-
-    executor = mock(IdempotentImportExecutor.class);
     when(executor.executeAndSwallowIOExceptions(any(), any(), any()))
         .then(
             (InvocationOnMock invocation) -> {
               Callable<String> callable = invocation.getArgument(2);
-              return callable.call();
+              String result = callable.call();
+              capturedResult.set(result);
+              return result;
             });
+    when(executor.importAndSwallowIOExceptions(any(), any())).thenCallRealMethod();
     authData = new TokensAndUrlAuthData("acc", "refresh", "");
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     server.shutdown();
   }
@@ -93,6 +96,7 @@ public class KoofrVideosImporterTest {
             new VideoAlbum("id1", "Album 1", "This is a fake album"),
             new VideoAlbum("id2", "", description1001));
 
+    Date uploadedTime = Date.from(Instant.parse("2020-09-04T12:40:57.741Z"));
     Collection<VideoModel> videos =
         ImmutableList.of(
             new VideoModel(
@@ -102,7 +106,8 @@ public class KoofrVideosImporterTest {
                 "video/mp4",
                 "video1",
                 "id1",
-                false),
+                false,
+                uploadedTime),
             new VideoModel(
                 "video2.mp4",
                 server.url("/2.mp4").toString(),
@@ -110,7 +115,8 @@ public class KoofrVideosImporterTest {
                 "video/mp4",
                 "video2",
                 "id1",
-                false),
+                false,
+                null),
             new VideoModel(
                 "video3.mp4",
                 server.url("/3.mp4").toString(),
@@ -118,7 +124,8 @@ public class KoofrVideosImporterTest {
                 "video/mp4",
                 "video3",
                 "id2",
-                false));
+                false,
+                null));
 
     VideosContainerResource resource = spy(new VideosContainerResource(albums, videos));
 
@@ -139,7 +146,7 @@ public class KoofrVideosImporterTest {
             eq("video1.mp4"),
             any(),
             eq("video/mp4"),
-            isNull(),
+            eq(uploadedTime),
             eq("A video 1"));
     clientInOrder.verify(client).fileExists(eq("/root/Album 1/video2.mp4"));
     clientInOrder.verify(client).fileExists(eq("/root/Album/video3.mp4"));
@@ -174,7 +181,8 @@ public class KoofrVideosImporterTest {
                 "video/mp4",
                 "video1",
                 null,
-                false),
+                false,
+                null),
             new VideoModel(
                 "video2.mp4",
                 server.url("/2.mp4").toString(),
@@ -182,7 +190,8 @@ public class KoofrVideosImporterTest {
                 "video/mp4",
                 "video2",
                 null,
-                false));
+                false,
+                null));
 
     VideosContainerResource resource = spy(new VideosContainerResource(albums, videos));
 
@@ -222,15 +231,16 @@ public class KoofrVideosImporterTest {
     Collection<VideoAlbum> albums = ImmutableList.of();
 
     Collection<VideoModel> videos =
-            ImmutableList.of(
-                    new VideoModel(
-                            "not_found_video_1.mp4",
-                            server.url("/not_found.mp4").toString(),
-                            "Video not founded in CDN",
-                            "video/mp4",
-                            "not_found_video_1",
-                            null,
-                            false));
+        ImmutableList.of(
+            new VideoModel(
+                "not_found_video_1.mp4",
+                server.url("/not_found.mp4").toString(),
+                "Video not founded in CDN",
+                "video/mp4",
+                "not_found_video_1",
+                null,
+                false,
+                null));
 
     VideosContainerResource resource = spy(new VideosContainerResource(albums, videos));
 
@@ -239,5 +249,8 @@ public class KoofrVideosImporterTest {
     InOrder clientInOrder = Mockito.inOrder(client);
 
     clientInOrder.verifyNoMoreInteractions();
+
+    String importResult = capturedResult.get();
+    assertEquals(importResult, "skipped-not_found_video_1");
   }
 }

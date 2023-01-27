@@ -16,6 +16,9 @@
 
 package org.datatransferproject.transfer.daybook;
 
+import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
+import static org.datatransferproject.types.common.models.DataVertical.SOCIAL_POSTS;
+
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
@@ -25,9 +28,11 @@ import okhttp3.OkHttpClient;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.transfer.daybook.photos.DaybookPhotosImporter;
 import org.datatransferproject.transfer.daybook.social.DaybookPostsImporter;
 
@@ -36,11 +41,11 @@ public class DaybookTransferExtension implements TransferExtension {
   private static final String SERVICE_ID = "Daybook";
   private static final String BASE_URL =
       "https://us-central1-diary-a77f6.cloudfunctions.net/post-daybook-dtp";
-  private static final ImmutableList<String> SUPPORTED_DATA_TYPES =
-      ImmutableList.of("PHOTOS", "SOCIAL-POSTS");
+  private static final ImmutableList<DataVertical> SUPPORTED_DATA_TYPES =
+      ImmutableList.of(PHOTOS, SOCIAL_POSTS);
 
   private boolean initialized = false;
-  private ImmutableMap<String, Importer> importerMap;
+  private ImmutableMap<DataVertical, Importer<?, ?>> importerMap;
 
   @Override
   public void initialize(ExtensionContext context) {
@@ -55,11 +60,12 @@ public class DaybookTransferExtension implements TransferExtension {
     OkHttpClient client = context.getService(OkHttpClient.class);
     TemporaryPerJobDataStore jobStore = context.getService(TemporaryPerJobDataStore.class);
 
-    ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
+    ImmutableMap.Builder<DataVertical, Importer<?, ?>> importerBuilder = ImmutableMap.builder();
+    String exportService = JobMetadata.getExportService();
     importerBuilder.put(
-        "PHOTOS", new DaybookPhotosImporter(monitor, client, mapper, jobStore, BASE_URL));
+        PHOTOS, new DaybookPhotosImporter(monitor, client, jobStore, BASE_URL, exportService));
     importerBuilder.put(
-        "SOCIAL-POSTS", new DaybookPostsImporter(monitor, client, mapper, BASE_URL));
+        SOCIAL_POSTS, new DaybookPostsImporter(monitor, client, mapper, BASE_URL, exportService));
     importerMap = importerBuilder.build();
     initialized = true;
   }
@@ -70,7 +76,7 @@ public class DaybookTransferExtension implements TransferExtension {
   }
 
   @Override
-  public Importer<?, ?> getImporter(String transferDataType) {
+  public Importer<?, ?> getImporter(DataVertical transferDataType) {
     Preconditions.checkArgument(
         initialized, "DaybookTransferExtension is not initialized. Unable to get Importer");
     Preconditions.checkArgument(
@@ -80,7 +86,7 @@ public class DaybookTransferExtension implements TransferExtension {
   }
 
   @Override
-  public Exporter<?, ?> getExporter(String transferDataType) {
+  public Exporter<?, ?> getExporter(DataVertical transferDataType) {
     throw new IllegalArgumentException();
   }
 }
