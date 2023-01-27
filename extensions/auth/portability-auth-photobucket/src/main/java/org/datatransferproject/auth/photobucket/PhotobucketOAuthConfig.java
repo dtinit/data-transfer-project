@@ -18,62 +18,65 @@ package org.datatransferproject.auth.photobucket;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import org.datatransferproject.auth.OAuth2Config;
+import org.datatransferproject.types.common.models.DataVertical;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.datatransferproject.auth.OAuth2Config;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
+import static org.datatransferproject.types.common.models.DataVertical.VIDEOS;
 
 public class PhotobucketOAuthConfig implements OAuth2Config {
-  private static final String PB_SERVICE_ID = "Photobucket";
-  private static final String PB_AUTH_URL = "https://auth.photobucket.com/oauth/authorize";
-  private static final String PB_TOKEN_URL = "https://auth.photobucket.com/oauth/token";
+    private static final String PB_SERVICE_ID = "Photobucket";
+    private static final String PB_AUTH_URL = "https://auth.photobucket.com/oauth/authorize";
+    private static final String PB_TOKEN_URL = "https://auth.photobucket.com/oauth/token";
 
-  private static final Pattern AUTH_TOKEN_PATTERN =
-      Pattern.compile(".*\"access_token\":\"([\\w.]+)*\".*");
+    private static final Pattern AUTH_TOKEN_PATTERN =
+            Pattern.compile(".*\"access_token\":\"([\\w.]+)*\".*");
 
-  @Override
-  public String getServiceName() {
-    return PB_SERVICE_ID;
-  }
-
-  @Override
-  public String getAuthUrl() {
-    return PB_AUTH_URL;
-  }
-
-  @Override
-  public String getTokenUrl() {
-    return PB_TOKEN_URL;
-  }
-
-  @Override
-  public Map<String, Set<String>> getExportScopes() {
-    return ImmutableMap.<String, Set<String>>builder()
-        .put("PHOTOS", ImmutableSet.of("create.media"))
-        .put("VIDEOS", ImmutableSet.of("create.media"))
-        .build();
-  }
-
-  @Override
-  public Map<String, Set<String>> getImportScopes() {
-    return ImmutableMap.<String, Set<String>>builder()
-        .put("PHOTOS", ImmutableSet.of("create.media"))
-        .put("VIDEOS", ImmutableSet.of("create.media"))
-        .build();
-  }
-
-  @Override
-  public TokensAndUrlAuthData getResponseClass(String result) throws IllegalArgumentException {
-    Matcher matcher = AUTH_TOKEN_PATTERN.matcher(result);
-    if (!matcher.matches()) {
-      throw new IllegalArgumentException(
-          result + " didn't match expected regex: " + AUTH_TOKEN_PATTERN.pattern());
+    @Override
+    public String getServiceName() {
+        return PB_SERVICE_ID;
     }
 
-    return new TokensAndUrlAuthData(matcher.group(1), null, getTokenUrl());
-  }
+    @Override
+    public String getAuthUrl() {
+        return PB_AUTH_URL;
+    }
+
+    @Override
+    public String getTokenUrl() {
+        return PB_TOKEN_URL;
+    }
+
+    @Override
+    public Map<DataVertical, Set<String>> getExportScopes() {
+        return ImmutableMap.<DataVertical, Set<String>>builder()
+                .put(PHOTOS, ImmutableSet.of("create.media"))
+                .put(VIDEOS, ImmutableSet.of("create.media"))
+                .build();
+    }
+
+    @Override
+    public Map<DataVertical, Set<String>> getImportScopes() {
+        return ImmutableMap.<DataVertical, Set<String>>builder()
+                .put(PHOTOS, ImmutableSet.of("create.media"))
+                .put(VIDEOS, ImmutableSet.of("create.media"))
+                .build();
+    }
+
+    @Override
+    public TokensAndUrlAuthData getResponseClass(String result) throws IllegalArgumentException {
+        Matcher matcher = AUTH_TOKEN_PATTERN.matcher(result);
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException(
+                    result + " didn't match expected regex: " + AUTH_TOKEN_PATTERN.pattern());
+        }
+
+        return new TokensAndUrlAuthData(matcher.group(1), null, getTokenUrl());
+    }
 }
