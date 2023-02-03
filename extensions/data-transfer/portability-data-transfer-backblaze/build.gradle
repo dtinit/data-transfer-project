@@ -26,7 +26,7 @@ dependencies {
 
     compile('software.amazon.awssdk:s3:2.15.24')
     compile('org.apache.commons:commons-lang3:3.11')
-    compile("commons-io:commons-io:2.6")
+    compile("commons-io:commons-io:2.7")
 }
 
 configurePublication(project)

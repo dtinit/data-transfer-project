@@ -1,0 +1,3 @@
+# Global rate limit is 50 requests / 5 seconds (https://developers.deezer.com/api)
+# so 50 * 12 = 600 qps globally, assume 100 concurent DTP users
+perUserRateLimit: 6

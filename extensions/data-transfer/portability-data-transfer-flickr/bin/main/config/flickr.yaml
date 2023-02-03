@@ -1,0 +1,4 @@
+# Global rate limit is 3600 requests / hour (https://www.flickr.com/services/developer/api/)
+# so 1 qps.  Limiting it to 1 per user, but in production this should be monitored to make sure
+# the global limit is not exceeded.
+perUserRateLimit: 1
