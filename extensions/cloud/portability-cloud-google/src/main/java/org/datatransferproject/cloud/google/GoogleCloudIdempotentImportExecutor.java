@@ -88,7 +88,7 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
           ErrorDetail.builder()
               .setId(idempotentId)
               .setTitle(itemName)
-              .setException(Throwables.getStackTraceAsString(e))
+              .setThrowable(e)
               .build();
       addError(idempotentId, errorDetail);
       monitor.severe(() -> jobIdPrefix + "Problem with importing item: " + errorDetail);
@@ -232,6 +232,8 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
   @VisibleForTesting
   Entity createErrorEntity(String idempotentId, UUID jobId, ErrorDetail error)
       throws IOException {
+    System.out.println("AQAQAQAQ");
+    System.out.println(objectMapper.writeValueAsString(error));
     return GoogleCloudUtils.createEntityBuilder(
         getErrorKey(idempotentId, jobId),
         ImmutableMap.of(
