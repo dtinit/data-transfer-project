@@ -41,22 +41,24 @@ import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 public class BackblazePhotosImporter
     implements Importer<TokenSecretAuthData, PhotosContainerResource> {
 
-  private static final String PHOTO_TRANSFER_MAIN_FOLDER = "Photo Transfer";
-
   private final TemporaryPerJobDataStore jobStore;
   private final ConnectionProvider connectionProvider;
   private final Monitor monitor;
   private final BackblazeDataTransferClientFactory b2ClientFactory;
 
+  private final String baseFolderName;
+
   public BackblazePhotosImporter(
       Monitor monitor,
       TemporaryPerJobDataStore jobStore,
       ConnectionProvider connectionProvider,
-      BackblazeDataTransferClientFactory b2ClientFactory) {
+      BackblazeDataTransferClientFactory b2ClientFactory,
+      String baseFolderName) {
     this.monitor = monitor;
     this.jobStore = jobStore;
     this.connectionProvider = connectionProvider;
     this.b2ClientFactory = b2ClientFactory;
+    this.baseFolderName = baseFolderName;
   }
 
   @Override
@@ -115,7 +117,7 @@ public class BackblazePhotosImporter
     }
     String response =
         b2Client.uploadFile(
-            String.format("%s/%s/%s.jpg", PHOTO_TRANSFER_MAIN_FOLDER, albumName, photo.getDataId()),
+            String.format("%s/%s/%s.jpg", baseFolderName, albumName, photo.getDataId()),
             file);
     long size = file.length();
 
