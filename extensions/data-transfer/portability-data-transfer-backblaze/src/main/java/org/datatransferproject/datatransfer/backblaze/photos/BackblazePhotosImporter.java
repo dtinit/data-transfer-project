@@ -117,8 +117,10 @@ public class BackblazePhotosImporter
     }
     String response =
         b2Client.uploadFile(
-            String.format("%s/%s/%s.jpg", baseFolderName, albumName, photo.getDataId()),
-            file);
+            String.format("%s/%s/%s", baseFolderName, albumName, photo.getTitle()),
+            file,
+            photo.getUploadedTime()
+        );
     long size = file.length();
 
     try {

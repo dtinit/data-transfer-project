@@ -32,7 +32,6 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.backblaze.common.BackblazeConstants;
 import org.datatransferproject.datatransfer.backblaze.common.BackblazeDataTransferClient;
 import org.datatransferproject.datatransfer.backblaze.common.BackblazeDataTransferClientFactory;
-import org.datatransferproject.datatransfer.backblaze.photos.BackblazePhotosImporter;
 import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
@@ -42,9 +41,7 @@ import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
-import org.junit.Before;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.io.TempDir;
@@ -126,7 +123,7 @@ public class BackblazeVideosImporterTest {
         .thenReturn(new InputStreamWrapper(IOUtils.toInputStream("video content", "UTF-8")));
 
     when(dataStore.getTempFileFromInputStream(any(), any(), any())).thenReturn(folder.toFile());
-    when(client.uploadFile(eq("Video Transfer/dataId.mp4"), any())).thenReturn(response);
+    when(client.uploadFile(eq("Video Transfer/dataId.mp4"), any(), any())).thenReturn(response);
     when(clientFactory.getOrCreateB2Client(jobId, authData)).thenReturn(client);
 
     videosImporter.importItem(jobId, executor, authData, data);

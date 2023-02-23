@@ -121,7 +121,7 @@ public class BackblazePhotosImporterTest {
     when(streamProvider.getInputStreamForItem(jobId, photoModel))
         .thenReturn(new InputStreamWrapper(IOUtils.toInputStream("photo content", "UTF-8")));
 
-    when(client.uploadFile(eq("Photo Transfer/albumName/dataId.jpg"), any())).thenReturn(response);
+    when(client.uploadFile(eq("Photo Transfer/albumName/dataId.jpg"), any(), any())).thenReturn(response);
     when(clientFactory.getOrCreateB2Client(jobId, authData)).thenReturn(client);
 
     File file = folder.toFile();

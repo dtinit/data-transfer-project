@@ -100,7 +100,7 @@ public class BackblazeVideosImporter
       File file = jobStore.getTempFileFromInputStream(videoFileStream, video.getDataId(), ".mp4");
       String res =
           b2Client.uploadFile(
-              String.format("%s/%s.mp4", baseFolderName, video.getDataId()), file);
+              String.format("%s/%s", baseFolderName, video.getName()), file, video.getUploadedTime());
       return ItemImportResult.success(res, file.length());
     } catch (FileNotFoundException e) {
       monitor.info(
