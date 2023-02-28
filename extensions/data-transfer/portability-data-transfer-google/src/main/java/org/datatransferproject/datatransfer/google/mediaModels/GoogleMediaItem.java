@@ -121,6 +121,8 @@ public class GoogleMediaItem {
     this.filename = filename;
   }
 
+  // TODO(zacsh) investigate why/if there's no setter for this; do we need setters or does the java
+  // annotation do the work for us somehow?
   public String getProductUrl() {
     return productUrl;
   }
@@ -135,5 +137,9 @@ public class GoogleMediaItem {
 
   public Date getUploadedTime() {
     return this.uploadedTime;
+  }
+
+  public void setUploadedTime(Date date) {
+    this.uploadedTime = date;
   }
 }
