@@ -39,6 +39,8 @@ import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
+// TODO WARNING DO NOT MODIFY THIS CLASS! (unless you're willing to mirror your changes to
+// GoogleMediaExporter too). This class is deprecated in favor. TODO here is to delete this class.
 public class GoogleVideosExporter
     implements Exporter<TokensAndUrlAuthData, VideosContainerResource> {
 

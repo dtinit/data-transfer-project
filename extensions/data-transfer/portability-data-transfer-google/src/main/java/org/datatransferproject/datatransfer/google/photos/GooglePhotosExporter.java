@@ -58,6 +58,8 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 // Not ready for prime-time!
 // TODO: fix duplication problems introduced by exporting all photos in 'root' directory first
 
+// TODO WARNING DO NOT MODIFY THIS CLASS! (unless you're willing to mirror your changes to
+// GoogleMediaExporter too). This class is deprecated in favor. TODO here is to delete this class.
 public class GooglePhotosExporter
     implements Exporter<TokensAndUrlAuthData, PhotosContainerResource> {
 
