@@ -16,11 +16,15 @@
 
 package org.datatransferproject.auth.koofr;
 
+import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
+import static org.datatransferproject.types.common.models.DataVertical.VIDEOS;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Map;
 import java.util.Set;
 import org.datatransferproject.auth.OAuth2Config;
+import org.datatransferproject.types.common.models.DataVertical;
 
 public class KoofrOAuthConfig implements OAuth2Config {
 
@@ -40,19 +44,19 @@ public class KoofrOAuthConfig implements OAuth2Config {
   }
 
   @Override
-  public Map<String, Set<String>> getExportScopes() {
+  public Map<DataVertical, Set<String>> getExportScopes() {
     // NOTE: KoofrTransferExtension does not implement export at the moment
-    return ImmutableMap.<String, Set<String>>builder()
-        .put("PHOTOS", ImmutableSet.of("files.read"))
-        .put("VIDEOS", ImmutableSet.of("files.read"))
+    return ImmutableMap.<DataVertical, Set<String>>builder()
+        .put(PHOTOS, ImmutableSet.of("files.read"))
+        .put(VIDEOS, ImmutableSet.of("files.read"))
         .build();
   }
 
   @Override
-  public Map<String, Set<String>> getImportScopes() {
-    return ImmutableMap.<String, Set<String>>builder()
-        .put("PHOTOS", ImmutableSet.of("files.import"))
-        .put("VIDEOS", ImmutableSet.of("files.import"))
+  public Map<DataVertical, Set<String>> getImportScopes() {
+    return ImmutableMap.<DataVertical, Set<String>>builder()
+        .put(PHOTOS, ImmutableSet.of("files.import"))
+        .put(VIDEOS, ImmutableSet.of("files.import"))
         .build();
   }
 }

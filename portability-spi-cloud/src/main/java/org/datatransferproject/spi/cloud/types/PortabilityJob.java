@@ -12,6 +12,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.TimeZone;
 import javax.annotation.Nullable;
+import org.datatransferproject.types.common.models.DataVertical;
 
 /**
  * A job that will fulfill a transfer request.
@@ -37,6 +38,7 @@ public abstract class PortabilityJob {
   private static final String EXPORT_ENCRYPTED_INITIAL_AUTH_DATA =
       "EXPORT_ENCRYPTED_INITIAL_AUTH_DATA";
   private static final String JOB_STATE = "JOB_STATE";
+  private static final String TRANSFER_MODE = "TRANSFER_MODE";
   private static final String FAILURE_REASON = "FAILURE_REASON";
   private static final String NUMBER_OF_FAILED_FILES_KEY = "NUM_FAILED_FILES";
   private static final String USER_TIMEZONE = "USER_TIMEZONE";
@@ -94,11 +96,21 @@ public abstract class PortabilityJob {
     String userLocale =
         properties.containsKey(USER_LOCALE) ? (String) properties.get(USER_LOCALE) : null;
 
+    TransferMode transferMode =
+        properties.containsKey(TRANSFER_MODE)
+            ? TransferMode.valueOf((String) properties.get(TRANSFER_MODE))
+            : TransferMode.DATA_TRANSFER;
+
+    DataVertical dataType =
+        properties.containsKey(DATA_TYPE_KEY)
+            ? DataVertical.fromDataType((String) properties.get(DATA_TYPE_KEY))
+            : null;
+
     return PortabilityJob.builder()
         .setState(state)
         .setExportService((String) properties.get(EXPORT_SERVICE_KEY))
         .setImportService((String) properties.get(IMPORT_SERVICE_KEY))
-        .setTransferDataType((String) properties.get(DATA_TYPE_KEY))
+        .setTransferDataType(dataType)
         .setExportInformation((String) properties.get(EXPORT_INFORMATION_KEY))
         .setCreatedTimestamp(now) // TODO: get from DB
         .setLastUpdateTimestamp(now)
@@ -117,6 +129,7 @@ public abstract class PortabilityJob {
                 .build())
         .setUserTimeZone(userTimeZone)
         .setUserLocale(userLocale)
+        .setTransferMode(transferMode)
         .build();
   }
 
@@ -144,7 +157,7 @@ public abstract class PortabilityJob {
   public abstract String importService();
 
   @JsonProperty("transferDataType")
-  public abstract String transferDataType();
+  public abstract DataVertical transferDataType();
 
   @Nullable
   @JsonProperty("exportInformation")
@@ -171,12 +184,16 @@ public abstract class PortabilityJob {
   @JsonProperty("userLocale")
   public abstract String userLocale();
 
+  @Nullable
+  @JsonProperty("transferMode")
+  public abstract TransferMode transferMode();
+
   public abstract PortabilityJob.Builder toBuilder();
 
   public Map<String, Object> toMap() {
     ImmutableMap.Builder<String, Object> builder =
         ImmutableMap.<String, Object>builder()
-            .put(DATA_TYPE_KEY, transferDataType())
+            .put(DATA_TYPE_KEY, transferDataType().getDataType())
             .put(EXPORT_SERVICE_KEY, exportService())
             .put(IMPORT_SERVICE_KEY, importService())
             .put(AUTHORIZATION_STATE, jobAuthorization().state().toString())
@@ -229,6 +246,10 @@ public abstract class PortabilityJob {
       builder.put(USER_LOCALE, userLocale());
     }
 
+    if (null != transferMode()) {
+      builder.put(TRANSFER_MODE, transferMode().toString());
+    }
+
     return builder.build();
   }
 
@@ -240,6 +261,19 @@ public abstract class PortabilityJob {
     ERROR,
     CANCELED,
     PREEMPTED
+  }
+
+  public enum TransferMode {
+    /**
+     * Regular data transfer mode: export data from a service, then import into another service.
+     */
+    DATA_TRANSFER,
+
+    /**
+     * Do not import the data. Instead, compute the size of every exported item and report the sizes
+     * to the job store.
+     */
+    SIZE_CALCULATION
   }
 
   @AutoValue.Builder
@@ -261,7 +295,7 @@ public abstract class PortabilityJob {
     public abstract Builder setImportService(String importService);
 
     @JsonProperty("transferDataType")
-    public abstract Builder setTransferDataType(String transferDataType);
+    public abstract Builder setTransferDataType(DataVertical transferDataType);
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("exportInformation")
@@ -305,6 +339,10 @@ public abstract class PortabilityJob {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("userLocale")
     public abstract Builder setUserLocale(String locale);
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("transferMode")
+    public abstract Builder setTransferMode(TransferMode transferMode);
 
     // For internal use only; clients should use setAndValidateJobAuthorization
     protected abstract Builder setJobAuthorization(JobAuthorization jobAuthorization);

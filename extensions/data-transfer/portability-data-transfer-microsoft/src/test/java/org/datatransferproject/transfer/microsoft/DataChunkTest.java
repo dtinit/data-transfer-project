@@ -16,44 +16,15 @@
 
 package org.datatransferproject.transfer.microsoft.photos;
 
+import static com.google.common.truth.Truth.assertThat;
+
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ByteArrayInputStream;
-import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import com.google.api.client.auth.oauth2.Credential;
-
-import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
-import org.datatransferproject.launcher.monitor.ConsoleMonitor;
-import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
-import org.datatransferproject.spi.transfer.provider.ImportResult;
-import org.datatransferproject.spi.transfer.types.ContinuationData;
-import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
-import org.datatransferproject.transfer.microsoft.driveModels.*;
-import org.datatransferproject.types.common.StringPaginationToken;
-import org.datatransferproject.types.common.models.ContainerResource;
-import org.datatransferproject.types.common.models.IdOnlyContainerResource;
-import org.datatransferproject.types.common.models.photos.PhotoAlbum;
-import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.transfer.microsoft.DataChunk;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Matchers;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import okhttp3.OkHttpClient;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-
-
-import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 
 /** */
@@ -63,7 +34,7 @@ public class DataChunkTest {
 
   InputStream inputStream;
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException {
   }
 

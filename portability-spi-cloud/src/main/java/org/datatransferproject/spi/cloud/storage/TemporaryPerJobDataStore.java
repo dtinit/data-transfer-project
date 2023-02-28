@@ -51,7 +51,7 @@ public interface TemporaryPerJobDataStore {
     return tmp;
   }
 
-  public class InputStreamWrapper {
+  class InputStreamWrapper {
 
     private final InputStream stream;
     private final Long bytes;

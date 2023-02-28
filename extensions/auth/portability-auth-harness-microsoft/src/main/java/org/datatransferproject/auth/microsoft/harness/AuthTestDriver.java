@@ -14,6 +14,7 @@ import org.datatransferproject.auth.microsoft.MicrosoftAuthServiceExtension;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 import org.datatransferproject.spi.api.types.AuthFlowConfiguration;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
 
 /** */
@@ -51,7 +52,7 @@ public class AuthTestDriver {
     OkHttpClient client = TestHelper.createTestBuilder(callbackHost).build();
 
     AuthDataGenerator authDataGenerator = new MicrosoftAuthServiceExtension()
-        .getAuthDataGenerator("CONTACTS", AuthMode.EXPORT);
+        .getAuthDataGenerator(DataVertical.CONTACTS, AuthMode.EXPORT);
 
     AuthFlowConfiguration configuration = authDataGenerator
         .generateConfiguration(callbackBase, "1");

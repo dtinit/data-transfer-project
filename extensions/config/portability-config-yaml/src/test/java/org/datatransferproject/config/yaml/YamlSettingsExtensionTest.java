@@ -20,15 +20,15 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.common.collect.ImmutableList;
 import java.io.InputStream;
 import org.datatransferproject.config.ConfigUtils;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class YamlSettingsExtensionTest {
+
   /**
-   * baseUrl: https://localhost:3000
-   * baseApiUrl: https://localhost:8080
+   * baseUrl: https://localhost:3000 baseApiUrl: https://localhost:8080
    */
   private static String API_SETTINGS_1 = "api-1.yaml";
   /**

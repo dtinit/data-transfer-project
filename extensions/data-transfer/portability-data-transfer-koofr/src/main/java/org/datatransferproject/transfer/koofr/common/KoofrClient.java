@@ -42,6 +42,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
+import org.datatransferproject.transfer.koofr.exceptions.KoofrClientIOException;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 /** A minimal Koofr REST API client. */
@@ -102,13 +103,7 @@ public class KoofrClient {
       if (code == 404) {
         return false;
       }
-      throw new IOException(
-          "Got error code: "
-              + code
-              + " message: "
-              + response.message()
-              + " body: "
-              + response.body().string());
+      throw new KoofrClientIOException(response);
     }
   }
 
@@ -138,13 +133,7 @@ public class KoofrClient {
       int code = response.code();
       // 409 response code means that the folder already exists
       if ((code < 200 || code > 299) && code != 409) {
-        throw new IOException(
-            "Got error code: "
-                + code
-                + " message: "
-                + response.message()
-                + " body: "
-                + response.body().string());
+       throw new KoofrClientIOException(response);
       }
     }
   }
@@ -176,13 +165,7 @@ public class KoofrClient {
     try (Response response = getResponse(requestBuilder)) {
       int code = response.code();
       if ((code < 200 || code > 299) && code != 409) {
-        throw new IOException(
-            "Got error code: "
-                + code
-                + " message: "
-                + response.message()
-                + " body: "
-                + response.body().string());
+        throw new KoofrClientIOException(response);
       }
     }
   }
@@ -224,7 +207,7 @@ public class KoofrClient {
 
     // We need to reset the input stream because the request could already read some data
     try (Response response =
-        getResponse(fileUploadClient, requestBuilder, () -> inputStream.reset())) {
+        getResponse(fileUploadClient, requestBuilder, inputStream::reset)) {
       int code = response.code();
       ResponseBody body = response.body();
       if (code == 413) {
@@ -232,13 +215,7 @@ public class KoofrClient {
             "Koofr quota exceeded", new Exception("Koofr file upload response code " + code));
       }
       if (code < 200 || code > 299) {
-        throw new IOException(
-            "Got error code: "
-                + code
-                + " message: "
-                + response.message()
-                + " body: "
-                + body.string());
+        throw new KoofrClientIOException(response);
       }
 
       Map<String, Object> responseData = objectMapper.readValue(body.bytes(), Map.class);
@@ -272,13 +249,7 @@ public class KoofrClient {
       }
       ResponseBody body = response.body();
       if (code < 200 || code > 299) {
-        throw new IOException(
-            "Got error code: "
-                + code
-                + " message: "
-                + response.message()
-                + " body: "
-                + body.string());
+        throw new KoofrClientIOException(response);
       }
 
       try (final Reader bodyReader =
@@ -314,13 +285,7 @@ public class KoofrClient {
       int code = response.code();
       ResponseBody body = response.body();
       if (code < 200 || code > 299) {
-        throw new IOException(
-            "Got error code: "
-                + code
-                + " message: "
-                + response.message()
-                + " body: "
-                + body.string());
+        throw new KoofrClientIOException(response);
       }
 
       Map<String, Object> responseData = objectMapper.readValue(body.bytes(), Map.class);

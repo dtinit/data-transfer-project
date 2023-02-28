@@ -16,6 +16,8 @@
 
 package org.datatransferproject.datatransfer.google;
 
+import static org.datatransferproject.types.common.models.DataVertical.SOCIAL_POSTS;
+
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.base.Preconditions;
@@ -27,6 +29,7 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.blogger.GoogleBloggerImporter;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -43,10 +46,10 @@ public class BloggerTransferExtension implements TransferExtension {
   private static final String SERVICE_ID = "GoogleBlogger";
 
   // TODO: centralized place, or enum type for these
-  private static final ImmutableList<String> SUPPORTED_SERVICES =
-      ImmutableList.of("SOCIAL-POSTS");
-  private ImmutableMap<String, Importer> importerMap;
-  private ImmutableMap<String, Exporter> exporterMap;
+  private static final ImmutableList<DataVertical> SUPPORTED_SERVICES =
+      ImmutableList.of(SOCIAL_POSTS);
+  private ImmutableMap<DataVertical, Importer> importerMap;
+  private ImmutableMap<DataVertical, Exporter> exporterMap;
   private boolean initialized = false;
 
   @Override
@@ -55,14 +58,14 @@ public class BloggerTransferExtension implements TransferExtension {
   }
 
   @Override
-  public Exporter<?, ?> getExporter(String transferDataType) {
+  public Exporter<?, ?> getExporter(DataVertical transferDataType) {
     Preconditions.checkArgument(initialized);
     Preconditions.checkArgument(SUPPORTED_SERVICES.contains(transferDataType));
     return exporterMap.get(transferDataType);
   }
 
   @Override
-  public Importer<?, ?> getImporter(String transferDataType) {
+  public Importer<?, ?> getImporter(DataVertical transferDataType) {
     Preconditions.checkArgument(initialized);
     Preconditions.checkArgument(SUPPORTED_SERVICES.contains(transferDataType));
     return importerMap.get(transferDataType);
@@ -98,13 +101,13 @@ public class BloggerTransferExtension implements TransferExtension {
     GoogleCredentialFactory credentialFactory =
         new GoogleCredentialFactory(httpTransport, jsonFactory, appCredentials, monitor);
 
-    ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
+    ImmutableMap.Builder<DataVertical, Importer> importerBuilder = ImmutableMap.builder();
 
-    importerBuilder.put("SOCIAL-POSTS", new GoogleBloggerImporter(credentialFactory));
+    importerBuilder.put(SOCIAL_POSTS, new GoogleBloggerImporter(credentialFactory));
 
     importerMap = importerBuilder.build();
 
-    ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();
+    ImmutableMap.Builder<DataVertical, Exporter> exporterBuilder = ImmutableMap.builder();
 
     exporterMap = exporterBuilder.build();
 

@@ -16,10 +16,13 @@
 
 package org.datatransferproject.auth.google;
 
+import static org.datatransferproject.types.common.models.DataVertical.SOCIAL_POSTS;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Map;
 import java.util.Set;
+import org.datatransferproject.types.common.models.DataVertical;
 
 /**
  * Class that supplies Google Blogger-specific OAuth2 info, this is needed so because multiple
@@ -36,17 +39,17 @@ public class BloggerOAuthConfig extends GoogleOAuthConfig {
 
   // See https://developers.google.com/identity/protocols/googlescopes
   @Override
-  public Map<String, Set<String>> getExportScopes() {
-    return ImmutableMap.<String, Set<String>>builder()
-        .put("SOCIAL-POSTS", ImmutableSet.of("https://www.googleapis.com/auth/blogger.readonly"))
+  public Map<DataVertical, Set<String>> getExportScopes() {
+    return ImmutableMap.<DataVertical, Set<String>>builder()
+        .put(SOCIAL_POSTS, ImmutableSet.of("https://www.googleapis.com/auth/blogger.readonly"))
         .build();
   }
 
   // See https://developers.google.com/identity/protocols/googlescopes
   @Override
-  public Map<String, Set<String>> getImportScopes() {
-    return ImmutableMap.<String, Set<String>>builder()
-        .put("SOCIAL-POSTS", ImmutableSet.of(
+  public Map<DataVertical, Set<String>> getImportScopes() {
+    return ImmutableMap.<DataVertical, Set<String>>builder()
+        .put(SOCIAL_POSTS, ImmutableSet.of(
             "https://www.googleapis.com/auth/blogger",
             // Any photos associated with the blog are stored in Drive.
             // This permission only grants access to files created by this app

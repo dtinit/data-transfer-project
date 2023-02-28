@@ -24,10 +24,9 @@ import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
 import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
 import org.datatransferproject.types.common.models.calendar.CalendarModel;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.UUID;
 
@@ -47,7 +46,7 @@ public class GoogleCalendarImporterTest {
   private Calendar.Events.Insert eventInsertRequest;
   private IdempotentImportExecutor executor;
 
-  @Before
+  @BeforeEach
   public void setup() {
     calendarClient = mock(Calendar.class);
     calendarCalendars = mock(Calendar.Calendars.class);

@@ -30,6 +30,7 @@ import org.datatransferproject.spi.api.auth.AuthDataGenerator;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 import org.datatransferproject.spi.api.types.AuthFlowConfiguration;
 import org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
@@ -41,7 +42,7 @@ public class OAuth1DataGenerator implements AuthDataGenerator {
 
   private final OAuth1Config config;
   private final Monitor monitor;
-  private final String dataType;
+  private final DataVertical dataType;
   private final AuthMode mode;
   // TODO: handle dynamic updates of client ids and secrets #597
   private final String clientId;
@@ -52,7 +53,7 @@ public class OAuth1DataGenerator implements AuthDataGenerator {
       OAuth1Config config,
       AppCredentials appCredentials,
       HttpTransport httpTransport,
-      String datatype,
+      DataVertical datatype,
       AuthMode mode,
       Monitor monitor) {
     this.config = config;

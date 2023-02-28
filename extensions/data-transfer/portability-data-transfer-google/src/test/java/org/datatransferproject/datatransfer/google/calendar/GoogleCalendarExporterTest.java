@@ -48,8 +48,8 @@ import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
 import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
 import org.datatransferproject.types.common.models.calendar.CalendarModel;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
 
@@ -76,7 +76,7 @@ public class GoogleCalendarExporterTest {
   private Calendar.Events.List eventListRequest;
   private Events eventListResponse;
 
-  @Before
+  @BeforeEach
   public void setup() throws IOException {
     calendarClient = mock(Calendar.class);
     calendarCalendars = mock(Calendar.Calendars.class);

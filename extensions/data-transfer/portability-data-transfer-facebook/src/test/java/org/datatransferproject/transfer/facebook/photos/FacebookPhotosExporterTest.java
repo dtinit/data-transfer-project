@@ -16,6 +16,15 @@
 
 package org.datatransferproject.transfer.facebook.photos;
 
+import static com.google.common.truth.Truth.assertThat;
+import static org.datatransferproject.transfer.facebook.photos.FacebookPhotosExporter.PHOTO_TOKEN_PREFIX;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.google.common.collect.Lists;
 import com.restfb.Connection;
 import com.restfb.types.Album;
@@ -27,10 +36,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
+import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
-import org.datatransferproject.transfer.ImageStreamProvider;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.StringPaginationToken;
 import org.datatransferproject.types.common.models.IdOnlyContainerResource;
@@ -39,19 +48,14 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentMatchers;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
-import static com.google.common.truth.Truth.assertThat;
-import static org.datatransferproject.transfer.facebook.photos.FacebookPhotosExporter.PHOTO_TOKEN_PREFIX;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 public class FacebookPhotosExporterTest {
+
   private static final String ALBUM_NAME = "My Album";
   private static final String ALBUM_ID = "1946595";
   private static final String ALBUM_DESCRIPTION = "This is a test album";
@@ -63,6 +67,7 @@ public class FacebookPhotosExporterTest {
 
   private FacebookPhotosExporter facebookPhotosExporter;
   private UUID uuid = UUID.randomUUID();
+  private MockedStatic<ConnectionProvider> connectionProviderMock;
 
   @Before
   public void setUp() throws IOException {
@@ -100,11 +105,14 @@ public class FacebookPhotosExporterTest {
     when(photosInterface.getPhotos(ALBUM_ID, Optional.empty())).thenReturn(photoConnection);
     when(photoConnection.getData()).thenReturn(photos);
 
-    final ImageStreamProvider imageStreamProvider = mock(ImageStreamProvider.class);
     InputStream inputStream = getClass().getClassLoader().getResourceAsStream("test.jpeg");
     HttpURLConnection connection = mock(HttpURLConnection.class);
-    when(imageStreamProvider.getConnection(ArgumentMatchers.anyString())).thenReturn(connection);
     when(connection.getInputStream()).thenReturn(inputStream);
+
+    connectionProviderMock = Mockito.mockStatic(ConnectionProvider.class);
+    connectionProviderMock
+        .when(() -> ConnectionProvider.getConnection(anyString()))
+        .thenReturn(connection);
 
     final TemporaryPerJobDataStore store = mock(TemporaryPerJobDataStore.class);
 
@@ -113,8 +121,12 @@ public class FacebookPhotosExporterTest {
             new AppCredentials("key", "secret"),
             photosInterface,
             null,
-            store,
-            imageStreamProvider);
+            store);
+  }
+
+  @After
+  public void tearDown() {
+    connectionProviderMock.close();
   }
 
   @Test
@@ -181,11 +193,13 @@ public class FacebookPhotosExporterTest {
         .contains(new IdOnlyContainerResource(ALBUM_ID));
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void testIllegalExport() throws CopyExceptionWithFailureReason {
-    facebookPhotosExporter.export(
-        uuid,
-        new TokensAndUrlAuthData("accessToken", null, null),
-        Optional.of(new ExportInformation(new StringPaginationToken(PHOTO_TOKEN_PREFIX), null)));
+    assertThrows(IllegalStateException.class, () -> {
+      facebookPhotosExporter.export(
+          uuid,
+          new TokensAndUrlAuthData("accessToken", null, null),
+          Optional.of(new ExportInformation(new StringPaginationToken(PHOTO_TOKEN_PREFIX), null)));
+    });
   }
 }

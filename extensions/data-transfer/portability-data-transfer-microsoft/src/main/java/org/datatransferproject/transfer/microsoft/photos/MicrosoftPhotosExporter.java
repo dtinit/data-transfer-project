@@ -120,7 +120,7 @@ public class MicrosoftPhotosExporter
               .getDriveItemsFromSpecialFolder(MicrosoftSpecialFolder.FolderType.photos);
     }
 
-    PaginationData nextPageData = SetNextPageToken(driveItemsResponse);
+    PaginationData nextPageData = setNextPageToken(driveItemsResponse);
     ContinuationData continuationData = new ContinuationData(nextPageData);
     PhotosContainerResource containerResource;
     MicrosoftDriveItem[] driveItems = driveItemsResponse.getDriveItems();
@@ -183,7 +183,7 @@ public class MicrosoftPhotosExporter
     return null;
   }
 
-  private PaginationData SetNextPageToken(MicrosoftDriveItemsResponse driveItemsResponse) {
+  private PaginationData setNextPageToken(MicrosoftDriveItemsResponse driveItemsResponse) {
     String url = driveItemsResponse.getNextPageLink();
 
     if (!Strings.isNullOrEmpty(url)) {

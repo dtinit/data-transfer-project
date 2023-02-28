@@ -16,7 +16,7 @@
 
 package org.datatransferproject.transfer.microsoft.photos;
 
-import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.json.gson.GsonFactory;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -38,9 +38,8 @@ import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Matchers;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -63,7 +62,7 @@ public class MicrosoftPhotosExporterTest {
 
   private MicrosoftDriveItemsResponse driveItemsResponse;
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException {
     MicrosoftCredentialFactory credentialFactory = mock(MicrosoftCredentialFactory.class);
     photosInterface = mock(MicrosoftPhotosInterface.class);
@@ -72,7 +71,7 @@ public class MicrosoftPhotosExporterTest {
 
     microsoftPhotosExporter =
         new MicrosoftPhotosExporter(
-            credentialFactory, new JacksonFactory(), photosInterface, monitor);
+            credentialFactory, GsonFactory.getDefaultInstance(), photosInterface, monitor);
 
     when(photosInterface.getDriveItems(any(Optional.class), any(Optional.class)))
         .thenReturn(driveItemsResponse);
@@ -310,6 +309,10 @@ public class MicrosoftPhotosExporterTest {
     albumEntry.id = FOLDER_ID;
     albumEntry.name = "Title";
     albumEntry.folder = new MicrosoftDriveFolder();
+    // TODO(zacsh) remove this childCount setting (or better: set it to a non-sensical value like
+    // zero). We clearly don't care about this (our tests don't break if this is incorrect) so even
+    // though the upstream APIs provide this, we shouldn't be writing test-doubles that imply that
+    // we adhere to this API in anyway.
     albumEntry.folder.childCount = 1;
 
     return albumEntry;

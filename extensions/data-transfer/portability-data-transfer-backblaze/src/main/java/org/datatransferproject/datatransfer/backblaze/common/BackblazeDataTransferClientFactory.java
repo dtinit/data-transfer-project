@@ -17,22 +17,40 @@
 package org.datatransferproject.datatransfer.backblaze.common;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.backblaze.exception.BackblazeCredentialsException;
+import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 
 public class BackblazeDataTransferClientFactory {
-  private BackblazeDataTransferClient b2Client;
+  private final Map<UUID, BackblazeDataTransferClient> backblazeDataTransferClientMap;
+  private final Monitor monitor;
 
-  public BackblazeDataTransferClient getOrCreateB2Client(
-      Monitor monitor, TokenSecretAuthData authData)
+  private static final long SIZE_THRESHOLD_FOR_MULTIPART_UPLOAD = 20 * 1024 * 1024; // 20 MB.
+  private static final long PART_SIZE_FOR_MULTIPART_UPLOAD = 5 * 1024 * 1024; // 5 MB.
+
+  public BackblazeDataTransferClientFactory(Monitor monitor) {
+    this.monitor = monitor;
+    this.backblazeDataTransferClientMap = new HashMap<>();
+  }
+
+  public BackblazeDataTransferClient getOrCreateB2Client( UUID jobId,
+      TokenSecretAuthData authData)
       throws BackblazeCredentialsException, IOException {
-    if (b2Client == null) {
+    if (!backblazeDataTransferClientMap.containsKey(jobId)) {
       BackblazeDataTransferClient backblazeDataTransferClient =
-          new BackblazeDataTransferClient(monitor);
-      backblazeDataTransferClient.init(authData.getToken(), authData.getSecret());
-      b2Client = backblazeDataTransferClient;
+              new BackblazeDataTransferClient(
+                      monitor,
+                      new BaseBackblazeS3ClientFactory(),
+                      SIZE_THRESHOLD_FOR_MULTIPART_UPLOAD,
+                      PART_SIZE_FOR_MULTIPART_UPLOAD);
+      String exportService = JobMetadata.getExportService();
+      backblazeDataTransferClient.init(authData.getToken(), authData.getSecret(), exportService);
+      backblazeDataTransferClientMap.put(jobId, backblazeDataTransferClient);
     }
-    return b2Client;
+    return backblazeDataTransferClientMap.get(jobId);
   }
 }
