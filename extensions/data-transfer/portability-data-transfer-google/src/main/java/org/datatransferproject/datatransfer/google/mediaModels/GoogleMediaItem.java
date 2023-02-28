@@ -18,6 +18,7 @@ package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
+import java.util.Date;
 import java.util.Optional;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.videos.VideoModel;
@@ -45,6 +46,9 @@ public class GoogleMediaItem {
   @JsonProperty("productUrl")
   private String productUrl;
 
+  @JsonProperty("uploadedTime")
+  private Date uploadedTime;
+
   public static VideoModel convertToVideoModel(
       Optional<String> albumId, GoogleMediaItem mediaItem) {
     Preconditions.checkArgument(mediaItem.getMediaMetadata().getVideo() != null);
@@ -57,7 +61,8 @@ public class GoogleMediaItem {
         mediaItem.getMimeType(),
         mediaItem.getId(),
         albumId.orElse(null),
-        false);
+        false /*inTempStore*/,
+        mediaItem.getUploadedTime());
   }
 
   public static PhotoModel convertToPhotoModel(
@@ -71,7 +76,9 @@ public class GoogleMediaItem {
         mediaItem.getMimeType(),
         mediaItem.getId(),
         albumId.orElse(null),
-        false);
+        false  /*inTempStore*/,
+        null  /*sha1*/,
+        mediaItem.getUploadedTime());
   }
 
   public String getId() {
@@ -124,5 +131,9 @@ public class GoogleMediaItem {
 
   public void setMediaMetadata(MediaMetadata mediaMetadata) {
     this.mediaMetadata = mediaMetadata;
+  }
+
+  public Date getUploadedTime() {
+    return this.uploadedTime;
   }
 }
