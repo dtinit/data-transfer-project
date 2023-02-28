@@ -44,7 +44,7 @@ import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
-import org.datatransferproject.spi.transfer.types.TempPhotosData;
+import org.datatransferproject.spi.transfer.types.TempMediaData;
 import org.datatransferproject.spi.transfer.types.UploadErrorException;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.PaginationData;
@@ -276,8 +276,8 @@ public class GooglePhotosExporter
   void populateContainedPhotosList(UUID jobId, TokensAndUrlAuthData authData)
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     // This method is only called once at the beginning of the transfer, so we can start by
-    // initializing a new TempPhotosData to be store in the job store.
-    TempPhotosData tempPhotosData = new TempPhotosData(jobId);
+    // initializing a new TempMediaData to be store in the job store.
+    TempMediaData tempMediaData = new TempMediaData(jobId);
 
     String albumToken = null;
     AlbumListResponse albumListResponse;
@@ -295,7 +295,7 @@ public class GooglePhotosExporter
                     .listMediaItems(Optional.of(albumId), Optional.ofNullable(photoToken));
             if (containedMediaSearchResponse.getMediaItems() != null) {
               for (GoogleMediaItem mediaItem : containedMediaSearchResponse.getMediaItems()) {
-                tempPhotosData.addContainedPhotoId(mediaItem.getId());
+                tempMediaData.addContainedPhotoId(mediaItem.getId());
               }
             }
             photoToken = containedMediaSearchResponse.getNextPageToken();
@@ -307,7 +307,7 @@ public class GooglePhotosExporter
 
     // TODO: if we see complaints about objects being too large for JobStore in other places, we
     // should consider putting logic in JobStore itself to handle it
-    InputStream stream = convertJsonToInputStream(tempPhotosData);
+    InputStream stream = convertJsonToInputStream(tempMediaData);
     jobStore.create(jobId, createCacheKey(), stream);
   }
 
@@ -334,10 +334,10 @@ public class GooglePhotosExporter
       Optional<String> albumId, GoogleMediaItem[] mediaItems, UUID jobId) throws IOException {
     List<PhotoModel> photos = new ArrayList<>(mediaItems.length);
 
-    TempPhotosData tempPhotosData = null;
+    TempMediaData tempMediaData = null;
     InputStream stream = jobStore.getStream(jobId, createCacheKey()).getStream();
     if (stream != null) {
-      tempPhotosData = new ObjectMapper().readValue(stream, TempPhotosData.class);
+      tempMediaData = new ObjectMapper().readValue(stream, TempMediaData.class);
       stream.close();
     }
 
@@ -346,8 +346,8 @@ public class GooglePhotosExporter
         // TODO: address videos
         boolean shouldUpload = albumId.isPresent();
 
-        if (tempPhotosData != null) {
-          shouldUpload = shouldUpload || !tempPhotosData.isContainedPhotoId(mediaItem.getId());
+        if (tempMediaData != null) {
+          shouldUpload = shouldUpload || !tempMediaData.isContainedPhotoId(mediaItem.getId());
         }
 
         if (shouldUpload) {
@@ -374,6 +374,6 @@ public class GooglePhotosExporter
   }
 
   private static String createCacheKey() {
-    return "tempPhotosData";
+    return "tempMediaData";
   }
 }
