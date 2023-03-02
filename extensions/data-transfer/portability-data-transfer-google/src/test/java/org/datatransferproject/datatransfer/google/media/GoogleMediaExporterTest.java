@@ -45,6 +45,7 @@ import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaMetadata;
 import org.datatransferproject.datatransfer.google.mediaModels.Photo;
+import org.datatransferproject.datatransfer.google.mediaModels.Video;
 import org.datatransferproject.datatransfer.google.photos.GooglePhotosInterface;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
@@ -205,10 +206,10 @@ public class GoogleMediaExporterTest {
     // Check photos field of container
     Collection<PhotoModel> actualPhotos = result.getExportedData().getPhotos();
     assertThat(actualPhotos.stream().map(PhotoModel::getFetchableUrl).collect(Collectors.toList()))
-        .containsExactly("some://fake/gphotoapi/uri" + "=d"); // for download
+        .containsExactly("some://fake/gphotoapi/uri=d"); // for download
     assertThat(actualPhotos.stream().map(PhotoModel::getAlbumId).collect(Collectors.toList()))
         .containsExactly(ALBUM_ID);
-    assertThat(actualPhotos.stream().map(PhotoModel::getTitle).collect(Collectors.toList()))
+    assertThat(actualPhotos.stream().map(PhotoModel::getName).collect(Collectors.toList()))
         .containsExactly(FILENAME);
   }
 
@@ -217,8 +218,8 @@ public class GoogleMediaExporterTest {
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     setUpSingleAlbum();
     when(albumListResponse.getNextPageToken()).thenReturn(null);
-    GoogleMediaItem mediaItem = setUpSinglePhoto(IMG_URI, "some-upstream-generated-photo-id"); // DO NOT MERGE: this should be video
-    // GoogleMediaItem mediaItem = setUpSingleVideo(VIDEO_URI, VIDEO_ID); // DO NOT MERGE
+    GoogleMediaItem mediaItem = setUpSingleVideo(
+        "some://fake/gphotoapi/uri", "some-upstream-generated-video-id");
     when(mediaItemSearchResponse.getMediaItems()).thenReturn(new GoogleMediaItem[] {mediaItem});
     when(mediaItemSearchResponse.getNextPageToken()).thenReturn(MEDIA_TOKEN);
 
@@ -243,13 +244,13 @@ public class GoogleMediaExporterTest {
     Collection<MediaAlbum> actualAlbums = result.getExportedData().getAlbums();
     assertThat(actualAlbums).isEmpty();
 
-    // Check photos field of container
-    Collection<PhotoModel> actualPhotos = result.getExportedData().getPhotos();
-    assertThat(actualPhotos.stream().map(PhotoModel::getFetchableUrl).collect(Collectors.toList()))
-        .containsExactly("some://fake/gphotoapi/uri" + "=d"); // for download
-    assertThat(actualPhotos.stream().map(PhotoModel::getAlbumId).collect(Collectors.toList()))
+    // Check videos field of container
+    Collection<VideoModel> actualVideos = result.getExportedData().getVideos();
+    assertThat(actualVideos.stream().map(VideoModel::getFetchableUrl).collect(Collectors.toList()))
+        .containsExactly("some://fake/gphotoapi/uri=dv"); // for download
+    assertThat(actualVideos.stream().map(VideoModel::getAlbumId).collect(Collectors.toList()))
         .containsExactly(ALBUM_ID);
-    assertThat(actualPhotos.stream().map(PhotoModel::getTitle).collect(Collectors.toList()))
+    assertThat(actualVideos.stream().map(VideoModel::getName).collect(Collectors.toList()))
         .containsExactly(FILENAME);
   }
 
@@ -258,7 +259,8 @@ public class GoogleMediaExporterTest {
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     setUpSingleAlbum();
     when(albumListResponse.getNextPageToken()).thenReturn(null);
-    GoogleMediaItem mediaItem = setUpSinglePhoto("some://fake/gphotoapi/uri", "some-upstream-generated-photo-id");
+    GoogleMediaItem mediaItem = setUpSinglePhoto(
+        "some://fake/gphotoapi/uri", "some-upstream-generated-photo-id");
     when(mediaItemSearchResponse.getMediaItems()).thenReturn(new GoogleMediaItem[] {mediaItem});
     when(mediaItemSearchResponse.getNextPageToken()).thenReturn(null);
 
@@ -362,17 +364,35 @@ public class GoogleMediaExporterTest {
   }
 
   /** Sets up a response for a single photo */
-  private GoogleMediaItem setUpSinglePhoto(String imageUri, String photoId) {
-    GoogleMediaItem googleMediaItem = new GoogleMediaItem();
-    googleMediaItem.setDescription("Description");
-    googleMediaItem.setMimeType("image/jpeg");
-    googleMediaItem.setBaseUrl(imageUri);
-    googleMediaItem.setId(photoId);
-    googleMediaItem.setFilename(FILENAME);
+  // TODO(zacsh) delete this helper in favor of explicitly setting the fields that an assertion will
+  // _actually_ use (and doing so _inlined, visibly_ in the arrange phase).
+  private static GoogleMediaItem setUpSinglePhoto(String imageUri, String photoId) {
     MediaMetadata mediaMetadata = new MediaMetadata();
     mediaMetadata.setPhoto(new Photo());
-    googleMediaItem.setMediaMetadata(mediaMetadata);
+    GoogleMediaItem googleMediaItem =
+        setUpSingleMediaItem(imageUri, photoId, mediaMetadata);
+    googleMediaItem.setMimeType("image/jpeg");
+    return googleMediaItem;
+  }
 
+  /** Sets up a response for a single photo */
+  private static GoogleMediaItem setUpSingleVideo(String videoUri, String videoId) {
+    MediaMetadata mediaMetadata = new MediaMetadata();
+    mediaMetadata.setVideo(new Video());
+    GoogleMediaItem googleMediaItem =
+        setUpSingleMediaItem(videoUri, videoId, mediaMetadata);
+    googleMediaItem.setMimeType("video/mp4");
+    return googleMediaItem;
+  }
+
+  /** Sets up a response for a single photo */
+  private static GoogleMediaItem setUpSingleMediaItem(String mediaUri, String mediaId, MediaMetadata mediaMetadata) {
+    GoogleMediaItem googleMediaItem = new GoogleMediaItem();
+    googleMediaItem.setDescription("Description");
+    googleMediaItem.setBaseUrl(mediaUri);
+    googleMediaItem.setId(mediaId);
+    googleMediaItem.setFilename(FILENAME);
+    googleMediaItem.setMediaMetadata(mediaMetadata);
     return googleMediaItem;
   }
 }

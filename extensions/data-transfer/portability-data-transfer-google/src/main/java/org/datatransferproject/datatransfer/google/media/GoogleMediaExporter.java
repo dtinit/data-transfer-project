@@ -389,7 +389,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
         shouldUpload = shouldUpload || !tempMediaData.isContainedPhotoId(mediaItem.getId());
       }
 
-      if (mediaItem.getMediaMetadata().getPhoto() != null) {
+      if (mediaItem.isPhoto()) {
         if (shouldUpload) {
           PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(albumId, mediaItem);
           photos.add(photoModel);
@@ -397,7 +397,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
           monitor.debug(
               () -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
         }
-      } else if (mediaItem.getMediaMetadata().getVideo() != null) {
+      } else if (mediaItem.isVideo()) {
         if (shouldUpload) {
           VideoModel videoModel = GoogleMediaItem.convertToVideoModel(albumId, mediaItem);
           videos.add(videoModel);
@@ -406,7 +406,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
         }
       }
     }
-    return new MediaContainerResource(null, photos, videos);
+    return new MediaContainerResource(null  /*albums*/, photos, videos);
   }
 
   private synchronized GooglePhotosInterface getOrCreatePhotosInterface(

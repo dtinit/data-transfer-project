@@ -49,14 +49,32 @@ public class GoogleMediaItem {
   @JsonProperty("uploadedTime")
   private Date uploadedTime;
 
+  public boolean isPhoto() {
+    return this.getMediaMetadata().getPhoto() != null;
+  }
+  public boolean isVideo() {
+    return this.getMediaMetadata().getVideo() != null;
+  }
+
+
+  public String getFetchableUrl() {
+    if (this.isPhoto()) {
+      return this.getBaseUrl() + "=d";
+    } else if (this.isVideo()) {
+      // dv = download video otherwise you only get a thumbnail
+      return this.getBaseUrl() + "=dv";
+    } else {
+      throw new IllegalArgumentException("unimplemented media type");
+    }
+  }
+
   public static VideoModel convertToVideoModel(
       Optional<String> albumId, GoogleMediaItem mediaItem) {
-    Preconditions.checkArgument(mediaItem.getMediaMetadata().getVideo() != null);
+    Preconditions.checkArgument(mediaItem.isVideo());
 
     return new VideoModel(
         mediaItem.getFilename(),
-        // dv = download video otherwise you only get a thumbnail
-        mediaItem.getBaseUrl() + "=dv",
+        mediaItem.getFetchableUrl(),
         mediaItem.getDescription(),
         mediaItem.getMimeType(),
         mediaItem.getId(),
@@ -67,11 +85,11 @@ public class GoogleMediaItem {
 
   public static PhotoModel convertToPhotoModel(
       Optional<String> albumId, GoogleMediaItem mediaItem) {
-    Preconditions.checkArgument(mediaItem.getMediaMetadata().getPhoto() != null);
+    Preconditions.checkArgument(mediaItem.isPhoto());
 
     return new PhotoModel(
         mediaItem.getFilename(),
-        mediaItem.getBaseUrl() + "=d",
+        mediaItem.getFetchableUrl(),
         mediaItem.getDescription(),
         mediaItem.getMimeType(),
         mediaItem.getId(),
