@@ -76,8 +76,8 @@ public class GoogleMediaExporterTest {
   private String PHOTO_ID = "photo id";
   private String FILENAME = "filename";
   private String ALBUM_ID = "GoogleAlbum id";
-  private String ALBUM_TOKEN = "album_token";
-  private String PHOTO_TOKEN = "photo_token";
+  private String ALBUM_TOKEN = "some-upstream-generated-album-token";
+  private String MEDIA_TOKEN = "some-upstream-generated-media-token";
 
   private UUID uuid = UUID.randomUUID();
 
@@ -112,7 +112,6 @@ public class GoogleMediaExporterTest {
     verifyNoInteractions(credentialFactory);
   }
 
- /* DO NOT MERGE - evaluate this test for the port to Media */
   @Test
   public void exportAlbumFirstSet() throws IOException, InvalidTokenException, PermissionDeniedException {
     setUpSingleAlbum();
@@ -151,7 +150,6 @@ public class GoogleMediaExporterTest {
         .containsExactly(ALBUM_ID);
   }
 
- /* DO NOT MERGE - evaluate this test for the port to Media */
   @Test
   public void exportAlbumSubsequentSet() throws IOException, InvalidTokenException, PermissionDeniedException {
     setUpSingleAlbum();
@@ -176,15 +174,14 @@ public class GoogleMediaExporterTest {
     assertThat(paginationData.getToken()).isEqualTo(MEDIA_TOKEN_PREFIX);
   }
 
- /* DO NOT MERGE - evaluate this test for the port to Media */
   @Test
-  public void exportMediaFirstSet()
+  public void exportPhotoFirstSet()
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     setUpSingleAlbum();
     when(albumListResponse.getNextPageToken()).thenReturn(null);
     GoogleMediaItem mediaItem = setUpSinglePhoto(IMG_URI, PHOTO_ID);
     when(mediaItemSearchResponse.getMediaItems()).thenReturn(new GoogleMediaItem[] {mediaItem});
-    when(mediaItemSearchResponse.getNextPageToken()).thenReturn(PHOTO_TOKEN);
+    when(mediaItemSearchResponse.getNextPageToken()).thenReturn(MEDIA_TOKEN);
 
     IdOnlyContainerResource idOnlyContainerResource = new IdOnlyContainerResource(ALBUM_ID);
 
@@ -201,7 +198,7 @@ public class GoogleMediaExporterTest {
     ContinuationData continuationData = result.getContinuationData();
     StringPaginationToken paginationToken =
         (StringPaginationToken) continuationData.getPaginationData();
-    assertThat(paginationToken.getToken()).isEqualTo(MEDIA_TOKEN_PREFIX + PHOTO_TOKEN);
+    assertThat(paginationToken.getToken()).isEqualTo(MEDIA_TOKEN_PREFIX + MEDIA_TOKEN);
 
     // Check albums field of container (should be empty)
     Collection<MediaAlbum> actualAlbums = result.getExportedData().getAlbums();
@@ -217,7 +214,46 @@ public class GoogleMediaExporterTest {
         .containsExactly(FILENAME);
   }
 
- /* DO NOT MERGE - evaluate this test for the port to Media */
+  @Test
+  public void exportVideoFirstSet()
+      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+    setUpSingleAlbum();
+    when(albumListResponse.getNextPageToken()).thenReturn(null);
+    GoogleMediaItem mediaItem = setUpSinglePhoto(IMG_URI, PHOTO_ID); // DO NOT MERGE: this should be video
+    when(mediaItemSearchResponse.getMediaItems()).thenReturn(new GoogleMediaItem[] {mediaItem});
+    when(mediaItemSearchResponse.getNextPageToken()).thenReturn(MEDIA_TOKEN);
+
+    IdOnlyContainerResource idOnlyContainerResource = new IdOnlyContainerResource(ALBUM_ID);
+
+    ExportResult<MediaContainerResource> result =
+        googleMediaExporter.exportMedia(
+            null, Optional.of(idOnlyContainerResource), Optional.empty(), uuid);
+
+    // Check results
+    // Verify correct methods were called
+    verify(photosInterface).listMediaItems(Optional.of(ALBUM_ID), Optional.empty());
+    verify(mediaItemSearchResponse).getMediaItems();
+
+    // Check pagination
+    ContinuationData continuationData = result.getContinuationData();
+    StringPaginationToken paginationToken =
+        (StringPaginationToken) continuationData.getPaginationData();
+    assertThat(paginationToken.getToken()).isEqualTo(MEDIA_TOKEN_PREFIX + MEDIA_TOKEN);
+
+    // Check albums field of container (should be empty)
+    Collection<MediaAlbum> actualAlbums = result.getExportedData().getAlbums();
+    assertThat(actualAlbums).isEmpty();
+
+    // Check photos field of container
+    Collection<PhotoModel> actualPhotos = result.getExportedData().getPhotos();
+    assertThat(actualPhotos.stream().map(PhotoModel::getFetchableUrl).collect(Collectors.toList()))
+        .containsExactly(IMG_URI + "=d"); // for download
+    assertThat(actualPhotos.stream().map(PhotoModel::getAlbumId).collect(Collectors.toList()))
+        .containsExactly(ALBUM_ID);
+    assertThat(actualPhotos.stream().map(PhotoModel::getTitle).collect(Collectors.toList()))
+        .containsExactly(FILENAME);
+  }
+
   @Test
   public void exportPhotoSubsequentSet()
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
@@ -228,7 +264,7 @@ public class GoogleMediaExporterTest {
     when(mediaItemSearchResponse.getNextPageToken()).thenReturn(null);
 
     StringPaginationToken inputPaginationToken =
-        new StringPaginationToken(MEDIA_TOKEN_PREFIX + PHOTO_TOKEN);
+        new StringPaginationToken(MEDIA_TOKEN_PREFIX + MEDIA_TOKEN);
     IdOnlyContainerResource idOnlyContainerResource = new IdOnlyContainerResource(ALBUM_ID);
 
     // Run test
@@ -238,7 +274,7 @@ public class GoogleMediaExporterTest {
 
     // Check results
     // Verify correct methods were called
-    verify(photosInterface).listMediaItems(Optional.of(ALBUM_ID), Optional.of(PHOTO_TOKEN));
+    verify(photosInterface).listMediaItems(Optional.of(ALBUM_ID), Optional.of(MEDIA_TOKEN));
     verify(mediaItemSearchResponse).getMediaItems();
 
     // Check pagination token
@@ -247,7 +283,6 @@ public class GoogleMediaExporterTest {
     assertNull(paginationToken);
   }
 
- /* DO NOT MERGE - evaluate this test for the port to Media */
   @Test
   public void populateContainedMediaList()
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
@@ -279,7 +314,6 @@ public class GoogleMediaExporterTest {
     assertThat(tempMediaData.lookupContainedPhotoIds()).containsExactly(PHOTO_ID, secondId);
   }
 
- /* DO NOT MERGE - evaluate this test for the port to Media */
   @Test
   /* Tests that when there is no album information passed along to exportMedia, only albumless
   photos are exported.
