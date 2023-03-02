@@ -72,12 +72,12 @@ import org.mockito.ArgumentCaptor;
 
 public class GoogleMediaExporterTest {
 
-  private String FILENAME = "filename";
-  private String ALBUM_ID = "GoogleAlbum id";
-  private String ALBUM_TOKEN = "some-upstream-generated-album-token";
-  private String MEDIA_TOKEN = "some-upstream-generated-media-token";
+  private static String FILENAME = "filename";
+  private static String ALBUM_ID = "GoogleAlbum id";
+  private static String ALBUM_TOKEN = "some-upstream-generated-album-token";
+  private static String MEDIA_TOKEN = "some-upstream-generated-media-token";
 
-  private UUID uuid = UUID.randomUUID();
+  private static UUID uuid = UUID.randomUUID();
 
   private GoogleMediaExporter googleMediaExporter;
   private TemporaryPerJobDataStore jobStore;
