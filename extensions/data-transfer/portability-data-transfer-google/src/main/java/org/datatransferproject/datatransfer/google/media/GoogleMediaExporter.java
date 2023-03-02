@@ -62,7 +62,7 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, MediaContainerResource> {
 
   static final String ALBUM_TOKEN_PREFIX = "album:";
-  static final String PHOTO_TOKEN_PREFIX = "media:";
+  static final String MEDIA_TOKEN_PREFIX = "media:";
 
   private final GoogleCredentialFactory credentialFactory;
   private final TemporaryPerJobDataStore jobStore;
@@ -139,7 +139,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
      * information, and there may or may not be album information. If there is no container
      * resource, that means that we're exporting albumless photos and a pagination token must be
      * present. The beginning step of exporting albumless photos is indicated by a pagination token
-     * containing only PHOTO_TOKEN_PREFIX with no token attached, in order to differentiate this
+     * containing only MEDIA_TOKEN_PREFIX with no token attached, in order to differentiate this
      * case for the first step of export (no export information at all).
      */
     StringPaginationToken paginationToken =
@@ -254,7 +254,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
     GoogleAlbum[] googleAlbums = albumListResponse.getAlbums();
 
     if (Strings.isNullOrEmpty(token)) {
-      nextPageData = new StringPaginationToken(PHOTO_TOKEN_PREFIX);
+      nextPageData = new StringPaginationToken(MEDIA_TOKEN_PREFIX);
     } else {
       nextPageData = new StringPaginationToken(ALBUM_TOKEN_PREFIX + token);
     }
@@ -300,7 +300,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
     if (!Strings.isNullOrEmpty(mediaItemSearchResponse.getNextPageToken())) {
       nextPageData =
           new StringPaginationToken(
-              PHOTO_TOKEN_PREFIX + mediaItemSearchResponse.getNextPageToken());
+              MEDIA_TOKEN_PREFIX + mediaItemSearchResponse.getNextPageToken());
     }
     ContinuationData continuationData = new ContinuationData(nextPageData);
 
@@ -362,9 +362,9 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
     if (paginationData.isPresent()) {
       String token = ((StringPaginationToken) paginationData.get()).getToken();
       Preconditions.checkArgument(
-          token.startsWith(PHOTO_TOKEN_PREFIX), "Invalid pagination token " + token);
-      if (token.length() > PHOTO_TOKEN_PREFIX.length()) {
-        paginationToken = Optional.of(token.substring(PHOTO_TOKEN_PREFIX.length()));
+          token.startsWith(MEDIA_TOKEN_PREFIX), "Invalid pagination token " + token);
+      if (token.length() > MEDIA_TOKEN_PREFIX.length()) {
+        paginationToken = Optional.of(token.substring(MEDIA_TOKEN_PREFIX.length()));
       }
     }
     return paginationToken;

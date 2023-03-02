@@ -17,7 +17,7 @@ package org.datatransferproject.datatransfer.google.media;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.datatransferproject.datatransfer.google.media.GoogleMediaExporter.ALBUM_TOKEN_PREFIX;
-import static org.datatransferproject.datatransfer.google.media.GoogleMediaExporter.PHOTO_TOKEN_PREFIX;
+import static org.datatransferproject.datatransfer.google.media.GoogleMediaExporter.MEDIA_TOKEN_PREFIX;
 
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -173,7 +173,7 @@ public class GoogleMediaExporterTest {
     ContinuationData continuationData = result.getContinuationData();
     StringPaginationToken paginationData =
         (StringPaginationToken) continuationData.getPaginationData();
-    assertThat(paginationData.getToken()).isEqualTo(GoogleMediaExporter.PHOTO_TOKEN_PREFIX);
+    assertThat(paginationData.getToken()).isEqualTo(MEDIA_TOKEN_PREFIX);
   }
 
  /* DO NOT MERGE - evaluate this test for the port to Media */
@@ -201,7 +201,7 @@ public class GoogleMediaExporterTest {
     ContinuationData continuationData = result.getContinuationData();
     StringPaginationToken paginationToken =
         (StringPaginationToken) continuationData.getPaginationData();
-    assertThat(paginationToken.getToken()).isEqualTo(PHOTO_TOKEN_PREFIX + PHOTO_TOKEN);
+    assertThat(paginationToken.getToken()).isEqualTo(MEDIA_TOKEN_PREFIX + PHOTO_TOKEN);
 
     // Check albums field of container (should be empty)
     Collection<MediaAlbum> actualAlbums = result.getExportedData().getAlbums();
@@ -228,7 +228,7 @@ public class GoogleMediaExporterTest {
     when(mediaItemSearchResponse.getNextPageToken()).thenReturn(null);
 
     StringPaginationToken inputPaginationToken =
-        new StringPaginationToken(PHOTO_TOKEN_PREFIX + PHOTO_TOKEN);
+        new StringPaginationToken(MEDIA_TOKEN_PREFIX + PHOTO_TOKEN);
     IdOnlyContainerResource idOnlyContainerResource = new IdOnlyContainerResource(ALBUM_ID);
 
     // Run test
