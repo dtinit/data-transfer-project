@@ -72,8 +72,6 @@ import org.mockito.ArgumentCaptor;
 
 public class GoogleMediaExporterTest {
 
-  private String IMG_URI = "image uri";
-  private String PHOTO_ID = "photo id";
   private String FILENAME = "filename";
   private String ALBUM_ID = "GoogleAlbum id";
   private String ALBUM_TOKEN = "some-upstream-generated-album-token";
@@ -179,7 +177,7 @@ public class GoogleMediaExporterTest {
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     setUpSingleAlbum();
     when(albumListResponse.getNextPageToken()).thenReturn(null);
-    GoogleMediaItem mediaItem = setUpSinglePhoto(IMG_URI, PHOTO_ID);
+    GoogleMediaItem mediaItem = setUpSinglePhoto("some://fake/gphotoapi/uri", "some-upstream-generated-photo-id");
     when(mediaItemSearchResponse.getMediaItems()).thenReturn(new GoogleMediaItem[] {mediaItem});
     when(mediaItemSearchResponse.getNextPageToken()).thenReturn(MEDIA_TOKEN);
 
@@ -207,7 +205,7 @@ public class GoogleMediaExporterTest {
     // Check photos field of container
     Collection<PhotoModel> actualPhotos = result.getExportedData().getPhotos();
     assertThat(actualPhotos.stream().map(PhotoModel::getFetchableUrl).collect(Collectors.toList()))
-        .containsExactly(IMG_URI + "=d"); // for download
+        .containsExactly("some://fake/gphotoapi/uri" + "=d"); // for download
     assertThat(actualPhotos.stream().map(PhotoModel::getAlbumId).collect(Collectors.toList()))
         .containsExactly(ALBUM_ID);
     assertThat(actualPhotos.stream().map(PhotoModel::getTitle).collect(Collectors.toList()))
@@ -219,7 +217,8 @@ public class GoogleMediaExporterTest {
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     setUpSingleAlbum();
     when(albumListResponse.getNextPageToken()).thenReturn(null);
-    GoogleMediaItem mediaItem = setUpSinglePhoto(IMG_URI, PHOTO_ID); // DO NOT MERGE: this should be video
+    GoogleMediaItem mediaItem = setUpSinglePhoto(IMG_URI, "some-upstream-generated-photo-id"); // DO NOT MERGE: this should be video
+    // GoogleMediaItem mediaItem = setUpSingleVideo(VIDEO_URI, VIDEO_ID); // DO NOT MERGE
     when(mediaItemSearchResponse.getMediaItems()).thenReturn(new GoogleMediaItem[] {mediaItem});
     when(mediaItemSearchResponse.getNextPageToken()).thenReturn(MEDIA_TOKEN);
 
@@ -247,7 +246,7 @@ public class GoogleMediaExporterTest {
     // Check photos field of container
     Collection<PhotoModel> actualPhotos = result.getExportedData().getPhotos();
     assertThat(actualPhotos.stream().map(PhotoModel::getFetchableUrl).collect(Collectors.toList()))
-        .containsExactly(IMG_URI + "=d"); // for download
+        .containsExactly("some://fake/gphotoapi/uri" + "=d"); // for download
     assertThat(actualPhotos.stream().map(PhotoModel::getAlbumId).collect(Collectors.toList()))
         .containsExactly(ALBUM_ID);
     assertThat(actualPhotos.stream().map(PhotoModel::getTitle).collect(Collectors.toList()))
@@ -259,7 +258,7 @@ public class GoogleMediaExporterTest {
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     setUpSingleAlbum();
     when(albumListResponse.getNextPageToken()).thenReturn(null);
-    GoogleMediaItem mediaItem = setUpSinglePhoto(IMG_URI, PHOTO_ID);
+    GoogleMediaItem mediaItem = setUpSinglePhoto("some://fake/gphotoapi/uri", "some-upstream-generated-photo-id");
     when(mediaItemSearchResponse.getMediaItems()).thenReturn(new GoogleMediaItem[] {mediaItem});
     when(mediaItemSearchResponse.getNextPageToken()).thenReturn(null);
 
@@ -291,7 +290,7 @@ public class GoogleMediaExporterTest {
     when(albumListResponse.getNextPageToken()).thenReturn(null);
 
     MediaItemSearchResponse albumMediaResponse = mock(MediaItemSearchResponse.class);
-    GoogleMediaItem firstPhoto = setUpSinglePhoto(IMG_URI, PHOTO_ID);
+    GoogleMediaItem firstPhoto = setUpSinglePhoto("some://fake/gphotoapi/uri", "some-upstream-generated-photo-id");
     String secondUri = "second uri";
     String secondId = "second id";
     GoogleMediaItem secondPhoto = setUpSinglePhoto(secondUri, secondId);
@@ -311,7 +310,7 @@ public class GoogleMediaExporterTest {
     verify(jobStore).create(eq(uuid), eq("tempMediaData"), inputStreamArgumentCaptor.capture());
     TempMediaData tempMediaData =
         new ObjectMapper().readValue(inputStreamArgumentCaptor.getValue(), TempMediaData.class);
-    assertThat(tempMediaData.lookupContainedPhotoIds()).containsExactly(PHOTO_ID, secondId);
+    assertThat(tempMediaData.lookupContainedPhotoIds()).containsExactly("some-upstream-generated-photo-id", secondId);
   }
 
   @Test
