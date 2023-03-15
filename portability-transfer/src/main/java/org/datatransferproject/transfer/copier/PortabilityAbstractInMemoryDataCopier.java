@@ -90,12 +90,18 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
 
   /** Kicks off transfer job {@code jobId} from {@code exporter} to {@code importer}. */
   @Override
-  public abstract Collection<ErrorDetail> copy(
+  public abstract void copy(
       AuthData exportAuthData,
       AuthData importAuthData,
       UUID jobId,
       Optional<ExportInformation> exportInfo)
       throws IOException, CopyException;
+
+  @Override
+  public Collection<ErrorDetail> getErrors(UUID jobId) {
+    idempotentImportExecutor.setJobId(jobId);
+    return idempotentImportExecutor.getErrors();
+  }
 
   protected ExportResult<?> copyIteration(
       UUID jobId,

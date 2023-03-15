@@ -34,6 +34,7 @@ import com.flickr4java.flickr.photos.PhotosInterface;
 import com.flickr4java.flickr.photosets.Photoset;
 import com.flickr4java.flickr.photosets.Photosets;
 import com.flickr4java.flickr.photosets.PhotosetsInterface;
+import com.github.scribejava.core.model.OAuth1Token;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
@@ -52,7 +53,6 @@ import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
 import org.junit.jupiter.api.Test;
-import org.scribe.model.Token;
 
 public class FlickrPhotosExporterTest {
   private static final String PHOTO_TITLE = "Title";
@@ -92,7 +92,7 @@ public class FlickrPhotosExporterTest {
   public void exportAlbumInitial() throws FlickrException {
     // set up auth, flickr service
     when(user.getId()).thenReturn("userId");
-    when(authInterface.checkToken(any(Token.class))).thenReturn(auth);
+    when(authInterface.checkToken(any(OAuth1Token.class))).thenReturn(auth);
     when(flickr.getPhotosetsInterface()).thenReturn(photosetsInterface);
     when(flickr.getPhotosInterface()).thenReturn(photosInterface);
     when(flickr.getAuthInterface()).thenReturn(authInterface);
@@ -137,7 +137,7 @@ public class FlickrPhotosExporterTest {
   public void exportPhotosFromPhotoset() throws FlickrException {
     // set up auth, flickr service
     when(user.getId()).thenReturn("userId");
-    when(authInterface.checkToken(any(Token.class))).thenReturn(auth);
+    when(authInterface.checkToken(any(OAuth1Token.class))).thenReturn(auth);
     when(flickr.getPhotosetsInterface()).thenReturn(photosetsInterface);
     when(flickr.getPhotosInterface()).thenReturn(photosInterface);
     when(flickr.getAuthInterface()).thenReturn(authInterface);
