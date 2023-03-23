@@ -327,6 +327,7 @@ public class GoogleVideosImporter
       }
       return Pair.of(uploadToken, tmp.length());
     } catch (ApiException ex) {
+      // temp check as exception is not captured and wrapped into UploadMediaItemResponse
       Throwable cause = ex.getCause();
       String message = cause.getMessage();
       if (message.contains("invalid_grant")) {
