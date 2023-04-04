@@ -95,7 +95,7 @@ public class GooglePhotosInterface {
   private final GoogleCredentialFactory credentialFactory;
   private final RateLimiter writeRateLimiter;
 
-  GooglePhotosInterface(
+  public GooglePhotosInterface(
       GoogleCredentialFactory credentialFactory,
       Credential credential,
       JsonFactory jsonFactory,
@@ -108,7 +108,7 @@ public class GooglePhotosInterface {
     writeRateLimiter = RateLimiter.create(writesPerSecond);
   }
 
-  AlbumListResponse listAlbums(Optional<String> pageToken)
+  public AlbumListResponse listAlbums(Optional<String> pageToken)
       throws IOException, InvalidTokenException, PermissionDeniedException {
     Map<String, String> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(ALBUM_PAGE_SIZE));
@@ -118,18 +118,18 @@ public class GooglePhotosInterface {
     return makeGetRequest(BASE_URL + "albums", Optional.of(params), AlbumListResponse.class);
   }
 
-  GoogleAlbum getAlbum(String albumId) throws IOException, InvalidTokenException, PermissionDeniedException{
+  public GoogleAlbum getAlbum(String albumId) throws IOException, InvalidTokenException, PermissionDeniedException{
     Map<String, String> params = new LinkedHashMap<>();
     return makeGetRequest(BASE_URL + "albums/" + albumId, Optional.of(params), GoogleAlbum.class);
   }
 
-  GoogleMediaItem getMediaItem(String mediaId) throws IOException, InvalidTokenException, PermissionDeniedException {
+  public GoogleMediaItem getMediaItem(String mediaId) throws IOException, InvalidTokenException, PermissionDeniedException {
     Map<String, String> params = new LinkedHashMap<>();
     return makeGetRequest(BASE_URL + "mediaItems/" + mediaId, Optional.of(params), GoogleMediaItem
         .class);
   }
 
-  MediaItemSearchResponse listMediaItems(Optional<String> albumId, Optional<String> pageToken)
+  public MediaItemSearchResponse listMediaItems(Optional<String> albumId, Optional<String> pageToken)
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     Map<String, Object> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(MEDIA_PAGE_SIZE));

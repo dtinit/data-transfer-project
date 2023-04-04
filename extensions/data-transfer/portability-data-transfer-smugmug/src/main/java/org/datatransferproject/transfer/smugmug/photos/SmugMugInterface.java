@@ -19,30 +19,34 @@ package org.datatransferproject.transfer.smugmug.photos;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.scribejava.core.builder.ServiceBuilder;
+import com.github.scribejava.core.model.OAuth1AccessToken;
+import com.github.scribejava.core.model.OAuthRequest;
+import com.github.scribejava.core.model.Response;
+import com.github.scribejava.core.model.Verb;
+import com.github.scribejava.core.oauth.OAuth10aService;
 import com.google.api.client.http.InputStreamContent;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HttpHeaders;
-import org.datatransferproject.transfer.smugmug.photos.model.*;
-import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.datatransferproject.types.transfer.auth.AppCredentials;
-import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
-import org.scribe.builder.ServiceBuilder;
-import org.scribe.model.OAuthRequest;
-import org.scribe.model.Response;
-import org.scribe.model.Token;
-import org.scribe.model.Verb;
-import org.scribe.oauth.OAuthService;
-
-import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import org.datatransferproject.transfer.smugmug.photos.model.*;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumImageResponse;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumResponse;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumsResponse;
+import org.datatransferproject.transfer.smugmug.photos.model.SmugMugImageUploadResponse;
+import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.transfer.auth.AppCredentials;
+import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 
 public class SmugMugInterface {
 
@@ -51,20 +55,18 @@ public class SmugMugInterface {
   private static final String ALBUMS_KEY = "UserAlbums";
   private static final String FOLDER_KEY = "Folder";
 
-  private final OAuthService oAuthService;
-  private final Token accessToken;
+  private final OAuth10aService oAuthService;
+  private final OAuth1AccessToken accessToken;
   private final ObjectMapper mapper;
   private final SmugMugUser user;
 
   SmugMugInterface(AppCredentials appCredentials, TokenSecretAuthData authData, ObjectMapper mapper)
       throws IOException {
     this.oAuthService =
-        new ServiceBuilder()
-            .apiKey(appCredentials.getKey())
+        new ServiceBuilder(appCredentials.getKey())
             .apiSecret(appCredentials.getSecret())
-            .provider(SmugMugOauthApi.class)
-            .build();
-    this.accessToken = new Token(authData.getToken(), authData.getSecret());
+            .build(new SmugMugOauthApi());
+    this.accessToken = new OAuth1AccessToken(authData.getToken(), authData.getSecret());
     this.mapper = mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     this.user = getUserInformation().getUser();
   }
@@ -158,11 +160,15 @@ public class SmugMugInterface {
         .getResponse();
   }
 
-  public InputStream getImageAsStream(String urlStr) {
+  public InputStream getImageAsStream(String urlStr) throws IOException {
     OAuthRequest request = new OAuthRequest(Verb.GET, urlStr);
     oAuthService.signRequest(accessToken, request);
-    final Response response = request.send();
-    return response.getStream();
+    try {
+      final Response response = oAuthService.execute(request);
+      return response.getStream();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new IOException(e);
+    }
   }
 
   private <T> SmugMugResponse<T> makeRequest(
@@ -180,14 +186,16 @@ public class SmugMugInterface {
 
     OAuthRequest request = new OAuthRequest(Verb.GET, fullUrl);
     oAuthService.signRequest(accessToken, request);
-    final Response response = request.send();
-
-    if (response.getCode() < 200 || response.getCode() >= 300) {
-      throw new IOException(
-          String.format("Error occurred in request for %s : %s", url, response.getMessage()));
+    try {
+      final Response response = oAuthService.execute(request);
+      if (response.getCode() < 200 || response.getCode() >= 300) {
+        throw new IOException(
+            String.format("Error occurred in request for %s : %s", url, response.getMessage()));
+      }
+      return mapper.readValue(response.getBody(), typeReference);
+    } catch (InterruptedException | ExecutionException e) {
+      throw new IOException(e);
     }
-
-    return mapper.readValue(response.getBody(), typeReference);
   }
 
   // Makes a post request with the content parameters provided as the body, or the httpcontent as
@@ -208,7 +216,7 @@ public class SmugMugInterface {
 
     // Add payload
     if (contentBytes != null) {
-      request.addPayload(contentBytes);
+      request.setPayload(contentBytes);
     }
 
     // Add body params
@@ -227,25 +235,30 @@ public class SmugMugInterface {
     // add accept and content type headers so the response comes back in json and not html
     request.addHeader(HttpHeaders.ACCEPT, "application/json");
 
-    Response response = request.send();
-    if (response.getCode() < 200 || response.getCode() >= 300) {
-      if (response.getCode() == 400) {
+    try {
+      Response response = oAuthService.execute(request);
+      if (response.getCode() < 200 || response.getCode() >= 300) {
+        if (response.getCode() == 400) {
+          throw new IOException(
+              String.format(
+                  "Error occurred in request for %s, code: %s, message: %s, request: %s,"
+                      + " bodyParams: %s, payload: %s",
+                  fullUrl,
+                  response.getCode(),
+                  response.getMessage(),
+                  request,
+                  request.getBodyParams(),
+                  new String(request.getByteArrayPayload(), request.getCharset())));
+        }
         throw new IOException(
             String.format(
-                "Error occurred in request for %s, code: %s, message: %s, request: %s, bodyParams: %s, payload: %s",
-                fullUrl,
-                response.getCode(),
-                response.getMessage(),
-                request,
-                request.getBodyParams(),
-                request.getBodyContents()));
+                "Error occurred in request for %s, code: %s, message: %s",
+                fullUrl, response.getCode(), response.getMessage()));
       }
-      throw new IOException(
-          String.format(
-              "Error occurred in request for %s, code: %s, message: %s",
-              fullUrl, response.getCode(), response.getMessage()));
+      return mapper.readValue(response.getBody(), typeReference);
+    } catch (InterruptedException | ExecutionException e) {
+      throw new IOException(e);
     }
-    return mapper.readValue(response.getBody(), typeReference);
   }
 
   static String cleanName(String name) {

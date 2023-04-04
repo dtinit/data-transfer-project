@@ -17,7 +17,6 @@
 package org.datatransferproject.copier.stack;
 
 import com.google.inject.Provider;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Stack;
@@ -38,7 +37,6 @@ import org.datatransferproject.transfer.copier.PortabilityAbstractInMemoryDataCo
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.transfer.auth.AuthData;
-import org.datatransferproject.types.transfer.errors.ErrorDetail;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 
 /** Implementation of {@link InMemoryDataCopier}. */
@@ -83,7 +81,7 @@ public class PortabilityStackInMemoryDataCopier extends PortabilityAbstractInMem
    * @param exportInfo Any pagination or resource information to use for subsequent calls.
    */
   @Override
-  public Collection<ErrorDetail> copy(
+  public void copy(
       AuthData exportAuthData,
       AuthData importAuthData,
       UUID jobId,
@@ -132,7 +130,6 @@ public class PortabilityStackInMemoryDataCopier extends PortabilityAbstractInMem
           copyIteration,
           exportResult.getContinuationData());
     }
-    return idempotentImportExecutor.getErrors();
   }
 
   private void updateStackAfterCopyIteration(

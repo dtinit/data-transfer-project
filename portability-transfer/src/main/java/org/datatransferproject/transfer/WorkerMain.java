@@ -44,7 +44,8 @@ import org.datatransferproject.spi.service.extension.ServiceExtension;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.hooks.JobHooks;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
-import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentExecutorLoader;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorExtension;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorLoader;
 import org.datatransferproject.spi.transfer.provider.TransferCompatibilityProvider;
 import org.datatransferproject.spi.transfer.security.SecurityExtension;
 import org.datatransferproject.spi.transfer.security.SecurityExtensionLoader;
@@ -103,10 +104,14 @@ public class WorkerMain {
         SecurityExtensionLoader.getSecurityExtension(extensionContext);
     monitor.info(() -> "Using SecurityExtension: " + securityExtension.getClass().getName());
 
-    IdempotentImportExecutor idempotentImportExecutor =
-        IdempotentExecutorLoader.load(extensionContext);
+    IdempotentImportExecutorExtension idempotentImportExecutorExtension =
+        IdempotentImportExecutorLoader.load(extensionContext);
+
+    extensionContext.registerService(
+        IdempotentImportExecutorExtension.class, idempotentImportExecutorExtension);
+
     monitor.info(
-        () -> "Using IdempotentImportExecutor: " + idempotentImportExecutor.getClass().getName());
+        () -> "Using IdempotentImportExecutor: " + idempotentImportExecutorExtension.getClass().getName());
 
     // TODO: make configurable
     SymmetricKeyGenerator symmetricKeyGenerator = new AesSymmetricKeyGenerator(monitor);
@@ -122,7 +127,7 @@ public class WorkerMain {
                   cloudExtension,
                   transferExtensions,
                   securityExtension,
-                  idempotentImportExecutor,
+                  idempotentImportExecutorExtension.getIdempotentImportExecutor(extensionContext),
                   symmetricKeyGenerator,
                   jobHooks,
                   new TransferCompatibilityProvider()));

@@ -32,6 +32,7 @@
 package org.datatransferproject.datatransfer.google.videos;
 
 import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.InvalidArgumentException;
 import com.google.api.gax.rpc.UnauthenticatedException;
 import com.google.auth.oauth2.AccessToken;
@@ -325,6 +326,14 @@ public class GoogleVideosImporter
         uploadToken = uploadResponse.getUploadToken().get();
       }
       return Pair.of(uploadToken, tmp.length());
+    } catch (ApiException ex) {
+      // temp check as exception is not captured and wrapped into UploadMediaItemResponse
+      Throwable cause = ex.getCause();
+      String message = cause.getMessage();
+      if (message.contains("invalid_grant")) {
+        throw new InvalidTokenException("Token has been expired or revoked", cause);
+      }
+      throw new IOException("An error was encountered while uploading the video.", cause);
     } finally {
       //noinspection ResultOfMethodCallIgnored
       tmp.delete();
