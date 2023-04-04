@@ -15,6 +15,11 @@ public class InMemoryIdempotentImportExecutorExtension
   }
 
   @Override
+  public IdempotentImportExecutor getRetryingIdempotentImportExecutor(ExtensionContext extensionContext) {
+    return new InMemoryIdempotentImportExecutor(extensionContext.getMonitor());
+  }
+
+  @Override
   public void initialize() {
   }
 }
