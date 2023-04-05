@@ -17,6 +17,12 @@
 package org.datatransferproject.copier.stack;
 
 import com.google.inject.Provider;
+import java.util.List;
+import java.util.Optional;
+import java.util.Stack;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+import javax.inject.Inject;
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
@@ -31,17 +37,7 @@ import org.datatransferproject.transfer.copier.PortabilityAbstractInMemoryDataCo
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.transfer.auth.AuthData;
-import org.datatransferproject.types.transfer.errors.ErrorDetail;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
-
-import javax.inject.Inject;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.Stack;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /** Implementation of {@link InMemoryDataCopier}. */
 public class PortabilityStackInMemoryDataCopier extends PortabilityAbstractInMemoryDataCopier {
@@ -85,12 +81,12 @@ public class PortabilityStackInMemoryDataCopier extends PortabilityAbstractInMem
    * @param exportInfo Any pagination or resource information to use for subsequent calls.
    */
   @Override
-  public Collection<ErrorDetail> copy(
+  public void copy(
       AuthData exportAuthData,
       AuthData importAuthData,
       UUID jobId,
       Optional<ExportInformation> exportInfo)
-      throws IOException, CopyException {
+      throws CopyException {
     idempotentImportExecutor.setJobId(jobId);
     String jobIdPrefix = "Job " + jobId + ": ";
 
@@ -107,7 +103,7 @@ public class PortabilityStackInMemoryDataCopier extends PortabilityAbstractInMem
               jobId, exportAuthData, importAuthData, exportInfo, jobIdPrefix, initialCopyIteration);
       // Import and Export were successful, determine what to do next
       ContainerResource exportContainerResource =
-          exportInfo.isPresent() ? exportInfo.get().getContainerResource() : null;
+          exportInfo.map(ExportInformation::getContainerResource).orElse(null);
       updateStackAfterCopyIteration(
           jobId,
           jobIdPrefix,
@@ -134,7 +130,6 @@ public class PortabilityStackInMemoryDataCopier extends PortabilityAbstractInMem
           copyIteration,
           exportResult.getContinuationData());
     }
-    return idempotentImportExecutor.getErrors();
   }
 
   private void updateStackAfterCopyIteration(

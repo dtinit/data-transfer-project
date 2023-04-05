@@ -25,6 +25,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import org.datatransferproject.types.common.models.DataVertical;
 
 /** Lists services available for export and import for the given type. */
 @Consumes({MediaType.APPLICATION_JSON})
@@ -39,7 +40,7 @@ public class TransferServicesController {
 
   @GET()
   @Path("{dataType}")
-  public TransferServices transferServices(@PathParam("dataType") String dataType) {
+  public TransferServices transferServices(@PathParam("dataType") DataVertical dataType) {
     return action.handle(new GetTransferServices(dataType));
   }
 }

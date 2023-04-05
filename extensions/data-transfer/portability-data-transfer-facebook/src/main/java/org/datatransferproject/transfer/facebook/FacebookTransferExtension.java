@@ -16,6 +16,9 @@
 
 package org.datatransferproject.transfer.facebook;
 
+import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
+import static org.datatransferproject.types.common.models.DataVertical.VIDEOS;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -24,6 +27,7 @@ import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
@@ -36,10 +40,10 @@ public class FacebookTransferExtension implements TransferExtension {
   private static final String SERVICE_ID = "Facebook";
   private boolean initialized = false;
 
-  private static final ImmutableList<String> SUPPORTED_SERVICES =
-      ImmutableList.of("PHOTOS", "VIDEOS");
-  private ImmutableMap<String, Importer> importerMap;
-  private ImmutableMap<String, Exporter> exporterMap;
+  private static final ImmutableList<DataVertical> SUPPORTED_SERVICES =
+      ImmutableList.of(PHOTOS, VIDEOS);
+  private ImmutableMap<DataVertical, Importer> importerMap;
+  private ImmutableMap<DataVertical, Exporter> exporterMap;
 
   @Override
   public String getServiceId() {
@@ -47,14 +51,14 @@ public class FacebookTransferExtension implements TransferExtension {
   }
 
   @Override
-  public Exporter<?, ?> getExporter(String transferDataType) {
+  public Exporter<?, ?> getExporter(DataVertical transferDataType) {
     Preconditions.checkArgument(initialized);
     Preconditions.checkArgument(SUPPORTED_SERVICES.contains(transferDataType));
     return exporterMap.get(transferDataType);
   }
 
   @Override
-  public Importer<?, ?> getImporter(String transferDataType) {
+  public Importer<?, ?> getImporter(DataVertical transferDataType) {
     Preconditions.checkArgument(initialized);
     Preconditions.checkArgument(SUPPORTED_SERVICES.contains(transferDataType));
     return importerMap.get(transferDataType);
@@ -79,16 +83,16 @@ public class FacebookTransferExtension implements TransferExtension {
       return;
     }
 
-    ImmutableMap.Builder<String, Importer> importerBuilder = ImmutableMap.builder();
-    importerBuilder.put("VIDEOS", new FacebookVideosImporter(appCredentials));
+    ImmutableMap.Builder<DataVertical, Importer> importerBuilder = ImmutableMap.builder();
+    importerBuilder.put(VIDEOS, new FacebookVideosImporter(appCredentials));
     importerMap = importerBuilder.build();
 
-    ImmutableMap.Builder<String, Exporter> exporterBuilder = ImmutableMap.builder();
+    ImmutableMap.Builder<DataVertical, Exporter> exporterBuilder = ImmutableMap.builder();
     exporterBuilder.put(
-        "PHOTOS",
+        PHOTOS,
         new FacebookPhotosExporter(
             appCredentials, monitor, context.getService(TemporaryPerJobDataStore.class)));
-    exporterBuilder.put("VIDEOS", new FacebookVideosExporter(appCredentials, monitor));
+    exporterBuilder.put(VIDEOS, new FacebookVideosExporter(appCredentials, monitor));
     exporterMap = exporterBuilder.build();
 
     initialized = true;

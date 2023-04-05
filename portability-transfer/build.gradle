@@ -44,11 +44,8 @@ dependencies {
     compile("com.google.api-client:google-api-client:${googleApiClient}")
     compile("com.google.inject:guice:${guiceVersion}")
     compile "com.squareup.okhttp3:okhttp:${okHttpVersion}"
+    compile("com.google.http-client:google-http-client-gson:${googleHttpClientVersion}")
 
-    testCompile("com.google.truth:truth:${truthVersion}")
-    testCompile("junit:junit:${junitVersion}")
-    testCompile("org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}")
-    testCompile("org.mockito:mockito-core:${mockitoVersion}")
     testCompile project(':extensions:cloud:portability-cloud-local')
     testCompile project(':extensions:copier:portability-stack-copier')
 }

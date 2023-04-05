@@ -22,29 +22,30 @@ import com.restfb.FacebookClient;
 import com.restfb.Parameter;
 import com.restfb.types.GraphResponse;
 import org.datatransferproject.types.common.models.videos.VideoModel;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class FacebookVideosImporterTest {
 
   private static final String VIDEO_URL = "https://www.example.com/photo.jpg";
   private static final String VIDEO_DESCRIPTION = "description";
 
   private FacebookVideosImporter importer = new FacebookVideosImporter(null);
-  @Mock private FacebookClient client;
+  @Mock
+  private FacebookClient client;
 
   @Test
   public void testImportSingleVideo() {
     importer.importSingleVideo(
         client,
         new VideoModel(
-            "title", VIDEO_URL, VIDEO_DESCRIPTION, "video/mp4", "videoId", null, false));
+            "title", VIDEO_URL, VIDEO_DESCRIPTION, "video/mp4", "videoId", null, false, null));
 
     Parameter[] params = {
-      Parameter.with("file_url", VIDEO_URL), Parameter.with("description", VIDEO_DESCRIPTION)
+        Parameter.with("file_url", VIDEO_URL), Parameter.with("description", VIDEO_DESCRIPTION)
     };
     verify(client).publish("me/videos", GraphResponse.class, params);
   }

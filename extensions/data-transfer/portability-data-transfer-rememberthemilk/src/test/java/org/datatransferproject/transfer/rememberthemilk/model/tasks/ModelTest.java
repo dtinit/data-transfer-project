@@ -17,7 +17,7 @@
 package org.datatransferproject.transfer.rememberthemilk.model.tasks;
 
 import com.fasterxml.jackson.xml.XmlMapper;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 

@@ -16,12 +16,16 @@
 
 package org.datatransferproject.auth.facebook;
 
+import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
+import static org.datatransferproject.types.common.models.DataVertical.VIDEOS;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.datatransferproject.auth.OAuth2Config;
 
 import java.util.Map;
 import java.util.Set;
+import org.datatransferproject.types.common.models.DataVertical;
 
 /**
  * Class that supplies Facebook-specific OAuth2 info
@@ -51,18 +55,18 @@ public class FacebookOAuthConfig implements OAuth2Config {
     }
 
     @Override
-    public Map<String, Set<String>> getExportScopes() {
-        return ImmutableMap.<String, Set<String>>builder()
-            .put("PHOTOS", ImmutableSet.of("user_photos"))
-            .put("VIDEOS", ImmutableSet.of("user_videos"))
+    public Map<DataVertical, Set<String>> getExportScopes() {
+        return ImmutableMap.<DataVertical, Set<String>>builder()
+            .put(PHOTOS, ImmutableSet.of("user_photos"))
+            .put(VIDEOS, ImmutableSet.of("user_videos"))
             .build();
     }
 
     @Override
-    public Map<String, Set<String>> getImportScopes() {
-        return ImmutableMap.<String, Set<String>>builder()
-            .put("PHOTOS", ImmutableSet.of("user_photos"))
-            .put("VIDEOS", ImmutableSet.of("user_videos"))
+    public Map<DataVertical, Set<String>> getImportScopes() {
+        return ImmutableMap.<DataVertical, Set<String>>builder()
+            .put(PHOTOS, ImmutableSet.of("user_photos"))
+            .put(VIDEOS, ImmutableSet.of("user_videos"))
             .build();
     }
 }

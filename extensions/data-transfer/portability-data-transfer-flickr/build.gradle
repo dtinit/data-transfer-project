@@ -24,8 +24,6 @@ dependencies {
 
     compile("com.flickr4java:flickr4java:${flickrVersion}")
 
-    testCompile("org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}")
-    testCompile("org.mockito:mockito-core:${mockitoVersion}")
     testCompile project(":extensions:cloud:portability-cloud-local")
 }
 

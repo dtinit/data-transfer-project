@@ -29,18 +29,14 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.util.concurrent.RateLimiter;
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.Collection;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
-import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
-import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorHelper;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
@@ -53,12 +49,13 @@ import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfi
 
 public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerResource> {
 
-  @VisibleForTesting static final String ORIGINAL_ALBUM_PREFIX = "original-album-";
+  @VisibleForTesting
+  static final String ORIGINAL_ALBUM_PREFIX = "original-album-";
 
   private final TemporaryPerJobDataStore jobStore;
   private final Flickr flickr;
   private final Uploader uploader;
-  private final ImageStreamProvider imageStreamProvider;
+  private final ConnectionProvider connectionProvider;
   private final PhotosetsInterface photosetsInterface;
   private final Monitor monitor;
   private final RateLimiter perUserRateLimiter;
@@ -71,7 +68,7 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     this.jobStore = jobStore;
     this.flickr = new Flickr(appCredentials.getKey(), appCredentials.getSecret(), new REST());
     this.uploader = flickr.getUploader();
-    this.imageStreamProvider = new ImageStreamProvider();
+    this.connectionProvider = new ConnectionProvider(jobStore);
     this.photosetsInterface = flickr.getPhotosetsInterface();
     this.monitor = monitor;
     this.perUserRateLimiter = serviceConfig.getPerUserRateLimiter();
@@ -81,11 +78,11 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   FlickrPhotosImporter(
       Flickr flickr,
       TemporaryPerJobDataStore jobstore,
-      ImageStreamProvider imageStreamProvider,
+      ConnectionProvider connectionProvider,
       Monitor monitor,
       TransferServiceConfig serviceConfig) {
     this.flickr = flickr;
-    this.imageStreamProvider = imageStreamProvider;
+    this.connectionProvider = connectionProvider;
     this.jobStore = jobstore;
     this.uploader = flickr.getUploader();
     this.photosetsInterface = flickr.getPhotosetsInterface();
@@ -150,7 +147,8 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   private void importSinglePhoto(
       IdempotentImportExecutor idempotentExecutor, UUID id, PhotoModel photo) throws Exception {
     String photoId =
-        idempotentExecutor.executeAndSwallowIOExceptions(IdempotentImportExecutorHelper.getPhotoIdempotentId(photo),
+        idempotentExecutor.executeAndSwallowIOExceptions(
+            photo.getIdempotentId(),
             photo.getTitle(),
             () -> uploadPhoto(photo, id));
     if (photoId == null) {
@@ -213,15 +211,6 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   }
 
   private String uploadPhoto(PhotoModel photo, UUID jobId) throws IOException, FlickrException {
-    InputStream inStream;
-    if (photo.isInTempStore()) {
-      final InputStreamWrapper streamWrapper =
-          jobStore.getStream(jobId, photo.getFetchableUrl());
-      inStream = streamWrapper.getStream();
-    } else {
-      inStream = imageStreamProvider.get(photo.getFetchableUrl());
-    }
-
     String photoTitle =
         Strings.isNullOrEmpty(photo.getTitle()) ? "" : photo.getTitle();
     String photoDescription = cleanString(photo.getDescription());
@@ -235,28 +224,14 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
             .setTitle(photoTitle)
             .setDescription(photoDescription);
     perUserRateLimiter.acquire();
-    String uploadResult = uploader.upload(inStream, uploadMetaData);
-    inStream.close();
-    monitor.debug(() -> String.format("%s: Flickr importer uploading photo: %s", jobId, photo));
-    return uploadResult;
+    try (InputStream is = connectionProvider.getInputStreamForItem(jobId, photo).getStream()) {
+      String uploadResult = uploader.upload(is, uploadMetaData);
+      monitor.debug(() -> String.format("%s: Flickr importer uploading photo: %s", jobId, photo));
+      return uploadResult;
+    }
   }
 
   private static String cleanString(String string) {
     return Strings.isNullOrEmpty(string) ? "" : string;
-  }
-
-  @VisibleForTesting
-  class ImageStreamProvider {
-
-    /**
-     * Gets an input stream to an image, given its URL. Used by {@link FlickrPhotosImporter} to
-     * upload the image.
-     */
-    public BufferedInputStream get(String urlStr) throws IOException {
-      URL url = new URL(urlStr);
-      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-      conn.connect();
-      return new BufferedInputStream(conn.getInputStream());
-    }
   }
 }

@@ -16,11 +16,14 @@
 
 package org.datatransferproject.auth.imgur;
 
+import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Map;
 import java.util.Set;
 import org.datatransferproject.auth.OAuth2Config;
+import org.datatransferproject.types.common.models.DataVertical;
 
 /**
  * Class that provides Imgur-specific information for OAuth2
@@ -45,12 +48,12 @@ public class ImgurOAuthConfig implements OAuth2Config {
 
   // Imgur doesn't require scopes
   @Override
-  public Map<String, Set<String>> getExportScopes() {
-    return ImmutableMap.of("PHOTOS", ImmutableSet.of(""));
+  public Map<DataVertical, Set<String>> getExportScopes() {
+    return ImmutableMap.of(PHOTOS, ImmutableSet.of(""));
   }
 
   @Override
-  public Map<String, Set<String>> getImportScopes() {
-    return ImmutableMap.of("PHOTOS", ImmutableSet.of(""));
+  public Map<DataVertical, Set<String>> getImportScopes() {
+    return ImmutableMap.of(PHOTOS, ImmutableSet.of(""));
   }
 }

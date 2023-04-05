@@ -36,7 +36,6 @@ import okhttp3.ResponseBody;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
-import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorHelper;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
@@ -124,7 +123,7 @@ public class MicrosoftPhotosImporter
 
     for (PhotoModel photoModel : resource.getPhotos()) {
       idempotentImportExecutor.executeAndSwallowIOExceptions(
-          IdempotentImportExecutorHelper.getPhotoIdempotentId(photoModel),
+          photoModel.getIdempotentId(),
         photoModel.getTitle(),
         () -> importSinglePhoto(photoModel, jobId, idempotentImportExecutor));
     }

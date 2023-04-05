@@ -40,7 +40,7 @@ public class StackdriverMonitorExtension implements MonitorExtension {
         .build()
         .getService();
     } catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException("Couldn't initialize StackdriverMonitorExtension", e);
     }
   }
 }

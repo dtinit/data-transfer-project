@@ -11,6 +11,7 @@ import java.util.UUID;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.spi.cloud.types.PortabilityJob.State;
+import org.datatransferproject.types.common.models.DataVertical;
 
 public abstract class JobStoreWithValidator implements JobStore {
 
@@ -35,9 +36,9 @@ public abstract class JobStoreWithValidator implements JobStore {
   }
 
   private static void validateForUpdateStateToCredsAvailable(PortabilityJob job) {
-    String dataType = job.transferDataType();
+    DataVertical dataType = job.transferDataType();
     Preconditions.checkArgument(
-        !Strings.isNullOrEmpty(dataType), "Missing valid dataTypeParam: %s", dataType);
+        dataType != null, "Missing valid dataTypeParam: %s", dataType);
 
     String exportService = job.exportService();
     Preconditions.checkArgument(

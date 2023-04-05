@@ -6,11 +6,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Truth;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.common.models.calendar.CalendarEventModel.CalendarEventTime;
-import org.junit.Test;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
+import org.junit.jupiter.api.Test;
 
 public class CalendarContainerResourceTest {
   @Test
@@ -50,6 +51,9 @@ public class CalendarContainerResourceTest {
     CalendarContainerResource deserialized = (CalendarContainerResource) deserializedModel;
     Truth.assertThat(deserialized.getCalendars()).hasSize(1);
     Truth.assertThat(deserialized.getEvents()).hasSize(2);
+    Map<String, Integer> counts = deserializedModel.getCounts();
+    Truth.assertThat(counts.get(CalendarContainerResource.CALENDARS_COUNT_DATA_NAME)).isEqualTo(calendars.size());
+    Truth.assertThat(counts.get(CalendarContainerResource.EVENTS_COUNT_DATA_NAME)).isEqualTo(events.size());
     Truth.assertThat(deserialized).isEqualTo(data);
   }
 }

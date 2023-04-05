@@ -16,10 +16,10 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.types.common.models.blob.BlobbyStorageContainerResource;
+import org.datatransferproject.types.common.models.blob.DigitalDocumentWrapper;
+import org.datatransferproject.types.common.models.blob.DtpDigitalDocument;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.transfer.models.blob.BlobbyStorageContainerResource;
-import org.datatransferproject.types.transfer.models.blob.DigitalDocumentWrapper;
-import org.datatransferproject.types.transfer.models.blob.DtpDigitalDocument;
 
 /** An {@link Importer} to import data to Google Drive. */
 public final class DriveImporter
@@ -60,27 +60,23 @@ public final class DriveImporter
               data.getName(),
               () -> importSingleFolder(driveInterface, "MigratedContent", null));
     } else {
-      parentId = idempotentExecutor.getCachedValue(ROOT_FOLDER_ID);
+      parentId = idempotentExecutor.getCachedValue(data.getId());
     }
 
-    // Uploads album metadata
-    if (data.getFolders() != null && data.getFolders().size() > 0) {
-      for (BlobbyStorageContainerResource folder : data.getFolders()) {
-        idempotentExecutor.executeAndSwallowIOExceptions(
-            folder.getId(),
-            folder.getName(),
-            () -> importSingleFolder(driveInterface, folder.getName(), parentId));
-      }
+    // Uploads folder metadata
+    for (BlobbyStorageContainerResource folder : data.getFolders()) {
+      idempotentExecutor.executeAndSwallowIOExceptions(
+          folder.getId(),
+          folder.getName(),
+          () -> importSingleFolder(driveInterface, folder.getName(), parentId));
     }
 
-    // Uploads photos
-    if (data.getFiles() != null && data.getFiles().size() > 0) {
-      for (DigitalDocumentWrapper file : data.getFiles()) {
-        idempotentExecutor.executeAndSwallowIOExceptions(
-            Integer.toString(file.hashCode()),
-            file.getDtpDigitalDocument().getName(),
-            () -> importSingleFile(jobId, driveInterface, file, parentId));
-      }
+    // Uploads files
+    for (DigitalDocumentWrapper file : data.getFiles()) {
+      idempotentExecutor.executeAndSwallowIOExceptions(
+          Integer.toString(file.hashCode()),
+          file.getDtpDigitalDocument().getName(),
+          () -> importSingleFile(jobId, driveInterface, file, parentId));
     }
 
     return ImportResult.OK;
