@@ -6,4 +6,5 @@ import org.datatransferproject.api.launcher.Monitor;
 
 public interface IdempotentImportExecutorExtension extends BootExtension {
   IdempotentImportExecutor getIdempotentImportExecutor(ExtensionContext extensionContext);
+  IdempotentImportExecutor getRetryingIdempotentImportExecutor(ExtensionContext extensionContext);
 }

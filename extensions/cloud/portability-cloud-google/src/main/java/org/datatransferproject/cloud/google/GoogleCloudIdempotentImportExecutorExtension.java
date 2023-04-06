@@ -26,6 +26,12 @@ public class GoogleCloudIdempotentImportExecutorExtension implements
   }
 
   @Override
+  public IdempotentImportExecutor getRetryingIdempotentImportExecutor(
+      ExtensionContext extensionContext) {
+    return null;
+  }
+
+  @Override
   public void initialize() {
   }
 
