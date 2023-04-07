@@ -214,7 +214,7 @@ public class GooglePhotosImporter
 
         try (InputStream s = streamWrapper.getStream()) {
           String uploadToken = getOrCreatePhotosInterface(jobId, authData).uploadPhotoContent(s,
-              photo.getSha1());
+              photo.getSha1(), photo.getTitle());
           String description = GooglePhotosImportUtils.cleanDescription(photo.getDescription());
           mediaItems.add(new NewMediaItem(description, uploadToken));
           uploadTokenToDataId.put(uploadToken, photo);

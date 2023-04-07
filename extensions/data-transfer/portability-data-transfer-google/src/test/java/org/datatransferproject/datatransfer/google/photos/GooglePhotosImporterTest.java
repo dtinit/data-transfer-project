@@ -136,7 +136,7 @@ public class GooglePhotosImporterTest {
             OLD_ALBUM_ID,
             false,
             SHA1);
-    Mockito.when(googlePhotosInterface.uploadPhotoContent(any(), eq(SHA1))).thenReturn("token1");
+    Mockito.when(googlePhotosInterface.uploadPhotoContent(any(), eq(SHA1), eq(PHOTO_TITLE))).thenReturn("token1");
 
     PhotoModel photoModel2 =
         new PhotoModel(
@@ -147,7 +147,7 @@ public class GooglePhotosImporterTest {
             "oldPhotoID2",
             OLD_ALBUM_ID,
             false);
-    Mockito.when(googlePhotosInterface.uploadPhotoContent(any(), eq(null)))
+    Mockito.when(googlePhotosInterface.uploadPhotoContent(any(), eq(null), eq(PHOTO_TITLE)))
         .thenReturn("token2");
 
     BatchMediaItemResponse batchMediaItemResponse =
@@ -161,6 +161,7 @@ public class GooglePhotosImporterTest {
 
     long length = googlePhotosImporter.importPhotos(Lists.newArrayList(photoModel1, photoModel2),
         executor, UUID.randomUUID(), Mockito.mock(TokensAndUrlAuthData.class));
+
     // Two photos of 32L each imported
     assertEquals(64L, length);
     assertTrue(executor.isKeyCached(String.format("%s-%s", OLD_ALBUM_ID, "oldPhotoID1")));
@@ -202,7 +203,7 @@ public class GooglePhotosImporterTest {
             OLD_ALBUM_ID,
             false);
 
-    Mockito.when(googlePhotosInterface.uploadPhotoContent(any(), eq(null)))
+    Mockito.when(googlePhotosInterface.uploadPhotoContent(any(), eq(null), eq(PHOTO_TITLE)))
         .thenReturn("token1", "token2");
     BatchMediaItemResponse batchMediaItemResponse =
         new BatchMediaItemResponse(
@@ -240,7 +241,7 @@ public class GooglePhotosImporterTest {
             false,
             SHA1);
 
-    Mockito.when(googlePhotosInterface.uploadPhotoContent(any(), eq(SHA1)))
+    Mockito.when(googlePhotosInterface.uploadPhotoContent(any(), eq(SHA1), eq(PHOTO_TITLE)))
         .thenThrow(new UploadErrorException("Hash mismatch will be thrown", new Throwable()));
     BatchMediaItemResponse batchMediaItemResponse = new BatchMediaItemResponse(
         new NewMediaItemResult[]{});
@@ -328,7 +329,7 @@ public class GooglePhotosImporterTest {
             OLD_ALBUM_ID,
             true);
 
-    Mockito.when(googlePhotosInterface.uploadPhotoContent(any(), eq(null))).thenReturn("token1");
+    Mockito.when(googlePhotosInterface.uploadPhotoContent(any(), eq(null), eq(PHOTO_TITLE))).thenReturn("token1");
     JobStore jobStore = Mockito.mock(LocalJobStore.class);
     Mockito.when(jobStore.getStream(any(), any()))
         .thenReturn(
@@ -369,7 +370,7 @@ public class GooglePhotosImporterTest {
             OLD_ALBUM_ID,
             true);
 
-    Mockito.when(googlePhotosInterface.uploadPhotoContent(any(), eq(null)))
+    Mockito.when(googlePhotosInterface.uploadPhotoContent(any(), eq(null), eq(PHOTO_TITLE)))
         .thenThrow(new IOException("Unit Testing"));
     JobStore jobStore = Mockito.mock(LocalJobStore.class);
     Mockito.when(jobStore.getStream(any(), any()))
@@ -410,7 +411,7 @@ public class GooglePhotosImporterTest {
             OLD_ALBUM_ID,
             true);
 
-    Mockito.when(googlePhotosInterface.uploadPhotoContent(any(), eq(null)))
+    Mockito.when(googlePhotosInterface.uploadPhotoContent(any(), eq(null), eq(PHOTO_TITLE)))
         .thenReturn("token1", "token2");
     JobStore jobStore = Mockito.mock(LocalJobStore.class);
     Mockito.when(jobStore.getStream(any(), any()))
@@ -445,7 +446,7 @@ public class GooglePhotosImporterTest {
             OLD_ALBUM_ID,
             true);
 
-    Mockito.when(googlePhotosInterface.uploadPhotoContent(any(), eq(null)))
+    Mockito.when(googlePhotosInterface.uploadPhotoContent(any(), eq(null), eq(PHOTO_TITLE)))
         .thenReturn("token1", "token2");
     JobStore jobStore = Mockito.mock(LocalJobStore.class);
     Mockito.when(jobStore.getStream(any(), any()))
