@@ -156,9 +156,8 @@ public class GooglePhotosInterface {
         GoogleAlbum.class);
   }
 
-  String uploadPhotoContent(InputStream inputStream, @Nullable String sha1)
+  String uploadPhotoContent(InputStream inputStream, @Nullable String sha1, String title)
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
-    // TODO: add filename
     InputStreamContent content = new InputStreamContent(null, inputStream);
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     content.writeTo(outputStream);
@@ -179,6 +178,10 @@ public class GooglePhotosInterface {
           .encodeToString(BaseEncoding.base16().decode(sha1.toUpperCase())));
     }
 
+    if(!title.isEmpty())
+    {
+      headers.put("X-Goog-Upload-File-Name",title);
+    }
     return makePostRequest(BASE_URL + "uploads/", Optional.of(PHOTO_UPLOAD_PARAMS),
         Optional.of(headers.build()), httpContent, String.class);
   }
