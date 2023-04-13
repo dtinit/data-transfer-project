@@ -16,7 +16,9 @@
 package org.datatransferproject.datatransfer.google.media;
 
 import static java.lang.String.format;
+import static org.datatransferproject.datatransfer.google.photos.GooglePhotosInterface.ERROR_HASH_MISMATCH;
 
+import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
@@ -24,11 +26,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
-import com.google.gdata.util.common.base.Pair;
+import com.google.photos.library.v1.PhotosLibraryClient;
 import com.google.rpc.Code;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -36,9 +37,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
+import org.datatransferproject.datatransfer.google.common.GooglePhotosImportUtils;
 import org.datatransferproject.datatransfer.google.mediaModels.BatchMediaItemResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;
@@ -46,32 +50,49 @@ import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemResul
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
 import org.datatransferproject.datatransfer.google.mediaModels.Status;
 import org.datatransferproject.datatransfer.google.photos.GooglePhotosInterface;
-import org.datatransferproject.datatransfer.google.photos.MediaResult;
+import org.datatransferproject.datatransfer.google.photos.PhotoResult;
+import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
+import org.datatransferproject.spi.cloud.types.PortabilityJob;
+import org.datatransferproject.spi.transfer.i18n.BaseMultilingualDictionary;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.ItemImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
-import org.datatransferproject.transfer.ImageStreamProvider;
-import org.datatransferproject.types.common.models.media.MediaAlbum;
+import org.datatransferproject.spi.transfer.types.UploadErrorException;
+import org.datatransferproject.types.common.DownloadableItem;
+import org.datatransferproject.types.common.ImportableItem;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
+import org.datatransferproject.types.common.models.media.MediaAlbum;
+import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-public class GoogleMediaImporter implements Importer<TokensAndUrlAuthData, MediaContainerResource> {
+public class GoogleMediaImporter
+    implements Importer<TokensAndUrlAuthData, MediaContainerResource> {
 
   private final GoogleCredentialFactory credentialFactory;
   private final JobStore jobStore;
   private final JsonFactory jsonFactory;
-  private final ImageStreamProvider imageStreamProvider;
+  private final ConnectionProvider connectionProvider;
   private final Monitor monitor;
   private final double writesPerSecond;
   private final Map<UUID, GooglePhotosInterface> photosInterfacesMap;
+  // TODO(aksingh737) delete the two interface-management approaches (map vs. singleton); the
+  // singleton appears to have been left behind during PR #882
   private final GooglePhotosInterface photosInterface;
+  private final HashMap<UUID, BaseMultilingualDictionary> multilingualStrings = new HashMap<>();
+  private final PhotosLibraryClient photosLibraryClient;
+
+  // We partition into groups of 49 as 50 is the maximum number of items that can be created
+  // in one call. (We use 49 to avoid potential off by one errors)
+  // https://developers.google.com/photos/library/guides/upload-media#creating-media-item
+  private static final int BATCH_UPLOAD_SIZE = 49;
 
   public GoogleMediaImporter(
       GoogleCredentialFactory credentialFactory,
@@ -83,9 +104,10 @@ public class GoogleMediaImporter implements Importer<TokensAndUrlAuthData, Media
         credentialFactory,
         jobStore,
         jsonFactory,
-        new HashMap<>(),
-        null,
-        new ImageStreamProvider(),
+        new HashMap<>(),  /*photosInterfacesMap*/
+        null,  /*photosInterface*/
+        null,  /*photosLibraryClient*/
+        new ConnectionProvider(jobStore),
         monitor,
         writesPerSecond);
   }
@@ -97,7 +119,8 @@ public class GoogleMediaImporter implements Importer<TokensAndUrlAuthData, Media
       JsonFactory jsonFactory,
       Map<UUID, GooglePhotosInterface> photosInterfacesMap,
       GooglePhotosInterface photosInterface,
-      ImageStreamProvider imageStreamProvider,
+      PhotosLibraryClient photosLibraryClient,
+      ConnectionProvider connectionProvider,
       Monitor monitor,
       double writesPerSecond) {
     this.credentialFactory = credentialFactory;
@@ -105,7 +128,8 @@ public class GoogleMediaImporter implements Importer<TokensAndUrlAuthData, Media
     this.jsonFactory = jsonFactory;
     this.photosInterfacesMap = photosInterfacesMap;
     this.photosInterface = photosInterface;
-    this.imageStreamProvider = imageStreamProvider;
+    this.photosLibraryClient = photosLibraryClient;
+    this.connectionProvider = connectionProvider;
     this.monitor = monitor;
     this.writesPerSecond = writesPerSecond;
   }
@@ -123,32 +147,25 @@ public class GoogleMediaImporter implements Importer<TokensAndUrlAuthData, Media
     }
 
     // Uploads album metadata
-    if (data.getAlbums() != null && data.getAlbums().size() > 0) {
-      for (MediaAlbum album : data.getAlbums()) {
-        idempotentImportExecutor.executeAndSwallowIOExceptions(
-            album.getId(), album.getName(), () -> importSingleAlbum(jobId, authData, album));
-      }
+    for (MediaAlbum album : data.getAlbums()) {
+      idempotentImportExecutor.executeAndSwallowIOExceptions(
+          album.getId(), album.getName(), () -> importSingleAlbum(jobId, authData, album));
     }
 
-    long bytes = importPhotos(data.getPhotos(), idempotentImportExecutor, jobId, authData);
-    bytes += importVideos(data.getVideos(), idempotentImportExecutor, jobId, authData);
+    long bytes =
+        importPhotos(data.getPhotos(), idempotentImportExecutor, jobId, authData)
+        + importVideos(data.getVideos(), idempotentImportExecutor, jobId, authData);
+
     final ImportResult result = ImportResult.OK;
     return result.copyWithBytes(bytes);
   }
 
   @VisibleForTesting
   String importSingleAlbum(UUID jobId, TokensAndUrlAuthData authData, MediaAlbum inputAlbum)
-      throws IOException, InvalidTokenException, PermissionDeniedException {
+      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     // Set up album
     GoogleAlbum googleAlbum = new GoogleAlbum();
-    String title = Strings.nullToEmpty(inputAlbum.getName());
-
-    // Album titles are restricted to 500 characters
-    // https://developers.google.com/photos/library/guides/manage-albums#creating-new-album
-    if (title.length() > 500) {
-      title = title.substring(0, 497) + "...";
-    }
-    googleAlbum.setTitle(title);
+    googleAlbum.setTitle(GooglePhotosImportUtils.cleanAlbumTitle(inputAlbum.getName()));
 
     GoogleAlbum responseAlbum =
         getOrCreatePhotosInterface(jobId, authData).createAlbum(googleAlbum);
@@ -161,173 +178,18 @@ public class GoogleMediaImporter implements Importer<TokensAndUrlAuthData, Media
       UUID jobId,
       TokensAndUrlAuthData authData)
       throws Exception {
-    long bytes = 0L;
-    // Uploads photos
-    if (photos != null && photos.size() > 0) {
-      Map<String, List<PhotoModel>> photosByAlbum =
-          photos.stream()
-              .filter(photo -> !executor.isKeyCached(getIdempotentId(photo)))
-              .collect(Collectors.groupingBy(PhotoModel::getAlbumId));
-
-      for (Entry<String, List<PhotoModel>> albumEntry : photosByAlbum.entrySet()) {
-        String originalAlbumId = albumEntry.getKey();
-        String googleAlbumId;
-        if (Strings.isNullOrEmpty(originalAlbumId)) {
-          // This is ok, since NewMediaItemUpload will ignore all null values and it's possible to
-          // upload a NewMediaItem without a corresponding album id.
-          googleAlbumId = null;
-        } else {
-          // Note this will throw if creating the album failed, which is what we want
-          // because that will also mark this photo as being failed.
-          googleAlbumId = executor.getCachedValue(originalAlbumId);
-        }
-
-        // We partition into groups of 49 as 50 is the maximum number of items that can be created
-        // in one call. (We use 49 to avoid potential off by one errors)
-        // https://developers.google.com/photos/library/guides/upload-media#creating-media-item
-        UnmodifiableIterator<List<PhotoModel>> batches =
-            Iterators.partition(albumEntry.getValue().iterator(), 49);
-        while (batches.hasNext()) {
-          long batchBytes =
-              importPhotoBatch(jobId, authData, batches.next(), executor, googleAlbumId);
-          bytes += batchBytes;
-        }
-      }
-    }
-    return bytes;
+    return importItemsViaBatching(
+        photos,
+        PhotoModel::getAlbumId,
+        BATCH_UPLOAD_SIZE,
+        executor,
+        jobId,
+        authData,
+        this::importPhotoBatch);
   }
 
-  private long importVideos(Collection<VideoModel> videos,
-      IdempotentImportExecutor executor, UUID jobId,
-      TokensAndUrlAuthData authData) throws Exception {
-    long bytes = 0L;
-    // Uploads photos
-    if (videos != null && videos.size() > 0) {
-      Map<String, List<VideoModel>> videosByAlbum =
-          videos.stream()
-              .filter(video -> !executor.isKeyCached(getIdempotentId(video)))
-              .collect(Collectors.groupingBy(VideoModel::getAlbumId));
-
-      for (Entry<String, List<VideoModel>> albumEntry : videosByAlbum.entrySet()) {
-        String originalAlbumId = albumEntry.getKey();
-        String googleAlbumId;
-        if (Strings.isNullOrEmpty(originalAlbumId)) {
-          // This is ok, since NewMediaItemUpload will ignore all null values and it's possible to
-          // upload a NewMediaItem without a corresponding album id.
-          googleAlbumId = null;
-        } else {
-          // Note this will throw if creating the album failed, which is what we want
-          // because that will also mark this photo as being failed.
-          googleAlbumId = executor.getCachedValue(originalAlbumId);
-        }
-
-        // We partition into groups of 49 as 50 is the maximum number of items that can be created
-        // in one call. (We use 49 to avoid potential off by one errors)
-        // https://developers.google.com/photos/library/guides/upload-media#creating-media-item
-        UnmodifiableIterator<List<VideoModel>> batches =
-            Iterators.partition(albumEntry.getValue().iterator(), 49);
-        while (batches.hasNext()) {
-          long batchBytes =
-              importVideoBatch(jobId, authData, batches.next(), executor, googleAlbumId);
-          bytes += batchBytes;
-        }
-      }
-    }
-    return bytes;
-  }
-
-  private long importVideoBatch(UUID jobId, TokensAndUrlAuthData authData, List<VideoModel> videos,
-      IdempotentImportExecutor executor, String albumId) throws Exception {
-    final ArrayList<NewMediaItem> mediaItems = new ArrayList<>();
-    final HashMap<String, VideoModel> uploadTokenToDataId = new HashMap<>();
-    final HashMap<String, Long> uploadTokenToLength = new HashMap<>();
-
-    // TODO: resumable uploads https://developers.google.com/photos/library/guides/resumable-uploads
-    //  Resumable uploads would allow the upload of larger media that don't fit in memory.  To do
-    //  this however, seems to require knowledge of the total file size.
-    for (VideoModel video : videos) {
-      try {
-        Pair<InputStream, Long> inputStreamBytesPair =
-            getInputStreamForUrl(jobId, video.getContentUrl().toString(), video.isInTempStore());
-
-        String uploadToken =
-            getOrCreatePhotosInterface(jobId, authData)
-                .uploadMediaContent(inputStreamBytesPair.getFirst());
-        mediaItems.add(new NewMediaItem(cleanDescription(video.getDescription()), uploadToken));
-        uploadTokenToDataId.put(uploadToken, video);
-        uploadTokenToLength.put(uploadToken, inputStreamBytesPair.getSecond());
-
-        try {
-          if (video.isInTempStore()) {
-            jobStore.removeData(jobId, video.getContentUrl().toString());
-          }
-        } catch (Exception e) {
-          // Swallow the exception caused by Remove data so that existing flows continue
-          monitor.info(
-              () ->
-                  format(
-                      "%s: Exception swallowed in removeData call for localPath %s",
-                      jobId, video.getContentUrl()),
-              e);
-        }
-      } catch (IOException e) {
-        executor.executeAndSwallowIOExceptions(
-            getIdempotentId(video),
-            video.getHeadline(),
-            () -> {
-              throw e;
-            });
-      }
-    }
-
-    if (mediaItems.isEmpty()) {
-      // Either we were not passed in any videos or we failed upload on all of them.
-      return 0L;
-    }
-
-    long totalBytes = 0L;
-    NewMediaItemUpload uploadItem = new NewMediaItemUpload(albumId, mediaItems);
-    try {
-      BatchMediaItemResponse photoCreationResponse =
-          getOrCreatePhotosInterface(jobId, authData).createPhotos(uploadItem);
-      Preconditions.checkNotNull(photoCreationResponse);
-      NewMediaItemResult[] mediaItemResults = photoCreationResponse.getResults();
-      Preconditions.checkNotNull(mediaItemResults);
-      for (NewMediaItemResult mediaItem : mediaItemResults) {
-        VideoModel video = uploadTokenToDataId.get(mediaItem.getUploadToken());
-        totalBytes +=
-            processMediaResult(
-                mediaItem,
-                getIdempotentId(video),
-                executor,
-                video.getHeadline(),
-                uploadTokenToLength.get(mediaItem.getUploadToken()));
-        uploadTokenToDataId.remove(mediaItem.getUploadToken());
-      }
-
-      if (!uploadTokenToDataId.isEmpty()) {
-        for (VideoModel video : uploadTokenToDataId.values()) {
-          executor.executeAndSwallowIOExceptions(
-              getIdempotentId(video),
-              video.getHeadline(),
-              () -> {
-                throw new IOException("Photo was missing from results list.");
-              });
-        }
-      }
-    } catch (IOException e) {
-      if (e.getMessage() != null
-          && e.getMessage().contains("The remaining storage in the user's account is not enough")) {
-        throw new DestinationMemoryFullException("Google destination storage full", e);
-      } else {
-        throw e;
-      }
-    }
-
-    return totalBytes;
-  }
-
-  long importPhotoBatch(
+  // DO NOT MERGE - can probably already make this generic
+  private long importPhotoBatch(
       UUID jobId,
       TokensAndUrlAuthData authData,
       List<PhotoModel> photos,
@@ -342,16 +204,28 @@ public class GoogleMediaImporter implements Importer<TokensAndUrlAuthData, Media
     //  Resumable uploads would allow the upload of larger media that don't fit in memory.  To do
     //  this however, seems to require knowledge of the total file size.
     for (PhotoModel photo : photos) {
+      Long size = null;
       try {
-        Pair<InputStream, Long> inputStreamBytesPair =
-            getInputStreamForUrl(jobId, photo.getFetchableUrl(), photo.isInTempStore());
+        InputStreamWrapper streamWrapper = connectionProvider
+            .getInputStreamForItem(jobId, photo);
 
-        String uploadToken =
-            getOrCreatePhotosInterface(jobId, authData)
-                .uploadMediaContent(inputStreamBytesPair.getFirst());
-        mediaItems.add(new NewMediaItem(cleanDescription(photo.getDescription()), uploadToken));
-        uploadTokenToDataId.put(uploadToken, photo);
-        uploadTokenToLength.put(uploadToken, inputStreamBytesPair.getSecond());
+        try (InputStream s = streamWrapper.getStream()) {
+          String uploadToken = getOrCreatePhotosInterface(jobId, authData).uploadMediaContent(s,
+              photo.getSha1());
+          String description = GooglePhotosImportUtils.cleanDescription(photo.getDescription());
+          mediaItems.add(new NewMediaItem(description, uploadToken));
+          uploadTokenToDataId.put(uploadToken, photo);
+          size = streamWrapper.getBytes();
+          uploadTokenToLength.put(uploadToken, size);
+        } catch (UploadErrorException e) {
+          if (e.getMessage().contains(ERROR_HASH_MISMATCH)) {
+            monitor.severe(
+                () -> format("%s: SHA-1 (%s) mismatch during upload", jobId, photo.getSha1()));
+          }
+
+          Long finalSize = size;
+          executor.importAndSwallowIOExceptions(photo, p -> ItemImportResult.error(e, finalSize));
+        }
 
         try {
           if (photo.isInTempStore()) {
@@ -366,13 +240,10 @@ public class GoogleMediaImporter implements Importer<TokensAndUrlAuthData, Media
                       jobId, photo.getFetchableUrl()),
               e);
         }
-      } catch (IOException e) {
-        executor.executeAndSwallowIOExceptions(
-            getIdempotentId(photo),
-            photo.getTitle(),
-            () -> {
-              throw e;
-            });
+      } catch (IOException exception) {
+        Long finalSize = size;
+        executor.importAndSwallowIOExceptions(
+            photo, p -> ItemImportResult.error(exception, finalSize));
       }
     }
 
@@ -393,28 +264,30 @@ public class GoogleMediaImporter implements Importer<TokensAndUrlAuthData, Media
         PhotoModel photo = uploadTokenToDataId.get(mediaItem.getUploadToken());
         totalBytes +=
             processMediaResult(
-                mediaItem,
-                getIdempotentId(photo),
-                executor,
-                photo.getTitle(),
-                uploadTokenToLength.get(mediaItem.getUploadToken()));
+                mediaItem, photo, executor, uploadTokenToLength.get(mediaItem.getUploadToken()));
         uploadTokenToDataId.remove(mediaItem.getUploadToken());
       }
 
       if (!uploadTokenToDataId.isEmpty()) {
-        for (PhotoModel photo : uploadTokenToDataId.values()) {
-          executor.executeAndSwallowIOExceptions(
-              getIdempotentId(photo),
-              photo.getTitle(),
-              () -> {
-                throw new IOException("Photo was missing from results list.");
-              });
+        for (Entry<String, PhotoModel> entry : uploadTokenToDataId.entrySet()) {
+          PhotoModel photo = entry.getValue();
+          executor.importAndSwallowIOExceptions(
+              photo,
+              p ->
+                  ItemImportResult.error(
+                      new IOException("Photo was missing from results list."),
+                      uploadTokenToLength.get(entry.getKey())));
         }
       }
     } catch (IOException e) {
-      if (e.getMessage() != null
-          && e.getMessage().contains("The remaining storage in the user's account is not enough")) {
+      if (StringUtils.contains(
+          e.getMessage(), "The remaining storage in the user's account is not enough")) {
         throw new DestinationMemoryFullException("Google destination storage full", e);
+      } else if (StringUtils.contains(
+          e.getMessage(), "The provided ID does not match any albums")) {
+        // which means the album was likely deleted by the user
+        // we skip this batch and log some data to understand it better
+        logMissingAlbumDetails(jobId, authData, albumId, e);
       } else {
         throw e;
       }
@@ -423,60 +296,115 @@ public class GoogleMediaImporter implements Importer<TokensAndUrlAuthData, Media
     return totalBytes;
   }
 
+  long importVideos(
+      Collection<VideoModel> videos,
+      IdempotentImportExecutor executor,
+      UUID jobId,
+      TokensAndUrlAuthData authData)
+      throws Exception {
+    return 0L; /* DO NOT MERGE*/
+
+//  return importItemsViaBatching(
+//      videos,
+//      VideoModel::getAlbumId,
+//      BATCH_UPLOAD_SIZE,
+//      executor,
+//      jobId,
+//      authData,
+//      this::importVideoBatch);
+  }
+
+  private void logMissingAlbumDetails(
+      UUID jobId, TokensAndUrlAuthData authData, String albumId, IOException e) {
+    monitor.info(
+        () -> format("Can't find album during createPhotos call, album is likely deleted"), e);
+    try {
+      GoogleAlbum album = getOrCreatePhotosInterface(jobId, authData).getAlbum(albumId);
+      monitor.debug(
+          () ->
+              format(
+                  "Can't find album during createPhotos call, album info: isWriteable %b, mediaItemsCount %d",
+                  album.getIsWriteable(), album.getMediaItemsCount()),
+          e);
+    } catch (Exception ex) {
+      monitor.info(() -> format("Can't find album during getAlbum call"), ex);
+    }
+  }
+
+  /**
+   * Imports all `items` by fanning out to `batchImporter` upload calls as specified by the.
+   *
+   * Returns the number of uploaded bytes, as summed across all `items` that were uploaded.
+   */
+  private <T extends DownloadableItem> long importItemsViaBatching(
+      Collection<T> items,
+      // TODO we could just specify we have FolderItem interface objects and call getFolderId, and
+      // drop this getAlbumId parameter (FolderItem was introduced for similar purposes in via
+      // MicrosoftMedia* work).
+      Function<T, String> getAlbumId,
+      int batchSize,
+      IdempotentImportExecutor executor,
+      UUID jobId,
+      TokensAndUrlAuthData authData,
+      ItemBatchImporter importer)
+      throws Exception {
+    long bytes = 0L;
+    if (items == null || items.size() <= 0) {
+      return bytes;
+    }
+    Map<String, List<T>> itemsByAlbumId =
+        items.stream()
+            .filter(item -> !executor.isKeyCached(item.getIdempotentId()))
+            .collect(Collectors.groupingBy(getAlbumId));
+
+    for (Entry<String, List<T>> albumEntry : itemsByAlbumId.entrySet()) {
+      String originalAlbumId = albumEntry.getKey();
+      String googleAlbumId;
+      if (Strings.isNullOrEmpty(originalAlbumId)) {
+        // This is ok, since NewMediaItemUpload will ignore all null values and it's possible to
+        // upload a NewMediaItem without a corresponding album id.
+        googleAlbumId = null;
+      } else {
+        // Note this will throw if creating the album failed, which is what we want
+        // because that will also mark this photo as being failed.
+        googleAlbumId = executor.getCachedValue(originalAlbumId);
+      }
+
+      UnmodifiableIterator<List<T>> batches =
+          Iterators.partition(albumEntry.getValue().iterator(), batchSize);
+      while (batches.hasNext()) {
+        long batchBytes =
+            importer.importToAlbum(jobId, authData, batches.next(), executor, googleAlbumId);
+        bytes += batchBytes;
+      }
+    }
+    return bytes;
+  }
+
   private long processMediaResult(
       NewMediaItemResult mediaItem,
-      String idempotentId,
+      ImportableItem item,
       IdempotentImportExecutor executor,
-      String title,
       long bytes)
       throws Exception {
     Status status = mediaItem.getStatus();
     if (status.getCode() == Code.OK_VALUE) {
-      executor.executeAndSwallowIOExceptions(
-          idempotentId, title, () -> new MediaResult(mediaItem.getMediaItem().getId(), bytes));
+      PhotoResult photoResult = new PhotoResult(mediaItem.getMediaItem().getId(), bytes);
+      executor.importAndSwallowIOExceptions(
+          item, itemToImport -> ItemImportResult.success(photoResult, bytes));
       return bytes;
     } else {
-      executor.executeAndSwallowIOExceptions(
-          idempotentId,
-          title,
-          () -> {
-            throw new IOException(
-                String.format(
-                    "Media item could not be created. Code: %d Message: %s",
-                    status.getCode(), status.getMessage()));
-          });
+      executor.importAndSwallowIOExceptions(
+          item,
+          itemToImport ->
+              ItemImportResult.error(
+                  new IOException(
+                      String.format(
+                          "Media item could not be created. Code: %d Message: %s",
+                          status.getCode(), status.getMessage())),
+                  bytes));
       return 0;
     }
-  }
-
-  private Pair<InputStream, Long> getInputStreamForUrl(
-      UUID jobId, String fetchableUrl, boolean inTempStore) throws IOException {
-    if (inTempStore) {
-      final InputStreamWrapper streamWrapper = jobStore.getStream(jobId, fetchableUrl);
-      return Pair.of(streamWrapper.getStream(), streamWrapper.getBytes());
-    }
-
-    HttpURLConnection conn = imageStreamProvider.getConnection(fetchableUrl);
-    return Pair.of(
-        conn.getInputStream(), conn.getContentLengthLong() != -1 ? conn.getContentLengthLong() : 0);
-  }
-
-  String getIdempotentId(PhotoModel photo) {
-    return photo.getAlbumId() + "-" + photo.getDataId();
-  }
-  String getIdempotentId(VideoModel video) {
-    return video.getAlbumId() + "-" + video.getDataId();
-  }
-
-  private String cleanDescription(String origDescription) {
-    String description = Strings.isNullOrEmpty(origDescription) ? "" : origDescription;
-
-    // Descriptions are restricted to 1000 characters
-    // https://developers.google.com/photos/library/guides/upload-media#creating-media-item
-    if (description.length() > 1000) {
-      description = description.substring(0, 997) + "...";
-    }
-    return description;
   }
 
   private synchronized GooglePhotosInterface getOrCreatePhotosInterface(
@@ -500,5 +428,40 @@ public class GoogleMediaImporter implements Importer<TokensAndUrlAuthData, Media
     Credential credential = credentialFactory.createCredential(authData);
     return new GooglePhotosInterface(
         credentialFactory, credential, jsonFactory, monitor, writesPerSecond);
+  }
+
+  private synchronized BaseMultilingualDictionary getOrCreateStringDictionary(UUID jobId) {
+    if (!multilingualStrings.containsKey(jobId)) {
+      PortabilityJob job = jobStore.findJob(jobId);
+      String locale = job != null ? job.userLocale() : null;
+      multilingualStrings.put(jobId, new BaseMultilingualDictionary(locale));
+    }
+
+    return multilingualStrings.get(jobId);
+  }
+
+  // TODO(aksingh737,jzacsh) refactor Google{Photos,Video,Media}{Importer,Exporter} classes so they're
+  // not all drifting-forks of each other, and instead share code with the help of small interfaces.
+  // We can start by using some of the de-duplication that happened, with the interfaces below, in
+  // the creation of this particular importer
+
+  // TODO(aksingh737,jzacsh) consider renaming lower-level gphotos code (ie: anything of the "google
+  // photos" product but not a "photo" from "google"; examples: the GooglePhotosInterface that
+  // interacts with gphotos teams' upstream SDKs, interfaces like this one below, PhotoResult,
+  // etc.). eg maybe start a org.datatransferproject.datatransfer.google.gphotos package for things
+  // that are wrapping the gphotos SDKs (the examples already mentioned) and make that package
+  // importable by the other google adapters.
+  @FunctionalInterface
+  private interface ItemBatchImporter {
+    /**
+     * Returns the number of uploaded bytes, as summed across all `items` that were uploaded in this
+     * batch.
+     */
+    public <T> long importToAlbum(
+        UUID jobId,
+        TokensAndUrlAuthData authData,
+        List<T> batch,
+        IdempotentImportExecutor executor,
+        String targetAlbumId);
   }
 }

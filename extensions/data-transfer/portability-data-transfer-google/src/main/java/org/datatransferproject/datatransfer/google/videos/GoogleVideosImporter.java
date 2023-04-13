@@ -31,6 +31,9 @@
  */
 package org.datatransferproject.datatransfer.google.videos;
 
+import static org.datatransferproject.datatransfer.google.videos.GoogleVideosInterface.buildPhotosLibraryClient;
+import static org.datatransferproject.datatransfer.google.videos.GoogleVideosInterface.uploadVideo;
+
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.InvalidArgumentException;
@@ -44,7 +47,6 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
 import com.google.photos.library.v1.PhotosLibraryClient;
-import com.google.photos.library.v1.PhotosLibrarySettings;
 import com.google.photos.library.v1.proto.BatchCreateMediaItemsResponse;
 import com.google.photos.library.v1.proto.NewMediaItem;
 import com.google.photos.library.v1.proto.NewMediaItemResult;
@@ -80,6 +82,7 @@ import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.UploadErrorException;
+import org.datatransferproject.types.common.DownloadableItem;
 import org.datatransferproject.types.common.models.videos.VideoAlbum;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
@@ -114,6 +117,10 @@ public class GoogleVideosImporter
     this.clientsMap = clientsMap;
   }
 
+  // TODO(aksingh737) WARNING: stop maintaining this code here; this needs to be reconciled against
+  // a generic version so we don't have feature/bug development drift against our forks; see the
+  // slowly-progressing effort to factor this code out with small interfaces, over in
+  // GoogleMediaImporter.
   @Override
   public ImportResult importItem(
       UUID jobId,
@@ -130,18 +137,7 @@ public class GoogleVideosImporter
     if (clientsMap.containsKey(jobId)) {
       client = clientsMap.get(jobId);
     } else {
-      PhotosLibrarySettings settings =
-          PhotosLibrarySettings.newBuilder()
-              .setCredentialsProvider(
-                  FixedCredentialsProvider.create(
-                      UserCredentials.newBuilder()
-                          .setClientId(appCredentials.getKey())
-                          .setClientSecret(appCredentials.getSecret())
-                          .setAccessToken(new AccessToken(authData.getAccessToken(), new Date()))
-                          .setRefreshToken(authData.getRefreshToken())
-                          .build()))
-              .build();
-      client = PhotosLibraryClient.initialize(settings);
+      client = buildPhotosLibraryClient(appCredentials, authData);
       clientsMap.put(jobId, client);
     }
 
@@ -174,13 +170,13 @@ public class GoogleVideosImporter
     return result.copyWithBytes(bytes);
   }
 
-  private boolean shouldImport(VideoModel video, IdempotentImportExecutor executor) {
-    if (video.getContentUrl() == null) {
+  private boolean shouldImport(DownloadableItem item, IdempotentImportExecutor executor) {
+    if (item.getFetchableUrl() == null) {
       monitor.info(() -> "Content Url is empty. Make sure that you provide a valid content Url.");
       return false;
     } else {
-      // If the video key is already cached there is no need to retry.
-      return !executor.isKeyCached(video.getDataId());
+      // If the item key is already cached there is no need to retry.
+      return !executor.isKeyCached(item.getIdempotentId());
     }
   }
 
@@ -190,6 +186,10 @@ public class GoogleVideosImporter
     return video;
   }
 
+  // TODO(aksingh737) WARNING: stop maintaining this code here; this needs to be reconciled against
+  // a generic version so we don't have feature/bug development drift against our forks; see the
+  // slowly-progressing effort to factor this code out with small interfaces, over in
+  // GoogleMediaImporter.
   long importVideoBatch(UUID jobId, List<VideoModel> batchedVideos, PhotosLibraryClient client,
       IdempotentImportExecutor executor) throws Exception {
     final ArrayListMultimap<String, NewMediaItem> mediaItemsByAlbum = ArrayListMultimap.create();
@@ -201,7 +201,7 @@ public class GoogleVideosImporter
     try {
       for (VideoModel video : batchedVideos) {
         try {
-          Pair<String, Long> pair = uploadMediaItem(jobId, video, client);
+          Pair<String, Long> pair = uploadVideo(jobId, video, client, dataStore, connectionProvider);
           final String uploadToken = pair.getLeft();
           final String googleAlbumId =
               Strings.isNullOrEmpty(video.getAlbumId())
@@ -218,7 +218,7 @@ public class GoogleVideosImporter
             // If the video file is no longer available then skip the video. We see this in a small
             // number of videos where the video has been deleted.
             monitor.info(
-                () -> String.format("Video resource was missing for id: %s", video.getDataId()), e);
+                () -> String.format("Video resource was missing for id: %s", video.getIdempotentId()), e);
             continue;
           }
           executor.importAndSwallowIOExceptions(
@@ -290,59 +290,6 @@ public class GoogleVideosImporter
       }
     } catch (UnauthenticatedException e) {
       throw new InvalidTokenException("Token has been expired or revoked", e);
-    }
-  }
-
-  private Pair<String, Long> uploadMediaItem(UUID jobId, VideoModel inputVideo,
-      PhotosLibraryClient photosLibraryClient)
-      throws IOException, UploadErrorException, InvalidTokenException {
-
-    final File tmp = createTempVideoFile(jobId, inputVideo);
-    try {
-      UploadMediaItemRequest uploadRequest =
-          UploadMediaItemRequest.newBuilder()
-              .setFileName(inputVideo.getName())
-              .setDataFile(new RandomAccessFile(tmp, "r"))
-              .build();
-      UploadMediaItemResponse uploadResponse = photosLibraryClient.uploadMediaItem(uploadRequest);
-      String uploadToken;
-      if (uploadResponse.getError().isPresent() || !uploadResponse.getUploadToken().isPresent()) {
-        Error error = uploadResponse.getError().orElse(null);
-
-        if (error != null) {
-          Throwable cause = error.getCause();
-          String message = cause.getMessage();
-          if (message.contains("The upload url is either finalized or rejected by the server")) {
-            throw new UploadErrorException("Upload was terminated because of error", cause);
-          } else if (message.contains("invalid_grant")) {
-            throw new InvalidTokenException("Token has been expired or revoked", cause);
-          }
-        }
-
-        throw new IOException(
-            "An error was encountered while uploading the video.",
-            error != null ? error.getCause() : null);
-      } else {
-        uploadToken = uploadResponse.getUploadToken().get();
-      }
-      return Pair.of(uploadToken, tmp.length());
-    } catch (ApiException ex) {
-      // temp check as exception is not captured and wrapped into UploadMediaItemResponse
-      Throwable cause = ex.getCause();
-      String message = cause.getMessage();
-      if (message.contains("invalid_grant")) {
-        throw new InvalidTokenException("Token has been expired or revoked", cause);
-      }
-      throw new IOException("An error was encountered while uploading the video.", cause);
-    } finally {
-      //noinspection ResultOfMethodCallIgnored
-      tmp.delete();
-    }
-  }
-
-  private File createTempVideoFile(UUID jobId, VideoModel inputVideo) throws IOException {
-    try (InputStream is = connectionProvider.getInputStreamForItem(jobId, inputVideo).getStream()) {
-      return dataStore.getTempFileFromInputStream(is, inputVideo.getName(), ".mp4");
     }
   }
 
