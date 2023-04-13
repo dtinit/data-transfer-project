@@ -217,7 +217,7 @@ public class GooglePhotosInterface {
     return objectMapper.readValue(result, clazz);
   }
 
-  <T> T makePostRequest(String url, Optional<Map<String, String>> parameters,
+  public <T> T makePostRequest(String url, Optional<Map<String, String>> parameters,
       Optional<Map<String, String>> extraHeaders, HttpContent httpContent, Class<T> clazz)
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     // Wait for write permit before making request
