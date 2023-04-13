@@ -35,42 +35,61 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.ArrayMap;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.InvalidArgumentException;
+import com.google.api.gax.rpc.UnauthenticatedException;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.UserCredentials;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import com.google.photos.library.v1.PhotosLibraryClient;
 import com.google.photos.library.v1.PhotosLibrarySettings;
+import com.google.photos.library.v1.proto.BatchCreateMediaItemsResponse;
+import com.google.photos.library.v1.proto.NewMediaItem;
+import com.google.photos.library.v1.proto.NewMediaItemResult;
 import com.google.photos.library.v1.upload.UploadMediaItemRequest;
-import com.google.photos.library.v1.upload.UploadMediaItemResponse;
 import com.google.photos.library.v1.upload.UploadMediaItemResponse.Error;
+import com.google.photos.library.v1.upload.UploadMediaItemResponse;
+import com.google.photos.library.v1.util.NewMediaItemFactory;
+import com.google.rpc.Code;
+import com.google.rpc.Status;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
+import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.datatransfer.google.common.GooglePhotosImportUtils;
 import org.datatransferproject.datatransfer.google.mediaModels.BatchMediaItemResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
 import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
-import org.datatransferproject.spi.transfer.types.UploadErrorException;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.ItemImportResult;
+import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
+import org.datatransferproject.spi.transfer.types.UploadErrorException;
 import org.datatransferproject.types.common.DownloadableItem;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
@@ -225,7 +244,6 @@ public class GoogleVideosInterface {
     return PhotosLibraryClient.initialize(settings);
   }
 
-/* DO NOT MERGE finish factoring GoogleVideosImporter logic out to this function  */
 //public static long uploadBatchOfVideos() throws Exception {
 //}
 
@@ -314,5 +332,133 @@ public class GoogleVideosInterface {
     try (InputStream is = connectionProvider.getInputStreamForItem(jobId, item).getStream()) {
       return dataStore.getTempFileFromInputStream(is, item.getName(), fileSuffix);
     }
+  }
+
+  // TODO(aksingh737) WARNING: stop maintaining this code here; this needs to be reconciled against
+  // a generic version so we don't have feature/bug development drift against our forks; see the
+  // slowly-progressing effort to factor this code out with small interfaces, over in
+  // GoogleMediaImporter.
+  // DO NOT MERGE  - rename this code into GoogleVideosInterface.uploadBatchOfVideos
+  @VisibleForTesting
+  public static long importVideoBatch(
+      UUID jobId,
+      List<VideoModel> batchedVideos,
+      TemporaryPerJobDataStore dataStore,
+      PhotosLibraryClient client,
+      IdempotentImportExecutor executor,
+      ConnectionProvider connectionProvider,
+      Monitor monitor) throws Exception {
+    final ArrayListMultimap<String, NewMediaItem> mediaItemsByAlbum = ArrayListMultimap.create();
+    final Map<String, VideoModel> uploadTokenToDataId = new HashMap<>();
+    final Map<String, Long> uploadTokenToLength = new HashMap<>();
+
+    // The PhotosLibraryClient can throw InvalidArgumentException and this try block wraps the two
+    // calls of the client to handle the InvalidArgumentException when the user's storage is full.
+    try {
+      for (VideoModel video : batchedVideos) {
+        try {
+          Pair<String, Long> pair = uploadVideo(jobId, video, client, dataStore, connectionProvider);
+          final String uploadToken = pair.getLeft();
+          final String googleAlbumId =
+              Strings.isNullOrEmpty(video.getAlbumId())
+                  ? null
+                  : executor.getCachedValue(video.getAlbumId());
+          mediaItemsByAlbum.put(googleAlbumId, buildMediaItem(video, uploadToken));
+          uploadTokenToDataId.put(uploadToken, video);
+          uploadTokenToLength.put(uploadToken, pair.getRight());
+          if (video.isInTempStore()) {
+            dataStore.removeData(jobId, video.getFetchableUrl());
+          }
+        } catch (IOException e) {
+          if (e instanceof FileNotFoundException) {
+            // If the video file is no longer available then skip the video. We see this in a small
+            // number of videos where the video has been deleted.
+            monitor.info(
+                () -> String.format("Video resource was missing for id: %s", video.getIdempotentId()), e);
+            continue;
+          }
+          executor.importAndSwallowIOExceptions(
+              video,
+              videoModel -> ItemImportResult.error(e, null)
+          );
+        }
+      }
+
+      if (mediaItemsByAlbum.isEmpty()) {
+        // Either we were not passed in any videos or we failed upload on all of them.
+        return 0L;
+      }
+
+      final List<NewMediaItemResult> resultsList = mediaItemsByAlbum.keySet().stream()
+          .map(k ->
+              k == null
+                  ? client.batchCreateMediaItems(mediaItemsByAlbum.get(null))
+                  : client.batchCreateMediaItems(k, mediaItemsByAlbum.get(k)))
+          .map(BatchCreateMediaItemsResponse::getNewMediaItemResultsList)
+          .flatMap(Collection::stream)
+          .collect(Collectors.toList());
+
+      long bytes = 0L;
+      for (NewMediaItemResult result : resultsList) {
+        String uploadToken = result.getUploadToken();
+        Status status = result.getStatus();
+
+        final VideoModel video = uploadTokenToDataId.get(uploadToken);
+        Preconditions.checkNotNull(video);
+        final int code = status.getCode();
+        Long length = uploadTokenToLength.get(uploadToken);
+        if (code == Code.OK_VALUE) {
+          executor.importAndSwallowIOExceptions(
+              video, videoModel -> ItemImportResult.success(result.getMediaItem().getId(), length)
+          );
+          if (length != null) {
+            bytes += length;
+          }
+        } else {
+          executor.importAndSwallowIOExceptions(
+              video,
+              videoModel -> ItemImportResult.error(new IOException(
+                  String.format(
+                      "Video item could not be created. Code: %d Message: %s",
+                      code, result.getStatus().getMessage())), length)
+          );
+        }
+        uploadTokenToDataId.remove(uploadToken);
+      }
+      if (!uploadTokenToDataId.isEmpty()) {
+        for (Entry<String, VideoModel> entry : uploadTokenToDataId.entrySet()) {
+          VideoModel video = entry.getValue();
+          String uploadToken = entry.getKey();
+          executor.importAndSwallowIOExceptions(
+              video,
+              videoModel -> ItemImportResult.error(
+                  new IOException("Video item was missing from results list."),
+                  uploadTokenToLength.get(uploadToken))
+          );
+        }
+      }
+      return bytes;
+    } catch (InvalidArgumentException e) {
+      if (e.getMessage().contains("The remaining storage in the user's account is not enough")) {
+        throw new DestinationMemoryFullException("Google destination storage full", e);
+      } else {
+        throw e;
+      }
+    } catch (UnauthenticatedException e) {
+      throw new InvalidTokenException("Token has been expired or revoked", e);
+    }
+  }
+
+  @VisibleForTesting
+  public static NewMediaItem buildMediaItem(VideoModel inputVideo, String uploadToken) {
+    NewMediaItem newMediaItem;
+    String videoDescription = inputVideo.getDescription();
+    if (Strings.isNullOrEmpty(videoDescription)) {
+      newMediaItem = NewMediaItemFactory.createNewMediaItem(uploadToken);
+    } else {
+      videoDescription = GooglePhotosImportUtils.cleanDescription(videoDescription);
+      newMediaItem = NewMediaItemFactory.createNewMediaItem(uploadToken, videoDescription);
+    }
+    return newMediaItem;
   }
 }

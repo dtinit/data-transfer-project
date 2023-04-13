@@ -16,6 +16,8 @@
 
 package org.datatransferproject.datatransfer.google.videos;
 
+import static org.datatransferproject.datatransfer.google.videos.GoogleVideosInterface.buildMediaItem;
+import static org.datatransferproject.datatransfer.google.videos.GoogleVideosInterface.importVideoBatch;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -216,7 +218,7 @@ public class GoogleVideosImporterTest {
     when(connectionProvider.getInputStreamForItem(any(), any()))
         .thenReturn(mock(InputStreamWrapper.class));
     long length =
-        GoogleVideosImporter.importVideoBatch(jobId,
+        importVideoBatch(jobId,
             Lists.newArrayList(
                 new VideoModel(
                     VIDEO_TITLE,
@@ -260,7 +262,7 @@ public class GoogleVideosImporterTest {
     InMemoryIdempotentImportExecutor executor =
         new InMemoryIdempotentImportExecutor(mock(Monitor.class));
     long length =
-        googleVideosImporter.importVideoBatch(
+        importVideoBatch(
             jobId,
             Lists.newArrayList(
                 new VideoModel(
@@ -301,7 +303,7 @@ public class GoogleVideosImporterTest {
             VIDEO_TITLE, VIDEO_URI, videoDescriptionOver1k, MP4_MEDIA_TYPE, VIDEO_ID, null, false, null);
 
     String uploadToken = "token";
-    NewMediaItem newMediaItemResult = googleVideosImporter.buildMediaItem(videoModel, uploadToken);
+    NewMediaItem newMediaItemResult = buildMediaItem(videoModel, uploadToken);
     assertFalse(
         (newMediaItemResult.getDescription().length() > 1000),"Expected the length of the description to be truncated to 1000 chars.");
     assertTrue(
@@ -337,7 +339,7 @@ public class GoogleVideosImporterTest {
     when(connectionProvider.getInputStreamForItem(any(), any()))
         .thenReturn(mock(InputStreamWrapper.class));
     long length =
-        googleVideosImporter.importVideoBatch(jobId,
+        importVideoBatch(jobId,
             Lists.newArrayList(
                 new VideoModel(
                     VIDEO_TITLE,
@@ -370,7 +372,7 @@ public class GoogleVideosImporterTest {
     GoogleVideosImporter googleVideosImporter =
         new GoogleVideosImporter(
             null, dataStore, mock(Monitor.class), connectionProvider, Map.of(jobId, client));
-    googleVideosImporter.importVideoBatch(jobId,
+    importVideoBatch(jobId,
         Lists.newArrayList(
             new VideoModel(
                 VIDEO_TITLE,
