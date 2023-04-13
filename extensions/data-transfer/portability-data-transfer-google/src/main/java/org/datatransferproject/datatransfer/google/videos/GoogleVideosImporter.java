@@ -162,7 +162,14 @@ public class GoogleVideosImporter
       final UnmodifiableIterator<List<VideoModel>> batches =
           Iterators.partition(stream.iterator(), 49);
       while (batches.hasNext()) {
-        long batchBytes = importVideoBatch(jobId, batches.next(), client, executor);
+        long batchBytes = importVideoBatch(
+            jobId,
+            batches.next(),
+            dataStore,
+            client,
+            executor,
+            connectionProvider,
+            monitor);
         bytes += batchBytes;
       }
     }
@@ -190,8 +197,16 @@ public class GoogleVideosImporter
   // a generic version so we don't have feature/bug development drift against our forks; see the
   // slowly-progressing effort to factor this code out with small interfaces, over in
   // GoogleMediaImporter.
-  long importVideoBatch(UUID jobId, List<VideoModel> batchedVideos, PhotosLibraryClient client,
-      IdempotentImportExecutor executor) throws Exception {
+  // DO NOT MERGE  - rename this code into GoogleVideosInterface.uploadBatchOfVideos
+  @VisibleForTesting
+  public static long importVideoBatch(
+      UUID jobId,
+      List<VideoModel> batchedVideos,
+      TemporaryPerJobDataStore dataStore,
+      PhotosLibraryClient client,
+      IdempotentImportExecutor executor,
+      ConnectionProvider connectionProvider,
+      Monitor monitor) throws Exception {
     final ArrayListMultimap<String, NewMediaItem> mediaItemsByAlbum = ArrayListMultimap.create();
     final Map<String, VideoModel> uploadTokenToDataId = new HashMap<>();
     final Map<String, Long> uploadTokenToLength = new HashMap<>();
@@ -294,7 +309,8 @@ public class GoogleVideosImporter
   }
 
   @VisibleForTesting
-  NewMediaItem buildMediaItem(VideoModel inputVideo, String uploadToken) {
+  // DO NOT MERGE move to GoogleVideosInterface
+  public static NewMediaItem buildMediaItem(VideoModel inputVideo, String uploadToken) {
     NewMediaItem newMediaItem;
     String videoDescription = inputVideo.getDescription();
     if (Strings.isNullOrEmpty(videoDescription)) {

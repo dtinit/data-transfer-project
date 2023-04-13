@@ -71,6 +71,7 @@ import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.types.UploadErrorException;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
+import org.datatransferproject.types.common.DownloadableItem;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
@@ -224,6 +225,10 @@ public class GoogleVideosInterface {
     return PhotosLibraryClient.initialize(settings);
   }
 
+/* DO NOT MERGE finish factoring GoogleVideosImporter logic out to this function  */
+//public static long uploadBatchOfVideos() throws Exception {
+//}
+
   /**
    * Uploads `video` via {@link com.google.photos.library.v1.PhotosLibraryClient} APIs.
    *
@@ -237,7 +242,11 @@ public class GoogleVideosInterface {
       ConnectionProvider connectionProvider)
       throws IOException, UploadErrorException, InvalidTokenException {
 
-    final File tmp = createTempVideoFile(jobId, dataStore, connectionProvider, video);
+    final File tmp = createTempFile(
+        jobId,
+        dataStore,
+        connectionProvider,
+        video);
     try {
       UploadMediaItemRequest uploadRequest =
           UploadMediaItemRequest.newBuilder()
@@ -280,14 +289,30 @@ public class GoogleVideosInterface {
     }
   }
 
-  private static File createTempVideoFile(
+  private static File createTempFile(
       UUID jobId,
       TemporaryPerJobDataStore dataStore,
       ConnectionProvider connectionProvider,
-      VideoModel video) throws IOException {
-    try (InputStream is = connectionProvider.getInputStreamForItem(jobId, video).getStream()) {
-      // TODO(aksingh737) should mp4 be hardcoded here?
-      return dataStore.getTempFileFromInputStream(is, video.getName(), ".mp4");
+      DownloadableItem video) throws IOException {
+    return createTempFile(
+        jobId,
+        dataStore,
+        connectionProvider,
+        video,
+        // TODO(aksingh737) should mp4 be hardcoded here?
+        "mp4" /*fileSuffix*/);
+  }
+
+  // TODO(aksingh737) factor this out into TemporaryPerJobDataStore which already has random/temp-file
+  // related logic
+  private static File createTempFile(
+      UUID jobId,
+      TemporaryPerJobDataStore dataStore,
+      ConnectionProvider connectionProvider,
+      DownloadableItem item,
+      String fileSuffix) throws IOException {
+    try (InputStream is = connectionProvider.getInputStreamForItem(jobId, item).getStream()) {
+      return dataStore.getTempFileFromInputStream(is, item.getName(), fileSuffix);
     }
   }
 }

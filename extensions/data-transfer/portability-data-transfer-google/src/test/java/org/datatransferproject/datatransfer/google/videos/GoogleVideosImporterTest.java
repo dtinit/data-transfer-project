@@ -212,8 +212,11 @@ public class GoogleVideosImporterTest {
 
     InMemoryIdempotentImportExecutor executor =
         new InMemoryIdempotentImportExecutor(mock(Monitor.class));
+    ConnectionProvider connectionProvider = mock(ConnectionProvider.class);
+    when(connectionProvider.getInputStreamForItem(any(), any()))
+        .thenReturn(mock(InputStreamWrapper.class));
     long length =
-        googleVideosImporter.importVideoBatch(jobId,
+        GoogleVideosImporter.importVideoBatch(jobId,
             Lists.newArrayList(
                 new VideoModel(
                     VIDEO_TITLE,
@@ -233,8 +236,11 @@ public class GoogleVideosImporterTest {
                     null,
                     false,
                     null)),
+            dataStore,
             photosLibraryClient,
-            executor);
+            executor,
+            connectionProvider,
+            mock(Monitor.class));
 
     assertEquals(32L, length,"Expected the number of bytes to be the one files of 32L.");
     assertEquals(1, executor.getErrors().size(),"Expected executor to have one error.");
@@ -266,8 +272,11 @@ public class GoogleVideosImporterTest {
                     null,
                     false,
                     null)),
+            dataStore,
             photosLibraryClient,
-            executor);
+            executor,
+            connectionProvider,
+            mock(Monitor.class));
     assertEquals(0L, length,"Expected the number of bytes to be 0L.");
     assertEquals(0, executor.getErrors().size(),"Expected executor to have no errors.");
   }
@@ -324,6 +333,9 @@ public class GoogleVideosImporterTest {
 
     InMemoryIdempotentImportExecutor executor =
         new InMemoryIdempotentImportExecutor(mock(Monitor.class));
+    ConnectionProvider connectionProvider = mock(ConnectionProvider.class);
+    when(connectionProvider.getInputStreamForItem(any(), any()))
+        .thenReturn(mock(InputStreamWrapper.class));
     long length =
         googleVideosImporter.importVideoBatch(jobId,
             Lists.newArrayList(
@@ -336,8 +348,11 @@ public class GoogleVideosImporterTest {
                     null,
                     true,
                     null)),
+            dataStore,
             photosLibraryClient,
-            executor);
+            executor,
+            connectionProvider,
+            mock(Monitor.class));
     assertThat(length).isEqualTo(32);
     assertThat(executor.getErrors()).isEmpty();
     verify(dataStore).removeData(any(), eq(VIDEO_URI));
@@ -366,8 +381,11 @@ public class GoogleVideosImporterTest {
                 null,
                 true,
                 null)),
+        dataStore,
         mock(PhotosLibraryClient.class),
-        executor);
+        executor,
+        connectionProvider,
+        mock(Monitor.class));
     // should only remove the video from temp store upon success
     verify(dataStore, never()).removeData(any(), anyString());
     verify(dataStore).getStream(any(), eq(VIDEO_URI));
