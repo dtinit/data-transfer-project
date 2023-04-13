@@ -302,7 +302,7 @@ public class GoogleMediaImporter
       UUID jobId,
       TokensAndUrlAuthData authData)
       throws Exception {
-    return 0L; /* DO NOT MERGE*/
+    return 0L; /* DO NOT MERGE */
 
 //  return importItemsViaBatching(
 //      videos,
@@ -346,7 +346,7 @@ public class GoogleMediaImporter
       IdempotentImportExecutor executor,
       UUID jobId,
       TokensAndUrlAuthData authData,
-      ItemBatchImporter importer)
+      ItemBatchImporter<T> importer)
       throws Exception {
     long bytes = 0L;
     if (items == null || items.size() <= 0) {
@@ -452,16 +452,16 @@ public class GoogleMediaImporter
   // that are wrapping the gphotos SDKs (the examples already mentioned) and make that package
   // importable by the other google adapters.
   @FunctionalInterface
-  private interface ItemBatchImporter {
+  private interface ItemBatchImporter<T> {
     /**
      * Returns the number of uploaded bytes, as summed across all `items` that were uploaded in this
      * batch.
      */
-    public <T> long importToAlbum(
+    public long importToAlbum(
         UUID jobId,
         TokensAndUrlAuthData authData,
         List<T> batch,
         IdempotentImportExecutor executor,
-        String targetAlbumId);
+        String targetAlbumId) throws Exception;
   }
 }

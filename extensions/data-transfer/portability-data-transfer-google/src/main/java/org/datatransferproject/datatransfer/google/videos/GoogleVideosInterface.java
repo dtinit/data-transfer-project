@@ -209,7 +209,7 @@ public class GoogleVideosInterface {
 
   public static PhotosLibraryClient buildPhotosLibraryClient(
       AppCredentials appCredentials,
-      TokensAndUrlAuthData authData) {
+      TokensAndUrlAuthData authData) throws IOException {
     PhotosLibrarySettings settings =
         PhotosLibrarySettings.newBuilder()
             .setCredentialsProvider(
