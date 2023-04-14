@@ -17,6 +17,7 @@ package org.datatransferproject.datatransfer.google.media;
 
 import static java.lang.String.format;
 import static org.datatransferproject.datatransfer.google.photos.GooglePhotosInterface.ERROR_HASH_MISMATCH;
+import static org.datatransferproject.datatransfer.google.videos.GoogleVideosInterface.importVideoBatch;
 
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.client.auth.oauth2.Credential;
@@ -53,6 +54,7 @@ import org.datatransferproject.datatransfer.google.photos.GooglePhotosInterface;
 import org.datatransferproject.datatransfer.google.photos.PhotoResult;
 import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.spi.transfer.i18n.BaseMultilingualDictionary;
@@ -78,6 +80,10 @@ public class GoogleMediaImporter
 
   private final GoogleCredentialFactory credentialFactory;
   private final JobStore jobStore;
+  // TODO(aksingh737) why does one half of the Google photos interactions rely on DTP's
+  // TemporaryPerJobDataStore and the other half on. JobStore - how do these relate? can they be
+  // consilidated everywhere? at least in this class?
+  private final TemporaryPerJobDataStore dataStore;
   private final JsonFactory jsonFactory;
   private final ConnectionProvider connectionProvider;
   private final Monitor monitor;
@@ -97,12 +103,14 @@ public class GoogleMediaImporter
   public GoogleMediaImporter(
       GoogleCredentialFactory credentialFactory,
       JobStore jobStore,
+      TemporaryPerJobDataStore dataStore,
       JsonFactory jsonFactory,
       Monitor monitor,
       double writesPerSecond) {
     this(
         credentialFactory,
         jobStore,
+        dataStore,
         jsonFactory,
         new HashMap<>(),  /*photosInterfacesMap*/
         null,  /*photosInterface*/
@@ -116,6 +124,7 @@ public class GoogleMediaImporter
   GoogleMediaImporter(
       GoogleCredentialFactory credentialFactory,
       JobStore jobStore,
+      TemporaryPerJobDataStore dataStore,
       JsonFactory jsonFactory,
       Map<UUID, GooglePhotosInterface> photosInterfacesMap,
       GooglePhotosInterface photosInterface,
@@ -125,6 +134,7 @@ public class GoogleMediaImporter
       double writesPerSecond) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
+    this.dataStore = dataStore;
     this.jsonFactory = jsonFactory;
     this.photosInterfacesMap = photosInterfacesMap;
     this.photosInterface = photosInterface;
@@ -302,16 +312,32 @@ public class GoogleMediaImporter
       UUID jobId,
       TokensAndUrlAuthData authData)
       throws Exception {
-    return 0L; /* DO NOT MERGE */
+    return importItemsViaBatching(
+        videos,
+        VideoModel::getAlbumId,
+        BATCH_UPLOAD_SIZE,
+        executor,
+        jobId,
+        authData,
+        this::importMediaVideoBatch);
+  }
 
-//  return importItemsViaBatching(
-//      videos,
-//      VideoModel::getAlbumId,
-//      BATCH_UPLOAD_SIZE,
-//      executor,
-//      jobId,
-//      authData,
-//      this::importVideoBatch);
+
+  private long importMediaVideoBatch(
+      UUID jobId,
+      TokensAndUrlAuthData authData,
+      List<VideoModel> batch,
+      IdempotentImportExecutor executor,
+      String albumId)
+      throws Exception {
+    return importVideoBatch(
+          jobId,
+          batch,
+          dataStore,
+          photosLibraryClient,
+          executor,
+          connectionProvider,
+          monitor);
   }
 
   private void logMissingAlbumDetails(
