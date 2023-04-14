@@ -95,7 +95,6 @@ configure(sourceProjects()) {
         useJUnitPlatform()
         testLogging {
             events "passed", "skipped", "failed"
-            exceptionFormat "full"
         }
     }
 
