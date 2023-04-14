@@ -90,7 +90,7 @@ import org.datatransferproject.spi.transfer.idempotentexecutor.ItemImportResult;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.UploadErrorException;
-import org.datatransferproject.types.common.DownloadableItem;
+import org.datatransferproject.types.common.DownloadableFile;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
@@ -244,9 +244,6 @@ public class GoogleVideosInterface {
     return PhotosLibraryClient.initialize(settings);
   }
 
-//public static long uploadBatchOfVideos() throws Exception {
-//}
-
   /**
    * Uploads `video` via {@link com.google.photos.library.v1.PhotosLibraryClient} APIs.
    *
@@ -311,14 +308,16 @@ public class GoogleVideosInterface {
       UUID jobId,
       TemporaryPerJobDataStore dataStore,
       ConnectionProvider connectionProvider,
-      DownloadableItem video) throws IOException {
+      DownloadableFile video) throws IOException {
+    // TODO(aksingh737) switch from hardcoding mp4 to relying on DownloadableFile#getMimeType()'s
+    // direction
+    final String fileSuffix = "mp4";
     return createTempFile(
         jobId,
         dataStore,
         connectionProvider,
         video,
-        // TODO(aksingh737) should mp4 be hardcoded here?
-        "mp4" /*fileSuffix*/);
+        fileSuffix);
   }
 
   // TODO(aksingh737) factor this out into TemporaryPerJobDataStore which already has random/temp-file
@@ -327,7 +326,7 @@ public class GoogleVideosInterface {
       UUID jobId,
       TemporaryPerJobDataStore dataStore,
       ConnectionProvider connectionProvider,
-      DownloadableItem item,
+      DownloadableFile item,
       String fileSuffix) throws IOException {
     try (InputStream is = connectionProvider.getInputStreamForItem(jobId, item).getStream()) {
       return dataStore.getTempFileFromInputStream(is, item.getName(), fileSuffix);
