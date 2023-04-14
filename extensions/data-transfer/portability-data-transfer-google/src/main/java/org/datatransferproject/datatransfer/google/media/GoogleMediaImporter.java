@@ -365,6 +365,9 @@ public class GoogleMediaImporter
    *
    * Returns the number of uploaded bytes, as summed across all `items` that were uploaded.
    */
+  // TODO(aksingh737,jzacsh) WARNING: delete the duplicated GooglePhotosImporter code by pulling
+  // this out of Media into a new GphotoMedia class that exposes these methods for _both_
+  // GoogleMediaImporter _and_ GooglePhotosImporter to use.
   private <T extends DownloadableItem> long importItemsViaBatching(
       Collection<T> items,
       // TODO we could just specify we have FolderItem interface objects and call getFolderId, and
