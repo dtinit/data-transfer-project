@@ -338,9 +338,8 @@ public class GoogleVideosInterface {
   // a generic version so we don't have feature/bug development drift against our forks; see the
   // slowly-progressing effort to factor this code out with small interfaces, over in
   // GoogleMediaImporter.
-  // DO NOT MERGE  - rename this code into GoogleVideosInterface.uploadBatchOfVideos
   @VisibleForTesting
-  public static long importVideoBatch(
+  public static long uploadBatchOfVideos(
       UUID jobId,
       List<VideoModel> batchedVideos,
       TemporaryPerJobDataStore dataStore,

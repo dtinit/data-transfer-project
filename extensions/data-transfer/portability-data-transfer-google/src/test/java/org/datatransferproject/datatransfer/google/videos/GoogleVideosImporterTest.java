@@ -17,7 +17,7 @@
 package org.datatransferproject.datatransfer.google.videos;
 
 import static org.datatransferproject.datatransfer.google.videos.GoogleVideosInterface.buildMediaItem;
-import static org.datatransferproject.datatransfer.google.videos.GoogleVideosInterface.importVideoBatch;
+import static org.datatransferproject.datatransfer.google.videos.GoogleVideosInterface.uploadBatchOfVideos;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -65,6 +65,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentMatchers;
 
+// TODO(aksingh737,jzacsh) factor unit test logic out of here (if any existed) that was previously
+// covering the internal guarantees of what has now been factored out into our dependency:
+// GoogleVideosInterface.uploadBatchOfVideos. Said factored-out unit tests should live in
+// GoogleVideosInterfaceTest.java instead.
 public class GoogleVideosImporterTest {
 
   private static final String VIDEO_TITLE = "Model video title";
@@ -218,7 +222,7 @@ public class GoogleVideosImporterTest {
     when(connectionProvider.getInputStreamForItem(any(), any()))
         .thenReturn(mock(InputStreamWrapper.class));
     long length =
-        importVideoBatch(jobId,
+        uploadBatchOfVideos(jobId,
             Lists.newArrayList(
                 new VideoModel(
                     VIDEO_TITLE,
@@ -262,7 +266,7 @@ public class GoogleVideosImporterTest {
     InMemoryIdempotentImportExecutor executor =
         new InMemoryIdempotentImportExecutor(mock(Monitor.class));
     long length =
-        importVideoBatch(
+        uploadBatchOfVideos(
             jobId,
             Lists.newArrayList(
                 new VideoModel(
@@ -339,7 +343,7 @@ public class GoogleVideosImporterTest {
     when(connectionProvider.getInputStreamForItem(any(), any()))
         .thenReturn(mock(InputStreamWrapper.class));
     long length =
-        importVideoBatch(jobId,
+        uploadBatchOfVideos(jobId,
             Lists.newArrayList(
                 new VideoModel(
                     VIDEO_TITLE,
@@ -372,7 +376,7 @@ public class GoogleVideosImporterTest {
     GoogleVideosImporter googleVideosImporter =
         new GoogleVideosImporter(
             null, dataStore, mock(Monitor.class), connectionProvider, Map.of(jobId, client));
-    importVideoBatch(jobId,
+    uploadBatchOfVideos(jobId,
         Lists.newArrayList(
             new VideoModel(
                 VIDEO_TITLE,

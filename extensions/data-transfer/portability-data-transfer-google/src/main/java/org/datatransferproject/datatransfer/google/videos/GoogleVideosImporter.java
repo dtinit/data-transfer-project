@@ -32,7 +32,7 @@
 package org.datatransferproject.datatransfer.google.videos;
 
 import static org.datatransferproject.datatransfer.google.videos.GoogleVideosInterface.buildPhotosLibraryClient;
-import static org.datatransferproject.datatransfer.google.videos.GoogleVideosInterface.importVideoBatch;
+import static org.datatransferproject.datatransfer.google.videos.GoogleVideosInterface.uploadBatchOfVideos;
 import static org.datatransferproject.datatransfer.google.videos.GoogleVideosInterface.uploadVideo;
 
 import com.google.api.gax.core.FixedCredentialsProvider;
@@ -162,7 +162,7 @@ public class GoogleVideosImporter
       final UnmodifiableIterator<List<VideoModel>> batches =
           Iterators.partition(stream.iterator(), 49);
       while (batches.hasNext()) {
-        long batchBytes = importVideoBatch(
+        long batchBytes = uploadBatchOfVideos(
             jobId,
             batches.next(),
             dataStore,

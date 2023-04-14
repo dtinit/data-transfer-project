@@ -17,7 +17,7 @@ package org.datatransferproject.datatransfer.google.media;
 
 import static java.lang.String.format;
 import static org.datatransferproject.datatransfer.google.photos.GooglePhotosInterface.ERROR_HASH_MISMATCH;
-import static org.datatransferproject.datatransfer.google.videos.GoogleVideosInterface.importVideoBatch;
+import static org.datatransferproject.datatransfer.google.videos.GoogleVideosInterface.uploadBatchOfVideos;
 
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.client.auth.oauth2.Credential;
@@ -198,7 +198,10 @@ public class GoogleMediaImporter
         this::importPhotoBatch);
   }
 
-  // DO NOT MERGE - can probably already make this generic
+  // TODO(aksingh737,jzacsh) if we consolidate underlying gphtoos SDK approaches, then this and the
+  // GoogleVideosInterface.uploadBatchOfVideos function can be de-duped. Right now they interact with
+  // differnet APIs and while maybe possible, probably better to spend time on de-duping the
+  // underlying SDK wrappers first.
   private long importPhotoBatch(
       UUID jobId,
       TokensAndUrlAuthData authData,
@@ -319,18 +322,18 @@ public class GoogleMediaImporter
         executor,
         jobId,
         authData,
-        this::importMediaVideoBatch);
+        this::importVideosBatch);
   }
 
 
-  private long importMediaVideoBatch(
+  private long importVideosBatch(
       UUID jobId,
       TokensAndUrlAuthData authData,
       List<VideoModel> batch,
       IdempotentImportExecutor executor,
       String albumId)
       throws Exception {
-    return importVideoBatch(
+    return uploadBatchOfVideos(
           jobId,
           batch,
           dataStore,
