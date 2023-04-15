@@ -60,3 +60,6 @@ client-rest/dist/
 Thumbs.db
 
 app_data/
+
+**/**/.out
+**/**/**/protogen
