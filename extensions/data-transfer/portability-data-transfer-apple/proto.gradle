@@ -33,11 +33,6 @@ protobuf {
       artifact = "com.google.protobuf:protoc:${protobufVersion}"
     }
   }
-  generateProtoTasks {
-    all().each { task ->
-      rootProject.tasks['idea'].dependsOn task
-    }
-  }
 }
 
 idea {

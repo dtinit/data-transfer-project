@@ -29,7 +29,7 @@ plugins {
   id 'signing'
 }
 
-apply from: rootProject.file('gradle/proto/proto.gradle')
+apply from: project.file('proto.gradle')
 
 dependencies {
   compile project(':portability-spi-cloud')
