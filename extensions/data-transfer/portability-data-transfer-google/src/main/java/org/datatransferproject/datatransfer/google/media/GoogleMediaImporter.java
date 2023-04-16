@@ -44,7 +44,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GooglePhotosImportUtils;
-import org.datatransferproject.datatransfer.google.common.GPhotosUpload;
+import org.datatransferproject.datatransfer.google.common.gphotos.GPhotosUpload;
 import org.datatransferproject.datatransfer.google.mediaModels.BatchMediaItemResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.datatransferproject.datatransfer.google.common;
+package org.datatransferproject.datatransfer.google.common.gphotos;
 
 import static java.lang.String.format;
 import static org.datatransferproject.datatransfer.google.photos.GooglePhotosInterface.ERROR_HASH_MISMATCH;
