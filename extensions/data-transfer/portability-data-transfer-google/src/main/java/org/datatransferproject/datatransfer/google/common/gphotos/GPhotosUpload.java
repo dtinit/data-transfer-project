@@ -67,7 +67,7 @@ import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.spi.transfer.types.UploadErrorException;
-import org.datatransferproject.types.common.DownloadableItem;
+import org.datatransferproject.types.common.DownloadableFile;
 import org.datatransferproject.types.common.ImportableItem;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
@@ -109,12 +109,8 @@ public class GPhotosUpload {
   // TODO(aksingh737,jzacsh) WARNING: delete the duplicated GooglePhotosImporter code by pulling
   // this out of Media into a new GphotoMedia class that exposes these methods for _both_
   // GoogleMediaImporter _and_ GooglePhotosImporter to use.
-  public <T extends DownloadableItem> long uploadItemsViaBatching(
+  public <T extends DownloadableFile> long uploadItemsViaBatching(
       Collection<T> items,
-      // TODO we could just specify we have FolderItem interface objects and call getFolderId, and
-      // drop this getAlbumId parameter (FolderItem was introduced for similar purposes in via
-      // MicrosoftMedia* work).
-      Function<T, String> getAlbumId,
       ItemBatchUploader<T> importer)
       throws Exception {
     long bytes = 0L;
@@ -124,7 +120,7 @@ public class GPhotosUpload {
     Map<String, List<T>> itemsByAlbumId =
         items.stream()
             .filter(item -> !executor.isKeyCached(item.getIdempotentId()))
-            .collect(Collectors.groupingBy(getAlbumId));
+            .collect(Collectors.groupingBy(DownloadableFile::getFolderId));
 
     for (Entry<String, List<T>> albumEntry : itemsByAlbumId.entrySet()) {
       String originalAlbumId = albumEntry.getKey();

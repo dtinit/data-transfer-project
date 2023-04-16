@@ -193,7 +193,6 @@ public class GoogleMediaImporter
       throws Exception {
     return gPhotosUpload.uploadItemsViaBatching(
         photos,
-        PhotoModel::getAlbumId,
         this::importPhotoBatch);
   }
 
@@ -314,7 +313,6 @@ public class GoogleMediaImporter
       throws Exception {
     return gPhotosUpload.uploadItemsViaBatching(
         videos,
-        VideoModel::getAlbumId,
         this::importVideosBatch);
   }
 
