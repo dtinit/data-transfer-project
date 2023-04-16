@@ -172,6 +172,9 @@ public class GoogleMediaImporter
     return result.copyWithBytes(bytes);
   }
 
+  // TODO(aksingh737,jzacsh) fix unit tests across Google adapters to stop testing internal methods
+  // like these, and just test importItem() (of
+  // org.datatransferproject.spi.transfer.provider.Importer interface).
   @VisibleForTesting
   String importSingleAlbum(UUID jobId, TokensAndUrlAuthData authData, MediaAlbum inputAlbum)
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
