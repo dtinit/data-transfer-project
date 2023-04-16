@@ -156,7 +156,7 @@ public class GoogleMediaImporter
       // Nothing to do
       return ImportResult.OK;
     }
-    final GPhotosUpload gPhotosApi = new GPhotosUpload(jobId, idempotentImportExecutor, authData);
+    final GPhotosUpload gPhotosUpload = new GPhotosUpload(jobId, idempotentImportExecutor, authData);
 
     // Uploads album metadata
     for (MediaAlbum album : data.getAlbums()) {
@@ -165,8 +165,8 @@ public class GoogleMediaImporter
     }
 
     long bytes =
-        importPhotos(data.getPhotos(), gPhotosApi)
-        + importVideos(data.getVideos(), gPhotosApi);
+        importPhotos(data.getPhotos(), gPhotosUpload)
+        + importVideos(data.getVideos(), gPhotosUpload);
 
     final ImportResult result = ImportResult.OK;
     return result.copyWithBytes(bytes);
@@ -189,12 +189,10 @@ public class GoogleMediaImporter
 
   long importPhotos(
       Collection<PhotoModel> photos,
-      GPhotosUpload gPhotosApi)
+      GPhotosUpload gPhotosUpload)
       throws Exception {
-    return gPhotosApi.uploadItemsViaBatching(
+    return gPhotosUpload.uploadItemsViaBatching(
         photos,
-        PhotoModel::getAlbumId,
-        BATCH_UPLOAD_SIZE,
         this::importPhotoBatch);
   }
 
@@ -311,12 +309,10 @@ public class GoogleMediaImporter
 
   long importVideos(
       Collection<VideoModel> videos,
-      GPhotosUpload gPhotosApi)
+      GPhotosUpload gPhotosUpload)
       throws Exception {
-    return gPhotosApi.uploadItemsViaBatching(
+    return gPhotosUpload.uploadItemsViaBatching(
         videos,
-        VideoModel::getAlbumId,
-        BATCH_UPLOAD_SIZE,
         this::importVideosBatch);
   }
 
