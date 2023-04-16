@@ -137,11 +137,7 @@ public class GooglePhotosImporter
       idempotentImportExecutor.executeAndSwallowIOExceptions(
           album.getId(), album.getName(), () -> importSingleAlbum(jobId, authData, album));
     }
-
-    long bytes = gPhotosUpload.uploadItemsViaBatching(
-        data.getPhotos(),
-        PhotoModel::getAlbumId,
-        this::importPhotoBatch);
+    long bytes = importPhotos(data.getPhotos(), gPhotosUpload);
 
     final ImportResult result = ImportResult.OK;
     return result.copyWithBytes(bytes);
@@ -157,6 +153,12 @@ public class GooglePhotosImporter
     GoogleAlbum responseAlbum =
         getOrCreatePhotosInterface(jobId, authData).createAlbum(googleAlbum);
     return responseAlbum.getId();
+  }
+
+  @VisibleForTesting // TODO(aksingh737,jzacsh) stop exposing this to unit tests
+  public long importPhotos(Collection<PhotoModel> photos, GPhotosUpload gPhotosUpload)
+    throws Exception {
+    return gPhotosUpload.uploadItemsViaBatching(photos, this::importPhotoBatch);
   }
 
   // TODO(aksingh737) WARNING: stop maintaining this code here; use newer GPhotosUploader instead
