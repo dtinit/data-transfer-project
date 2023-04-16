@@ -87,6 +87,11 @@ public class GPhotosUpload {
   private IdempotentImportExecutor executor;
   private TokensAndUrlAuthData authData;
 
+  // We partition into groups of 49 as 50 is the maximum number of items that can be created
+  // in one call. (We use 49 to avoid potential off by one errors)
+  // https://developers.google.com/photos/library/guides/upload-media#creating-media-item
+  private static final int BATCH_UPLOAD_SIZE = 49;
+
   public GPhotosUpload(
       UUID jobId,
       IdempotentImportExecutor executor,
@@ -110,7 +115,6 @@ public class GPhotosUpload {
       // drop this getAlbumId parameter (FolderItem was introduced for similar purposes in via
       // MicrosoftMedia* work).
       Function<T, String> getAlbumId,
-      int batchSize,
       ItemBatchUploader<T> importer)
       throws Exception {
     long bytes = 0L;
@@ -136,7 +140,9 @@ public class GPhotosUpload {
       }
 
       UnmodifiableIterator<List<T>> batches =
-          Iterators.partition(albumEntry.getValue().iterator(), batchSize);
+          Iterators.partition(albumEntry.getValue().iterator(),
+          BATCH_UPLOAD_SIZE);
+
       while (batches.hasNext()) {
         long batchBytes =
             importer.uploadToAlbum(jobId, authData, batches.next(), executor, googleAlbumId);
