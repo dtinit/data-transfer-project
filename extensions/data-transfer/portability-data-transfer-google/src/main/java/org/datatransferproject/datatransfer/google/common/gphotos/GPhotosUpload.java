@@ -77,7 +77,6 @@ import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 
- /* DO NOT MERGE - rename this to GPhotosUploader and org.datatransferproject.datatransfer.google.common.gphotos */
 // TODO(aksingh737,jzacsh) finish refactoring Google{Photos,Video,Media}{Importer,Exporter} classes
 // so they're not all drifting-forks of each other, and instead share code with the help of small
 // interfaces. We can start by using some of the de-duplication that happened in
