@@ -161,7 +161,7 @@ public class GooglePhotosImporter
     return gPhotosUpload.uploadItemsViaBatching(photos, this::importPhotoBatch);
   }
 
-  // TODO(aksingh737) WARNING: stop maintaining this code here; use newer GPhotosUploader instead
+  // TODO(aksingh737) WARNING: stop maintaining this code here; use newer GPhotosUpload instead
   private long importPhotoBatch(
       UUID jobId,
       TokensAndUrlAuthData authData,

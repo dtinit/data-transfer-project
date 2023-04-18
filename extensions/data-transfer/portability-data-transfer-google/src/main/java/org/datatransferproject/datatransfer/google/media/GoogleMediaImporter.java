@@ -156,6 +156,9 @@ public class GoogleMediaImporter
       // Nothing to do
       return ImportResult.OK;
     }
+    // WARNING: this should be constructed PER request so as to not conflate job IDs or auth data
+    // across processes. That is: do NOT cache an instance of this object across your requests, say
+    // by storing the instance as a member of your adapter's Importer or Exporter implementations.
     final GPhotosUpload gPhotosUpload = new GPhotosUpload(jobId, idempotentImportExecutor, authData);
 
     // Uploads album metadata
