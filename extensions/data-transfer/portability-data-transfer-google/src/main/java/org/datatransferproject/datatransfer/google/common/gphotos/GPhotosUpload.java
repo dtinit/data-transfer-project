@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2023 The Data Transfer Project Authors.
  *
@@ -76,7 +75,18 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-
+/**
+ * Upload content to the Google Photos servers' APIs - be it photos, video, etc.
+ *
+ * APIs offered aim to be agnostic to file types, and try to be the general wrapper for all upload
+ * needs for the Photos SDKs, is in contrast to the predecessors used in the DTP codebase like
+ * {@link PhotosLibraryClient} or {@link GooglePhotosInterface} which are each used and/or managed
+ * for a specific use-case and we hope to delete in favor of classes in this package.
+ *
+ * WARNING: this should be constructed PER request so as to not conflate job IDs or auth data across
+ * processes. That is: do NOT cache an instance of this object across your requests, say by storing
+ * the instance as a member of your adapter's Importer or Exporter implementations.
+ */
 // TODO(aksingh737,jzacsh) finish refactoring Google{Photos,Video,Media}{Importer,Exporter} classes
 // so they're not all drifting-forks of each other, and instead share code with the help of small
 // interfaces. We can start by using some of the de-duplication that happened in
@@ -91,6 +101,11 @@ public class GPhotosUpload {
   // https://developers.google.com/photos/library/guides/upload-media#creating-media-item
   private static final int BATCH_UPLOAD_SIZE = 49;
 
+  /**
+   * WARNING: this should be constructed PER request so as to not conflate job IDs or auth data
+   * across processes. That is: do NOT cache an instance of this object across your requests, say by
+   * storing the instance as a member of your adapter's Importer or Exporter implementations.
+   */
   public GPhotosUpload(
       UUID jobId,
       IdempotentImportExecutor executor,
