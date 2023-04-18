@@ -154,7 +154,7 @@ public class GooglePhotosImporter
     return responseAlbum.getId();
   }
 
-  // TODO(aksingh737) WARNING: stop maintaining this code here; use newer GPhotosUploader instead
+  // TODO(aksingh737) WARNING: stop maintaining this code here; use newer GPhotosUpload instead
   long importPhotos(
       Collection<PhotoModel> photos,
       IdempotentImportExecutor executor,
@@ -197,7 +197,7 @@ public class GooglePhotosImporter
     return bytes;
   }
 
-  // TODO(aksingh737) WARNING: stop maintaining this code here; use newer GPhotosUploader instead
+  // TODO(aksingh737) WARNING: stop maintaining this code here; use newer GPhotosUpload instead
   private long importPhotoBatch(
       UUID jobId,
       TokensAndUrlAuthData authData,
