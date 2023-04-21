@@ -109,3 +109,6 @@ JB :
 theme:
 
 google_analytics: UA-51297152-3
+
+plugins:
+  - jekyll-redirect-from
