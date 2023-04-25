@@ -1,6 +1,6 @@
 ---
 title: How to particate
-redirect_to: https://dtinit.org/
+redirect_to: https://dtinit.org/community
 ---
 <div class="section" markdown="1">
 ## How to participate
