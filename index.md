@@ -2,6 +2,7 @@
 title: Data Transfer Project
 tagline:  a platform for transferring data
 description: Data Transfer Project is a collaboration of organizations committed to building a common framework with open-source code that can connect any two online service providers, enabling a seamless, direct transfer of data between the two platforms.
+redirect_to: https://dtinit.org/
 ---
 
 <div class="section" markdown="1">

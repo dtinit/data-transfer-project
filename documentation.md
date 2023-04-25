@@ -1,3 +1,7 @@
+---
+title: Technical Overview
+redirect_to: https://dtinit.org/documentation
+---
 <div class="section" markdown="1">
 ## Technical Overview
 <div class="mustache">

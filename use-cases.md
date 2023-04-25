@@ -1,3 +1,8 @@
+---
+title: Use Cases
+redirect_to: https://dtinit.org/use-cases
+---
+
 <div class="section" markdown="1">
 ## Data Transfer Project Use Cases
 <div class="mustache">

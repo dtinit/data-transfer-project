@@ -1,3 +1,7 @@
+---
+title: Project Updates
+redirect_to: https://dtinit.org/faq
+---
 <div class="section" markdown="1">
 ## Q: Are there common standards by which Data Transfer Project partners should abide in performing transfers?
 <div class="mustache">

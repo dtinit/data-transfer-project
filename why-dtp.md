@@ -1,3 +1,8 @@
+---
+Title: Why do we need the Data Transfer Project
+redirect_to: https://dtinit.org/why-dtp
+---
+
 <div class="section" markdown="1">
 ## Why do we need the DTP
 <div class="mustache">
