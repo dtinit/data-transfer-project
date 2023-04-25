@@ -16,8 +16,6 @@
 
 package org.datatransferproject.datatransfer.apple.constants;
 
-import org.jetbrains.annotations.NotNull;
-
 /** Constants that are specific to Photos & Videos. */
 public class ApplePhotosConstants {
   // Content transfer encoding chunk length, default 50MB
@@ -29,24 +27,7 @@ public class ApplePhotosConstants {
   // Maximum num of media import in a single request
   public static final Integer maxNewMediaRequests = 50;
   // maximum media size that can be transferred, default 50GB
-  public static final Long maxMediaTransferSize = 50_000_000_000L;
+  public static final Long maxMediaTransferByteSize = 50_000_000_000L;
   public static final String BYTES_KEY = "bytes";
   public static final String COUNT_KEY = "count";
-
-  public enum AppleMediaType {
-    IMAGE("image"),
-    VIDEO("video"),
-    MEDIA("media");
-
-    private final String val;
-
-    AppleMediaType(final String val) {
-      this.val = val;
-    }
-
-    @NotNull
-    public String toString() {
-      return this.val;
-    }
-  }
 }

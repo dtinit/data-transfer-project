@@ -27,6 +27,7 @@ import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportE
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.JobMetadata;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
@@ -66,26 +67,27 @@ public class AppleMediaImporter implements Importer<TokensAndUrlAuthData, MediaC
       return ImportResult.OK;
     }
 
-    AppleMediaInterface mediaInterface = getMediaInterface(authData);
+    AppleMediaInterface mediaInterface = factory
+      .getOrCreateMediaInterface(jobId, authData, appCredentials, exportingService, monitor);
 
     final int albumCount =
         mediaInterface.importAlbums(
             jobId,
             idempotentExecutor,
             data.getAlbums(),
-            ApplePhotosConstants.AppleMediaType.MEDIA.toString());
+          DataVertical.MEDIA.getDataType());
     final Map<String, Long> importResultMap =
         mediaInterface.importAllMedia(
             jobId,
             idempotentExecutor,
             data.getPhotos(),
-            ApplePhotosConstants.AppleMediaType.MEDIA.toString());
+          DataVertical.MEDIA.getDataType());
     final Map<String, Long> importVideosResult =
         mediaInterface.importAllMedia(
             jobId,
             idempotentExecutor,
             data.getVideos(),
-          ApplePhotosConstants.AppleMediaType.MEDIA.toString());
+          DataVertical.MEDIA.getDataType());
 
     final Map<String, Integer> counts =
         new ImmutableMap.Builder<String, Integer>()
@@ -103,10 +105,5 @@ public class AppleMediaImporter implements Importer<TokensAndUrlAuthData, MediaC
             importResultMap.getOrDefault(ApplePhotosConstants.BYTES_KEY, 0L)
                 + importVideosResult.getOrDefault(ApplePhotosConstants.BYTES_KEY, 0L))
         .copyWithCounts(counts);
-  }
-
-  private AppleMediaInterface getMediaInterface(TokensAndUrlAuthData authData) {
-        return factory.getOrCreateMediaInterface(authData, appCredentials,
-          exportingService, monitor);
   }
 }

@@ -78,7 +78,7 @@ public class AppleImporterTestBase {
     executor = new InMemoryIdempotentImportExecutor(monitor);
     mediaInterface = setupMediaInterface();
     factory = mock(AppleInterfaceFactory.class);
-    when(factory.getOrCreateMediaInterface(any(), any(), anyString(), any()))
+    when(factory.getOrCreateMediaInterface(any(), any(), any(), anyString(), any()))
       .thenReturn(mediaInterface);
   }
 

@@ -14,16 +14,10 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.datatransfer.apple.constants;
+package org.datatransferproject.datatransfer.apple;
 
 /**
- * Constants are applicable to all the verticals that Apple Supports.
+ * The Base Interface for all the {@link org.datatransferproject.types.common.models.DataVertical}s
+ * that Apple Supports.
  */
-public class AppleConstants {
-
-  private AppleConstants() {}
-
-  public static final String DTP_SERVICE_ID = "Apple";
-  public static final String APPLE_KEY = "APPLE_KEY";
-  public static final String APPLE_SECRET = "APPLE_SECRET";
-}
+public interface AppleBaseInterface { }

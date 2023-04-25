@@ -24,11 +24,11 @@ import java.util.stream.Collectors;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.apple.AppleInterfaceFactory;
 import org.datatransferproject.datatransfer.apple.constants.ApplePhotosConstants;
-import org.datatransferproject.datatransfer.apple.constants.ApplePhotosConstants.AppleMediaType;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.JobMetadata;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
@@ -73,7 +73,8 @@ public class ApplePhotosImporter
       return ImportResult.OK;
     }
 
-    AppleMediaInterface mediaInterface = getMediaInterface(authData);
+    AppleMediaInterface mediaInterface = factory
+      .getOrCreateMediaInterface(jobId, authData, appCredentials, exportingService, monitor);
 
     // Uploads album metadata
     final int albumCount =
@@ -83,13 +84,13 @@ public class ApplePhotosImporter
             data.getAlbums().stream()
                 .map(MediaAlbum::photoToMediaAlbum)
                 .collect(Collectors.toList()),
-            AppleMediaType.IMAGE.toString());
+            DataVertical.PHOTOS.getDataType());
     final Map<String, Long> importPhotosResult =
       mediaInterface.importAllMedia(
             jobId,
             idempotentImportExecutor,
             data.getPhotos(),
-            AppleMediaType.IMAGE.toString());
+            DataVertical.PHOTOS.getDataType());
 
     // generate import result
     final ImportResult result = ImportResult.OK;
@@ -103,10 +104,5 @@ public class ApplePhotosImporter
     return result
         .copyWithBytes(importPhotosResult.get(ApplePhotosConstants.BYTES_KEY))
         .copyWithCounts(counts);
-  }
-
-  private AppleMediaInterface getMediaInterface(TokensAndUrlAuthData authData) {
-    return factory.getOrCreateMediaInterface(authData, appCredentials,
-      exportingService, monitor);
   }
 }

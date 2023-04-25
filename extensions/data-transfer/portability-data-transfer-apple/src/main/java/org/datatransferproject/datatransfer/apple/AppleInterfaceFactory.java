@@ -16,7 +16,11 @@
 
 package org.datatransferproject.datatransfer.apple;
 
+import com.google.common.base.Preconditions;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.apple.photos.AppleMediaInterface;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
@@ -26,15 +30,18 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
  * The Factory class that creates the Apple Import Extensions.
  */
 public class AppleInterfaceFactory {
-  protected volatile AppleMediaInterface mediaInterface;
+
+  private static String errorMessage = "%s is required";
+  private Map<UUID, AppleBaseInterface> interfacesByAuthData = new HashMap<>();
   public synchronized AppleMediaInterface getOrCreateMediaInterface(
+    UUID jobId,
     TokensAndUrlAuthData authData,
     AppCredentials appCredentials,
     String exportingService,
     Monitor monitor) {
-    if (Objects.isNull(mediaInterface)) {
-      mediaInterface = makeMediaInterface(authData, appCredentials, exportingService, monitor);
-    }
+    AppleMediaInterface mediaInterface = (AppleMediaInterface)interfacesByAuthData
+      .computeIfAbsent(jobId, key ->  makeMediaInterface(authData, appCredentials,
+        exportingService, monitor));
     return mediaInterface;
   }
 
@@ -44,10 +51,10 @@ public class AppleInterfaceFactory {
     String exportingService,
     Monitor monitor) {
 
-    Objects.requireNonNull(authData);
-    Objects.requireNonNull(appCredentials);
-    Objects.requireNonNull(exportingService);
-    Objects.requireNonNull(monitor);
+    Preconditions.checkNotNull(authData, errorMessage, "authData");
+    Preconditions.checkNotNull(appCredentials, errorMessage, "appCredentials");
+    Preconditions.checkNotNull(exportingService, errorMessage, "exportingService");
+    Preconditions.checkNotNull(monitor, errorMessage, "monitor");
 
     return new AppleMediaInterface(authData, appCredentials, exportingService, monitor);
   }

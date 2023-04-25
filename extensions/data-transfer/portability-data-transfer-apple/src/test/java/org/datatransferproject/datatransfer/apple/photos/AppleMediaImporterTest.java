@@ -17,9 +17,13 @@ package org.datatransferproject.datatransfer.apple.photos;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.apache.http.HttpStatus.SC_OK;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -27,11 +31,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.datatransferproject.datatransfer.apple.AppleInterfaceFactory;
-import org.datatransferproject.datatransfer.apple.constants.ApplePhotosConstants.AppleMediaType;
 import org.datatransferproject.datatransfer.apple.photos.photosproto.PhotosProtocol;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
@@ -101,11 +104,11 @@ public class AppleMediaImporterTest extends AppleImporterTestBase {
         videos.stream().map(VideoModel::getDataId).collect(Collectors.toList());
 
     verify(mediaInterface)
-        .createAlbums(uuid.toString(), AppleMediaType.MEDIA.toString(), mediaAlbums);
+        .createAlbums(uuid.toString(), DataVertical.MEDIA.getDataType(), mediaAlbums);
     verify(mediaInterface)
-        .getUploadUrl(uuid.toString(), AppleMediaType.MEDIA.toString(), photosDataIds);
+        .getUploadUrl(uuid.toString(), DataVertical.MEDIA.getDataType(), photosDataIds);
     verify(mediaInterface)
-        .getUploadUrl(uuid.toString(), AppleMediaType.MEDIA.toString(), videosDataIds);
+        .getUploadUrl(uuid.toString(), DataVertical.MEDIA.getDataType(), videosDataIds);
     verify(mediaInterface, times(2)).uploadContent(anyMap(), anyList());
     verify(mediaInterface, times(2)).createMedia(anyString(), anyString(), anyList());
 

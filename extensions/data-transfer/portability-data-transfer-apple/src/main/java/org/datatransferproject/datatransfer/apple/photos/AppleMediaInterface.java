@@ -44,6 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import org.apache.commons.io.IOUtils;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.datatransfer.apple.AppleBaseInterface;
 import org.datatransferproject.datatransfer.apple.constants.ApplePhotosConstants;
 import org.datatransferproject.datatransfer.apple.constants.AuditKeys;
 import org.datatransferproject.datatransfer.apple.constants.Headers;
@@ -82,7 +83,7 @@ import org.json.simple.parser.ParseException;
 /**
  * An interface that is synonymous to HTTP client to interact with the Apple Photos APIs.
  */
-public class AppleMediaInterface {
+public class AppleMediaInterface implements AppleBaseInterface {
 
   protected String baseUrl;
   protected AppCredentials appCredentials;
@@ -186,7 +187,7 @@ public class AppleMediaInterface {
             data = downloadClient.downloadBytes(maxRequestBytes)) {
           totalSize += data.length;
 
-          if (totalSize > ApplePhotosConstants.maxMediaTransferSize) {
+          if (totalSize > ApplePhotosConstants.maxMediaTransferByteSize) {
             monitor.severe(
               () -> "file too large to import to Apple: ",
               AuditKeys.dataId, dataId,
@@ -249,10 +250,10 @@ public class AppleMediaInterface {
       con.setRequestMethod("POST");
       con.setRequestProperty(Headers.AUTHORIZATION.getValue(), authData.getAccessToken());
       con.setRequestProperty(Headers.CORRELATION_ID.getValue(), appleRequestUUID);
-      if (url.contains(
-          baseUrl)) { // which means we are not sending request to get access token, the
+      if (url.contains(baseUrl)) {
+        // which means we are not sending request to get access token, the
         // contentStream is not filled with params, but with DTP transfer request
-        con.setRequestProperty("Content-Type", "");
+        con.setRequestProperty(Headers.CONTENT_TYPE.getValue(), "");
       }
       IOUtils.write(requestData, con.getOutputStream());
       responseString = IOUtils.toString(con.getInputStream(), StandardCharsets.ISO_8859_1);

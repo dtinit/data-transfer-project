@@ -24,7 +24,9 @@ import org.jetbrains.annotations.Nullable;
 /** Http Header names. */
 public enum Headers {
   AUTHORIZATION("Authorization"),
-  CORRELATION_ID("X-Apple-Request-UUID");
+  CORRELATION_ID("X-Apple-Request-UUID"),
+  CONTENT_TYPE("Content-Type");
+
 
   private final String value;
 

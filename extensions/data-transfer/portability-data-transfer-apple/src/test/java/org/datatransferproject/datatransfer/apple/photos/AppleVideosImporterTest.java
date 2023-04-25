@@ -4,8 +4,10 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.apache.http.HttpStatus.SC_INTERNAL_SERVER_ERROR;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.datatransferproject.types.common.models.media.MediaContainerResource.VIDEOS_COUNT_DATA_NAME;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.io.Serializable;
@@ -14,8 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.datatransferproject.datatransfer.apple.constants.ApplePhotosConstants;
-import org.datatransferproject.datatransfer.apple.constants.ApplePhotosConstants.AppleMediaType;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
@@ -56,7 +58,7 @@ public class AppleVideosImporterTest extends AppleImporterTestBase {
     verify(mediaInterface)
         .getUploadUrl(
             uuid.toString(),
-            AppleMediaType.VIDEO.toString(),
+            DataVertical.VIDEOS.getDataType(),
             videos.stream().map(VideoModel::getDataId).collect(Collectors.toList()));
     verify(mediaInterface).uploadContent(anyMap(), anyList());
     verify(mediaInterface).createMedia(anyString(), anyString(), anyList());
@@ -99,14 +101,14 @@ public class AppleVideosImporterTest extends AppleImporterTestBase {
     verify(mediaInterface)
         .getUploadUrl(
             uuid.toString(),
-            AppleMediaType.VIDEO.toString(),
+            DataVertical.VIDEOS.getDataType(),
             videos.subList(0, ApplePhotosConstants.maxNewMediaRequests).stream()
                 .map(VideoModel::getDataId)
                 .collect(Collectors.toList()));
     verify(mediaInterface)
         .getUploadUrl(
             uuid.toString(),
-            AppleMediaType.VIDEO.toString(),
+            DataVertical.VIDEOS.getDataType(),
             videos.subList(ApplePhotosConstants.maxNewMediaRequests, videoCount).stream()
                 .map(VideoModel::getDataId)
                 .collect(Collectors.toList()));
@@ -154,14 +156,14 @@ public class AppleVideosImporterTest extends AppleImporterTestBase {
     verify(mediaInterface)
         .getUploadUrl(
             uuid.toString(),
-            AppleMediaType.VIDEO.toString(),
+            DataVertical.VIDEOS.getDataType(),
             videos.subList(0, ApplePhotosConstants.maxNewMediaRequests).stream()
                 .map(VideoModel::getDataId)
                 .collect(Collectors.toList()));
     verify(mediaInterface)
         .getUploadUrl(
             uuid.toString(),
-            AppleMediaType.VIDEO.toString(),
+            DataVertical.VIDEOS.getDataType(),
             videos.subList(ApplePhotosConstants.maxNewMediaRequests, videoCount).stream()
                 .map(VideoModel::getDataId)
                 .collect(Collectors.toList()));

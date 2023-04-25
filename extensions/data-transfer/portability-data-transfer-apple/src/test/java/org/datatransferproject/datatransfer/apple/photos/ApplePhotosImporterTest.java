@@ -21,8 +21,13 @@ import static org.apache.http.HttpStatus.SC_OK;
 import static org.datatransferproject.types.common.models.photos.PhotosContainerResource.ALBUMS_COUNT_DATA_NAME;
 import static org.datatransferproject.types.common.models.photos.PhotosContainerResource.PHOTOS_COUNT_DATA_NAME;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyCollection;
+import static org.mockito.Mockito.anyList;
+import static org.mockito.Mockito.anyMap;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -32,12 +37,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.datatransferproject.datatransfer.apple.constants.ApplePhotosConstants;
-import org.datatransferproject.datatransfer.apple.constants.ApplePhotosConstants.AppleMediaType;
 import org.datatransferproject.datatransfer.apple.photos.photosproto.PhotosProtocol.CreateAlbumsResponse;
 import org.datatransferproject.datatransfer.apple.photos.photosproto.PhotosProtocol.NewPhotoAlbumResponse;
 import org.datatransferproject.datatransfer.apple.photos.photosproto.PhotosProtocol.Status;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
@@ -79,7 +84,7 @@ public class ApplePhotosImporterTest extends AppleImporterTestBase {
     verify(mediaInterface)
         .createAlbums(
             uuid.toString(),
-            AppleMediaType.IMAGE.toString(),
+            DataVertical.PHOTOS.getDataType(),
             data.getAlbums().stream()
                 .map(MediaAlbum::photoToMediaAlbum)
                 .collect(Collectors.toList()));
@@ -116,14 +121,14 @@ public class ApplePhotosImporterTest extends AppleImporterTestBase {
     verify(mediaInterface)
         .createAlbums(
             uuid.toString(),
-            AppleMediaType.IMAGE.toString(),
+            DataVertical.PHOTOS.getDataType(),
             photoAlbums.subList(0, ApplePhotosConstants.maxNewAlbumRequests).stream()
                 .map(MediaAlbum::photoToMediaAlbum)
                 .collect(Collectors.toList()));
     verify(mediaInterface)
         .createAlbums(
             uuid.toString(),
-            AppleMediaType.IMAGE.toString(),
+            DataVertical.PHOTOS.getDataType(),
             photoAlbums.subList(ApplePhotosConstants.maxNewAlbumRequests, albumCount).stream()
                 .map(MediaAlbum::photoToMediaAlbum)
                 .collect(Collectors.toList()));
@@ -162,14 +167,14 @@ public class ApplePhotosImporterTest extends AppleImporterTestBase {
     verify(mediaInterface)
         .createAlbums(
             uuid.toString(),
-            AppleMediaType.IMAGE.toString(),
+            DataVertical.PHOTOS.getDataType(),
             photoAlbums.subList(0, ApplePhotosConstants.maxNewAlbumRequests).stream()
                 .map(MediaAlbum::photoToMediaAlbum)
                 .collect(Collectors.toList()));
     verify(mediaInterface)
         .createAlbums(
             uuid.toString(),
-            AppleMediaType.IMAGE.toString(),
+            DataVertical.PHOTOS.getDataType(),
             photoAlbums.subList(ApplePhotosConstants.maxNewAlbumRequests, albumCount).stream()
                 .map(MediaAlbum::photoToMediaAlbum)
                 .collect(Collectors.toList()));
@@ -231,7 +236,7 @@ public class ApplePhotosImporterTest extends AppleImporterTestBase {
         photos.stream().map(PhotoModel::getDataId).collect(Collectors.toList());
     verify(mediaInterface)
         .getUploadUrl(
-            uuid.toString(), AppleMediaType.IMAGE.toString(), dataIds);
+            uuid.toString(), DataVertical.PHOTOS.getDataType(), dataIds);
     verify(mediaInterface).uploadContent(anyMap(), anyList());
     verify(mediaInterface).createMedia(anyString(), anyString(), anyList());
 
@@ -275,14 +280,14 @@ public class ApplePhotosImporterTest extends AppleImporterTestBase {
     verify(mediaInterface)
         .getUploadUrl(
             uuid.toString(),
-            AppleMediaType.IMAGE.toString(),
+            DataVertical.PHOTOS.getDataType(),
             photos.subList(0, ApplePhotosConstants.maxNewMediaRequests).stream()
                 .map(PhotoModel::getDataId)
                 .collect(Collectors.toList()));
     verify(mediaInterface)
         .getUploadUrl(
             uuid.toString(),
-            AppleMediaType.IMAGE.toString(),
+            DataVertical.PHOTOS.getDataType(),
             photos.subList(ApplePhotosConstants.maxNewMediaRequests, photoCount).stream()
                 .map(PhotoModel::getDataId)
                 .collect(Collectors.toList()));
@@ -339,14 +344,14 @@ public class ApplePhotosImporterTest extends AppleImporterTestBase {
     verify(mediaInterface)
         .getUploadUrl(
             uuid.toString(),
-            AppleMediaType.IMAGE.toString(),
+            DataVertical.PHOTOS.getDataType(),
             photos.subList(0, ApplePhotosConstants.maxNewMediaRequests).stream()
                 .map(PhotoModel::getDataId)
                 .collect(Collectors.toList()));
     verify(mediaInterface)
         .getUploadUrl(
             uuid.toString(),
-            AppleMediaType.IMAGE.toString(),
+            DataVertical.PHOTOS.getDataType(),
             photos.subList(ApplePhotosConstants.maxNewMediaRequests, photoCount).stream()
                 .map(PhotoModel::getDataId)
                 .collect(Collectors.toList()));

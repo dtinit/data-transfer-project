@@ -18,7 +18,7 @@ package org.datatransferproject.datatransfer.apple;
 
 import static org.datatransferproject.datatransfer.apple.constants.AppleConstants.APPLE_KEY;
 import static org.datatransferproject.datatransfer.apple.constants.AppleConstants.APPLE_SECRET;
-import static org.datatransferproject.datatransfer.apple.constants.AppleConstants.SERVICE_ID;
+import static org.datatransferproject.datatransfer.apple.constants.AppleConstants.DTP_SERVICE_ID;
 import static org.datatransferproject.types.common.models.DataVertical.MEDIA;
 import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
 import static org.datatransferproject.types.common.models.DataVertical.VIDEOS;
@@ -51,7 +51,7 @@ public class AppleTransferExtension implements TransferExtension {
 
   @Override
   public String getServiceId() {
-    return SERVICE_ID;
+    return DTP_SERVICE_ID;
   }
 
   @Override
