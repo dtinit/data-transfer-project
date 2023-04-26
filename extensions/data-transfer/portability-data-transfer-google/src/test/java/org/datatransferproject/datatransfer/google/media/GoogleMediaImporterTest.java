@@ -74,7 +74,7 @@ public class GoogleMediaImporterTest {
   private String JPEG_MEDIA_TYPE = "image/jpeg";
   private String SHA1 = "11aa11AAff11aa11AAFF11aa11AAff11aa11AAFF";
   private UUID uuid = UUID.randomUUID();
-  private GoogleMediaImporter googlePhotosImporter;
+  private GoogleMediaImporter googleMediaImporter;
   private GooglePhotosInterface googlePhotosInterface;
   private PhotosLibraryClient photosLibraryClient;
   private IdempotentImportExecutor executor;
@@ -103,7 +103,7 @@ public class GoogleMediaImporterTest {
     Mockito.when(connectionProvider.getInputStreamForItem(any(), any())).thenReturn(is);
     photosLibraryClient = mock(PhotosLibraryClient.class);
 
-    googlePhotosImporter =
+    googleMediaImporter =
         new GoogleMediaImporter(
             null,  /*credentialFactory*/
             jobStore,
@@ -130,7 +130,7 @@ public class GoogleMediaImporterTest {
         .thenReturn(responseAlbum);
 
     // Run test
-    googlePhotosImporter.importSingleAlbum(uuid, null, albumModel);
+    googleMediaImporter.importSingleAlbum(uuid, null, albumModel);
 
     // Check results
     ArgumentCaptor<GoogleAlbum> albumArgumentCaptor = ArgumentCaptor.forClass(GoogleAlbum.class);
@@ -174,7 +174,7 @@ public class GoogleMediaImporterTest {
     Mockito.when(googlePhotosInterface.createPhotos(any(NewMediaItemUpload.class)))
         .thenReturn(batchMediaItemResponse);
 
-    long length = googlePhotosImporter.importPhotos(Lists.newArrayList(photoModel1, photoModel2),
+    long length = googleMediaImporter.importPhotos(Lists.newArrayList(photoModel1, photoModel2),
         executor, UUID.randomUUID(), mock(TokensAndUrlAuthData.class));
     // Two photos of 32L each imported
     assertEquals(64L, length);
@@ -228,7 +228,7 @@ public class GoogleMediaImporterTest {
     Mockito.when(googlePhotosInterface.createPhotos(any(NewMediaItemUpload.class)))
         .thenReturn(batchMediaItemResponse);
 
-    long length = googlePhotosImporter.importPhotos(Lists.newArrayList(photoModel1, photoModel2),
+    long length = googleMediaImporter.importPhotos(Lists.newArrayList(photoModel1, photoModel2),
         executor, UUID.randomUUID(), mock(TokensAndUrlAuthData.class));
     // Only one photo of 32L imported
     assertEquals(32L, length);
@@ -264,7 +264,7 @@ public class GoogleMediaImporterTest {
 
     // No photo imported and will return a hash mismatch error for investigation.
     assertThrows(UploadErrorException.class,
-        () -> googlePhotosImporter.importPhotos(Lists.newArrayList(photoModel), executor,
+        () -> googleMediaImporter.importPhotos(Lists.newArrayList(photoModel), executor,
             UUID.randomUUID(), mock(TokensAndUrlAuthData.class)));
 
     String failedDataId = String.format("%s-%s", OLD_ALBUM_ID, "oldPhotoID1");
@@ -373,7 +373,7 @@ public class GoogleMediaImporterTest {
     Mockito.doNothing().when(jobStore).removeData(any(), anyString());
 
     ConnectionProvider connectionProvider = new ConnectionProvider(jobStore);
-    GoogleMediaImporter googlePhotosImporter =
+    GoogleMediaImporter googleMediaImporter =
         new GoogleMediaImporter(
             null,  /*credentialFactory*/
             jobStore,
@@ -395,7 +395,7 @@ public class GoogleMediaImporterTest {
 
     UUID jobId = UUID.randomUUID();
 
-    googlePhotosImporter.importPhotos(Lists.newArrayList(photoModel), executor, jobId,
+    googleMediaImporter.importPhotos(Lists.newArrayList(photoModel), executor, jobId,
         mock(TokensAndUrlAuthData.class));
     assertTrue(executor.isKeyCached(String.format("%s-%s", OLD_ALBUM_ID, "oldPhotoID1")));
     Mockito.verify(jobStore, Mockito.times(1)).removeData(any(), anyString());
@@ -425,7 +425,7 @@ public class GoogleMediaImporterTest {
     Mockito.doNothing().when(jobStore).removeData(any(), anyString());
 
     ConnectionProvider connectionProvider = new ConnectionProvider(jobStore);
-    GoogleMediaImporter googlePhotosImporter =
+    GoogleMediaImporter googleMediaImporter =
         new GoogleMediaImporter(
             null,  /*credentialFactory*/
             jobStore,
@@ -447,7 +447,7 @@ public class GoogleMediaImporterTest {
 
     UUID jobId = UUID.randomUUID();
 
-    googlePhotosImporter.importPhotos(Lists.newArrayList(photoModel), executor, jobId,
+    googleMediaImporter.importPhotos(Lists.newArrayList(photoModel), executor, jobId,
         mock(TokensAndUrlAuthData.class));
     Mockito.verify(jobStore, Mockito.times(0)).removeData(any(), anyString());
     Mockito.verify(jobStore, Mockito.times(1)).getStream(any(), anyString());
@@ -473,7 +473,7 @@ public class GoogleMediaImporterTest {
         .thenReturn(
             new TemporaryPerJobDataStore.InputStreamWrapper(
                 new ByteArrayInputStream("TestingBytes".getBytes())));
-    googlePhotosImporter =
+    googleMediaImporter =
         new GoogleMediaImporter(
             null,  /*credentialFactory*/
             jobStore,
@@ -491,7 +491,7 @@ public class GoogleMediaImporterTest {
     GoogleAlbum responseAlbum = new GoogleAlbum();
     Mockito.when(googlePhotosInterface.getAlbum(any())).thenReturn(responseAlbum);
 
-    long bytes = googlePhotosImporter.importPhotos(Lists.newArrayList(photoModel), executor, uuid,
+    long bytes = googleMediaImporter.importPhotos(Lists.newArrayList(photoModel), executor, uuid,
         mock(TokensAndUrlAuthData.class));
 
     // didn't throw
@@ -518,7 +518,7 @@ public class GoogleMediaImporterTest {
         .thenReturn(
             new TemporaryPerJobDataStore.InputStreamWrapper(
                 new ByteArrayInputStream("TestingBytes".getBytes())));
-    googlePhotosImporter =
+    googleMediaImporter =
         new GoogleMediaImporter(
             null,  /*credentialFactory*/
             jobStore,
@@ -538,7 +538,7 @@ public class GoogleMediaImporterTest {
     Mockito.when(googlePhotosInterface.getAlbum(any())).thenReturn(responseAlbum);
 
     assertThrows(IOException.class,
-        () -> googlePhotosImporter.importPhotos(Lists.newArrayList(photoModel), executor, uuid,
+        () -> googleMediaImporter.importPhotos(Lists.newArrayList(photoModel), executor, uuid,
             mock(TokensAndUrlAuthData.class)));
   }
 }
