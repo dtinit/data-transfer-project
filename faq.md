@@ -52,6 +52,6 @@ No, when a user initiates a data transfer, their encrypted information flows fro
 
 DTP is an open source project centered around the idea that less-resourced companies can use and build on the common models and codebase developed by the community of contributors. All companies are welcome to participate. Although the DTP reduces the technical burdens of service-to-service transfers, development work is required of each participating organization. Deciding to participate in the project may require shifting limited resources from other  priorities. We are continuing to make integrating with DTP easier. Our goal is to help companies of all sizes realize the value of providing users more control over their data.
 
-If you are interested in joining the project, please visit our [community]({{site.baseurl}}/community) page to learn how.
+If you are interested in joining the project, please visit the [community]({{site.baseurl}}/community) page to learn how.
 
 </div>
