@@ -1,3 +1,8 @@
+---
+Title: What is the Data Transfer Project
+redirect_to: https://dtinit.org/what-is-dtp
+---
+
 <div class="section" markdown="1">
 ## What is the Data Transfer Project
 <div class="mustache">
