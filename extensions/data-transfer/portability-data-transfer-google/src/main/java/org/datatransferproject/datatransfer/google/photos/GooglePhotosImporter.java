@@ -40,6 +40,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GooglePhotosImportUtils;
+import org.datatransferproject.datatransfer.google.common.gphotos.GPhotosUpload;
 import org.datatransferproject.datatransfer.google.mediaModels.BatchMediaItemResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;
@@ -130,13 +131,13 @@ public class GooglePhotosImporter
       // Nothing to do
       return ImportResult.OK;
     }
+    GPhotosUpload gPhotosUpload = new GPhotosUpload(jobId, idempotentImportExecutor, authData);
 
     for (PhotoAlbum album : data.getAlbums()) {
       idempotentImportExecutor.executeAndSwallowIOExceptions(
           album.getId(), album.getName(), () -> importSingleAlbum(jobId, authData, album));
     }
-
-    long bytes = importPhotos(data.getPhotos(), idempotentImportExecutor, jobId, authData);
+    long bytes = importPhotos(data.getPhotos(), gPhotosUpload);
 
     final ImportResult result = ImportResult.OK;
     return result.copyWithBytes(bytes);
@@ -154,47 +155,10 @@ public class GooglePhotosImporter
     return responseAlbum.getId();
   }
 
-  // TODO(aksingh737) WARNING: stop maintaining this code here; use newer GPhotosUpload instead
-  long importPhotos(
-      Collection<PhotoModel> photos,
-      IdempotentImportExecutor executor,
-      UUID jobId,
-      TokensAndUrlAuthData authData)
-      throws Exception {
-    long bytes = 0L;
-    // Uploads photos
-    if (photos != null && photos.size() > 0) {
-      Map<String, List<PhotoModel>> photosByAlbum =
-          photos.stream()
-              .filter(photo -> !executor.isKeyCached(photo.getIdempotentId()))
-              .collect(Collectors.groupingBy(PhotoModel::getAlbumId));
-
-      for (Entry<String, List<PhotoModel>> albumEntry : photosByAlbum.entrySet()) {
-        String originalAlbumId = albumEntry.getKey();
-        String googleAlbumId;
-        if (Strings.isNullOrEmpty(originalAlbumId)) {
-          // This is ok, since NewMediaItemUpload will ignore all null values and it's possible to
-          // upload a NewMediaItem without a corresponding album id.
-          googleAlbumId = null;
-        } else {
-          // Note this will throw if creating the album failed, which is what we want
-          // because that will also mark this photo as being failed.
-          googleAlbumId = executor.getCachedValue(originalAlbumId);
-        }
-
-        // We partition into groups of 49 as 50 is the maximum number of items that can be created
-        // in one call. (We use 49 to avoid potential off by one errors)
-        // https://developers.google.com/photos/library/guides/upload-media#creating-media-item
-        UnmodifiableIterator<List<PhotoModel>> batches =
-            Iterators.partition(albumEntry.getValue().iterator(), 49);
-        while (batches.hasNext()) {
-          long batchBytes =
-              importPhotoBatch(jobId, authData, batches.next(), executor, googleAlbumId);
-          bytes += batchBytes;
-        }
-      }
-    }
-    return bytes;
+  @VisibleForTesting // TODO(aksingh737,jzacsh) stop exposing this to unit tests
+  public long importPhotos(Collection<PhotoModel> photos, GPhotosUpload gPhotosUpload)
+    throws Exception {
+    return gPhotosUpload.uploadItemsViaBatching(photos, this::importPhotoBatch);
   }
 
   // TODO(aksingh737) WARNING: stop maintaining this code here; use newer GPhotosUpload instead
