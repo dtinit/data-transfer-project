@@ -154,11 +154,7 @@ public class GooglePhotosImporter
     return responseAlbum.getId();
   }
 
-  // TODO(aksingh737) WARNING: stop maintaining this code here; this needs to be reconciled against
-  // a generic version so we don't have feature/bug development drift against our forks; see the
-  // slowly-progressing effort to factor this code out with small interfaces, over in
-  // GoogleMediaImporter. (eg: once GoogleMediaImporter factors its importItemsViaBatching function
-  // out, all of this code can be deleted).
+  // TODO(aksingh737) WARNING: stop maintaining this code here; use newer GPhotosUpload instead
   long importPhotos(
       Collection<PhotoModel> photos,
       IdempotentImportExecutor executor,
@@ -201,10 +197,7 @@ public class GooglePhotosImporter
     return bytes;
   }
 
-  // TODO(aksingh737) WARNING: stop maintaining this code here; this needs to be reconciled against
-  // a generic version so we don't have feature/bug development drift against our forks; see the
-  // slowly-progressing effort to factor this code out with small interfaces, over in
-  // GoogleMediaImporter.
+  // TODO(aksingh737) WARNING: stop maintaining this code here; use newer GPhotosUpload instead
   private long importPhotoBatch(
       UUID jobId,
       TokensAndUrlAuthData authData,
