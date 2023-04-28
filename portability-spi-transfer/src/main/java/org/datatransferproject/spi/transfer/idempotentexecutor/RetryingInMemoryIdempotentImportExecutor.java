@@ -21,7 +21,6 @@ import static java.lang.String.format;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.inject.Provider;
 import java.io.IOException;
 import java.io.Serializable;
 import java.time.Clock;
@@ -44,13 +43,12 @@ public class RetryingInMemoryIdempotentImportExecutor implements IdempotentImpor
   private final Map<String, ErrorDetail> recentErrors = new HashMap<>();
   private final Monitor monitor;
   private UUID jobId;
-
-  private final Provider<RetryStrategyLibrary> retryStrategyLibraryProvider;
+  private final RetryStrategyLibrary retryStrategyLibrary;
 
   public RetryingInMemoryIdempotentImportExecutor(
-      Monitor monitor, Provider<RetryStrategyLibrary> retryStrategyLibraryProvider) {
+      Monitor monitor, RetryStrategyLibrary  retryStrategyLibrary) {
     this.monitor = monitor;
-    this.retryStrategyLibraryProvider = retryStrategyLibraryProvider;
+    this.retryStrategyLibrary = retryStrategyLibrary;
   }
 
   @Override
@@ -73,7 +71,7 @@ public class RetryingInMemoryIdempotentImportExecutor implements IdempotentImpor
     RetryingCallable<T> retryingCallable =
         new RetryingCallable<>(
             callable,
-            retryStrategyLibraryProvider.get(),
+            retryStrategyLibrary,
             Clock.systemUTC(),
             monitor,
             JobMetadata.getDataType(),

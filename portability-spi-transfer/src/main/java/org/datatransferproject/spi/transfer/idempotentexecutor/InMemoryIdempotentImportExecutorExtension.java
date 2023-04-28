@@ -11,8 +11,6 @@ import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 public class InMemoryIdempotentImportExecutorExtension
     implements IdempotentImportExecutorExtension {
 
-  private Provider<RetryStrategyLibrary> retryStrategyLibraryProvider;
-
   @Override
   public IdempotentImportExecutor getIdempotentImportExecutor(ExtensionContext extensionContext) {
     return new InMemoryIdempotentImportExecutor(extensionContext.getMonitor());
@@ -20,7 +18,7 @@ public class InMemoryIdempotentImportExecutorExtension
 
   @Override
   public IdempotentImportExecutor getRetryingIdempotentImportExecutor(ExtensionContext extensionContext){
-    return new RetryingInMemoryIdempotentImportExecutor(extensionContext.getMonitor(), retryStrategyLibraryProvider);
+    return new RetryingInMemoryIdempotentImportExecutor(extensionContext.getMonitor(), extensionContext.getSetting("retryLibrary", null));
   }
 
   @Override
