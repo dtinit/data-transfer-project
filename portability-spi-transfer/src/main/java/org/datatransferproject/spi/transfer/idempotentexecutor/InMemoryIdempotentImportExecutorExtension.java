@@ -1,6 +1,5 @@
 package org.datatransferproject.spi.transfer.idempotentexecutor;
 
-import com.google.inject.Provider;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
