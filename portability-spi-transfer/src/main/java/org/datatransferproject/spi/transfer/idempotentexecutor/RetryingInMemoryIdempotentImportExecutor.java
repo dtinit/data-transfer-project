@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 import org.datatransferproject.types.transfer.retry.RetryingCallable;
@@ -73,9 +72,7 @@ public class RetryingInMemoryIdempotentImportExecutor implements IdempotentImpor
             callable,
             retryStrategyLibrary,
             Clock.systemUTC(),
-            monitor,
-            JobMetadata.getDataType(),
-            JobMetadata.getExportService());
+            monitor);
 
     if (knownValues.containsKey(idempotentId)) {
       monitor.debug(
