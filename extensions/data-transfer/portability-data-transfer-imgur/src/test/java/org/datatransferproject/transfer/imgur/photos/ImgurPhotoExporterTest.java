@@ -18,14 +18,22 @@ package org.datatransferproject.transfer.imgur.photos;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.util.IOUtils;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Optional;
 import java.util.UUID;
 import okhttp3.OkHttpClient;
@@ -44,6 +52,8 @@ import org.junit.After;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -55,6 +65,7 @@ public class ImgurPhotoExporterTest {
   private TokensAndUrlAuthData token =
       new TokensAndUrlAuthData("accessToken", "refreshToken", "tokenUrl");
   private JobStore jobStore = mock(JobStore.class);
+  private ImgurPhotosExporter exporter1;
   private ImgurPhotosExporter exporter;
   private Monitor monitor = mock(Monitor.class);
 
@@ -99,8 +110,9 @@ public class ImgurPhotoExporterTest {
   public void setUp() throws IOException {
     server = new MockWebServer();
     server.start();
-    exporter =
+    exporter1 =
         new ImgurPhotosExporter(monitor, client, mapper, jobStore, server.url("").toString());
+    exporter = Mockito.spy(exporter1);
   }
 
   @Test
@@ -142,6 +154,9 @@ public class ImgurPhotoExporterTest {
     server.enqueue(new MockResponse().setBody(albumsResponse));
     server.enqueue(new MockResponse().setBody(album1ImagesResponse));
 
+    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("testStream");
+    doReturn(inputStream).when(exporter).getImageAsStream(anyString());
+
     // export albums
     exporter.export(UUID.randomUUID(), token, Optional.empty());
 
@@ -162,6 +177,9 @@ public class ImgurPhotoExporterTest {
     server.enqueue(new MockResponse().setBody(albumsResponse));
     server.enqueue(new MockResponse().setBody(album1ImagesResponse));
     server.enqueue(new MockResponse().setBody(allImagesResponse));
+
+    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("testStream");
+    doReturn(inputStream).when(exporter).getImageAsStream(anyString());
 
     // export albums
     exporter.export(UUID.randomUUID(), token, Optional.empty());
@@ -194,6 +212,9 @@ public class ImgurPhotoExporterTest {
     // all photos are non-album
     server.enqueue(new MockResponse().setBody(allImagesResponse));
 
+    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("testStream");
+    doReturn(inputStream).when(exporter).getImageAsStream(anyString());
+
     ExportResult<PhotosContainerResource> nonAlbumPhotosResult =
         exporter.export(
             UUID.randomUUID(),
@@ -210,6 +231,9 @@ public class ImgurPhotoExporterTest {
     server.enqueue(new MockResponse().setBody(page1Response));
     server.enqueue(new MockResponse().setBody(page2Response));
     int page = 0;
+
+    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("testStream");
+    doReturn(inputStream).when(exporter).getImageAsStream(anyString());
 
     ExportResult<PhotosContainerResource> page1Result =
         exporter.export(

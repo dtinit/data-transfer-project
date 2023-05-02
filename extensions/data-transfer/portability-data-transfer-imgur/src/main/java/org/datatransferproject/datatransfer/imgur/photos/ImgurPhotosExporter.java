@@ -17,6 +17,7 @@
 package org.datatransferproject.datatransfer.imgur.photos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -306,7 +307,8 @@ public class ImgurPhotosExporter
     }
   }
 
-  private InputStream getImageAsStream(String imageUrl) throws IOException {
+  @VisibleForTesting
+  public InputStream getImageAsStream(String imageUrl) throws IOException {
     URL url = new URL(imageUrl);
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.connect();
