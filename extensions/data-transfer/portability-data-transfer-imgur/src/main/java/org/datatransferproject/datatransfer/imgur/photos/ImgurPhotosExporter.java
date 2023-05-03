@@ -68,6 +68,8 @@ public class ImgurPhotosExporter
   private final Monitor monitor;
   private final TemporaryPerJobDataStore jobStore;
 
+  private URL url;
+
   public ImgurPhotosExporter(
       Monitor monitor,
       OkHttpClient client,
@@ -82,6 +84,26 @@ public class ImgurPhotosExporter
     ALBUMS_URL_TEMPLATE = baseUrl + "/account/me/albums/%s?perPage=" + RESULTS_PER_PAGE;
     ALL_PHOTOS_URL_TEMPLATE = baseUrl + "/account/me/images/%s?perPage=" + RESULTS_PER_PAGE;
   }
+
+  @VisibleForTesting
+  public ImgurPhotosExporter(
+      Monitor monitor,
+      OkHttpClient client,
+      ObjectMapper objectMapper,
+      TemporaryPerJobDataStore jobStore,
+      String baseUrl,
+      URL url) {
+    this.client = client;
+    this.objectMapper = objectMapper;
+    this.monitor = monitor;
+    this.jobStore = jobStore;
+    this.url = url;
+    ALBUM_PHOTOS_URL_TEMPLATE = baseUrl + "/album/%s/images";
+    ALBUMS_URL_TEMPLATE = baseUrl + "/account/me/albums/%s?perPage=" + RESULTS_PER_PAGE;
+    ALL_PHOTOS_URL_TEMPLATE = baseUrl + "/account/me/images/%s?perPage=" + RESULTS_PER_PAGE;
+  }
+
+
 
   /**
    * Exports albums and photos. Gets albums first, then photos which are contained in albums and
@@ -307,11 +329,16 @@ public class ImgurPhotosExporter
     }
   }
 
-  @VisibleForTesting
-  public InputStream getImageAsStream(String imageUrl) throws IOException {
-    URL url = new URL(imageUrl);
+  private InputStream getImageAsStream(String imageUrl) throws IOException {
+    if (url == null) {
+      url = from(imageUrl);
+    }
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.connect();
     return conn.getInputStream();
+  }
+
+  private static URL from(String imageUrl) throws IOException{
+    return new URL(imageUrl);
   }
 }
