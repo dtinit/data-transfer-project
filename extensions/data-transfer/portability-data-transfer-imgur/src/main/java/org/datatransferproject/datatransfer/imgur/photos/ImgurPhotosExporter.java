@@ -103,8 +103,6 @@ public class ImgurPhotosExporter
     ALL_PHOTOS_URL_TEMPLATE = baseUrl + "/account/me/images/%s?perPage=" + RESULTS_PER_PAGE;
   }
 
-
-
   /**
    * Exports albums and photos. Gets albums first, then photos which are contained in albums and
    * non-album photos
