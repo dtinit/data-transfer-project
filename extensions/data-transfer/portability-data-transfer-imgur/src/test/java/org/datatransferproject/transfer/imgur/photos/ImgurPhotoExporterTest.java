@@ -58,7 +58,6 @@ public class ImgurPhotoExporterTest {
   private TokensAndUrlAuthData token =
       new TokensAndUrlAuthData("accessToken", "refreshToken", "tokenUrl");
   private JobStore jobStore = mock(JobStore.class);
-  private ImgurPhotosExporter exporter1;
   private ImgurPhotosExporter exporter;
   private Monitor monitor = mock(Monitor.class);
   private URL url = mock(URL.class);
