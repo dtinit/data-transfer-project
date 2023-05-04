@@ -19,6 +19,7 @@ package org.datatransferproject.datatransfer.imgur.photos;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import java.net.MalformedURLException;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -68,7 +69,8 @@ public class ImgurPhotosExporter
   private final Monitor monitor;
   private final TemporaryPerJobDataStore jobStore;
 
-  private URL url;
+  // private URL url;
+  private UrlFactory urlFactory;
 
   public ImgurPhotosExporter(
       Monitor monitor,
@@ -80,6 +82,7 @@ public class ImgurPhotosExporter
     this.objectMapper = objectMapper;
     this.monitor = monitor;
     this.jobStore = jobStore;
+    this.urlFactory = (urlString)->{return new URL(urlString);};
     ALBUM_PHOTOS_URL_TEMPLATE = baseUrl + "/album/%s/images";
     ALBUMS_URL_TEMPLATE = baseUrl + "/account/me/albums/%s?perPage=" + RESULTS_PER_PAGE;
     ALL_PHOTOS_URL_TEMPLATE = baseUrl + "/account/me/images/%s?perPage=" + RESULTS_PER_PAGE;
@@ -92,12 +95,14 @@ public class ImgurPhotosExporter
       ObjectMapper objectMapper,
       TemporaryPerJobDataStore jobStore,
       String baseUrl,
-      URL url) {
+      // URL url,
+      UrlFactory urlFactory) {
     this.client = client;
     this.objectMapper = objectMapper;
     this.monitor = monitor;
     this.jobStore = jobStore;
-    this.url = url;
+    // this.url = url;
+    this.urlFactory = urlFactory;
     ALBUM_PHOTOS_URL_TEMPLATE = baseUrl + "/album/%s/images";
     ALBUMS_URL_TEMPLATE = baseUrl + "/account/me/albums/%s?perPage=" + RESULTS_PER_PAGE;
     ALL_PHOTOS_URL_TEMPLATE = baseUrl + "/account/me/images/%s?perPage=" + RESULTS_PER_PAGE;
@@ -328,15 +333,20 @@ public class ImgurPhotosExporter
   }
 
   private InputStream getImageAsStream(String imageUrl) throws IOException {
-    if (url == null) {
-      url = from(imageUrl);
-    }
+    // if (url == null) {
+    //   url = from(imageUrl);
+    // }
+    URL url = urlFactory.fromUrl(imageUrl);
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.connect();
     return conn.getInputStream();
   }
 
-  private static URL from(String imageUrl) throws IOException{
-    return new URL(imageUrl);
+  // private static URL from(String imageUrl) throws IOException{
+  //   return new URL(imageUrl);
+  // }
+
+  public interface UrlFactory{
+    public URL fromUrl(String urlString) throws IOException;
   }
 }
