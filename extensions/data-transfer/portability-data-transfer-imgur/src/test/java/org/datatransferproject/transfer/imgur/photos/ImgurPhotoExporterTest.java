@@ -82,8 +82,6 @@ public class ImgurPhotoExporterTest {
   private String page1Response;
   private String page2Response;
 
-  //private UrlFactory urlFactory =
-
   {
     try {
       albumsResponse =

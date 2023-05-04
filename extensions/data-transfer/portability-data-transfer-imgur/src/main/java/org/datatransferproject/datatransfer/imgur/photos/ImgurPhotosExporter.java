@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.net.MalformedURLException;
+import java.util.function.Function;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -69,8 +70,7 @@ public class ImgurPhotosExporter
   private final Monitor monitor;
   private final TemporaryPerJobDataStore jobStore;
 
-  // private URL url;
-  private UrlFactory urlFactory;
+  private Function<String, URL> urlFactory;
 
   public ImgurPhotosExporter(
       Monitor monitor,
@@ -78,14 +78,13 @@ public class ImgurPhotosExporter
       ObjectMapper objectMapper,
       TemporaryPerJobDataStore jobStore,
       String baseUrl) {
-    this.client = client;
-    this.objectMapper = objectMapper;
-    this.monitor = monitor;
-    this.jobStore = jobStore;
-    this.urlFactory = (urlString)->{return new URL(urlString);};
-    ALBUM_PHOTOS_URL_TEMPLATE = baseUrl + "/album/%s/images";
-    ALBUMS_URL_TEMPLATE = baseUrl + "/account/me/albums/%s?perPage=" + RESULTS_PER_PAGE;
-    ALL_PHOTOS_URL_TEMPLATE = baseUrl + "/account/me/images/%s?perPage=" + RESULTS_PER_PAGE;
+    this(monitor, client, objectMapper, jobStore, baseUrl, (url) -> {
+      try {
+        return new URL(url);
+      } catch (MalformedURLException e) {
+        throw new RuntimeException(e);
+      }
+    });
   }
 
   @VisibleForTesting
@@ -95,7 +94,7 @@ public class ImgurPhotosExporter
       ObjectMapper objectMapper,
       TemporaryPerJobDataStore jobStore,
       String baseUrl,
-      UrlFactory urlFactory) {
+      Function<String, URL> urlFactory) {
     this.client = client;
     this.objectMapper = objectMapper;
     this.monitor = monitor;
@@ -331,14 +330,9 @@ public class ImgurPhotosExporter
   }
 
   private InputStream getImageAsStream(String imageUrl) throws IOException {
-    URL url = urlFactory.fromUrl(imageUrl);
+    URL url = urlFactory.apply(imageUrl);
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.connect();
     return conn.getInputStream();
-  }
-
-
-  public interface UrlFactory{
-    public URL fromUrl(String urlString) throws IOException;
   }
 }
