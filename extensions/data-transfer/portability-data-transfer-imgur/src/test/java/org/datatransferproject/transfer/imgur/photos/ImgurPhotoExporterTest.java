@@ -107,7 +107,11 @@ public class ImgurPhotoExporterTest {
         new ImgurPhotosExporter(monitor, client, mapper, jobStore, server.url("").toString(),
             (urlString) -> {
               URL u = mock(URL.class);
-              when(u.openConnection()).thenReturn(mock(HttpURLConnection.class));
+              try {
+                when(u.openConnection()).thenReturn(mock(HttpURLConnection.class));
+              } catch (IOException e) {
+                throw new RuntimeException(e);
+              }
               return u;
             });
   }
