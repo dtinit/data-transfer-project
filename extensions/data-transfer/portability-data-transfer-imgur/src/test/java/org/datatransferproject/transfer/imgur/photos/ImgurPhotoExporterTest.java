@@ -153,9 +153,6 @@ public class ImgurPhotoExporterTest {
     server.enqueue(new MockResponse().setBody(albumsResponse));
     server.enqueue(new MockResponse().setBody(album1ImagesResponse));
 
-    // HttpURLConnection connection = mock(HttpURLConnection.class);
-    // when(url.openConnection()).thenReturn(connection);
-
     // export albums
     exporter.export(UUID.randomUUID(), token, Optional.empty());
 
@@ -176,9 +173,6 @@ public class ImgurPhotoExporterTest {
     server.enqueue(new MockResponse().setBody(albumsResponse));
     server.enqueue(new MockResponse().setBody(album1ImagesResponse));
     server.enqueue(new MockResponse().setBody(allImagesResponse));
-
-    // HttpURLConnection connection = mock(HttpURLConnection.class);
-    // when(url.openConnection()).thenReturn(connection);
 
     // export albums
     exporter.export(UUID.randomUUID(), token, Optional.empty());
@@ -211,9 +205,6 @@ public class ImgurPhotoExporterTest {
     // all photos are non-album
     server.enqueue(new MockResponse().setBody(allImagesResponse));
 
-    // HttpURLConnection connection = mock(HttpURLConnection.class);
-    // when(url.openConnection()).thenReturn(connection);
-
     ExportResult<PhotosContainerResource> nonAlbumPhotosResult =
         exporter.export(
             UUID.randomUUID(),
@@ -230,9 +221,6 @@ public class ImgurPhotoExporterTest {
     server.enqueue(new MockResponse().setBody(page1Response));
     server.enqueue(new MockResponse().setBody(page2Response));
     int page = 0;
-
-    // HttpURLConnection connection = mock(HttpURLConnection.class);
-    // when(url.openConnection()).thenReturn(connection);
 
     ExportResult<PhotosContainerResource> page1Result =
         exporter.export(

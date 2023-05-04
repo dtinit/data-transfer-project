@@ -95,13 +95,11 @@ public class ImgurPhotosExporter
       ObjectMapper objectMapper,
       TemporaryPerJobDataStore jobStore,
       String baseUrl,
-      // URL url,
       UrlFactory urlFactory) {
     this.client = client;
     this.objectMapper = objectMapper;
     this.monitor = monitor;
     this.jobStore = jobStore;
-    // this.url = url;
     this.urlFactory = urlFactory;
     ALBUM_PHOTOS_URL_TEMPLATE = baseUrl + "/album/%s/images";
     ALBUMS_URL_TEMPLATE = baseUrl + "/account/me/albums/%s?perPage=" + RESULTS_PER_PAGE;
@@ -333,18 +331,12 @@ public class ImgurPhotosExporter
   }
 
   private InputStream getImageAsStream(String imageUrl) throws IOException {
-    // if (url == null) {
-    //   url = from(imageUrl);
-    // }
     URL url = urlFactory.fromUrl(imageUrl);
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.connect();
     return conn.getInputStream();
   }
 
-  // private static URL from(String imageUrl) throws IOException{
-  //   return new URL(imageUrl);
-  // }
 
   public interface UrlFactory{
     public URL fromUrl(String urlString) throws IOException;
