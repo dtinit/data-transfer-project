@@ -18,8 +18,11 @@ package org.datatransferproject.transfer.imgur.photos;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static  org.mockito.Mockito.spy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
@@ -28,6 +31,7 @@ import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Optional;
 import java.util.UUID;
@@ -106,9 +110,16 @@ public class ImgurPhotoExporterTest {
     exporter =
         new ImgurPhotosExporter(monitor, client, mapper, jobStore, server.url("").toString(),
             (urlString) -> {
-              URL u = mock(URL.class);
+              URL u = null;
               try {
-                when(u.openConnection()).thenReturn(mock(HttpURLConnection.class));
+                u = spy(new URL(urlString));
+              } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+              }
+              HttpURLConnection connection = mock(HttpURLConnection.class);
+              try {
+                doReturn(connection).when(u).openConnection();
+                doNothing().when(connection).connect();
               } catch (IOException e) {
                 throw new RuntimeException(e);
               }
