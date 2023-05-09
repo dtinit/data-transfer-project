@@ -58,6 +58,14 @@ public class RetryingCallable<T> implements Callable<T> {
     this.attempts = 0;
   }
 
+  public RetryingCallable(
+      Callable<T> callable,
+      RetryStrategyLibrary retryStrategyLibrary,
+      Clock clock,
+      Monitor monitor) {
+    this(callable, retryStrategyLibrary, clock, monitor, null, null);
+  }
+
   /**
    * Tries to call the {@link Callable} given the class's {@link RetryStrategyLibrary}.
    *
