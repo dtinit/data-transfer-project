@@ -26,8 +26,8 @@ import java.util.Objects;
 import org.datatransferproject.types.common.models.ContainerResource;
 
 public class VideosContainerResource extends ContainerResource {
-  private static final String VIDEOS_COUNT_DATA_NAME = "videosCount";
-  private static final String ALBUMS_COUNT_DATA_NAME = "albumsCount";
+  public static final String VIDEOS_COUNT_DATA_NAME = "videosCount";
+  public static final String ALBUMS_COUNT_DATA_NAME = "albumsCount";
 
   private final Collection<VideoAlbum> albums;
   private final Collection<VideoModel> videos;

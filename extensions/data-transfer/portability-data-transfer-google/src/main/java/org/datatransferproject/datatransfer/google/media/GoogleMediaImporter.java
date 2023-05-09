@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Data Transfer Project Authors.
+ * Copyright 2023 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GooglePhotosImportUtils;
+import org.datatransferproject.datatransfer.google.common.gphotos.GPhotosUpload;
 import org.datatransferproject.datatransfer.google.mediaModels.BatchMediaItemResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;
@@ -155,6 +156,10 @@ public class GoogleMediaImporter
       // Nothing to do
       return ImportResult.OK;
     }
+    // WARNING: this should be constructed PER request so as to not conflate job IDs or auth data
+    // across processes. That is: do NOT cache an instance of this object across your requests, say
+    // by storing the instance as a member of your adapter's Importer or Exporter implementations.
+    final GPhotosUpload gPhotosUpload = new GPhotosUpload(jobId, idempotentImportExecutor, authData);
 
     // Uploads album metadata
     for (MediaAlbum album : data.getAlbums()) {
@@ -163,13 +168,16 @@ public class GoogleMediaImporter
     }
 
     long bytes =
-        importPhotos(data.getPhotos(), idempotentImportExecutor, jobId, authData)
-        + importVideos(data.getVideos(), idempotentImportExecutor, jobId, authData);
+        importPhotos(data.getPhotos(), gPhotosUpload)
+        + importVideos(data.getVideos(), gPhotosUpload);
 
     final ImportResult result = ImportResult.OK;
     return result.copyWithBytes(bytes);
   }
 
+  // TODO(aksingh737,jzacsh) fix unit tests across Google adapters to stop testing internal methods
+  // like these, and just test importItem() (of
+  // org.datatransferproject.spi.transfer.provider.Importer interface).
   @VisibleForTesting
   String importSingleAlbum(UUID jobId, TokensAndUrlAuthData authData, MediaAlbum inputAlbum)
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
@@ -184,17 +192,10 @@ public class GoogleMediaImporter
 
   long importPhotos(
       Collection<PhotoModel> photos,
-      IdempotentImportExecutor executor,
-      UUID jobId,
-      TokensAndUrlAuthData authData)
+      GPhotosUpload gPhotosUpload)
       throws Exception {
-    return importItemsViaBatching(
+    return gPhotosUpload.uploadItemsViaBatching(
         photos,
-        PhotoModel::getAlbumId,
-        BATCH_UPLOAD_SIZE,
-        executor,
-        jobId,
-        authData,
         this::importPhotoBatch);
   }
 
@@ -311,17 +312,10 @@ public class GoogleMediaImporter
 
   long importVideos(
       Collection<VideoModel> videos,
-      IdempotentImportExecutor executor,
-      UUID jobId,
-      TokensAndUrlAuthData authData)
+      GPhotosUpload gPhotosUpload)
       throws Exception {
-    return importItemsViaBatching(
+    return gPhotosUpload.uploadItemsViaBatching(
         videos,
-        VideoModel::getAlbumId,
-        BATCH_UPLOAD_SIZE,
-        executor,
-        jobId,
-        authData,
         this::importVideosBatch);
   }
 
@@ -358,59 +352,6 @@ public class GoogleMediaImporter
     } catch (Exception ex) {
       monitor.info(() -> format("Can't find album during getAlbum call"), ex);
     }
-  }
-
-  /**
-   * Imports all `items` by fanning out to `batchImporter` upload calls as specified by the.
-   *
-   * Returns the number of uploaded bytes, as summed across all `items` that were uploaded.
-   */
-  // TODO(aksingh737,jzacsh) WARNING: delete the duplicated GooglePhotosImporter code by pulling
-  // this out of Media into a new GphotoMedia class that exposes these methods for _both_
-  // GoogleMediaImporter _and_ GooglePhotosImporter to use.
-  private <T extends DownloadableItem> long importItemsViaBatching(
-      Collection<T> items,
-      // TODO we could just specify we have FolderItem interface objects and call getFolderId, and
-      // drop this getAlbumId parameter (FolderItem was introduced for similar purposes in via
-      // MicrosoftMedia* work).
-      Function<T, String> getAlbumId,
-      int batchSize,
-      IdempotentImportExecutor executor,
-      UUID jobId,
-      TokensAndUrlAuthData authData,
-      ItemBatchImporter<T> importer)
-      throws Exception {
-    long bytes = 0L;
-    if (items == null || items.size() <= 0) {
-      return bytes;
-    }
-    Map<String, List<T>> itemsByAlbumId =
-        items.stream()
-            .filter(item -> !executor.isKeyCached(item.getIdempotentId()))
-            .collect(Collectors.groupingBy(getAlbumId));
-
-    for (Entry<String, List<T>> albumEntry : itemsByAlbumId.entrySet()) {
-      String originalAlbumId = albumEntry.getKey();
-      String googleAlbumId;
-      if (Strings.isNullOrEmpty(originalAlbumId)) {
-        // This is ok, since NewMediaItemUpload will ignore all null values and it's possible to
-        // upload a NewMediaItem without a corresponding album id.
-        googleAlbumId = null;
-      } else {
-        // Note this will throw if creating the album failed, which is what we want
-        // because that will also mark this photo as being failed.
-        googleAlbumId = executor.getCachedValue(originalAlbumId);
-      }
-
-      UnmodifiableIterator<List<T>> batches =
-          Iterators.partition(albumEntry.getValue().iterator(), batchSize);
-      while (batches.hasNext()) {
-        long batchBytes =
-            importer.importToAlbum(jobId, authData, batches.next(), executor, googleAlbumId);
-        bytes += batchBytes;
-      }
-    }
-    return bytes;
   }
 
   private long processMediaResult(
@@ -470,30 +411,5 @@ public class GoogleMediaImporter
     }
 
     return multilingualStrings.get(jobId);
-  }
-
-  // TODO(aksingh737,jzacsh) refactor Google{Photos,Video,Media}{Importer,Exporter} classes so they're
-  // not all drifting-forks of each other, and instead share code with the help of small interfaces.
-  // We can start by using some of the de-duplication that happened, with the interfaces below, in
-  // the creation of this particular importer
-
-  // TODO(aksingh737,jzacsh) consider renaming lower-level gphotos code (ie: anything of the "google
-  // photos" product but not a "photo" from "google"; examples: the GooglePhotosInterface that
-  // interacts with gphotos teams' upstream SDKs, interfaces like this one below, PhotoResult,
-  // etc.). eg maybe start a org.datatransferproject.datatransfer.google.gphotos package for things
-  // that are wrapping the gphotos SDKs (the examples already mentioned) and make that package
-  // importable by the other google adapters.
-  @FunctionalInterface
-  private interface ItemBatchImporter<T> {
-    /**
-     * Returns the number of uploaded bytes, as summed across all `items` that were uploaded in this
-     * batch.
-     */
-    public long importToAlbum(
-        UUID jobId,
-        TokensAndUrlAuthData authData,
-        List<T> batch,
-        IdempotentImportExecutor executor,
-        String targetAlbumId) throws Exception;
   }
 }

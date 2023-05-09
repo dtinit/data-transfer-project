@@ -1,0 +1,21 @@
+project.ext.ideaCommandLineArgumentProviders = new ArrayList<CommandLineArgumentProvider>()
+project.ext.ideaCommandLineArguments = new ArrayList<String>()
+
+idea.workspace.iws {
+    withXml { ws ->
+        ws.node
+                .component.find { it.@name == 'RunManager' }
+                .configuration.findAll { it.@default && (it.@type == 'Application' || it.@type == 'JUnit') }
+                .each { conf ->
+                    conf.option.find { it.@name == 'VM_PARAMETERS' }.@value = ideaCommandLineArguments()
+                }
+    }
+}
+
+def ideaCommandLineArguments() {
+    def args = new HashSet<String>(project.ideaCommandLineArguments)
+    args.addAll(project.ideaCommandLineArgumentProviders.collect { it.asArguments().join(' ') })
+    return args.join(' ')
+}
+
+cleanIdea.dependsOn cleanIdeaWorkspace

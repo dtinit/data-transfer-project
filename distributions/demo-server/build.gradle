@@ -67,6 +67,8 @@ dependencies {
     compile project(':extensions:config:portability-config-yaml')
 
     // TODO: depend on these based on list in flag values.
+
+    compile project(':extensions:auth:portability-auth-apple')
     compile project(':extensions:auth:portability-auth-daybook')
     compile project(':extensions:auth:portability-auth-deezer')
     compile project(':extensions:auth:portability-auth-flickr')
@@ -81,6 +83,7 @@ dependencies {
     compile project(':extensions:auth:portability-auth-imgur')
     compile project(':extensions:auth:portability-auth-koofr')
 
+    compile project(':extensions:data-transfer:portability-data-transfer-apple')
     compile project(':extensions:data-transfer:portability-data-transfer-daybook')
     compile project(':extensions:data-transfer:portability-data-transfer-deezer')
     compile project(':extensions:data-transfer:portability-data-transfer-flickr')
