@@ -79,6 +79,8 @@ public class GooglePhotosImporter
   private final GooglePhotosInterface photosInterface;
   private final HashMap<UUID, BaseMultilingualDictionary> multilingualStrings = new HashMap<>();
 
+  private IdempotentImportExecutor retryingIdempotentExecutor;
+
   public GooglePhotosImporter(
       GoogleCredentialFactory credentialFactory,
       JobStore jobStore,
@@ -94,6 +96,21 @@ public class GooglePhotosImporter
         new ConnectionProvider(jobStore),
         monitor,
         writesPerSecond);
+  }
+  public GooglePhotosImporter(
+      GoogleCredentialFactory credentialFactory,
+      JobStore jobStore,
+      JsonFactory jsonFactory,
+      Monitor monitor,
+      double writesPerSecond,
+      IdempotentImportExecutor retryingIdempotentExecutor) {
+    this(
+        credentialFactory,
+        jobStore,
+        jsonFactory,
+        monitor,
+        writesPerSecond);
+    this.retryingIdempotentExecutor = retryingIdempotentExecutor;
   }
 
   @VisibleForTesting
@@ -131,10 +148,11 @@ public class GooglePhotosImporter
       // Nothing to do
       return ImportResult.OK;
     }
-    GPhotosUpload gPhotosUpload = new GPhotosUpload(jobId, idempotentImportExecutor, authData);
+    IdempotentImportExecutor executor = retryingIdempotentExecutor == null ? idempotentImportExecutor : retryingIdempotentExecutor;
+    GPhotosUpload gPhotosUpload = new GPhotosUpload(jobId, executor, authData);
 
     for (PhotoAlbum album : data.getAlbums()) {
-      idempotentImportExecutor.executeAndSwallowIOExceptions(
+      executor.executeAndSwallowIOExceptions(
           album.getId(), album.getName(), () -> importSingleAlbum(jobId, authData, album));
     }
     long bytes = importPhotos(data.getPhotos(), gPhotosUpload);

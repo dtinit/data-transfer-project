@@ -37,6 +37,8 @@ import org.datatransferproject.datatransfer.google.videos.GoogleVideosExporter;
 import org.datatransferproject.datatransfer.google.videos.GoogleVideosImporter;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorExtension;
 import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -107,6 +109,9 @@ public class GoogleTransferExtension implements TransferExtension {
     GoogleCredentialFactory credentialFactory =
         new GoogleCredentialFactory(httpTransport, jsonFactory, appCredentials, monitor);
 
+    IdempotentImportExecutor idempotentImportExecutor = context.getService(
+        IdempotentImportExecutorExtension.class).getRetryingIdempotentImportExecutor(context);
+
     ImmutableMap.Builder<DataVertical, Importer> importerBuilder = ImmutableMap.builder();
     importerBuilder.put(BLOBS, new DriveImporter(credentialFactory, jobStore, monitor));
     importerBuilder.put(CONTACTS, new GoogleContactsImporter(credentialFactory));
@@ -120,7 +125,8 @@ public class GoogleTransferExtension implements TransferExtension {
             jobStore,
             jsonFactory,
             monitor,
-            context.getSetting("googleWritesPerSecond", 1.0)));
+            context.getSetting("googleWritesPerSecond", 1.0),
+            idempotentImportExecutor));
     importerBuilder.put(VIDEOS, new GoogleVideosImporter(appCredentials, jobStore, monitor));
     importerMap = importerBuilder.build();
 
