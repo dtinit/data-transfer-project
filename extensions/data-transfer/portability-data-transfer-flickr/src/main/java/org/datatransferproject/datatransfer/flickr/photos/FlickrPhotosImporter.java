@@ -62,13 +62,13 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   private IdempotentImportExecutor retryingIdempotentExecutor;
   private Boolean enableRetrying;
 
-
-
   public FlickrPhotosImporter(
       AppCredentials appCredentials,
       TemporaryPerJobDataStore jobStore,
       Monitor monitor,
-      TransferServiceConfig serviceConfig) {
+      TransferServiceConfig serviceConfig,
+      IdempotentImportExecutor retryingIdempotentExecutor,
+      boolean enableRetrying) {
     this.jobStore = jobStore;
     this.flickr = new Flickr(appCredentials.getKey(), appCredentials.getSecret(), new REST());
     this.uploader = flickr.getUploader();
@@ -76,18 +76,16 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     this.photosetsInterface = flickr.getPhotosetsInterface();
     this.monitor = monitor;
     this.perUserRateLimiter = serviceConfig.getPerUserRateLimiter();
+    this.retryingIdempotentExecutor = retryingIdempotentExecutor;
+    this.enableRetrying = enableRetrying;
   }
 
   public FlickrPhotosImporter(
       AppCredentials appCredentials,
       TemporaryPerJobDataStore jobStore,
       Monitor monitor,
-      TransferServiceConfig serviceConfig,
-      IdempotentImportExecutor retryingIdempotentExecutor,
-      Boolean enableRetrying) {
-    this(appCredentials, jobStore, monitor, serviceConfig);
-    this.retryingIdempotentExecutor = retryingIdempotentExecutor;
-    this.enableRetrying = enableRetrying;
+      TransferServiceConfig serviceConfig) {
+    this(appCredentials, jobStore, monitor, serviceConfig, null /*retryingIdempotentExecutor*/, false  /*enableRetrying*/);
   }
 
   @VisibleForTesting
@@ -128,8 +126,8 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
       storeAlbums(jobId, data.getAlbums());
     }
 
-      IdempotentImportExecutor executor =
-          (retryingIdempotentExecutor != null && enableRetrying) ? retryingIdempotentExecutor : idempotentExecutor;
+    IdempotentImportExecutor executor =
+        (retryingIdempotentExecutor != null && enableRetrying) ? retryingIdempotentExecutor : idempotentExecutor;
 
     if (data.getPhotos() != null) {
       for (PhotoModel photo : data.getPhotos()) {
