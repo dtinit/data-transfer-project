@@ -28,6 +28,8 @@ import org.datatransferproject.datatransfer.flickr.photos.FlickrPhotosExporter;
 import org.datatransferproject.datatransfer.flickr.photos.FlickrPhotosImporter;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorExtension;
 import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -36,6 +38,7 @@ import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
 
 public class FlickrTransferExtension implements TransferExtension {
+
   private static final String SERVICE_ID = "flickr";
   private static final String FLICKR_KEY = "FLICKR_KEY";
   private static final String FLICKR_SECRET = "FLICKR_SECRET";
@@ -69,7 +72,9 @@ public class FlickrTransferExtension implements TransferExtension {
 
   @Override
   public void initialize(ExtensionContext context) {
-    if (initialized) return;
+    if (initialized) {
+      return;
+    }
     jobStore = context.getService(TemporaryPerJobDataStore.class);
     Monitor monitor = context.getMonitor();
 
@@ -89,7 +94,11 @@ public class FlickrTransferExtension implements TransferExtension {
 
     TransferServiceConfig serviceConfig = context.getService(TransferServiceConfig.class);
 
-    importer = new FlickrPhotosImporter(appCredentials, jobStore, monitor, serviceConfig);
+    IdempotentImportExecutor idempotentImportExecutor = context.getService(
+        IdempotentImportExecutorExtension.class).getRetryingIdempotentImportExecutor(context);
+    boolean enableRetrying = context.getSetting("enableRetrying", false);
+
+    importer = new FlickrPhotosImporter(appCredentials, jobStore, monitor, serviceConfig, idempotentImportExecutor, enableRetrying);
     exporter = new FlickrPhotosExporter(appCredentials, serviceConfig);
     initialized = true;
   }
