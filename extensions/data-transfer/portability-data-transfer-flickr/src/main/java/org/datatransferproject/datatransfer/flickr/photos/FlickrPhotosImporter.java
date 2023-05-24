@@ -59,6 +59,10 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
   private final PhotosetsInterface photosetsInterface;
   private final Monitor monitor;
   private final RateLimiter perUserRateLimiter;
+  private IdempotentImportExecutor retryingIdempotentExecutor;
+  private Boolean enableRetrying;
+
+
 
   public FlickrPhotosImporter(
       AppCredentials appCredentials,
@@ -72,6 +76,18 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
     this.photosetsInterface = flickr.getPhotosetsInterface();
     this.monitor = monitor;
     this.perUserRateLimiter = serviceConfig.getPerUserRateLimiter();
+  }
+
+  public FlickrPhotosImporter(
+      AppCredentials appCredentials,
+      TemporaryPerJobDataStore jobStore,
+      Monitor monitor,
+      TransferServiceConfig serviceConfig,
+      IdempotentImportExecutor retryingIdempotentExecutor,
+      Boolean enableRetrying) {
+    this(appCredentials, jobStore, monitor, serviceConfig);
+    this.retryingIdempotentExecutor = retryingIdempotentExecutor;
+    this.enableRetrying = enableRetrying;
   }
 
   @VisibleForTesting
@@ -112,10 +128,13 @@ public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerR
       storeAlbums(jobId, data.getAlbums());
     }
 
+      IdempotentImportExecutor executor =
+          (retryingIdempotentExecutor != null && enableRetrying) ? retryingIdempotentExecutor : idempotentExecutor;
+
     if (data.getPhotos() != null) {
       for (PhotoModel photo : data.getPhotos()) {
         try {
-          importSinglePhoto(idempotentExecutor, jobId, photo);
+          importSinglePhoto(executor, jobId, photo);
         } catch (FlickrException e) {
           if (e.getMessage().contains("Upload limit reached")) {
             throw new DestinationMemoryFullException("Flickr destination memory reached", e);
