@@ -24,7 +24,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
@@ -48,131 +47,60 @@ import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
 
 public class AppleMediaImporterTest extends AppleImporterTestBase {
-  private AppleMediaImporter appleMediaImporter;
 
-  @BeforeEach
-  public void setup() throws Exception {
-    super.setup();
-    appleMediaImporter =
-        new AppleMediaImporter(
-            new AppCredentials("key", "secret"), EXPORTING_SERVICE, monitor, factory);
-  }
+    private AppleMediaImporter appleMediaImporter;
 
-  @Test
-  public void importPhotosVideosAndAlbums() throws Exception {
-    // set up albums
-    final int albumCount = 1;
-    final List<MediaAlbum> mediaAlbums =
-        createTestAlbums(albumCount).stream()
-            .map(MediaAlbum::photoToMediaAlbum)
-            .collect(Collectors.toList());
-    setUpCreateAlbumsResponse(
-        mediaAlbums.stream()
-            .collect(
-                Collectors.toMap(MediaAlbum::getId, photoAlbum -> SC_OK)));
+    @BeforeEach
+    public void setup() throws Exception {
+        super.setup();
+        appleMediaImporter = new AppleMediaImporter(new AppCredentials("key", "secret"), EXPORTING_SERVICE, monitor, factory);
+    }
 
-    // set up photos
-    final int photoCount = 2;
-    final List<PhotoModel> photos = createTestPhotos(photoCount);
-    final Map<String, Integer> dataIdToStatus =
-        photos.stream()
-            .collect(
-                Collectors.toMap(PhotoModel::getDataId, photoModel -> SC_OK));
+    @Test
+    public void importPhotosVideosAndAlbums() throws Exception {
+        // set up albums
+        final int albumCount = 1;
+        final List<MediaAlbum> mediaAlbums = createTestAlbums(albumCount).stream().map(MediaAlbum::photoToMediaAlbum).collect(Collectors.toList());
+        setUpCreateAlbumsResponse(mediaAlbums.stream().collect(Collectors.toMap(MediaAlbum::getId, photoAlbum -> SC_OK)));
+        // set up photos
+        final int photoCount = 2;
+        final List<PhotoModel> photos = createTestPhotos(photoCount);
+        final Map<String, Integer> dataIdToStatus = photos.stream().collect(Collectors.toMap(PhotoModel::getDataId, photoModel -> SC_OK));
+        // set up videos
+        final int videoCount = 3;
+        final List<VideoModel> videos = createTestVideos(videoCount).stream().collect(Collectors.toList());
+        dataIdToStatus.putAll(videos.stream().collect(Collectors.toMap(VideoModel::getDataId, videoModel -> SC_OK)));
+        setUpGetUploadUrlResponse(dataIdToStatus);
+        setUpUploadContentResponse(dataIdToStatus);
+        setUpCreateMediaResponse(dataIdToStatus);
+        MediaContainerResource mediaData = new MediaContainerResource(mediaAlbums, photos, videos);
+        final ImportResult importResult = appleMediaImporter.importItem(uuid, executor, authData, mediaData);
+        // verify correct methods were called
+        final List<String> photosDataIds = photos.stream().map(PhotoModel::getDataId).collect(Collectors.toList());
+        final List<String> videosDataIds = videos.stream().map(VideoModel::getDataId).collect(Collectors.toList());
+        verify(mediaInterface).createAlbums(uuid.toString(), DataVertical.MEDIA.getDataType(), mediaAlbums);
+        verify(mediaInterface).getUploadUrl(uuid.toString(), DataVertical.MEDIA.getDataType(), photosDataIds);
+        verify(mediaInterface).getUploadUrl(uuid.toString(), DataVertical.MEDIA.getDataType(), videosDataIds);
+        verify(mediaInterface, times(2)).uploadContent(anyMap(), anyList());
+        verify(mediaInterface, times(2)).createMedia(anyString(), anyString(), anyList());
+        // check the result
+        assertThat(importResult.getCounts().isPresent());
+        assertThat(importResult.getCounts().get().get(PhotosContainerResource.ALBUMS_COUNT_DATA_NAME) == 1);
+        assertThat(importResult.getCounts().get().get(PhotosContainerResource.PHOTOS_COUNT_DATA_NAME) == photoCount);
+        assertThat(importResult.getCounts().get().get(VideosContainerResource.VIDEOS_COUNT_DATA_NAME) == videoCount);
+        assertThat(importResult.getBytes().get() == photoCount * PHOTOS_FILE_SIZE + videoCount * VIDEOS_FILE_SIZE);
+        final Map<String, Serializable> expectedKnownValue = mediaAlbums.stream().collect(Collectors.toMap(MediaAlbum::getId, mediaAlbum -> ALBUM_RECORDID_BASE + mediaAlbum.getId()));
+        expectedKnownValue.putAll(photos.stream().collect(Collectors.toMap(photoModel -> photoModel.getAlbumId() + "-" + photoModel.getDataId(), photoModel -> MEDIA_RECORDID_BASE + photoModel.getDataId())));
+        expectedKnownValue.putAll(videos.stream().collect(Collectors.toMap(videoModel -> videoModel.getDataId(), videoModel -> MEDIA_RECORDID_BASE + videoModel.getDataId())));
+        checkKnownValues(expectedKnownValue);
+    }
 
-    // set up videos
-    final int videoCount = 3;
-    final List<VideoModel> videos =
-        createTestVideos(videoCount).stream().collect(Collectors.toList());
-    dataIdToStatus.putAll(
-        videos.stream()
-            .collect(
-                Collectors.toMap(
-                    VideoModel::getDataId, videoModel -> SC_OK)));
-    setUpGetUploadUrlResponse(dataIdToStatus);
-    setUpUploadContentResponse(dataIdToStatus);
-    setUpCreateMediaResponse(dataIdToStatus);
-
-    MediaContainerResource mediaData = new MediaContainerResource(mediaAlbums, photos, videos);
-
-    final ImportResult importResult =
-        appleMediaImporter.importItem(uuid, executor, authData, mediaData);
-
-    // verify correct methods were called
-    final List<String> photosDataIds =
-        photos.stream().map(PhotoModel::getDataId).collect(Collectors.toList());
-    final List<String> videosDataIds =
-        videos.stream().map(VideoModel::getDataId).collect(Collectors.toList());
-
-    verify(mediaInterface)
-        .createAlbums(uuid.toString(), DataVertical.MEDIA.getDataType(), mediaAlbums);
-    verify(mediaInterface)
-        .getUploadUrl(uuid.toString(), DataVertical.MEDIA.getDataType(), photosDataIds);
-    verify(mediaInterface)
-        .getUploadUrl(uuid.toString(), DataVertical.MEDIA.getDataType(), videosDataIds);
-    verify(mediaInterface, times(2)).uploadContent(anyMap(), anyList());
-    verify(mediaInterface, times(2)).createMedia(anyString(), anyString(), anyList());
-
-    // check the result
-    assertThat(importResult.getCounts().isPresent());
-    assertThat(
-        importResult.getCounts().get().get(PhotosContainerResource.ALBUMS_COUNT_DATA_NAME) == 1);
-    assertThat(
-        importResult.getCounts().get().get(PhotosContainerResource.PHOTOS_COUNT_DATA_NAME)
-            == photoCount);
-    assertThat(
-        importResult.getCounts().get().get(VideosContainerResource.VIDEOS_COUNT_DATA_NAME)
-            == videoCount);
-
-    assertThat(
-        importResult.getBytes().get()
-            == photoCount * PHOTOS_FILE_SIZE + videoCount * VIDEOS_FILE_SIZE);
-
-    final Map<String, Serializable> expectedKnownValue =
-        mediaAlbums.stream()
-            .collect(
-                Collectors.toMap(
-                    MediaAlbum::getId, mediaAlbum -> ALBUM_RECORDID_BASE + mediaAlbum.getId()));
-    expectedKnownValue.putAll(
-        photos.stream()
-            .collect(
-                Collectors.toMap(
-                    photoModel -> photoModel.getAlbumId() + "-" + photoModel.getDataId(),
-                    photoModel -> MEDIA_RECORDID_BASE + photoModel.getDataId())));
-    expectedKnownValue.putAll(
-        videos.stream()
-            .collect(
-                Collectors.toMap(
-                    videoModel -> videoModel.getDataId(),
-                    videoModel -> MEDIA_RECORDID_BASE + videoModel.getDataId())));
-    checkKnownValues(expectedKnownValue);
-  }
-
-  private void setUpCreateAlbumsResponse(@NotNull final Map<String, Integer> datatIdToStatus)
-      throws IOException, CopyExceptionWithFailureReason {
-    when(mediaInterface.createAlbums(any(String.class), any(String.class), any(Collection.class)))
-        .thenAnswer(
-            (Answer<PhotosProtocol.CreateAlbumsResponse>)
-                invocation -> {
-                  Object[] args = invocation.getArguments();
-                  final Collection<MediaAlbum> mediaAlbums = (Collection<MediaAlbum>) args[2];
-                  final List<PhotosProtocol.NewPhotoAlbumResponse> newPhotoAlbumResponseList =
-                      mediaAlbums.stream()
-                          .map(
-                              mediaAlbum ->
-                                  PhotosProtocol.NewPhotoAlbumResponse.newBuilder()
-                                      .setRecordId(
-                                          ALBUM_RECORDID_BASE + mediaAlbum.getIdempotentId())
-                                      .setDataId(mediaAlbum.getIdempotentId())
-                                      .setName(mediaAlbum.getName())
-                                      .setStatus(
-                                          PhotosProtocol.Status.newBuilder()
-                                              .setCode(datatIdToStatus.get(mediaAlbum.getId()))
-                                              .build())
-                                      .build())
-                          .collect(Collectors.toList());
-                  return PhotosProtocol.CreateAlbumsResponse.newBuilder()
-                      .addAllNewPhotoAlbumResponses(newPhotoAlbumResponseList)
-                      .build();
-                });
-  }
+    private void setUpCreateAlbumsResponse(@NotNull final Map<String, Integer> datatIdToStatus) throws IOException, CopyExceptionWithFailureReason {
+        when(mediaInterface.createAlbums(any(String.class), any(String.class), any(Collection.class))).thenAnswer((Answer<PhotosProtocol.CreateAlbumsResponse>) invocation -> {
+            Object[] args = invocation.getArguments();
+            final Collection<MediaAlbum> mediaAlbums = (Collection<MediaAlbum>) args[2];
+            final List<PhotosProtocol.NewPhotoAlbumResponse> newPhotoAlbumResponseList = mediaAlbums.stream().map(mediaAlbum -> PhotosProtocol.NewPhotoAlbumResponse.newBuilder().setRecordId(ALBUM_RECORDID_BASE + mediaAlbum.getIdempotentId()).setDataId(mediaAlbum.getIdempotentId()).setName(mediaAlbum.getName()).setStatus(PhotosProtocol.Status.newBuilder().setCode(datatIdToStatus.get(mediaAlbum.getId())).build()).build()).collect(Collectors.toList());
+            return PhotosProtocol.CreateAlbumsResponse.newBuilder().addAllNewPhotoAlbumResponses(newPhotoAlbumResponseList).build();
+        });
+    }
 }

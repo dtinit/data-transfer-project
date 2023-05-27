@@ -16,7 +16,6 @@
 package org.datatransferproject.transfer.spotify;
 
 import static org.datatransferproject.types.common.models.DataVertical.PLAYLISTS;
-
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.wrapper.spotify.SpotifyApi;
@@ -34,68 +33,54 @@ import org.datatransferproject.types.common.models.playlists.PlaylistContainerRe
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-
 public class SpotifyTransferExtension implements TransferExtension {
-  private static final ImmutableList<DataVertical> SUPPORTED_DATA_TYPES = ImmutableList.of(PLAYLISTS);
 
-  private Exporter<TokensAndUrlAuthData, PlaylistContainerResource> exporter;
-  private Importer<TokensAndUrlAuthData, PlaylistContainerResource> importer;
+    private static final ImmutableList<DataVertical> SUPPORTED_DATA_TYPES = ImmutableList.of(PLAYLISTS);
 
-  private boolean initialized = false;
+    private Exporter<TokensAndUrlAuthData, PlaylistContainerResource> exporter;
 
-  @Override
-  public String getServiceId() {
-    return "Spotify";
-  }
+    private Importer<TokensAndUrlAuthData, PlaylistContainerResource> importer;
 
-  @Override
-  public Exporter<?, ?> getExporter(DataVertical transferDataType) {
-    Preconditions.checkArgument(
-        initialized, "SpotifyTransferExtension not initialized. Unable to get Exporter");
-    Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(transferDataType));
-    return exporter;
-  }
+    private boolean initialized = false;
 
-  @Override
-  public Importer<?, ?> getImporter(DataVertical transferDataType) {
-    Preconditions.checkArgument(
-        initialized, "SpotifyTransferExtension not initialized. Unable to get Importer");
-    Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(transferDataType));
-    return importer;
-  }
-
-  @Override
-  public void initialize(ExtensionContext context) {
-    if (initialized) {
-      Monitor monitor = context.getMonitor();
-      monitor.severe(() -> "SpotifyTransferExtension already initialized");
-      return;
+    @Override
+    public String getServiceId() {
+        return "Spotify";
     }
 
-    AppCredentials appCredentials;
-    try {
-      appCredentials =
-          context
-              .getService(AppCredentialStore.class)
-              .getAppCredentials("SPOTIFY_KEY", "SPOTIFY_SECRET");
-    } catch (IOException e) {
-      Monitor monitor = context.getMonitor();
-      monitor.info(
-          () -> "Unable to retrieve Spotify AppCredentials. "
-              + "Did you set SPOTIFY_KEY and SPOTIFY_SECRET?");
-      return;
+    @Override
+    public Exporter<?, ?> getExporter(DataVertical transferDataType) {
+        Preconditions.checkArgument(initialized, "SpotifyTransferExtension not initialized. Unable to get Exporter");
+        Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(transferDataType));
+        return exporter;
     }
 
+    @Override
+    public Importer<?, ?> getImporter(DataVertical transferDataType) {
+        Preconditions.checkArgument(initialized, "SpotifyTransferExtension not initialized. Unable to get Importer");
+        Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(transferDataType));
+        return importer;
+    }
 
-    Monitor monitor = context.getMonitor();
-
-    SpotifyApi spotifyApi = new SpotifyApi.Builder()
-        .setClientId(appCredentials.getKey())
-        .setClientSecret(appCredentials.getSecret())
-        .build();
-
-    exporter = new SpotifyPlaylistExporter(monitor, spotifyApi);
-    importer = new SpotifyPlaylistImporter(monitor, spotifyApi);
-    initialized = true;
-  }
+    @Override
+    public void initialize(ExtensionContext context) {
+        if (initialized) {
+            Monitor monitor = context.getMonitor();
+            monitor.severe(() -> "SpotifyTransferExtension already initialized");
+            return;
+        }
+        AppCredentials appCredentials;
+        try {
+            appCredentials = context.getService(AppCredentialStore.class).getAppCredentials("SPOTIFY_KEY", "SPOTIFY_SECRET");
+        } catch (IOException e) {
+            Monitor monitor = context.getMonitor();
+            monitor.info(() -> "Unable to retrieve Spotify AppCredentials. " + "Did you set SPOTIFY_KEY and SPOTIFY_SECRET?");
+            return;
+        }
+        Monitor monitor = context.getMonitor();
+        SpotifyApi spotifyApi = new SpotifyApi.Builder().setClientId(appCredentials.getKey()).setClientSecret(appCredentials.getSecret()).build();
+        exporter = new SpotifyPlaylistExporter(monitor, spotifyApi);
+        importer = new SpotifyPlaylistImporter(monitor, spotifyApi);
+        initialized = true;
+    }
 }

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.transfer.twitter;
 
 import com.google.api.client.http.InputStreamContent;
@@ -28,55 +27,45 @@ import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import twitter4j.StatusUpdate;
 import twitter4j.Twitter;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.UUID;
 
-final class TwitterPhotosImporter
-    implements Importer<TokenSecretAuthData, PhotosContainerResource> {
-  private final AppCredentials appCredentials;
-  private final Monitor monitor;
+final class TwitterPhotosImporter implements Importer<TokenSecretAuthData, PhotosContainerResource> {
 
-  public TwitterPhotosImporter(AppCredentials appCredentials, Monitor monitor) {
-    this.appCredentials = appCredentials;
-    this.monitor = monitor;
-  }
+    private final AppCredentials appCredentials;
 
-  @Override
-  public ImportResult importItem(
-      UUID jobId,
-      IdempotentImportExecutor idempotentExecutor,
-      TokenSecretAuthData authData,
-      PhotosContainerResource data) throws Exception {
-    Twitter twitterApi = TwitterApiWrapper.getInstance(appCredentials, authData);
-    // Twitter doesn't support an 'Albums' concept, so that information is just lost.
+    private final Monitor monitor;
 
-    for (PhotoModel image : data.getPhotos()) {
-      try {
-        StatusUpdate update = new StatusUpdate(image.getDescription());
-        InputStreamContent content =
-            new InputStreamContent(null, getImageAsStream(image.getFetchableUrl()));
-        update.media(image.getTitle(), content.getInputStream());
-
-        idempotentExecutor.executeAndSwallowIOExceptions(
-            image.getIdempotentId(),
-            image.getTitle(),
-            () -> twitterApi.tweets().updateStatus(update));
-      } catch (IOException e) {
-        monitor.severe(() -> "Error importing twitter photo", e);
-        return new ImportResult(e);
-      }
+    public TwitterPhotosImporter(AppCredentials appCredentials, Monitor monitor) {
+        this.appCredentials = appCredentials;
+        this.monitor = monitor;
     }
-    return new ImportResult(ResultType.OK);
-  }
 
-  private InputStream getImageAsStream(String urlStr) throws IOException {
-    URL url = new URL(urlStr);
-    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-    conn.connect();
-    return conn.getInputStream();
-  }
+    @Override
+    public ImportResult importItem(UUID jobId, IdempotentImportExecutor idempotentExecutor, TokenSecretAuthData authData, PhotosContainerResource data) throws Exception {
+        Twitter twitterApi = TwitterApiWrapper.getInstance(appCredentials, authData);
+        // Twitter doesn't support an 'Albums' concept, so that information is just lost.
+        for (PhotoModel image : data.getPhotos()) {
+            try {
+                StatusUpdate update = new StatusUpdate(image.getDescription());
+                InputStreamContent content = new InputStreamContent(null, getImageAsStream(image.getFetchableUrl()));
+                update.media(image.getTitle(), content.getInputStream());
+                idempotentExecutor.executeAndSwallowIOExceptions(image.getIdempotentId(), image.getTitle(), () -> twitterApi.tweets().updateStatus(update));
+            } catch (IOException e) {
+                monitor.severe(() -> "Error importing twitter photo", e);
+                return new ImportResult(e);
+            }
+        }
+        return new ImportResult(ResultType.OK);
+    }
+
+    private InputStream getImageAsStream(String urlStr) throws IOException {
+        URL url = new URL(urlStr);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.connect();
+        return conn.getInputStream();
+    }
 }

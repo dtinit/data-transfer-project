@@ -26,14 +26,12 @@ import org.datatransferproject.transfer.microsoft.transformer.TransformResult;
 import org.datatransferproject.transfer.microsoft.transformer.TransformerService;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
 import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 import static java.util.stream.Collectors.toList;
 import static org.datatransferproject.transfer.microsoft.common.RequestHelper.batchRequest;
 import static org.datatransferproject.transfer.microsoft.common.RequestHelper.createRequest;
@@ -43,61 +41,48 @@ import static org.datatransferproject.transfer.microsoft.common.RequestHelper.cr
  * https://developer.microsoft.com/en-us/graph/docs/concepts/json_batching.
  */
 public class MicrosoftContactsImporter implements Importer<TokenAuthData, ContactsModelWrapper> {
-  private static final String CONTACTS_URL = "/me/contacts"; // must be relative for batch operations
 
-  private final String baseUrl;
-  private final OkHttpClient client;
-  private final ObjectMapper objectMapper;
-  private final TransformerService transformerService;
+    // must be relative for batch operations
+    private static final String CONTACTS_URL = "/me/contacts";
 
-  public MicrosoftContactsImporter(
-      String baseUrl,
-      OkHttpClient client,
-      ObjectMapper objectMapper,
-      TransformerService transformerService) {
-    this.baseUrl = baseUrl;
-    this.client = client;
-    this.objectMapper = objectMapper;
-    this.transformerService = transformerService;
-  }
+    private final String baseUrl;
 
-  @Override
-  public ImportResult importItem(
-      UUID jobId,
-      IdempotentImportExecutor idempotentImportExecutor,
-      TokenAuthData authData,
-      ContactsModelWrapper wrapper) {
-    JCardReader reader = new JCardReader(wrapper.getVCards());
-    try {
-      List<VCard> cards = reader.readAll();
+    private final OkHttpClient client;
 
-      List<String> problems = new ArrayList<>();
+    private final ObjectMapper objectMapper;
 
-      int[] id = new int[] {1};
-      List<Map<String, Object>> requests =
-          cards
-              .stream()
-              .map(
-                  card -> {
-                    TransformResult<LinkedHashMap> result =
-                        transformerService.transform(LinkedHashMap.class, card);
-                    problems.addAll(result.getProblems());
-                    LinkedHashMap contact = result.getTransformed();
-                    Map<String, Object> request = createRequest(id[0], CONTACTS_URL, contact);
-                    id[0]++;
-                    return request;
-                  })
-              .collect(toList());
+    private final TransformerService transformerService;
 
-      if (!problems.isEmpty()) {
-        // TODO log problems
-      }
-
-      return batchRequest(authData, requests, baseUrl, client, objectMapper).getResult();
-    } catch (IOException e) {
-      // TODO log
-      e.printStackTrace();
-      return new ImportResult(e);
+    public MicrosoftContactsImporter(String baseUrl, OkHttpClient client, ObjectMapper objectMapper, TransformerService transformerService) {
+        this.baseUrl = baseUrl;
+        this.client = client;
+        this.objectMapper = objectMapper;
+        this.transformerService = transformerService;
     }
-  }
+
+    @Override
+    public ImportResult importItem(UUID jobId, IdempotentImportExecutor idempotentImportExecutor, TokenAuthData authData, ContactsModelWrapper wrapper) {
+        JCardReader reader = new JCardReader(wrapper.getVCards());
+        try {
+            List<VCard> cards = reader.readAll();
+            List<String> problems = new ArrayList<>();
+            int[] id = new int[] { 1 };
+            List<Map<String, Object>> requests = cards.stream().map(card -> {
+                TransformResult<LinkedHashMap> result = transformerService.transform(LinkedHashMap.class, card);
+                problems.addAll(result.getProblems());
+                LinkedHashMap contact = result.getTransformed();
+                Map<String, Object> request = createRequest(id[0], CONTACTS_URL, contact);
+                id[0]++;
+                return request;
+            }).collect(toList());
+            if (!problems.isEmpty()) {
+                // TODO log problems
+            }
+            return batchRequest(authData, requests, baseUrl, client, objectMapper).getResult();
+        } catch (IOException e) {
+            // TODO log
+            e.printStackTrace();
+            return new ImportResult(e);
+        }
+    }
 }

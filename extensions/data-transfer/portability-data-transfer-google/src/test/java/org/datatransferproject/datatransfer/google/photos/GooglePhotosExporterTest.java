@@ -18,7 +18,6 @@ package org.datatransferproject.datatransfer.google.photos;
 import static com.google.common.truth.Truth.assertThat;
 import static org.datatransferproject.datatransfer.google.photos.GooglePhotosExporter.ALBUM_TOKEN_PREFIX;
 import static org.datatransferproject.datatransfer.google.photos.GooglePhotosExporter.PHOTO_TOKEN_PREFIX;
-
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -27,7 +26,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.json.gson.GsonFactory;
 import java.io.IOException;
@@ -66,268 +64,210 @@ import org.mockito.ArgumentCaptor;
 
 public class GooglePhotosExporterTest {
 
-  private String IMG_URI = "image uri";
-  private String PHOTO_ID = "photo id";
-  private String FILENAME = "filename";
-  private String ALBUM_ID = "GoogleAlbum id";
-  private String ALBUM_TOKEN = "album_token";
-  private String PHOTO_TOKEN = "photo_token";
+    private String IMG_URI = "image uri";
 
-  private UUID uuid = UUID.randomUUID();
+    private String PHOTO_ID = "photo id";
 
-  private GooglePhotosExporter googlePhotosExporter;
-  private TemporaryPerJobDataStore jobStore;
-  private GooglePhotosInterface photosInterface;
+    private String FILENAME = "filename";
 
-  private MediaItemSearchResponse mediaItemSearchResponse;
-  private AlbumListResponse albumListResponse;
+    private String ALBUM_ID = "GoogleAlbum id";
 
-  @BeforeEach
-  public void setup()
-      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
-    GoogleCredentialFactory credentialFactory = mock(GoogleCredentialFactory.class);
-    jobStore = mock(TemporaryPerJobDataStore.class);
-    when(jobStore.getStream(any(), anyString())).thenReturn(mock(InputStreamWrapper.class));
-    photosInterface = mock(GooglePhotosInterface.class);
+    private String ALBUM_TOKEN = "album_token";
 
-    albumListResponse = mock(AlbumListResponse.class);
-    mediaItemSearchResponse = mock(MediaItemSearchResponse.class);
+    private String PHOTO_TOKEN = "photo_token";
 
-    Monitor monitor = mock(Monitor.class);
+    private UUID uuid = UUID.randomUUID();
 
-    googlePhotosExporter =
-        new GooglePhotosExporter(
-            credentialFactory, jobStore, GsonFactory.getDefaultInstance(), photosInterface, monitor);
+    private GooglePhotosExporter googlePhotosExporter;
 
-    when(photosInterface.listAlbums(any(Optional.class))).thenReturn(albumListResponse);
-    when(photosInterface.listMediaItems(any(Optional.class), any(Optional.class)))
-        .thenReturn(mediaItemSearchResponse);
+    private TemporaryPerJobDataStore jobStore;
 
-    verifyNoInteractions(credentialFactory);
-  }
+    private GooglePhotosInterface photosInterface;
 
-  @Test
-  public void exportAlbumFirstSet() throws IOException, InvalidTokenException, PermissionDeniedException {
-    setUpSingleAlbum();
-    when(albumListResponse.getNextPageToken()).thenReturn(ALBUM_TOKEN);
+    private MediaItemSearchResponse mediaItemSearchResponse;
 
-    // Run test
-    ExportResult<PhotosContainerResource> result =
-        googlePhotosExporter.exportAlbums(null, Optional.empty(), uuid);
+    private AlbumListResponse albumListResponse;
 
-    // Check results
-    // Verify correct methods were called
-    verify(photosInterface).listAlbums(Optional.empty());
-    verify(albumListResponse).getAlbums();
+    @BeforeEach
+    public void setup() throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+        GoogleCredentialFactory credentialFactory = mock(GoogleCredentialFactory.class);
+        jobStore = mock(TemporaryPerJobDataStore.class);
+        when(jobStore.getStream(any(), anyString())).thenReturn(mock(InputStreamWrapper.class));
+        photosInterface = mock(GooglePhotosInterface.class);
+        albumListResponse = mock(AlbumListResponse.class);
+        mediaItemSearchResponse = mock(MediaItemSearchResponse.class);
+        Monitor monitor = mock(Monitor.class);
+        googlePhotosExporter = new GooglePhotosExporter(credentialFactory, jobStore, GsonFactory.getDefaultInstance(), photosInterface, monitor);
+        when(photosInterface.listAlbums(any(Optional.class))).thenReturn(albumListResponse);
+        when(photosInterface.listMediaItems(any(Optional.class), any(Optional.class))).thenReturn(mediaItemSearchResponse);
+        verifyNoInteractions(credentialFactory);
+    }
 
-    // Check pagination token
-    ContinuationData continuationData = result.getContinuationData();
-    StringPaginationToken paginationToken =
-        (StringPaginationToken) continuationData.getPaginationData();
-    assertThat(paginationToken.getToken()).isEqualTo(ALBUM_TOKEN_PREFIX + ALBUM_TOKEN);
+    @Test
+    public void exportAlbumFirstSet() throws IOException, InvalidTokenException, PermissionDeniedException {
+        setUpSingleAlbum();
+        when(albumListResponse.getNextPageToken()).thenReturn(ALBUM_TOKEN);
+        // Run test
+        ExportResult<PhotosContainerResource> result = googlePhotosExporter.exportAlbums(null, Optional.empty(), uuid);
+        // Check results
+        // Verify correct methods were called
+        verify(photosInterface).listAlbums(Optional.empty());
+        verify(albumListResponse).getAlbums();
+        // Check pagination token
+        ContinuationData continuationData = result.getContinuationData();
+        StringPaginationToken paginationToken = (StringPaginationToken) continuationData.getPaginationData();
+        assertThat(paginationToken.getToken()).isEqualTo(ALBUM_TOKEN_PREFIX + ALBUM_TOKEN);
+        // Check albums field of container
+        Collection<PhotoAlbum> actualAlbums = result.getExportedData().getAlbums();
+        assertThat(actualAlbums.stream().map(PhotoAlbum::getId).collect(Collectors.toList())).containsExactly(ALBUM_ID);
+        // Check photos field of container (should be empty, even though there is a photo in the
+        // original album)
+        Collection<PhotoModel> actualPhotos = result.getExportedData().getPhotos();
+        assertThat(actualPhotos).isEmpty();
+        // Should be one container in the resource list
+        List<ContainerResource> actualResources = continuationData.getContainerResources();
+        assertThat(actualResources.stream().map(a -> ((IdOnlyContainerResource) a).getId()).collect(Collectors.toList())).containsExactly(ALBUM_ID);
+    }
 
-    // Check albums field of container
-    Collection<PhotoAlbum> actualAlbums = result.getExportedData().getAlbums();
-    assertThat(actualAlbums.stream().map(PhotoAlbum::getId).collect(Collectors.toList()))
-        .containsExactly(ALBUM_ID);
+    @Test
+    public void exportAlbumSubsequentSet() throws IOException, InvalidTokenException, PermissionDeniedException {
+        setUpSingleAlbum();
+        when(albumListResponse.getNextPageToken()).thenReturn(null);
+        StringPaginationToken inputPaginationToken = new StringPaginationToken(ALBUM_TOKEN_PREFIX + ALBUM_TOKEN);
+        // Run test
+        ExportResult<PhotosContainerResource> result = googlePhotosExporter.exportAlbums(null, Optional.of(inputPaginationToken), uuid);
+        // Check results
+        // Verify correct methods were called
+        verify(photosInterface).listAlbums(Optional.of(ALBUM_TOKEN));
+        verify(albumListResponse).getAlbums();
+        // Check pagination token - should be absent
+        ContinuationData continuationData = result.getContinuationData();
+        StringPaginationToken paginationData = (StringPaginationToken) continuationData.getPaginationData();
+        assertThat(paginationData.getToken()).isEqualTo(GooglePhotosExporter.PHOTO_TOKEN_PREFIX);
+    }
 
-    // Check photos field of container (should be empty, even though there is a photo in the
-    // original album)
-    Collection<PhotoModel> actualPhotos = result.getExportedData().getPhotos();
-    assertThat(actualPhotos).isEmpty();
-    // Should be one container in the resource list
-    List<ContainerResource> actualResources = continuationData.getContainerResources();
-    assertThat(
-            actualResources.stream()
-                .map(a -> ((IdOnlyContainerResource) a).getId())
-                .collect(Collectors.toList()))
-        .containsExactly(ALBUM_ID);
-  }
+    @Test
+    public void exportPhotoFirstSet() throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+        setUpSingleAlbum();
+        when(albumListResponse.getNextPageToken()).thenReturn(null);
+        GoogleMediaItem mediaItem = setUpSinglePhoto(IMG_URI, PHOTO_ID);
+        when(mediaItemSearchResponse.getMediaItems()).thenReturn(new GoogleMediaItem[] { mediaItem });
+        when(mediaItemSearchResponse.getNextPageToken()).thenReturn(PHOTO_TOKEN);
+        IdOnlyContainerResource idOnlyContainerResource = new IdOnlyContainerResource(ALBUM_ID);
+        ExportResult<PhotosContainerResource> result = googlePhotosExporter.exportPhotos(null, Optional.of(idOnlyContainerResource), Optional.empty(), uuid);
+        // Check results
+        // Verify correct methods were called
+        verify(photosInterface).listMediaItems(Optional.of(ALBUM_ID), Optional.empty());
+        verify(mediaItemSearchResponse).getMediaItems();
+        // Check pagination
+        ContinuationData continuationData = result.getContinuationData();
+        StringPaginationToken paginationToken = (StringPaginationToken) continuationData.getPaginationData();
+        assertThat(paginationToken.getToken()).isEqualTo(PHOTO_TOKEN_PREFIX + PHOTO_TOKEN);
+        // Check albums field of container (should be empty)
+        Collection<PhotoAlbum> actualAlbums = result.getExportedData().getAlbums();
+        assertThat(actualAlbums).isEmpty();
+        // Check photos field of container
+        Collection<PhotoModel> actualPhotos = result.getExportedData().getPhotos();
+        assertThat(actualPhotos.stream().map(PhotoModel::getFetchableUrl).collect(Collectors.toList())).containsExactly(// for download
+        IMG_URI + "=d");
+        assertThat(actualPhotos.stream().map(PhotoModel::getAlbumId).collect(Collectors.toList())).containsExactly(ALBUM_ID);
+        assertThat(actualPhotos.stream().map(PhotoModel::getTitle).collect(Collectors.toList())).containsExactly(FILENAME);
+    }
 
-  @Test
-  public void exportAlbumSubsequentSet() throws IOException, InvalidTokenException, PermissionDeniedException {
-    setUpSingleAlbum();
-    when(albumListResponse.getNextPageToken()).thenReturn(null);
+    @Test
+    public void exportPhotoSubsequentSet() throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+        setUpSingleAlbum();
+        when(albumListResponse.getNextPageToken()).thenReturn(null);
+        GoogleMediaItem mediaItem = setUpSinglePhoto(IMG_URI, PHOTO_ID);
+        when(mediaItemSearchResponse.getMediaItems()).thenReturn(new GoogleMediaItem[] { mediaItem });
+        when(mediaItemSearchResponse.getNextPageToken()).thenReturn(null);
+        StringPaginationToken inputPaginationToken = new StringPaginationToken(PHOTO_TOKEN_PREFIX + PHOTO_TOKEN);
+        IdOnlyContainerResource idOnlyContainerResource = new IdOnlyContainerResource(ALBUM_ID);
+        // Run test
+        ExportResult<PhotosContainerResource> result = googlePhotosExporter.exportPhotos(null, Optional.of(idOnlyContainerResource), Optional.of(inputPaginationToken), uuid);
+        // Check results
+        // Verify correct methods were called
+        verify(photosInterface).listMediaItems(Optional.of(ALBUM_ID), Optional.of(PHOTO_TOKEN));
+        verify(mediaItemSearchResponse).getMediaItems();
+        // Check pagination token
+        ContinuationData continuationData = result.getContinuationData();
+        PaginationData paginationToken = continuationData.getPaginationData();
+        assertNull(paginationToken);
+    }
 
-    StringPaginationToken inputPaginationToken =
-        new StringPaginationToken(ALBUM_TOKEN_PREFIX + ALBUM_TOKEN);
+    @Test
+    public void populateContainedPhotosList() throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+        // Set up an album with two photos
+        setUpSingleAlbum();
+        when(albumListResponse.getNextPageToken()).thenReturn(null);
+        MediaItemSearchResponse albumMediaResponse = mock(MediaItemSearchResponse.class);
+        GoogleMediaItem firstPhoto = setUpSinglePhoto(IMG_URI, PHOTO_ID);
+        String secondUri = "second uri";
+        String secondId = "second id";
+        GoogleMediaItem secondPhoto = setUpSinglePhoto(secondUri, secondId);
+        when(photosInterface.listMediaItems(eq(Optional.of(ALBUM_ID)), any(Optional.class))).thenReturn(albumMediaResponse);
+        when(albumMediaResponse.getMediaItems()).thenReturn(new GoogleMediaItem[] { firstPhoto, secondPhoto });
+        when(albumMediaResponse.getNextPageToken()).thenReturn(null);
+        // Run test
+        googlePhotosExporter.populateContainedPhotosList(uuid, null);
+        // Check contents of job store
+        ArgumentCaptor<InputStream> inputStreamArgumentCaptor = ArgumentCaptor.forClass(InputStream.class);
+        verify(jobStore).create(eq(uuid), eq("tempMediaData"), inputStreamArgumentCaptor.capture());
+        TempMediaData tempMediaData = new ObjectMapper().readValue(inputStreamArgumentCaptor.getValue(), TempMediaData.class);
+        assertThat(tempMediaData.lookupContainedPhotoIds()).containsExactly(PHOTO_ID, secondId);
+    }
 
-    // Run test
-    ExportResult<PhotosContainerResource> result =
-        googlePhotosExporter.exportAlbums(null, Optional.of(inputPaginationToken), uuid);
-
-    // Check results
-    // Verify correct methods were called
-    verify(photosInterface).listAlbums(Optional.of(ALBUM_TOKEN));
-    verify(albumListResponse).getAlbums();
-
-    // Check pagination token - should be absent
-    ContinuationData continuationData = result.getContinuationData();
-    StringPaginationToken paginationData =
-        (StringPaginationToken) continuationData.getPaginationData();
-    assertThat(paginationData.getToken()).isEqualTo(GooglePhotosExporter.PHOTO_TOKEN_PREFIX);
-  }
-
-  @Test
-  public void exportPhotoFirstSet()
-      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
-    setUpSingleAlbum();
-    when(albumListResponse.getNextPageToken()).thenReturn(null);
-    GoogleMediaItem mediaItem = setUpSinglePhoto(IMG_URI, PHOTO_ID);
-    when(mediaItemSearchResponse.getMediaItems()).thenReturn(new GoogleMediaItem[] {mediaItem});
-    when(mediaItemSearchResponse.getNextPageToken()).thenReturn(PHOTO_TOKEN);
-
-    IdOnlyContainerResource idOnlyContainerResource = new IdOnlyContainerResource(ALBUM_ID);
-
-    ExportResult<PhotosContainerResource> result =
-        googlePhotosExporter.exportPhotos(
-            null, Optional.of(idOnlyContainerResource), Optional.empty(), uuid);
-
-    // Check results
-    // Verify correct methods were called
-    verify(photosInterface).listMediaItems(Optional.of(ALBUM_ID), Optional.empty());
-    verify(mediaItemSearchResponse).getMediaItems();
-
-    // Check pagination
-    ContinuationData continuationData = result.getContinuationData();
-    StringPaginationToken paginationToken =
-        (StringPaginationToken) continuationData.getPaginationData();
-    assertThat(paginationToken.getToken()).isEqualTo(PHOTO_TOKEN_PREFIX + PHOTO_TOKEN);
-
-    // Check albums field of container (should be empty)
-    Collection<PhotoAlbum> actualAlbums = result.getExportedData().getAlbums();
-    assertThat(actualAlbums).isEmpty();
-
-    // Check photos field of container
-    Collection<PhotoModel> actualPhotos = result.getExportedData().getPhotos();
-    assertThat(actualPhotos.stream().map(PhotoModel::getFetchableUrl).collect(Collectors.toList()))
-        .containsExactly(IMG_URI + "=d"); // for download
-    assertThat(actualPhotos.stream().map(PhotoModel::getAlbumId).collect(Collectors.toList()))
-        .containsExactly(ALBUM_ID);
-    assertThat(actualPhotos.stream().map(PhotoModel::getTitle).collect(Collectors.toList()))
-        .containsExactly(FILENAME);
-  }
-
-  @Test
-  public void exportPhotoSubsequentSet()
-      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
-    setUpSingleAlbum();
-    when(albumListResponse.getNextPageToken()).thenReturn(null);
-    GoogleMediaItem mediaItem = setUpSinglePhoto(IMG_URI, PHOTO_ID);
-    when(mediaItemSearchResponse.getMediaItems()).thenReturn(new GoogleMediaItem[] {mediaItem});
-    when(mediaItemSearchResponse.getNextPageToken()).thenReturn(null);
-
-    StringPaginationToken inputPaginationToken =
-        new StringPaginationToken(PHOTO_TOKEN_PREFIX + PHOTO_TOKEN);
-    IdOnlyContainerResource idOnlyContainerResource = new IdOnlyContainerResource(ALBUM_ID);
-
-    // Run test
-    ExportResult<PhotosContainerResource> result =
-        googlePhotosExporter.exportPhotos(
-            null, Optional.of(idOnlyContainerResource), Optional.of(inputPaginationToken), uuid);
-
-    // Check results
-    // Verify correct methods were called
-    verify(photosInterface).listMediaItems(Optional.of(ALBUM_ID), Optional.of(PHOTO_TOKEN));
-    verify(mediaItemSearchResponse).getMediaItems();
-
-    // Check pagination token
-    ContinuationData continuationData = result.getContinuationData();
-    PaginationData paginationToken = continuationData.getPaginationData();
-    assertNull(paginationToken);
-  }
-
-  @Test
-  public void populateContainedPhotosList()
-      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
-    // Set up an album with two photos
-    setUpSingleAlbum();
-    when(albumListResponse.getNextPageToken()).thenReturn(null);
-
-    MediaItemSearchResponse albumMediaResponse = mock(MediaItemSearchResponse.class);
-    GoogleMediaItem firstPhoto = setUpSinglePhoto(IMG_URI, PHOTO_ID);
-    String secondUri = "second uri";
-    String secondId = "second id";
-    GoogleMediaItem secondPhoto = setUpSinglePhoto(secondUri, secondId);
-
-    when(photosInterface.listMediaItems(eq(Optional.of(ALBUM_ID)), any(Optional.class)))
-        .thenReturn(albumMediaResponse);
-    when(albumMediaResponse.getMediaItems())
-        .thenReturn(new GoogleMediaItem[] {firstPhoto, secondPhoto});
-    when(albumMediaResponse.getNextPageToken()).thenReturn(null);
-
-    // Run test
-    googlePhotosExporter.populateContainedPhotosList(uuid, null);
-
-    // Check contents of job store
-    ArgumentCaptor<InputStream> inputStreamArgumentCaptor =
-        ArgumentCaptor.forClass(InputStream.class);
-    verify(jobStore).create(eq(uuid), eq("tempMediaData"), inputStreamArgumentCaptor.capture());
-    TempMediaData tempMediaData =
-        new ObjectMapper().readValue(inputStreamArgumentCaptor.getValue(), TempMediaData.class);
-    assertThat(tempMediaData.lookupContainedPhotoIds()).containsExactly(PHOTO_ID, secondId);
-  }
-
-  @Test
-  /* Tests that when there is no album information passed along to exportPhotos, only albumless
+    @Test
+    public /* Tests that when there is no album information passed along to exportPhotos, only albumless
   photos are exported.
   */
-  public void onlyExportAlbumlessPhoto()
-      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
-    // Set up - two photos will be returned by a media item search without an album id, but one of
-    // them will have already been put into the list of contained photos
-    String containedPhotoUri = "contained photo uri";
-    String containedPhotoId = "contained photo id";
-    GoogleMediaItem containedPhoto = setUpSinglePhoto(containedPhotoUri, containedPhotoId);
-    String albumlessPhotoUri = "albumless photo uri";
-    String albumlessPhotoId = "albumless photo id";
-    GoogleMediaItem albumlessPhoto = setUpSinglePhoto(albumlessPhotoUri, albumlessPhotoId);
-    MediaItemSearchResponse mediaItemSearchResponse = mock(MediaItemSearchResponse.class);
+    void onlyExportAlbumlessPhoto() throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+        // Set up - two photos will be returned by a media item search without an album id, but one of
+        // them will have already been put into the list of contained photos
+        String containedPhotoUri = "contained photo uri";
+        String containedPhotoId = "contained photo id";
+        GoogleMediaItem containedPhoto = setUpSinglePhoto(containedPhotoUri, containedPhotoId);
+        String albumlessPhotoUri = "albumless photo uri";
+        String albumlessPhotoId = "albumless photo id";
+        GoogleMediaItem albumlessPhoto = setUpSinglePhoto(albumlessPhotoUri, albumlessPhotoId);
+        MediaItemSearchResponse mediaItemSearchResponse = mock(MediaItemSearchResponse.class);
+        when(photosInterface.listMediaItems(eq(Optional.empty()), eq(Optional.empty()))).thenReturn(mediaItemSearchResponse);
+        when(mediaItemSearchResponse.getMediaItems()).thenReturn(new GoogleMediaItem[] { containedPhoto, albumlessPhoto });
+        when(mediaItemSearchResponse.getNextPageToken()).thenReturn(null);
+        TempMediaData tempMediaData = new TempMediaData(uuid);
+        tempMediaData.addContainedPhotoId(containedPhotoId);
+        InputStream stream = GooglePhotosExporter.convertJsonToInputStream(tempMediaData);
+        when(jobStore.getStream(uuid, "tempMediaData")).thenReturn(new InputStreamWrapper(stream));
+        // Run test
+        ExportResult<PhotosContainerResource> result = googlePhotosExporter.exportPhotos(null, Optional.empty(), Optional.empty(), uuid);
+        // Check results
+        assertThat(result.getExportedData().getPhotos().stream().map(PhotoModel::getFetchableUrl).collect(Collectors.toList())).containsExactly(// download
+        albumlessPhotoUri + "=d");
+    }
 
-    when(photosInterface.listMediaItems(eq(Optional.empty()), eq(Optional.empty())))
-        .thenReturn(mediaItemSearchResponse);
-    when(mediaItemSearchResponse.getMediaItems())
-        .thenReturn(new GoogleMediaItem[] {containedPhoto, albumlessPhoto});
-    when(mediaItemSearchResponse.getNextPageToken()).thenReturn(null);
+    /**
+     * Sets up a response with a single album, containing a single photo
+     */
+    private void setUpSingleAlbum() {
+        GoogleAlbum albumEntry = new GoogleAlbum();
+        albumEntry.setId(ALBUM_ID);
+        albumEntry.setTitle("Title");
+        when(albumListResponse.getAlbums()).thenReturn(new GoogleAlbum[] { albumEntry });
+    }
 
-    TempMediaData tempMediaData = new TempMediaData(uuid);
-    tempMediaData.addContainedPhotoId(containedPhotoId);
-    InputStream stream = GooglePhotosExporter.convertJsonToInputStream(tempMediaData);
-    when(jobStore.getStream(uuid, "tempMediaData")).thenReturn(new InputStreamWrapper(stream));
-
-    // Run test
-    ExportResult<PhotosContainerResource> result =
-        googlePhotosExporter.exportPhotos(null, Optional.empty(), Optional.empty(), uuid);
-
-    // Check results
-    assertThat(
-            result.getExportedData().getPhotos().stream()
-                .map(PhotoModel::getFetchableUrl)
-                .collect(Collectors.toList()))
-        .containsExactly(albumlessPhotoUri + "=d"); // download
-  }
-
-  /** Sets up a response with a single album, containing a single photo */
-  private void setUpSingleAlbum() {
-    GoogleAlbum albumEntry = new GoogleAlbum();
-    albumEntry.setId(ALBUM_ID);
-    albumEntry.setTitle("Title");
-
-    when(albumListResponse.getAlbums()).thenReturn(new GoogleAlbum[] {albumEntry});
-  }
-
-  /** Sets up a response for a single photo */
-  private GoogleMediaItem setUpSinglePhoto(String imageUri, String photoId) {
-    GoogleMediaItem photoEntry = new GoogleMediaItem();
-    photoEntry.setDescription("Description");
-    photoEntry.setMimeType("image/jpeg");
-    photoEntry.setBaseUrl(imageUri);
-    photoEntry.setId(photoId);
-    photoEntry.setFilename(FILENAME);
-    MediaMetadata mediaMetadata = new MediaMetadata();
-    mediaMetadata.setPhoto(new Photo());
-    photoEntry.setMediaMetadata(mediaMetadata);
-
-    return photoEntry;
-  }
+    /**
+     * Sets up a response for a single photo
+     */
+    private GoogleMediaItem setUpSinglePhoto(String imageUri, String photoId) {
+        GoogleMediaItem photoEntry = new GoogleMediaItem();
+        photoEntry.setDescription("Description");
+        photoEntry.setMimeType("image/jpeg");
+        photoEntry.setBaseUrl(imageUri);
+        photoEntry.setId(photoId);
+        photoEntry.setFilename(FILENAME);
+        MediaMetadata mediaMetadata = new MediaMetadata();
+        mediaMetadata.setPhoto(new Photo());
+        photoEntry.setMediaMetadata(mediaMetadata);
+        return photoEntry;
+    }
 }

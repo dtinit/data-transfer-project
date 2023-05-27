@@ -36,7 +36,6 @@ import org.datatransferproject.transfer.deezer.model.PlaylistsResponse;
 import org.datatransferproject.transfer.deezer.model.Track;
 import org.datatransferproject.transfer.deezer.model.User;
 import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
-
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
@@ -50,115 +49,93 @@ import java.util.Map;
  * <p>See: https://developers.deezer.com/api/explorer
  */
 public class DeezerApi {
-  private static final ObjectMapper MAPPER =
-      new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-  private static final String BASE_URL = "https://api.deezer.com";
 
-  private final String accessToken;
-  private final HttpTransport httpTransport;
-  private final RateLimiter perUserRateLimiter;
+    private static final ObjectMapper MAPPER = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-  public DeezerApi(
-      String accessToken,
-      HttpTransport httpTransport,
-      TransferServiceConfig transferServiceConfig) {
-    this.accessToken = accessToken;
-    this.httpTransport = httpTransport;
-    this.perUserRateLimiter = transferServiceConfig.getPerUserRateLimiter();
-  }
+    private static final String BASE_URL = "https://api.deezer.com";
 
-  public User getUser() throws IOException {
-    return makeRequest(BASE_URL + "/user/me", User.class);
-  }
+    private final String accessToken;
 
-  public Collection<PlaylistSummary> getPlaylists() throws IOException {
-    return ImmutableList.copyOf(
-        makeRequest(BASE_URL + "/user/me/playlists", PlaylistsResponse.class)
-            .getData());
-  }
+    private final HttpTransport httpTransport;
 
-  public PlaylistDetails getPlaylistDetails(long playlistId) throws IOException {
-    return makeRequest(BASE_URL + "/playlist/" + playlistId, PlaylistDetails.class);
-  }
+    private final RateLimiter perUserRateLimiter;
 
-  public Track getTrack(long trackId) throws IOException {
-    return makeRequest(BASE_URL + "/track/" + trackId, Track.class);
-  }
-
-  public InsertResponse createPlaylist(String title) throws IOException {
-    String result = makePostRequest(
-        BASE_URL + "/user/me/playlists",
-        ImmutableMap.of("title", title));
-    return MAPPER.readValue(result, InsertResponse.class);
-  }
-
-  public Error insertTracksInPlaylist(long playlist, Collection<Long> tracks)
-      throws IOException {
-    if (tracks.isEmpty()) {
-      return null;
+    public DeezerApi(String accessToken, HttpTransport httpTransport, TransferServiceConfig transferServiceConfig) {
+        this.accessToken = accessToken;
+        this.httpTransport = httpTransport;
+        this.perUserRateLimiter = transferServiceConfig.getPerUserRateLimiter();
     }
-    // Track inserts return true if successful and an Error json object on error....
-    String result = makePostRequest(
-        BASE_URL + "/playlist/" + playlist + "/tracks",
-        ImmutableMap.of("songs", Joiner.on(",").join(tracks)));
-    if ("true".equalsIgnoreCase(result)) {
-      return null;
-    }
-    return MAPPER.readValue(result, Error.class);
-  }
 
-  public Track lookupTrackByIsrc(String isrc) throws IOException {
-    // This is undocumented in their official API, but was recommended here:
-    // https://stackoverflow.com/questions/21484347/query-track-by-isrc
-    return makeRequest(BASE_URL + "/2.0/track/isrc:" + isrc, Track.class);
-  }
-
-  private String makePostRequest(String url, Map<String, String> params) throws IOException {
-    HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
-    StringBuilder extraArgs = new StringBuilder();
-    params.entrySet().forEach(entry -> {
-      try {
-        extraArgs
-            .append("&")
-            .append(entry.getKey())
-            .append("=")
-            .append(URLEncoder.encode(entry.getValue(), "UTF8"));
-      } catch (UnsupportedEncodingException e) {
-        throw new IllegalArgumentException(e);
-      }
-    });
-    HttpRequest getRequest =
-        requestFactory.buildGetRequest(
-            new GenericUrl(url
-                + "?output=json&request_method=post&access_token=" + accessToken
-                + extraArgs));
-    perUserRateLimiter.acquire();
-    HttpResponse response = getRequest.execute();
-    int statusCode = response.getStatusCode();
-    if (statusCode != 200) {
-      throw new IOException(
-          "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
+    public User getUser() throws IOException {
+        return makeRequest(BASE_URL + "/user/me", User.class);
     }
-    String result =
-        CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
-    return result;
-  }
 
-  private <T> T makeRequest(String url, Class<T> clazz)
-      throws IOException {
-    HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
-    HttpRequest getRequest =
-        requestFactory.buildGetRequest(
-            new GenericUrl(url + "?output=json&access_token=" + accessToken));
-    perUserRateLimiter.acquire();
-    HttpResponse response = getRequest.execute();
-    int statusCode = response.getStatusCode();
-    if (statusCode != 200) {
-      throw new IOException(
-          "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
+    public Collection<PlaylistSummary> getPlaylists() throws IOException {
+        return ImmutableList.copyOf(makeRequest(BASE_URL + "/user/me/playlists", PlaylistsResponse.class).getData());
     }
-    String result =
-        CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
-    return MAPPER.readValue(result, clazz);
-  }
+
+    public PlaylistDetails getPlaylistDetails(long playlistId) throws IOException {
+        return makeRequest(BASE_URL + "/playlist/" + playlistId, PlaylistDetails.class);
+    }
+
+    public Track getTrack(long trackId) throws IOException {
+        return makeRequest(BASE_URL + "/track/" + trackId, Track.class);
+    }
+
+    public InsertResponse createPlaylist(String title) throws IOException {
+        String result = makePostRequest(BASE_URL + "/user/me/playlists", ImmutableMap.of("title", title));
+        return MAPPER.readValue(result, InsertResponse.class);
+    }
+
+    public Error insertTracksInPlaylist(long playlist, Collection<Long> tracks) throws IOException {
+        if (tracks.isEmpty()) {
+            return null;
+        }
+        // Track inserts return true if successful and an Error json object on error....
+        String result = makePostRequest(BASE_URL + "/playlist/" + playlist + "/tracks", ImmutableMap.of("songs", Joiner.on(",").join(tracks)));
+        if ("true".equalsIgnoreCase(result)) {
+            return null;
+        }
+        return MAPPER.readValue(result, Error.class);
+    }
+
+    public Track lookupTrackByIsrc(String isrc) throws IOException {
+        // This is undocumented in their official API, but was recommended here:
+        // https://stackoverflow.com/questions/21484347/query-track-by-isrc
+        return makeRequest(BASE_URL + "/2.0/track/isrc:" + isrc, Track.class);
+    }
+
+    private String makePostRequest(String url, Map<String, String> params) throws IOException {
+        HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
+        StringBuilder extraArgs = new StringBuilder();
+        params.entrySet().forEach(entry -> {
+            try {
+                extraArgs.append("&").append(entry.getKey()).append("=").append(URLEncoder.encode(entry.getValue(), "UTF8"));
+            } catch (UnsupportedEncodingException e) {
+                throw new IllegalArgumentException(e);
+            }
+        });
+        HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(url + "?output=json&request_method=post&access_token=" + accessToken + extraArgs));
+        perUserRateLimiter.acquire();
+        HttpResponse response = getRequest.execute();
+        int statusCode = response.getStatusCode();
+        if (statusCode != 200) {
+            throw new IOException("Bad status code: " + statusCode + " error: " + response.getStatusMessage());
+        }
+        String result = CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
+        return result;
+    }
+
+    private <T> T makeRequest(String url, Class<T> clazz) throws IOException {
+        HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
+        HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(url + "?output=json&access_token=" + accessToken));
+        perUserRateLimiter.acquire();
+        HttpResponse response = getRequest.execute();
+        int statusCode = response.getStatusCode();
+        if (statusCode != 200) {
+            throw new IOException("Bad status code: " + statusCode + " error: " + response.getStatusMessage());
+        }
+        String result = CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
+        return MAPPER.readValue(result, clazz);
+    }
 }

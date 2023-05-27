@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.cloud.google;
 
 import com.google.auth.oauth2.GoogleCredentials;
@@ -32,11 +31,9 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.cloud.google.GoogleCloudExtensionModule.ProjectId;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
-
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-
 import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
 
@@ -49,110 +46,101 @@ import static java.lang.String.format;
  */
 @Singleton
 final class GoogleAppCredentialStore implements AppCredentialStore {
-  private static final Integer CACHE_EXPIRATION_MINUTES = 10;
-  private static final String APP_CREDENTIAL_BUCKET_PREFIX = "app-data-";
-  private static final String KEYS_DIR = "keys/";
-  private static final String KEY_EXTENSION = ".txt";
-  private static final String SECRETS_DIR = "encrypted_secrets/";
-  private static final String SECRET_EXTENSION = ".encrypted";
 
-  private final GoogleAppSecretDecrypter appSecretDecrypter;
-  private final Monitor monitor;
-  private final Storage storage;
-  private final String bucketName;
+    private static final Integer CACHE_EXPIRATION_MINUTES = 10;
 
-  /**
-   * Store keys and secrets in a cache so we can reduce load on cloud storage / KMS when reading
-   * keys and reading/decrypting secrets several times on startup.
-   *
-   * <p>Set the cache to reload keys/secrets periodically so that in the event of a key/secret being
-   * compromised, we can update them without restarting our servers.
-   */
-  private final LoadingCache<String, String> keys;
+    private static final String APP_CREDENTIAL_BUCKET_PREFIX = "app-data-";
 
-  private final LoadingCache<String, String> secrets;
+    private static final String KEYS_DIR = "keys/";
 
-  @Inject
-  GoogleAppCredentialStore(
-      GoogleAppSecretDecrypter appSecretDecrypter,
-      GoogleCredentials googleCredentials,
-      @ProjectId String projectId,
-      Monitor monitor) {
-    this.appSecretDecrypter = appSecretDecrypter;
-    this.monitor = monitor;
-    this.storage =
-        StorageOptions.newBuilder()
-            .setProjectId(projectId)
-            .setCredentials(googleCredentials)
-            .build()
-            .getService();
-    // Google Cloud Platform requires bucket names be unique across projects, so we include project
-    // ID in the bucket name.
-    this.bucketName = APP_CREDENTIAL_BUCKET_PREFIX + projectId;
-    this.keys =
-        CacheBuilder.newBuilder()
-            .expireAfterWrite(CACHE_EXPIRATION_MINUTES, TimeUnit.MINUTES)
-            .build(
-                new CacheLoader<String, String>() {
-                  @Override
-                  public String load(String key) throws Exception {
-                    return lookupKey(key);
-                  }
-                });
-    this.secrets =
-        CacheBuilder.newBuilder()
-            .expireAfterWrite(CACHE_EXPIRATION_MINUTES, TimeUnit.MINUTES)
-            .build(
-                new CacheLoader<String, String>() {
-                  @Override
-                  public String load(String key) throws Exception {
-                    return lookupSecret(key);
-                  }
-                });
-  }
+    private static final String KEY_EXTENSION = ".txt";
 
-  public AppCredentials getAppCredentials(String keyName, String secretName) throws IOException {
-    String key;
-    String secret;
-    try {
-      key = keys.get(keyName);
-    } catch (ExecutionException e) {
-      throw new IOException("Couldn't lookup key: " + keyName, e);
+    private static final String SECRETS_DIR = "encrypted_secrets/";
+
+    private static final String SECRET_EXTENSION = ".encrypted";
+
+    private final GoogleAppSecretDecrypter appSecretDecrypter;
+
+    private final Monitor monitor;
+
+    private final Storage storage;
+
+    private final String bucketName;
+
+    /**
+     * Store keys and secrets in a cache so we can reduce load on cloud storage / KMS when reading
+     * keys and reading/decrypting secrets several times on startup.
+     *
+     * <p>Set the cache to reload keys/secrets periodically so that in the event of a key/secret being
+     * compromised, we can update them without restarting our servers.
+     */
+    private final LoadingCache<String, String> keys;
+
+    private final LoadingCache<String, String> secrets;
+
+    @Inject
+    GoogleAppCredentialStore(GoogleAppSecretDecrypter appSecretDecrypter, GoogleCredentials googleCredentials, @ProjectId String projectId, Monitor monitor) {
+        this.appSecretDecrypter = appSecretDecrypter;
+        this.monitor = monitor;
+        this.storage = StorageOptions.newBuilder().setProjectId(projectId).setCredentials(googleCredentials).build().getService();
+        // Google Cloud Platform requires bucket names be unique across projects, so we include project
+        // ID in the bucket name.
+        this.bucketName = APP_CREDENTIAL_BUCKET_PREFIX + projectId;
+        this.keys = CacheBuilder.newBuilder().expireAfterWrite(CACHE_EXPIRATION_MINUTES, TimeUnit.MINUTES).build(new CacheLoader<String, String>() {
+
+            @Override
+            public String load(String key) throws Exception {
+                return lookupKey(key);
+            }
+        });
+        this.secrets = CacheBuilder.newBuilder().expireAfterWrite(CACHE_EXPIRATION_MINUTES, TimeUnit.MINUTES).build(new CacheLoader<String, String>() {
+
+            @Override
+            public String load(String key) throws Exception {
+                return lookupSecret(key);
+            }
+        });
     }
 
-    try {
-      secret = secrets.get(secretName);
-    } catch (ExecutionException e) {
-      throw new IOException("Couldn't lookup secret: " + secretName, e);
+    public AppCredentials getAppCredentials(String keyName, String secretName) throws IOException {
+        String key;
+        String secret;
+        try {
+            key = keys.get(keyName);
+        } catch (ExecutionException e) {
+            throw new IOException("Couldn't lookup key: " + keyName, e);
+        }
+        try {
+            secret = secrets.get(secretName);
+        } catch (ExecutionException e) {
+            throw new IOException("Couldn't lookup secret: " + secretName, e);
+        }
+        return new AppCredentials(key, secret);
     }
 
-    return new AppCredentials(key, secret);
-  }
+    private byte[] getRawBytes(String blobName) {
+        Bucket bucket = storage.get(bucketName);
+        Preconditions.checkNotNull(bucket, "Bucket [%s] not found", bucketName);
+        Blob blob = bucket.get(blobName);
+        Preconditions.checkNotNull(blob, "blob [%s] not found", blobName);
+        return blob.getContent();
+    }
 
-  private byte[] getRawBytes(String blobName) {
-    Bucket bucket = storage.get(bucketName);
-    Preconditions.checkNotNull(bucket, "Bucket [%s] not found", bucketName);
-    Blob blob = bucket.get(blobName);
-    Preconditions.checkNotNull(blob, "blob [%s] not found", blobName);
-    return blob.getContent();
-  }
+    private String lookupKey(String keyName) {
+        String keyLocation = KEYS_DIR + keyName + KEY_EXTENSION;
+        monitor.debug(() -> format("Getting app key for %s (blob %s) from bucket", keyName, keyLocation));
+        byte[] rawKeyBytes = getRawBytes(keyLocation);
+        checkState(rawKeyBytes != null, "Couldn't look up: " + keyName);
+        return new String(rawKeyBytes).trim();
+    }
 
-  private String lookupKey(String keyName) {
-    String keyLocation = KEYS_DIR + keyName + KEY_EXTENSION;
-    monitor.debug(
-        () -> format("Getting app key for %s (blob %s) from bucket", keyName, keyLocation));
-    byte[] rawKeyBytes = getRawBytes(keyLocation);
-    checkState(rawKeyBytes != null, "Couldn't look up: " + keyName);
-    return new String(rawKeyBytes).trim();
-  }
-
-  private String lookupSecret(String secretName) throws IOException {
-    String secretLocation = SECRETS_DIR + secretName + SECRET_EXTENSION;
-    monitor.debug(()->format("Getting app secret for %s (blob %s)", secretName, secretLocation));
-    byte[] encryptedSecret = getRawBytes(secretLocation);
-    checkState(encryptedSecret != null, "Couldn't look up: " + secretName);
-    String secret = new String(appSecretDecrypter.decryptAppSecret(encryptedSecret)).trim();
-    checkState(!Strings.isNullOrEmpty(secret), "Couldn't decrypt: " + secretName);
-    return secret;
-  }
+    private String lookupSecret(String secretName) throws IOException {
+        String secretLocation = SECRETS_DIR + secretName + SECRET_EXTENSION;
+        monitor.debug(() -> format("Getting app secret for %s (blob %s)", secretName, secretLocation));
+        byte[] encryptedSecret = getRawBytes(secretLocation);
+        checkState(encryptedSecret != null, "Couldn't look up: " + secretName);
+        String secret = new String(appSecretDecrypter.decryptAppSecret(encryptedSecret)).trim();
+        checkState(!Strings.isNullOrEmpty(secret), "Couldn't decrypt: " + secretName);
+        return secret;
+    }
 }

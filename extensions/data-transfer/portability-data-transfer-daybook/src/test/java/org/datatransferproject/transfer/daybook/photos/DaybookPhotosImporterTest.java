@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.transfer.daybook.photos;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -24,7 +23,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -55,65 +53,54 @@ import org.mockito.ArgumentCaptor;
 
 public class DaybookPhotosImporterTest {
 
-  private Monitor monitor;
-  private TemporaryPerJobDataStore jobStore;
-  private IdempotentImportExecutor executor;
-  private TokensAndUrlAuthData authData;
-  private PhotosContainerResource data;
-  private OkHttpClient client;
+    private Monitor monitor;
 
-  @TempDir
-  public Path folder;
+    private TemporaryPerJobDataStore jobStore;
 
-  @BeforeEach
-  public void setUp() {
-    monitor = mock(Monitor.class);
-    jobStore = mock(TemporaryPerJobDataStore.class);
-    executor = new InMemoryIdempotentImportExecutor(monitor);
-    authData = new TokensAndUrlAuthData("access-token", "refresh-token", "http://example.com");
-    client = mock(OkHttpClient.class);
-  }
+    private IdempotentImportExecutor executor;
 
-  @Test
-  public void testImportSinglePhoto() throws Exception {
-    byte[] expectedImageData = {0xF, 0xA, 0xC, 0xE, 0xB, 0x0, 0x0, 0xC};
-    InputStream inputStream = new ByteArrayInputStream(expectedImageData);
-    TemporaryPerJobDataStore.InputStreamWrapper inputStreamWrapper =
-        new TemporaryPerJobDataStore.InputStreamWrapper(inputStream);
-    File file = folder.toFile();
-    when(jobStore.getTempFileFromInputStream(any(), any(), any())).thenReturn(file);
-    when(jobStore.getStream(any(), any())).thenReturn(inputStreamWrapper);
+    private TokensAndUrlAuthData authData;
 
-    PhotoModel photoModel =
-        new PhotoModel("TestingPhotoTitle", "", "description", "", "TestingPhoto", "", true);
-    PhotosContainerResource resource =
-        new PhotosContainerResource(Collections.emptyList(), Collections.singletonList(photoModel));
+    private PhotosContainerResource data;
 
-    Call call = mock(Call.class);
-    Response dummySuccessfulResponse =
-        new Response.Builder()
-            .code(200)
-            .request(new Request.Builder().url("http://example.com").build())
-            .protocol(Protocol.HTTP_1_1)
-            .message("all good!")
-            .body(ResponseBody.create(MediaType.parse("text/xml"), "<a>ok!</a>"))
-            .build();
-    when(call.execute()).thenReturn(dummySuccessfulResponse);
-    when(client.newCall(any())).thenReturn(call);
+    private OkHttpClient client;
 
-    DaybookPhotosImporter daybookPhotosImporter =
-        new DaybookPhotosImporter(monitor, client, jobStore, "http://daybook.com", "exporter");
-    daybookPhotosImporter.importItem(UUID.randomUUID(), executor, authData, resource);
-    ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
-    verify(client, times(1)).newCall(requestCaptor.capture());
+    @TempDir
+    public Path folder;
 
-    RequestBody untypedBody = requestCaptor.getValue().body();
-    assertTrue(untypedBody instanceof FormBody);
-    FormBody actual = (FormBody) untypedBody;
-    assertEquals("image", actual.name(0));
+    @BeforeEach
+    public void setUp() {
+        monitor = mock(Monitor.class);
+        jobStore = mock(TemporaryPerJobDataStore.class);
+        executor = new InMemoryIdempotentImportExecutor(monitor);
+        authData = new TokensAndUrlAuthData("access-token", "refresh-token", "http://example.com");
+        client = mock(OkHttpClient.class);
+    }
 
-    String base64Image = actual.value(0);
-    byte[] actualImageData = Base64.getDecoder().decode(base64Image);
-    assertArrayEquals(expectedImageData, actualImageData);
-  }
+    @Test
+    public void testImportSinglePhoto() throws Exception {
+        byte[] expectedImageData = { 0xF, 0xA, 0xC, 0xE, 0xB, 0x0, 0x0, 0xC };
+        InputStream inputStream = new ByteArrayInputStream(expectedImageData);
+        TemporaryPerJobDataStore.InputStreamWrapper inputStreamWrapper = new TemporaryPerJobDataStore.InputStreamWrapper(inputStream);
+        File file = folder.toFile();
+        when(jobStore.getTempFileFromInputStream(any(), any(), any())).thenReturn(file);
+        when(jobStore.getStream(any(), any())).thenReturn(inputStreamWrapper);
+        PhotoModel photoModel = new PhotoModel("TestingPhotoTitle", "", "description", "", "TestingPhoto", "", true);
+        PhotosContainerResource resource = new PhotosContainerResource(Collections.emptyList(), Collections.singletonList(photoModel));
+        Call call = mock(Call.class);
+        Response dummySuccessfulResponse = new Response.Builder().code(200).request(new Request.Builder().url("http://example.com").build()).protocol(Protocol.HTTP_1_1).message("all good!").body(ResponseBody.create(MediaType.parse("text/xml"), "<a>ok!</a>")).build();
+        when(call.execute()).thenReturn(dummySuccessfulResponse);
+        when(client.newCall(any())).thenReturn(call);
+        DaybookPhotosImporter daybookPhotosImporter = new DaybookPhotosImporter(monitor, client, jobStore, "http://daybook.com", "exporter");
+        daybookPhotosImporter.importItem(UUID.randomUUID(), executor, authData, resource);
+        ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
+        verify(client, times(1)).newCall(requestCaptor.capture());
+        RequestBody untypedBody = requestCaptor.getValue().body();
+        assertTrue(untypedBody instanceof FormBody);
+        FormBody actual = (FormBody) untypedBody;
+        assertEquals("image", actual.name(0));
+        String base64Image = actual.value(0);
+        byte[] actualImageData = Base64.getDecoder().decode(base64Image);
+        assertArrayEquals(expectedImageData, actualImageData);
+    }
 }

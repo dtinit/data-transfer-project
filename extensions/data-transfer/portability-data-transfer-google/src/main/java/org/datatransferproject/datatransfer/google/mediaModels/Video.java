@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -22,22 +21,21 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * Video metadata - not the content of the video itself!
  */
 public class Video {
-  @JsonProperty("cameraMake")
-  private String cameraMake;
 
-  @JsonProperty("cameraModel")
-  private String cameraModel;
+    @JsonProperty("cameraMake")
+    private String cameraMake;
 
-  @JsonProperty("fps")
-  private double fps;
+    @JsonProperty("cameraModel")
+    private String cameraModel;
 
-  @JsonProperty("status")
-  private VideoProcessingStatus status;
+    @JsonProperty("fps")
+    private double fps;
 
-  public enum VideoProcessingStatus {
-    UNSPECIFIED,
-    PROCESSING,
-    READY,
-    FAILED;
-  }
+    @JsonProperty("status")
+    private VideoProcessingStatus status;
+
+    public enum VideoProcessingStatus {
+
+        UNSPECIFIED, PROCESSING, READY, FAILED
+    }
 }

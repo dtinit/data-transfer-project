@@ -13,116 +13,102 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.types.common.models.social;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
 import org.datatransferproject.types.common.ImportableItem;
-
 import javax.annotation.Nonnull;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Objects;
 
 public class SocialActivityModel implements ImportableItem {
-  private String id;
-  private Instant published;
-  private SocialActivityType type;
-  private Collection<SocialActivityAttachment> attachments;
-  private SocialActivityLocation location;
-  private String title;
-  private String content;
-  private String url;
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    SocialActivityModel that = (SocialActivityModel) o;
-    return Objects.equals(getId(), that.getId())
-        && Objects.equals(getPublished(), that.getPublished())
-        && getType() == that.getType()
-        && Objects.equals(getAttachments(), that.getAttachments())
-        && Objects.equals(getLocation(), that.getLocation())
-        && Objects.equals(getTitle(), that.getTitle())
-        && Objects.equals(getContent(), that.getContent())
-        && Objects.equals(getUrl(), that.getUrl());
-  }
+    private String id;
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(
-        getId(),
-        getPublished(),
-        getType(),
-        getAttachments(),
-        getLocation(),
-        getTitle(),
-        getContent(),
-        getUrl());
-  }
+    private Instant published;
 
-  @JsonCreator
-  public SocialActivityModel(
-      @JsonProperty("id") String id,
-      @JsonProperty("published") Instant published,
-      @JsonProperty("type") SocialActivityType type,
-      @JsonProperty("attachments") Collection<SocialActivityAttachment> attachments,
-      @JsonProperty("location") SocialActivityLocation location,
-      @JsonProperty("title") String title,
-      @JsonProperty("content") String content,
-      @JsonProperty("url") String url) {
-    this.id = id;
-    this.published = published;
-    this.type = type;
-    this.attachments = attachments == null ? ImmutableList.of() : attachments;
-    this.location = location;
-    this.title = title;
-    this.content = content;
-    this.url = url;
-  }
+    private SocialActivityType type;
 
-  public String getId() {
-    return id;
-  }
+    private Collection<SocialActivityAttachment> attachments;
 
-  public Instant getPublished() {
-    return published;
-  }
+    private SocialActivityLocation location;
 
-  public SocialActivityType getType() {
-    return type;
-  }
+    private String title;
 
-  public Collection<SocialActivityAttachment> getAttachments() {
-    return attachments;
-  }
+    private String content;
 
-  public SocialActivityLocation getLocation() {
-    return location;
-  }
+    private String url;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        SocialActivityModel that = (SocialActivityModel) o;
+        return Objects.equals(getId(), that.getId()) && Objects.equals(getPublished(), that.getPublished()) && getType() == that.getType() && Objects.equals(getAttachments(), that.getAttachments()) && Objects.equals(getLocation(), that.getLocation()) && Objects.equals(getTitle(), that.getTitle()) && Objects.equals(getContent(), that.getContent()) && Objects.equals(getUrl(), that.getUrl());
+    }
 
-  public String getTitle() {
-    return title;
-  }
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId(), getPublished(), getType(), getAttachments(), getLocation(), getTitle(), getContent(), getUrl());
+    }
 
-  public String getContent() {
-    return content;
-  }
+    @JsonCreator
+    public SocialActivityModel(@JsonProperty("id") String id, @JsonProperty("published") Instant published, @JsonProperty("type") SocialActivityType type, @JsonProperty("attachments") Collection<SocialActivityAttachment> attachments, @JsonProperty("location") SocialActivityLocation location, @JsonProperty("title") String title, @JsonProperty("content") String content, @JsonProperty("url") String url) {
+        this.id = id;
+        this.published = published;
+        this.type = type;
+        this.attachments = attachments == null ? ImmutableList.of() : attachments;
+        this.location = location;
+        this.title = title;
+        this.content = content;
+        this.url = url;
+    }
 
-  public String getUrl() {
-    return url;
-  }
+    public String getId() {
+        return id;
+    }
 
-  @Nonnull
-  @Override
-  public String getIdempotentId() {
-    return Integer.toString(hashCode());
-  }
+    public Instant getPublished() {
+        return published;
+    }
 
-  @Override
-  public String getName() { return title; }
+    public SocialActivityType getType() {
+        return type;
+    }
+
+    public Collection<SocialActivityAttachment> getAttachments() {
+        return attachments;
+    }
+
+    public SocialActivityLocation getLocation() {
+        return location;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    @Nonnull
+    @Override
+    public String getIdempotentId() {
+        return Integer.toString(hashCode());
+    }
+
+    @Override
+    public String getName() {
+        return title;
+    }
 }

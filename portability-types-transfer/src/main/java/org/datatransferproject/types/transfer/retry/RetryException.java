@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.types.transfer.retry;
 
 /**
@@ -21,19 +20,19 @@ package org.datatransferproject.types.transfer.retry;
  */
 public class RetryException extends Exception {
 
-  private final int triesSoFar;
+    private final int triesSoFar;
 
-  RetryException(int triesSoFar, Exception exception) {
-    super(exception);
-    this.triesSoFar = triesSoFar;
-  }
+    RetryException(int triesSoFar, Exception exception) {
+        super(exception);
+        this.triesSoFar = triesSoFar;
+    }
 
-  @Override
-  public Exception getCause() {
-    return (Exception) super.getCause();
-  }
+    @Override
+    public Exception getCause() {
+        return (Exception) super.getCause();
+    }
 
-  public int getTriesSoFar() {
-    return triesSoFar;
-  }
+    public int getTriesSoFar() {
+        return triesSoFar;
+    }
 }

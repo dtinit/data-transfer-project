@@ -21,56 +21,56 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 
 @JsonTypeName("org.dataportability:SmugMugAlbum")
 public class SmugMugAlbum {
-  private final String date;
-  private final String description;
-  private final String name;
-  private final String privacy;
-  private final String uri;
-  private final String urlName;
-  private final String webUri;
 
-  public SmugMugAlbum(
-    @JsonProperty("Date") String date, 
-    @JsonProperty("Description") String description, 
-    @JsonProperty("Name") String name, 
-    @JsonProperty("Privacy") String privacy, 
-    @JsonProperty("Uri") String uri, 
-    @JsonProperty("UrlName") String urlName, 
-    @JsonProperty("WebUri") String webUri) {
-    this.date = date;
-    this.description = description;
-    this.name = name;
-    this.privacy = privacy;
-    this.uri = uri;
-    this.urlName = urlName;
-    this.webUri = webUri;
-  }
+    private final String date;
 
-  public String getDate() {
-    return date;
-  }
+    private final String description;
 
-  public String getDescription() {
-    return description;
-  }
+    private final String name;
 
-  public String getName() {
-    return name;
-  }
+    private final String privacy;
 
-  public String getPrivacy() {
-    return privacy;
-  }
+    private final String uri;
 
-  public String getUri() {
-    return uri;
-  }
+    private final String urlName;
 
-  public String getUrlName() {
-    return urlName;
-  }
+    private final String webUri;
 
-  public String getWebUri() {
-    return webUri;
-  }
+    public SmugMugAlbum(@JsonProperty("Date") String date, @JsonProperty("Description") String description, @JsonProperty("Name") String name, @JsonProperty("Privacy") String privacy, @JsonProperty("Uri") String uri, @JsonProperty("UrlName") String urlName, @JsonProperty("WebUri") String webUri) {
+        this.date = date;
+        this.description = description;
+        this.name = name;
+        this.privacy = privacy;
+        this.uri = uri;
+        this.urlName = urlName;
+        this.webUri = webUri;
+    }
+
+    public String getDate() {
+        return date;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getPrivacy() {
+        return privacy;
+    }
+
+    public String getUri() {
+        return uri;
+    }
+
+    public String getUrlName() {
+        return urlName;
+    }
+
+    public String getWebUri() {
+        return webUri;
+    }
 }

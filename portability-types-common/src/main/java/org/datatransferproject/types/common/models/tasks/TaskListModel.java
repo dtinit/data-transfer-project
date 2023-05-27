@@ -20,47 +20,49 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.datatransferproject.types.common.models.DataModel;
 import org.datatransferproject.types.common.ImportableItem;
-
 import javax.annotation.Nonnull;
 import java.util.Objects;
 
 public class TaskListModel extends DataModel implements ImportableItem {
-  private final String id;
-  private final String name;
 
-  @JsonCreator
-  public TaskListModel(@JsonProperty("id") String id, @JsonProperty("name") String name) {
-    this.id = id;
-    this.name = name;
-  }
+    private final String id;
 
-  @JsonIgnore(false)
-  @Override
-  public String getName() {
-    return name;
-  }
+    private final String name;
 
-  public String getId() {
-    return id;
-  }
+    @JsonCreator
+    public TaskListModel(@JsonProperty("id") String id, @JsonProperty("name") String name) {
+        this.id = id;
+        this.name = name;
+    }
 
-  @Nonnull
-  @Override
-  public String getIdempotentId() {
-    return getId();
-  }
+    @JsonIgnore(false)
+    @Override
+    public String getName() {
+        return name;
+    }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    TaskListModel that = (TaskListModel) o;
-    return Objects.equals(getId(), that.getId()) &&
-            Objects.equals(getName(), that.getName());
-  }
+    public String getId() {
+        return id;
+    }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(getId(), getName());
-  }
+    @Nonnull
+    @Override
+    public String getIdempotentId() {
+        return getId();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        TaskListModel that = (TaskListModel) o;
+        return Objects.equals(getId(), that.getId()) && Objects.equals(getName(), that.getName());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId(), getName());
+    }
 }

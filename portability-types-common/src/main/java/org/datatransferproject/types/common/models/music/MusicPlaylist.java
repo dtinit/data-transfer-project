@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.types.common.models.music;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
@@ -30,81 +28,71 @@ import java.util.Objects;
  */
 public class MusicPlaylist {
 
-  private final String id;
-  private final String title;
-  private final String description;
+    private final String id;
 
-  /**
-   * The same as https://schema.org/dateCreated but of uses java.time.Instant for arbitrary granularity usage
-   */
-  private final Instant timeCreated;
+    private final String title;
 
-  /**
-   * The same as https://schema.org/dateModified but of uses java.time.Instant for arbitrary granularity usage
-   */
-  private final Instant timeUpdated;
+    private final String description;
 
-  @JsonCreator
-  public MusicPlaylist(
-      @JsonProperty("id") String id,
-      @JsonProperty("title") String title,
-      @JsonProperty("description") String description,
-      @JsonProperty("timeCreated") Instant timeCreated,
-      @JsonProperty("timeUpdated") Instant timeUpdated) {
-    Preconditions.checkArgument(!isNullOrEmpty(id),
-        "non-empty id required for MusicPlaylist");
-    this.id = id;
-    this.title = title;
-    this.description = description;
-    this.timeCreated = timeCreated;
-    this.timeUpdated = timeUpdated;
-  }
+    /**
+     * The same as https://schema.org/dateCreated but of uses java.time.Instant for arbitrary granularity usage
+     */
+    private final Instant timeCreated;
 
-  public String getId() {
-    return id;
-  }
+    /**
+     * The same as https://schema.org/dateModified but of uses java.time.Instant for arbitrary granularity usage
+     */
+    private final Instant timeUpdated;
 
-  public String getTitle() {
-    return title;
-  }
-
-  public String getDescription() {
-    return description;
-  }
-
-  public Instant getTimeCreated() {
-    return timeCreated;
-  }
-
-  public Instant getTimeUpdated() {
-    return timeUpdated;
-  }
-
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("id", getId())
-        .add("title", getTitle())
-        .add("description", getDescription())
-        .add("timeCreated", getTimeCreated())
-        .add("timeUpdated", getTimeUpdated())
-        .toString();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
+    @JsonCreator
+    public MusicPlaylist(@JsonProperty("id") String id, @JsonProperty("title") String title, @JsonProperty("description") String description, @JsonProperty("timeCreated") Instant timeCreated, @JsonProperty("timeUpdated") Instant timeUpdated) {
+        Preconditions.checkArgument(!isNullOrEmpty(id), "non-empty id required for MusicPlaylist");
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.timeCreated = timeCreated;
+        this.timeUpdated = timeUpdated;
     }
-    if (!(o instanceof MusicPlaylist)) {
-      return false;
-    }
-    MusicPlaylist that = (MusicPlaylist) o;
-    return Objects.equals(id, that.id);
-  }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(id);
-  }
+    public String getId() {
+        return id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public Instant getTimeCreated() {
+        return timeCreated;
+    }
+
+    public Instant getTimeUpdated() {
+        return timeUpdated;
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this).add("id", getId()).add("title", getTitle()).add("description", getDescription()).add("timeCreated", getTimeCreated()).add("timeUpdated", getTimeUpdated()).toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof MusicPlaylist)) {
+            return false;
+        }
+        MusicPlaylist that = (MusicPlaylist) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }

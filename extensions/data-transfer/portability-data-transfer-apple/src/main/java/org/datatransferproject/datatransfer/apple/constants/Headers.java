@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.apple.constants;
 
 import java.util.HashMap;
@@ -21,34 +20,34 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 import org.jetbrains.annotations.Nullable;
 
-/** Http Header names. */
+/**
+ * Http Header names.
+ */
 public enum Headers {
-  AUTHORIZATION("Authorization"),
-  CORRELATION_ID("X-Apple-Request-UUID"),
-  CONTENT_TYPE("Content-Type");
 
+    AUTHORIZATION("Authorization"), CORRELATION_ID("X-Apple-Request-UUID"), CONTENT_TYPE("Content-Type");
 
-  private final String value;
+    private final String value;
 
-  Headers(final String value) {
-    this.value = value;
-  }
-
-  @Nonnull
-  public String getValue() {
-    return value;
-  }
-
-  private static final Map<String, Headers> map = new HashMap<>();
-
-  static {
-    for (final Headers headers : Headers.values()) {
-      map.put(headers.getValue().toLowerCase(), headers);
+    Headers(final String value) {
+        this.value = value;
     }
-  }
 
-  @Nullable
-  public static Headers forNameIgnoreCase(final String name) {
-    return map.get(name.toLowerCase());
-  }
+    @Nonnull
+    public String getValue() {
+        return value;
+    }
+
+    private static final Map<String, Headers> map = new HashMap<>();
+
+    static {
+        for (final Headers headers : Headers.values()) {
+            map.put(headers.getValue().toLowerCase(), headers);
+        }
+    }
+
+    @Nullable
+    public static Headers forNameIgnoreCase(final String name) {
+        return map.get(name.toLowerCase());
+    }
 }

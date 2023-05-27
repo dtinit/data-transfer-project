@@ -17,7 +17,6 @@ package org.datatransferproject.transfer;
 
 import static com.google.common.collect.MoreCollectors.onlyElement;
 import static java.lang.String.format;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -59,208 +58,176 @@ import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfi
 
 final class WorkerModule extends FlagBindingModule {
 
-  private final CloudExtension cloudExtension;
-  private final ExtensionContext context;
-  private final List<TransferExtension> transferExtensions;
-  private final SecurityExtension securityExtension;
-  private final IdempotentImportExecutor idempotentImportExecutor;
-  private final SymmetricKeyGenerator symmetricKeyGenerator;
-  private final JobHooks jobHooks;
-  private final TransferCompatibilityProvider compatibilityProvider;
+    private final CloudExtension cloudExtension;
 
-  WorkerModule(
-      ExtensionContext context,
-      CloudExtension cloudExtension,
-      List<TransferExtension> transferExtensions,
-      SecurityExtension securityExtension,
-      IdempotentImportExecutor idempotentImportExecutor,
-      SymmetricKeyGenerator symmetricKeyGenerator,
-      JobHooks jobHooks,
-      TransferCompatibilityProvider transferCompatibilityProvider) {
-    this.cloudExtension = cloudExtension;
-    this.context = context;
-    this.transferExtensions = transferExtensions;
-    this.securityExtension = securityExtension;
-    this.idempotentImportExecutor = idempotentImportExecutor;
-    this.symmetricKeyGenerator = symmetricKeyGenerator;
-    this.jobHooks = jobHooks;
-    this.compatibilityProvider = transferCompatibilityProvider;
-  }
+    private final ExtensionContext context;
 
-  @VisibleForTesting
-  static TransferExtension findTransferExtension(
-      ImmutableList<TransferExtension> transferExtensions, String service) {
-    try {
-      return transferExtensions
-          .stream()
-          .filter(ext -> ext.getServiceId().toLowerCase().equals(service.toLowerCase()))
-          .collect(onlyElement());
-    } catch (IllegalArgumentException e) {
-      throw new IllegalStateException(
-          "Found multiple transfer extensions for service " + service, e);
-    } catch (NoSuchElementException e) {
-      throw new IllegalStateException(
-          "Did not find a valid transfer extension for service " + service, e);
+    private final List<TransferExtension> transferExtensions;
+
+    private final SecurityExtension securityExtension;
+
+    private final IdempotentImportExecutor idempotentImportExecutor;
+
+    private final SymmetricKeyGenerator symmetricKeyGenerator;
+
+    private final JobHooks jobHooks;
+
+    private final TransferCompatibilityProvider compatibilityProvider;
+
+    WorkerModule(ExtensionContext context, CloudExtension cloudExtension, List<TransferExtension> transferExtensions, SecurityExtension securityExtension, IdempotentImportExecutor idempotentImportExecutor, SymmetricKeyGenerator symmetricKeyGenerator, JobHooks jobHooks, TransferCompatibilityProvider transferCompatibilityProvider) {
+        this.cloudExtension = cloudExtension;
+        this.context = context;
+        this.transferExtensions = transferExtensions;
+        this.securityExtension = securityExtension;
+        this.idempotentImportExecutor = idempotentImportExecutor;
+        this.symmetricKeyGenerator = symmetricKeyGenerator;
+        this.jobHooks = jobHooks;
+        this.compatibilityProvider = transferCompatibilityProvider;
     }
-  }
 
-  @Override
-  protected void configure() {
-    // binds flags from ExtensionContext to @Named annotations
-    bindFlags(context);
-
-    bind(JobHooks.class).toInstance(jobHooks);
-    bind(InMemoryDataCopier.class).to(InMemoryDataCopierClassLoader.load());
-    getMonitor()
-        .info(() -> "Using InMemoryDataCopier: " + InMemoryDataCopierClassLoader.load().getName());
-
-    bind(ObjectMapper.class).toInstance(context.getTypeManager().getMapper());
-
-    // Ensure a DtpInternalMetricRecorder exists
-    LoggingDtpInternalMetricRecorder.registerRecorderIfNeeded(context);
-    bind(DtpInternalMetricRecorder.class)
-        .toInstance(context.getService(DtpInternalMetricRecorder.class));
-  }
-
-  @Provides
-  @Singleton
-  SymmetricKeyGenerator getSymmetricKeyGenerator() {
-    return symmetricKeyGenerator;
-  }
-
-  @Provides
-  @Singleton
-  PublicKeySerializer getPublicKeySerializer() {
-    return securityExtension.getPublicKeySerializer();
-  }
-
-  @Provides
-  @Singleton
-  AuthDataDecryptService getAuthDataDecryptService() {
-    return securityExtension.getDecryptService();
-  }
-
-  @Provides
-  @Singleton
-  TransferKeyGenerator getTransferKeyGenerator() {
-    return securityExtension.getTransferKeyGenerator();
-  }
-
-  @Provides
-  @Singleton
-  JobStore getJobStore() {
-    return cloudExtension.getJobStore();
-  }
-
-  @Provides
-  @Singleton
-  AppCredentialStore getBucketStore() {
-    return cloudExtension.getAppCredentialStore();
-  }
-
-  @Provides
-  @Singleton
-  Exporter getExporter(ImmutableList<TransferExtension> transferExtensions) {
-    TransferExtension extension =
-        findTransferExtension(transferExtensions, JobMetadata.getExportService());
-    DelegatingExtensionContext serviceSpecificContext = new DelegatingExtensionContext(context);
-    serviceSpecificContext.registerOverrideService(
-        MetricRecorder.class,
-        new ServiceAwareMetricRecorder(
-            extension.getServiceId(),
-            context.getService(DtpInternalMetricRecorder.class)));
-    serviceSpecificContext.registerOverrideService(
-        TransferServiceConfig.class,
-        getTransferServiceConfig(extension));
-    extension.initialize(serviceSpecificContext);
-
-    return compatibilityProvider.getCompatibleExporter(extension, JobMetadata.getDataType());
-  }
-
-  @Provides
-  @Singleton
-  Importer getImporter(ImmutableList<TransferExtension> transferExtensions) {
-    TransferExtension extension =
-        findTransferExtension(transferExtensions, JobMetadata.getImportService());
-    DelegatingExtensionContext serviceSpecificContext = new DelegatingExtensionContext(context);
-    serviceSpecificContext.registerOverrideService(
-        MetricRecorder.class,
-        new ServiceAwareMetricRecorder(
-            extension.getServiceId(),
-            context.getService(DtpInternalMetricRecorder.class)));
-    serviceSpecificContext.registerOverrideService(
-        TransferServiceConfig.class,
-        getTransferServiceConfig(extension));
-    extension.initialize(serviceSpecificContext);
-    return compatibilityProvider.getCompatibleImporter(extension, JobMetadata.getDataType());
-  }
-
-  @Provides
-  @Singleton
-  ImmutableList<TransferExtension> getTransferExtensions() {
-    return ImmutableList.copyOf(transferExtensions);
-  }
-
-
-  @Provides
-  @Singleton
-  RetryStrategyLibrary getRetryStrategyLibrary() {
-    return context.getSetting("retryLibrary", null);
-  }
-
-  @Provides
-  @Singleton
-  Scheduler getScheduler() {
-    // TODO: parse a Duration from the settings
-    long interval = context.getSetting("pollInterval", 2000); // Default: poll every 2s
-    return AbstractScheduledService.Scheduler.newFixedDelaySchedule(
-        0, interval, TimeUnit.MILLISECONDS);
-  }
-
-  @Provides
-  @Singleton
-  @Annotations.CancelScheduler
-  Scheduler getCancelCheckingScheduler() {
-    // TODO: parse a Duration from the settings
-    long interval = context.getSetting("cancelCheckPollInterval", 60000); // Default: poll every 1m
-    return AbstractScheduledService.Scheduler.newFixedDelaySchedule(
-        0, interval, TimeUnit.MILLISECONDS);
-  }
-
-  @Provides
-  @Singleton
-  Monitor getMonitor() {
-    return context.getMonitor();
-  }
-
-  @Provides
-  @Singleton
-  ExtensionContext getContext() {
-    return context;
-  }
-
-  private TransferServiceConfig getTransferServiceConfig(TransferExtension ext) {
-    String configFileName = "config/" + ext.getServiceId().toLowerCase() + ".yaml";
-    InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(configFileName);
-    getMonitor()
-        .info(
-            () ->
-                format(
-                    "Service %s has a config file: %s", ext.getServiceId(), (inputStream != null)));
-    if (inputStream == null) {
-      return TransferServiceConfig.getDefaultInstance();
-    } else {
-      try {
-        return TransferServiceConfig.create(inputStream);
-      } catch (IOException e) {
-        throw new RuntimeException("Couldn't create config for " + ext.getServiceId(), e);
-      }
+    @VisibleForTesting
+    static TransferExtension findTransferExtension(ImmutableList<TransferExtension> transferExtensions, String service) {
+        try {
+            return transferExtensions.stream().filter(ext -> ext.getServiceId().toLowerCase().equals(service.toLowerCase())).collect(onlyElement());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException("Found multiple transfer extensions for service " + service, e);
+        } catch (NoSuchElementException e) {
+            throw new IllegalStateException("Did not find a valid transfer extension for service " + service, e);
+        }
     }
-  }
 
-  @Provides
-  @Singleton
-  public IdempotentImportExecutor getIdempotentImportExecutor() {
-    return idempotentImportExecutor;
-  }
+    @Override
+    protected void configure() {
+        // binds flags from ExtensionContext to @Named annotations
+        bindFlags(context);
+        bind(JobHooks.class).toInstance(jobHooks);
+        bind(InMemoryDataCopier.class).to(InMemoryDataCopierClassLoader.load());
+        getMonitor().info(() -> "Using InMemoryDataCopier: " + InMemoryDataCopierClassLoader.load().getName());
+        bind(ObjectMapper.class).toInstance(context.getTypeManager().getMapper());
+        // Ensure a DtpInternalMetricRecorder exists
+        LoggingDtpInternalMetricRecorder.registerRecorderIfNeeded(context);
+        bind(DtpInternalMetricRecorder.class).toInstance(context.getService(DtpInternalMetricRecorder.class));
+    }
+
+    @Provides
+    @Singleton
+    SymmetricKeyGenerator getSymmetricKeyGenerator() {
+        return symmetricKeyGenerator;
+    }
+
+    @Provides
+    @Singleton
+    PublicKeySerializer getPublicKeySerializer() {
+        return securityExtension.getPublicKeySerializer();
+    }
+
+    @Provides
+    @Singleton
+    AuthDataDecryptService getAuthDataDecryptService() {
+        return securityExtension.getDecryptService();
+    }
+
+    @Provides
+    @Singleton
+    TransferKeyGenerator getTransferKeyGenerator() {
+        return securityExtension.getTransferKeyGenerator();
+    }
+
+    @Provides
+    @Singleton
+    JobStore getJobStore() {
+        return cloudExtension.getJobStore();
+    }
+
+    @Provides
+    @Singleton
+    AppCredentialStore getBucketStore() {
+        return cloudExtension.getAppCredentialStore();
+    }
+
+    @Provides
+    @Singleton
+    Exporter getExporter(ImmutableList<TransferExtension> transferExtensions) {
+        TransferExtension extension = findTransferExtension(transferExtensions, JobMetadata.getExportService());
+        DelegatingExtensionContext serviceSpecificContext = new DelegatingExtensionContext(context);
+        serviceSpecificContext.registerOverrideService(MetricRecorder.class, new ServiceAwareMetricRecorder(extension.getServiceId(), context.getService(DtpInternalMetricRecorder.class)));
+        serviceSpecificContext.registerOverrideService(TransferServiceConfig.class, getTransferServiceConfig(extension));
+        extension.initialize(serviceSpecificContext);
+        return compatibilityProvider.getCompatibleExporter(extension, JobMetadata.getDataType());
+    }
+
+    @Provides
+    @Singleton
+    Importer getImporter(ImmutableList<TransferExtension> transferExtensions) {
+        TransferExtension extension = findTransferExtension(transferExtensions, JobMetadata.getImportService());
+        DelegatingExtensionContext serviceSpecificContext = new DelegatingExtensionContext(context);
+        serviceSpecificContext.registerOverrideService(MetricRecorder.class, new ServiceAwareMetricRecorder(extension.getServiceId(), context.getService(DtpInternalMetricRecorder.class)));
+        serviceSpecificContext.registerOverrideService(TransferServiceConfig.class, getTransferServiceConfig(extension));
+        extension.initialize(serviceSpecificContext);
+        return compatibilityProvider.getCompatibleImporter(extension, JobMetadata.getDataType());
+    }
+
+    @Provides
+    @Singleton
+    ImmutableList<TransferExtension> getTransferExtensions() {
+        return ImmutableList.copyOf(transferExtensions);
+    }
+
+    @Provides
+    @Singleton
+    RetryStrategyLibrary getRetryStrategyLibrary() {
+        return context.getSetting("retryLibrary", null);
+    }
+
+    @Provides
+    @Singleton
+    Scheduler getScheduler() {
+        // TODO: parse a Duration from the settings
+        // Default: poll every 2s
+        long interval = context.getSetting("pollInterval", 2000);
+        return AbstractScheduledService.Scheduler.newFixedDelaySchedule(0, interval, TimeUnit.MILLISECONDS);
+    }
+
+    @Provides
+    @Singleton
+    @Annotations.CancelScheduler
+    Scheduler getCancelCheckingScheduler() {
+        // TODO: parse a Duration from the settings
+        // Default: poll every 1m
+        long interval = context.getSetting("cancelCheckPollInterval", 60000);
+        return AbstractScheduledService.Scheduler.newFixedDelaySchedule(0, interval, TimeUnit.MILLISECONDS);
+    }
+
+    @Provides
+    @Singleton
+    Monitor getMonitor() {
+        return context.getMonitor();
+    }
+
+    @Provides
+    @Singleton
+    ExtensionContext getContext() {
+        return context;
+    }
+
+    private TransferServiceConfig getTransferServiceConfig(TransferExtension ext) {
+        String configFileName = "config/" + ext.getServiceId().toLowerCase() + ".yaml";
+        InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(configFileName);
+        getMonitor().info(() -> format("Service %s has a config file: %s", ext.getServiceId(), (inputStream != null)));
+        if (inputStream == null) {
+            return TransferServiceConfig.getDefaultInstance();
+        } else {
+            try {
+                return TransferServiceConfig.create(inputStream);
+            } catch (IOException e) {
+                throw new RuntimeException("Couldn't create config for " + ext.getServiceId(), e);
+            }
+        }
+    }
+
+    @Provides
+    @Singleton
+    public IdempotentImportExecutor getIdempotentImportExecutor() {
+        return idempotentImportExecutor;
+    }
 }

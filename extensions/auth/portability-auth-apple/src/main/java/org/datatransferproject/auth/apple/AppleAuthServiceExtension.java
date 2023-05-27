@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.auth.apple;
 
 import org.datatransferproject.auth.OAuth2ServiceExtension;
@@ -22,6 +21,7 @@ import org.datatransferproject.auth.OAuth2ServiceExtension;
  * Auth Service Extension of Apple.
  */
 public class AppleAuthServiceExtension extends OAuth2ServiceExtension {
+
     public AppleAuthServiceExtension() {
         super(new AppleOAuthConfig());
     }

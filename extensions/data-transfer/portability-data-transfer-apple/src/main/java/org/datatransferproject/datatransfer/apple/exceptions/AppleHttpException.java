@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.apple.exceptions;
 
 import javax.annotation.Nonnull;
@@ -24,20 +23,21 @@ import org.jetbrains.annotations.NotNull;
  * A generic Exception for all Apple Transfer HTTP APIs.
  */
 public class AppleHttpException extends CopyExceptionWithFailureReason {
-  private final int responseStatus;
 
-  public AppleHttpException(@NotNull final String message, @NotNull final Throwable cause, @NotNull final int responseStatus) {
-    super(message, cause);
-    this.responseStatus = responseStatus;
-  }
+    private final int responseStatus;
 
-  public int getResponseStatus() {
-    return responseStatus;
-  }
+    public AppleHttpException(@NotNull final String message, @NotNull final Throwable cause, @NotNull final int responseStatus) {
+        super(message, cause);
+        this.responseStatus = responseStatus;
+    }
 
-  @Nonnull
-  @Override
-  public String getFailureReason() {
-    return getMessage();
-  }
+    public int getResponseStatus() {
+        return responseStatus;
+    }
+
+    @Nonnull
+    @Override
+    public String getFailureReason() {
+        return getMessage();
+    }
 }

@@ -10,19 +10,20 @@ import org.datatransferproject.types.common.PaginationData;
  */
 @JsonTypeName("org.dataportability:StringPagination")
 public class StringPaginationToken extends PaginationData {
-  private final String token;
 
-  /**
-   * Ctor.
-   *
-   * @param token the token to get the next page
-   */
-  @JsonCreator
-  public StringPaginationToken(@JsonProperty("token") String token) {
-    this.token = token;
-  }
+    private final String token;
 
-  public String getToken() {
-    return token;
-  }
+    /**
+     * Ctor.
+     *
+     * @param token the token to get the next page
+     */
+    @JsonCreator
+    public StringPaginationToken(@JsonProperty("token") String token) {
+        this.token = token;
+    }
+
+    public String getToken() {
+        return token;
+    }
 }

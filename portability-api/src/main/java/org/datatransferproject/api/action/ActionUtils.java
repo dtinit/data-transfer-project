@@ -19,27 +19,29 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
-
 import java.util.UUID;
 import org.datatransferproject.types.common.models.DataVertical;
 
-/** Helper functions for validating action related data. */
+/**
+ * Helper functions for validating action related data.
+ */
 public final class ActionUtils {
 
-  public static String encodeJobId(UUID jobId) {
-    Preconditions.checkNotNull(jobId);
-    return BaseEncoding.base64Url().encode(jobId.toString().getBytes(Charsets.UTF_8));
-  }
+    public static String encodeJobId(UUID jobId) {
+        Preconditions.checkNotNull(jobId);
+        return BaseEncoding.base64Url().encode(jobId.toString().getBytes(Charsets.UTF_8));
+    }
 
-  public static UUID decodeJobId(String encodedJobId) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(encodedJobId));
-    return UUID.fromString(new String(BaseEncoding.base64Url().decode(encodedJobId),
-        Charsets.UTF_8));
-  }
+    public static UUID decodeJobId(String encodedJobId) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(encodedJobId));
+        return UUID.fromString(new String(BaseEncoding.base64Url().decode(encodedJobId), Charsets.UTF_8));
+    }
 
-  /** Determines whether the current service is a valid service for import.
-   * @param transferDataType*/
-  public static boolean isValidTransferDataType(DataVertical transferDataType) {
-    return transferDataType != null;
-  }
+    /**
+     * Determines whether the current service is a valid service for import.
+     * @param transferDataType
+     */
+    public static boolean isValidTransferDataType(DataVertical transferDataType) {
+        return transferDataType != null;
+    }
 }

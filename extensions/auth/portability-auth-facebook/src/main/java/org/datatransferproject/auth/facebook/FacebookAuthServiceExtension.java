@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.auth.facebook;
 
 import org.datatransferproject.auth.OAuth2ServiceExtension;
 
 public class FacebookAuthServiceExtension extends OAuth2ServiceExtension {
-  public FacebookAuthServiceExtension() { super(new FacebookOAuthConfig()); }
 
+    public FacebookAuthServiceExtension() {
+        super(new FacebookOAuthConfig());
+    }
 }

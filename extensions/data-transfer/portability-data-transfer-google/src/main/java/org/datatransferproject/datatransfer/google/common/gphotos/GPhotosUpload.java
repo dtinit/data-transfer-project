@@ -18,7 +18,6 @@ package org.datatransferproject.datatransfer.google.common.gphotos;
 import static java.lang.String.format;
 import static org.datatransferproject.datatransfer.google.photos.GooglePhotosInterface.ERROR_HASH_MISMATCH;
 import static org.datatransferproject.datatransfer.google.videos.GoogleVideosInterface.uploadBatchOfVideos;
-
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.json.JsonFactory;
@@ -92,93 +91,77 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 // interfaces. We can start by using some of the de-duplication that happened in
 // org.datatransferproject.datatransfer.google.common.gphotos package
 public class GPhotosUpload {
-  private UUID jobId;
-  private IdempotentImportExecutor executor;
-  private TokensAndUrlAuthData authData;
 
-  // We partition into groups of 49 as 50 is the maximum number of items that can be created
-  // in one call. (We use 49 to avoid potential off by one errors)
-  // https://developers.google.com/photos/library/guides/upload-media#creating-media-item
-  private static final int BATCH_UPLOAD_SIZE = 49;
+    private UUID jobId;
 
-  /**
-   * WARNING: this should be constructed PER request so as to not conflate job IDs or auth data
-   * across processes. That is: do NOT cache an instance of this object across your requests, say by
-   * storing the instance as a member of your adapter's Importer or Exporter implementations.
-   */
-  public GPhotosUpload(
-      UUID jobId,
-      IdempotentImportExecutor executor,
-      TokensAndUrlAuthData authData) {
-    this.jobId = jobId;
-    this.executor = executor;
-    this.authData = authData;
-  }
+    private IdempotentImportExecutor executor;
 
-  /**
-   * Imports all `items` by fanning out to `batchImporter` upload calls as specified by the.
-   *
-   * Returns the number of uploaded bytes, as summed across all `items` that were uploaded.
-   */
-  // TODO(aksingh737,jzacsh) WARNING: delete the duplicated GooglePhotosImporter code by pulling
-  // this out of Media into a new GphotoMedia class that exposes these methods for _both_
-  // GoogleMediaImporter _and_ GooglePhotosImporter to use.
-  public <T extends DownloadableFile> long uploadItemsViaBatching(
-      Collection<T> items,
-      ItemBatchUploader<T> importer)
-      throws Exception {
-    long bytes = 0L;
-    if (items == null || items.size() <= 0) {
-      return bytes;
-    }
-    Map<String, List<T>> itemsByAlbumId =
-        items.stream()
-            .filter(item -> !executor.isKeyCached(item.getIdempotentId()))
-            .collect(Collectors.groupingBy(DownloadableFile::getFolderId));
+    private TokensAndUrlAuthData authData;
 
-    for (Entry<String, List<T>> albumEntry : itemsByAlbumId.entrySet()) {
-      String originalAlbumId = albumEntry.getKey();
-      String googleAlbumId;
-      if (Strings.isNullOrEmpty(originalAlbumId)) {
-        // This is ok, since NewMediaItemUpload will ignore all null values and it's possible to
-        // upload a NewMediaItem without a corresponding album id.
-        googleAlbumId = null;
-      } else {
-        // Note this will throw if creating the album failed, which is what we want
-        // because that will also mark this photo as being failed.
-        googleAlbumId = executor.getCachedValue(originalAlbumId);
-      }
+    // We partition into groups of 49 as 50 is the maximum number of items that can be created
+    // in one call. (We use 49 to avoid potential off by one errors)
+    // https://developers.google.com/photos/library/guides/upload-media#creating-media-item
+    private static final int BATCH_UPLOAD_SIZE = 49;
 
-      UnmodifiableIterator<List<T>> batches =
-          Iterators.partition(albumEntry.getValue().iterator(),
-          BATCH_UPLOAD_SIZE);
-
-      while (batches.hasNext()) {
-        long batchBytes =
-            importer.uploadToAlbum(jobId, authData, batches.next(), executor, googleAlbumId);
-        bytes += batchBytes;
-      }
-    }
-    return bytes;
-  }
-
-  // TODO(aksingh737,jzacsh) consider renaming lower-level gphotos code (ie: anything of the "google
-  // photos" product but not a "photo" from "google"; examples: the GooglePhotosInterface that
-  // interacts with gphotos teams' upstream SDKs, interfaces like this one below, PhotoResult,
-  // etc.). eg maybe start a org.datatransferproject.datatransfer.google.gphotos package for things
-  // that are wrapping the gphotos SDKs (the examples already mentioned) and make that package
-  // importable by the other google adapters.
-  @FunctionalInterface
-  public interface ItemBatchUploader<T> {
     /**
-     * Returns the number of uploaded bytes, as summed across all `items` that were uploaded in this
-     * batch.
+     * WARNING: this should be constructed PER request so as to not conflate job IDs or auth data
+     * across processes. That is: do NOT cache an instance of this object across your requests, say by
+     * storing the instance as a member of your adapter's Importer or Exporter implementations.
      */
-    public long uploadToAlbum(
-        UUID jobId,
-        TokensAndUrlAuthData authData,
-        List<T> batch,
-        IdempotentImportExecutor executor,
-        String targetAlbumId) throws Exception;
-  }
+    public GPhotosUpload(UUID jobId, IdempotentImportExecutor executor, TokensAndUrlAuthData authData) {
+        this.jobId = jobId;
+        this.executor = executor;
+        this.authData = authData;
+    }
+
+    /**
+     * Imports all `items` by fanning out to `batchImporter` upload calls as specified by the.
+     *
+     * Returns the number of uploaded bytes, as summed across all `items` that were uploaded.
+     */
+    // TODO(aksingh737,jzacsh) WARNING: delete the duplicated GooglePhotosImporter code by pulling
+    // this out of Media into a new GphotoMedia class that exposes these methods for _both_
+    // GoogleMediaImporter _and_ GooglePhotosImporter to use.
+    public <T extends DownloadableFile> long uploadItemsViaBatching(Collection<T> items, ItemBatchUploader<T> importer) throws Exception {
+        long bytes = 0L;
+        if (items == null || items.size() <= 0) {
+            return bytes;
+        }
+        Map<String, List<T>> itemsByAlbumId = items.stream().filter(item -> !executor.isKeyCached(item.getIdempotentId())).collect(Collectors.groupingBy(DownloadableFile::getFolderId));
+        for (Entry<String, List<T>> albumEntry : itemsByAlbumId.entrySet()) {
+            String originalAlbumId = albumEntry.getKey();
+            String googleAlbumId;
+            if (Strings.isNullOrEmpty(originalAlbumId)) {
+                // This is ok, since NewMediaItemUpload will ignore all null values and it's possible to
+                // upload a NewMediaItem without a corresponding album id.
+                googleAlbumId = null;
+            } else {
+                // Note this will throw if creating the album failed, which is what we want
+                // because that will also mark this photo as being failed.
+                googleAlbumId = executor.getCachedValue(originalAlbumId);
+            }
+            UnmodifiableIterator<List<T>> batches = Iterators.partition(albumEntry.getValue().iterator(), BATCH_UPLOAD_SIZE);
+            while (batches.hasNext()) {
+                long batchBytes = importer.uploadToAlbum(jobId, authData, batches.next(), executor, googleAlbumId);
+                bytes += batchBytes;
+            }
+        }
+        return bytes;
+    }
+
+    // TODO(aksingh737,jzacsh) consider renaming lower-level gphotos code (ie: anything of the "google
+    // photos" product but not a "photo" from "google"; examples: the GooglePhotosInterface that
+    // interacts with gphotos teams' upstream SDKs, interfaces like this one below, PhotoResult,
+    // etc.). eg maybe start a org.datatransferproject.datatransfer.google.gphotos package for things
+    // that are wrapping the gphotos SDKs (the examples already mentioned) and make that package
+    // importable by the other google adapters.
+    @FunctionalInterface
+    public interface ItemBatchUploader<T> {
+
+        /**
+         * Returns the number of uploaded bytes, as summed across all `items` that were uploaded in this
+         * batch.
+         */
+        public long uploadToAlbum(UUID jobId, TokensAndUrlAuthData authData, List<T> batch, IdempotentImportExecutor executor, String targetAlbumId) throws Exception;
+    }
 }

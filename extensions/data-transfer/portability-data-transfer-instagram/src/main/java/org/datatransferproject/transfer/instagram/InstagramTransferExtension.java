@@ -16,7 +16,6 @@
 package org.datatransferproject.transfer.instagram;
 
 import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
-
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.HttpTransport;
@@ -32,48 +31,43 @@ import org.datatransferproject.transfer.instagram.photos.InstagramPhotoExporter;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-
 public class InstagramTransferExtension implements TransferExtension {
-  private static final ImmutableList<DataVertical> SUPPORTED_DATA_TYPES = ImmutableList.of(PHOTOS);
 
-  private Exporter<TokensAndUrlAuthData, PhotosContainerResource> exporter;
+    private static final ImmutableList<DataVertical> SUPPORTED_DATA_TYPES = ImmutableList.of(PHOTOS);
 
-  private boolean initialized = false;
+    private Exporter<TokensAndUrlAuthData, PhotosContainerResource> exporter;
 
-  @Override
-  public String getServiceId() {
-    return "instagram";
-  }
+    private boolean initialized = false;
 
-  @Override
-  public Exporter<?, ?> getExporter(DataVertical transferDataType) {
-    Preconditions.checkArgument(
-        initialized, "InstagramTransferExtension not initialized. Unable to get Exporter");
-    Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(transferDataType));
-    return exporter;
-  }
-
-  @Override
-  public Importer<?, ?> getImporter(DataVertical transferDataType) {
-    Preconditions.checkArgument(
-        initialized, "InstagramTransferExtension not initialized. Unable to get Importer");
-    Preconditions.checkArgument(false, "Instagram does not support import");
-    return null;
-  }
-
-  @Override
-  public void initialize(ExtensionContext context) {
-    if (initialized) {
-      Monitor monitor = context.getMonitor();
-      monitor.severe(() -> "InstagramTransferExtension already initialized");
-      return;
+    @Override
+    public String getServiceId() {
+        return "instagram";
     }
 
-    ObjectMapper mapper =
-        new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    @Override
+    public Exporter<?, ?> getExporter(DataVertical transferDataType) {
+        Preconditions.checkArgument(initialized, "InstagramTransferExtension not initialized. Unable to get Exporter");
+        Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(transferDataType));
+        return exporter;
+    }
 
-    HttpTransport httpTransport = context.getService(HttpTransport.class);
-    exporter = new InstagramPhotoExporter(mapper, httpTransport);
-    initialized = true;
-  }
+    @Override
+    public Importer<?, ?> getImporter(DataVertical transferDataType) {
+        Preconditions.checkArgument(initialized, "InstagramTransferExtension not initialized. Unable to get Importer");
+        Preconditions.checkArgument(false, "Instagram does not support import");
+        return null;
+    }
+
+    @Override
+    public void initialize(ExtensionContext context) {
+        if (initialized) {
+            Monitor monitor = context.getMonitor();
+            monitor.severe(() -> "InstagramTransferExtension already initialized");
+            return;
+        }
+        ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        HttpTransport httpTransport = context.getService(HttpTransport.class);
+        exporter = new InstagramPhotoExporter(mapper, httpTransport);
+        initialized = true;
+    }
 }

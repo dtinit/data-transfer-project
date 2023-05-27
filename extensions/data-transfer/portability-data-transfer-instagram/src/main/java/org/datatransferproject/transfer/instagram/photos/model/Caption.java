@@ -13,28 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.transfer.instagram.photos.model;
 
-/** DataModel for a Caption object in the Instagram API. Instantiated by JSON mapping. */
+/**
+ * DataModel for a Caption object in the Instagram API. Instantiated by JSON mapping.
+ */
 public final class Caption {
 
-  private String created_time;
+    private String created_time;
 
-  private String id;
+    private String id;
 
-  private String text;
+    private String text;
 
-  public String getCreated_time() {
-    return created_time;
-  }
+    public String getCreated_time() {
+        return created_time;
+    }
 
-  public String getId() {
-    return id;
-  }
+    public String getId() {
+        return id;
+    }
 
-  public String getText() {
-    return text;
-  }
+    public String getText() {
+        return text;
+    }
 }
-

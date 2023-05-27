@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.transfer.facebook.photos;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -24,7 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
 import com.google.common.collect.Lists;
 import com.restfb.Connection;
 import com.restfb.types.Album;
@@ -56,150 +54,103 @@ import org.mockito.Mockito;
 
 public class FacebookPhotosExporterTest {
 
-  private static final String ALBUM_NAME = "My Album";
-  private static final String ALBUM_ID = "1946595";
-  private static final String ALBUM_DESCRIPTION = "This is a test album";
+    private static final String ALBUM_NAME = "My Album";
 
-  private static final String PHOTO_ID = "937644721";
-  private static final String PHOTO_SOURCE = "https://www.example.com/photo.jpg";
-  private static final String PHOTO_NAME = "Example photo";
-  private static final Date PHOTO_TIME = new Date(1234567890123L);
+    private static final String ALBUM_ID = "1946595";
 
-  private FacebookPhotosExporter facebookPhotosExporter;
-  private UUID uuid = UUID.randomUUID();
-  private MockedStatic<ConnectionProvider> connectionProviderMock;
+    private static final String ALBUM_DESCRIPTION = "This is a test album";
 
-  @Before
-  public void setUp() throws IOException {
-    FacebookPhotosInterface photosInterface = mock(FacebookPhotosInterface.class);
+    private static final String PHOTO_ID = "937644721";
 
-    // Set up example album
-    Album album = new Album();
-    album.setId(ALBUM_ID);
-    album.setName(ALBUM_NAME);
-    album.setDescription(ALBUM_DESCRIPTION);
+    private static final String PHOTO_SOURCE = "https://www.example.com/photo.jpg";
 
-    ArrayList<Album> albums = new ArrayList<>();
-    albums.add(album);
+    private static final String PHOTO_NAME = "Example photo";
 
-    @SuppressWarnings("unchecked")
-    Connection<Album> albumConnection = mock(Connection.class);
-    when(photosInterface.getAlbums(Mockito.any())).thenReturn(albumConnection);
-    when(albumConnection.getData()).thenReturn(albums);
+    private static final Date PHOTO_TIME = new Date(1234567890123L);
 
-    // Set up example photo
-    Photo photo = new Photo();
-    photo.setId(PHOTO_ID);
-    photo.setCreatedTime(PHOTO_TIME);
-    Photo.Image image = new Photo.Image();
-    image.setSource(PHOTO_SOURCE);
-    photo.addImage(image);
-    photo.setName(PHOTO_NAME);
+    private FacebookPhotosExporter facebookPhotosExporter;
 
-    ArrayList<Photo> photos = new ArrayList<>();
-    photos.add(photo);
+    private UUID uuid = UUID.randomUUID();
 
-    @SuppressWarnings("unchecked")
-    Connection<Photo> photoConnection = mock(Connection.class);
+    private MockedStatic<ConnectionProvider> connectionProviderMock;
 
-    when(photosInterface.getPhotos(ALBUM_ID, Optional.empty())).thenReturn(photoConnection);
-    when(photoConnection.getData()).thenReturn(photos);
+    @Before
+    public void setUp() throws IOException {
+        FacebookPhotosInterface photosInterface = mock(FacebookPhotosInterface.class);
+        // Set up example album
+        Album album = new Album();
+        album.setId(ALBUM_ID);
+        album.setName(ALBUM_NAME);
+        album.setDescription(ALBUM_DESCRIPTION);
+        ArrayList<Album> albums = new ArrayList<>();
+        albums.add(album);
+        @SuppressWarnings("unchecked")
+        Connection<Album> albumConnection = mock(Connection.class);
+        when(photosInterface.getAlbums(Mockito.any())).thenReturn(albumConnection);
+        when(albumConnection.getData()).thenReturn(albums);
+        // Set up example photo
+        Photo photo = new Photo();
+        photo.setId(PHOTO_ID);
+        photo.setCreatedTime(PHOTO_TIME);
+        Photo.Image image = new Photo.Image();
+        image.setSource(PHOTO_SOURCE);
+        photo.addImage(image);
+        photo.setName(PHOTO_NAME);
+        ArrayList<Photo> photos = new ArrayList<>();
+        photos.add(photo);
+        @SuppressWarnings("unchecked")
+        Connection<Photo> photoConnection = mock(Connection.class);
+        when(photosInterface.getPhotos(ALBUM_ID, Optional.empty())).thenReturn(photoConnection);
+        when(photoConnection.getData()).thenReturn(photos);
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("test.jpeg");
+        HttpURLConnection connection = mock(HttpURLConnection.class);
+        when(connection.getInputStream()).thenReturn(inputStream);
+        connectionProviderMock = Mockito.mockStatic(ConnectionProvider.class);
+        connectionProviderMock.when(() -> ConnectionProvider.getConnection(anyString())).thenReturn(connection);
+        final TemporaryPerJobDataStore store = mock(TemporaryPerJobDataStore.class);
+        facebookPhotosExporter = new FacebookPhotosExporter(new AppCredentials("key", "secret"), photosInterface, null, store);
+    }
 
-    InputStream inputStream = getClass().getClassLoader().getResourceAsStream("test.jpeg");
-    HttpURLConnection connection = mock(HttpURLConnection.class);
-    when(connection.getInputStream()).thenReturn(inputStream);
+    @After
+    public void tearDown() {
+        connectionProviderMock.close();
+    }
 
-    connectionProviderMock = Mockito.mockStatic(ConnectionProvider.class);
-    connectionProviderMock
-        .when(() -> ConnectionProvider.getConnection(anyString()))
-        .thenReturn(connection);
+    @Test
+    public void testExportAlbum() throws CopyExceptionWithFailureReason {
+        ExportResult<PhotosContainerResource> result = facebookPhotosExporter.export(uuid, new TokensAndUrlAuthData("accessToken", null, null), Optional.empty());
+        assertEquals(ExportResult.ResultType.CONTINUE, result.getType());
+        PhotosContainerResource exportedData = result.getExportedData();
+        assertEquals(1, exportedData.getAlbums().size());
+        assertEquals(new PhotoAlbum(ALBUM_ID, ALBUM_NAME, ALBUM_DESCRIPTION), exportedData.getAlbums().toArray()[0]);
+        assertNull(result.getContinuationData().getPaginationData());
+        assertThat(result.getContinuationData().getContainerResources()).contains(new IdOnlyContainerResource(ALBUM_ID));
+    }
 
-    final TemporaryPerJobDataStore store = mock(TemporaryPerJobDataStore.class);
+    @Test
+    public void testExportPhoto() throws CopyExceptionWithFailureReason {
+        ExportResult<PhotosContainerResource> result = facebookPhotosExporter.export(uuid, new TokensAndUrlAuthData("accessToken", null, null), Optional.of(new ExportInformation(null, new IdOnlyContainerResource(ALBUM_ID))));
+        assertEquals(ExportResult.ResultType.END, result.getType());
+        PhotosContainerResource exportedData = result.getExportedData();
+        assertEquals(1, exportedData.getPhotos().size());
+        assertEquals(new PhotoModel(PHOTO_ID + ".jpg", PHOTO_ID, PHOTO_NAME, "image/jpg", PHOTO_ID, ALBUM_ID, false, PHOTO_TIME), exportedData.getPhotos().toArray()[0]);
+    }
 
-    facebookPhotosExporter =
-        new FacebookPhotosExporter(
-            new AppCredentials("key", "secret"),
-            photosInterface,
-            null,
-            store);
-  }
+    @Test
+    public void testSpecifiedAlbums() throws CopyExceptionWithFailureReason {
+        ExportResult<PhotosContainerResource> result = facebookPhotosExporter.export(uuid, new TokensAndUrlAuthData("accessToken", null, null), Optional.of(new ExportInformation(new StringPaginationToken(PHOTO_TOKEN_PREFIX), new PhotosContainerResource(Lists.newArrayList(new PhotoAlbum(ALBUM_ID, ALBUM_NAME, ALBUM_DESCRIPTION)), new ArrayList<>()))));
+        assertEquals(ExportResult.ResultType.CONTINUE, result.getType());
+        PhotosContainerResource exportedData = result.getExportedData();
+        assertEquals(1, exportedData.getAlbums().size());
+        assertEquals(new PhotoAlbum(ALBUM_ID, ALBUM_NAME, ALBUM_DESCRIPTION), exportedData.getAlbums().toArray()[0]);
+        assertNull((result.getContinuationData().getPaginationData()));
+        assertThat(result.getContinuationData().getContainerResources()).contains(new IdOnlyContainerResource(ALBUM_ID));
+    }
 
-  @After
-  public void tearDown() {
-    connectionProviderMock.close();
-  }
-
-  @Test
-  public void testExportAlbum() throws CopyExceptionWithFailureReason {
-    ExportResult<PhotosContainerResource> result =
-        facebookPhotosExporter.export(
-            uuid, new TokensAndUrlAuthData("accessToken", null, null), Optional.empty());
-
-    assertEquals(ExportResult.ResultType.CONTINUE, result.getType());
-    PhotosContainerResource exportedData = result.getExportedData();
-    assertEquals(1, exportedData.getAlbums().size());
-    assertEquals(
-        new PhotoAlbum(ALBUM_ID, ALBUM_NAME, ALBUM_DESCRIPTION),
-        exportedData.getAlbums().toArray()[0]);
-    assertNull(result.getContinuationData().getPaginationData());
-    assertThat(result.getContinuationData().getContainerResources())
-        .contains(new IdOnlyContainerResource(ALBUM_ID));
-  }
-
-  @Test
-  public void testExportPhoto() throws CopyExceptionWithFailureReason {
-    ExportResult<PhotosContainerResource> result =
-        facebookPhotosExporter.export(
-            uuid,
-            new TokensAndUrlAuthData("accessToken", null, null),
-            Optional.of(new ExportInformation(null, new IdOnlyContainerResource(ALBUM_ID))));
-
-    assertEquals(ExportResult.ResultType.END, result.getType());
-    PhotosContainerResource exportedData = result.getExportedData();
-    assertEquals(1, exportedData.getPhotos().size());
-    assertEquals(
-        new PhotoModel(
-            PHOTO_ID + ".jpg",
-            PHOTO_ID,
-            PHOTO_NAME,
-            "image/jpg",
-            PHOTO_ID,
-            ALBUM_ID,
-            false,
-            PHOTO_TIME),
-        exportedData.getPhotos().toArray()[0]);
-  }
-
-  @Test
-  public void testSpecifiedAlbums() throws CopyExceptionWithFailureReason {
-    ExportResult<PhotosContainerResource> result =
-        facebookPhotosExporter.export(
-            uuid,
-            new TokensAndUrlAuthData("accessToken", null, null),
-            Optional.of(
-                new ExportInformation(
-                    new StringPaginationToken(PHOTO_TOKEN_PREFIX),
-                    new PhotosContainerResource(
-                        Lists.newArrayList(new PhotoAlbum(ALBUM_ID, ALBUM_NAME, ALBUM_DESCRIPTION)),
-                        new ArrayList<>()))));
-    assertEquals(ExportResult.ResultType.CONTINUE, result.getType());
-    PhotosContainerResource exportedData = result.getExportedData();
-    assertEquals(1, exportedData.getAlbums().size());
-    assertEquals(
-        new PhotoAlbum(ALBUM_ID, ALBUM_NAME, ALBUM_DESCRIPTION),
-        exportedData.getAlbums().toArray()[0]);
-    assertNull((result.getContinuationData().getPaginationData()));
-    assertThat(result.getContinuationData().getContainerResources())
-        .contains(new IdOnlyContainerResource(ALBUM_ID));
-  }
-
-  @Test
-  public void testIllegalExport() throws CopyExceptionWithFailureReason {
-    assertThrows(IllegalStateException.class, () -> {
-      facebookPhotosExporter.export(
-          uuid,
-          new TokensAndUrlAuthData("accessToken", null, null),
-          Optional.of(new ExportInformation(new StringPaginationToken(PHOTO_TOKEN_PREFIX), null)));
-    });
-  }
+    @Test
+    public void testIllegalExport() throws CopyExceptionWithFailureReason {
+        assertThrows(IllegalStateException.class, () -> {
+            facebookPhotosExporter.export(uuid, new TokensAndUrlAuthData("accessToken", null, null), Optional.of(new ExportInformation(new StringPaginationToken(PHOTO_TOKEN_PREFIX), null)));
+        });
+    }
 }

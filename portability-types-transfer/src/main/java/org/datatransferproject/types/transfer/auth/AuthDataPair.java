@@ -18,24 +18,26 @@ package org.datatransferproject.types.transfer.auth;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/** Encapsulates authorization tokens needed to perform a data transfer. */
-public class AuthDataPair  {
-  private String exportAuthData;
-  private String importAuthData;
+/**
+ * Encapsulates authorization tokens needed to perform a data transfer.
+ */
+public class AuthDataPair {
 
-  @JsonCreator
-  public AuthDataPair(
-      @JsonProperty("exportAuthData") String exportAuthData,
-      @JsonProperty("importAuthData") String importAuthData) {
-    this.exportAuthData = exportAuthData;
-    this.importAuthData = importAuthData;
-  }
+    private String exportAuthData;
 
-  public String getExportAuthData() {
-    return exportAuthData;
-  }
+    private String importAuthData;
 
-  public String getImportAuthData() {
-    return importAuthData;
-  }
+    @JsonCreator
+    public AuthDataPair(@JsonProperty("exportAuthData") String exportAuthData, @JsonProperty("importAuthData") String importAuthData) {
+        this.exportAuthData = exportAuthData;
+        this.importAuthData = importAuthData;
+    }
+
+    public String getExportAuthData() {
+        return exportAuthData;
+    }
+
+    public String getImportAuthData() {
+        return importAuthData;
+    }
 }

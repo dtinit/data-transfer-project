@@ -23,127 +23,114 @@ import java.util.Objects;
 
 public class CalendarEventModel {
 
-  private final String calendarId;
-  private final String title;
-  private final String notes;
-  private final List<CalendarAttendeeModel> attendees;
-  private final String location;
-  private final CalendarEventTime startTime;
-  private final CalendarEventTime endTime;
-  private final RecurrenceRule recurrenceRule;
+    private final String calendarId;
 
-  @JsonCreator
-  public CalendarEventModel(
-      @JsonProperty("calendarId") String calendarId,
-      @JsonProperty("title") String title,
-      @JsonProperty("notes") String notes,
-      @JsonProperty("attendees") List<CalendarAttendeeModel> attendees,
-      @JsonProperty("location") String location,
-      @JsonProperty("startTime") CalendarEventTime startTime,
-      @JsonProperty("endTime") CalendarEventTime endTime,
-      @JsonProperty("recurrenceRule") RecurrenceRule recurrenceRule) {
-    this.calendarId = calendarId;
-    this.title = title;
-    this.notes = notes;
-    this.attendees = attendees;
-    this.location = location;
-    this.startTime = startTime;
-    this.endTime = endTime;
-    this.recurrenceRule = recurrenceRule;
-  }
+    private final String title;
 
-  public String getTitle() {
-    return title;
-  }
+    private final String notes;
 
-  public List<CalendarAttendeeModel> getAttendees() {
-    return attendees;
-  }
+    private final List<CalendarAttendeeModel> attendees;
 
-  public String getLocation() {
-    return location;
-  }
+    private final String location;
 
-  public CalendarEventTime getStartTime() {
-    return startTime;
-  }
+    private final CalendarEventTime startTime;
 
-  public CalendarEventTime getEndTime() {
-    return endTime;
-  }
+    private final CalendarEventTime endTime;
 
-  public String getNotes() {
-    return notes;
-  }
-
-  public String getCalendarId() {
-    return calendarId;
-  }
-
-  public RecurrenceRule getRecurrenceRule() {
-    return recurrenceRule;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    CalendarEventModel that = (CalendarEventModel) o;
-    return Objects.equals(getCalendarId(), that.getCalendarId())
-        && Objects.equals(getTitle(), that.getTitle())
-        && Objects.equals(getNotes(), that.getNotes())
-        && Objects.equals(getAttendees(), that.getAttendees())
-        && Objects.equals(getLocation(), that.getLocation())
-        && Objects.equals(getStartTime(), that.getStartTime())
-        && Objects.equals(getEndTime(), that.getEndTime())
-        && Objects.equals(getRecurrenceRule(), that.getRecurrenceRule());
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(
-        getCalendarId(),
-        getTitle(),
-        getNotes(),
-        getAttendees(),
-        getLocation(),
-        getStartTime(),
-        getEndTime(),
-        getRecurrenceRule());
-  }
-
-  public static class CalendarEventTime {
-    private final OffsetDateTime dateTime;
-    private final boolean dateOnly;
+    private final RecurrenceRule recurrenceRule;
 
     @JsonCreator
-    public CalendarEventTime(
-        @JsonProperty("dateTime") OffsetDateTime dateTime,
-        @JsonProperty("dateOnly") boolean dateOnly) {
-      this.dateTime = dateTime;
-      this.dateOnly = dateOnly;
+    public CalendarEventModel(@JsonProperty("calendarId") String calendarId, @JsonProperty("title") String title, @JsonProperty("notes") String notes, @JsonProperty("attendees") List<CalendarAttendeeModel> attendees, @JsonProperty("location") String location, @JsonProperty("startTime") CalendarEventTime startTime, @JsonProperty("endTime") CalendarEventTime endTime, @JsonProperty("recurrenceRule") RecurrenceRule recurrenceRule) {
+        this.calendarId = calendarId;
+        this.title = title;
+        this.notes = notes;
+        this.attendees = attendees;
+        this.location = location;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.recurrenceRule = recurrenceRule;
     }
 
-    public OffsetDateTime getDateTime() {
-      return dateTime;
+    public String getTitle() {
+        return title;
     }
 
-    public boolean isDateOnly() {
-      return dateOnly;
+    public List<CalendarAttendeeModel> getAttendees() {
+        return attendees;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public CalendarEventTime getStartTime() {
+        return startTime;
+    }
+
+    public CalendarEventTime getEndTime() {
+        return endTime;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public String getCalendarId() {
+        return calendarId;
+    }
+
+    public RecurrenceRule getRecurrenceRule() {
+        return recurrenceRule;
     }
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      CalendarEventTime that = (CalendarEventTime) o;
-      return isDateOnly() == that.isDateOnly() &&
-              Objects.equals(getDateTime(), that.getDateTime());
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        CalendarEventModel that = (CalendarEventModel) o;
+        return Objects.equals(getCalendarId(), that.getCalendarId()) && Objects.equals(getTitle(), that.getTitle()) && Objects.equals(getNotes(), that.getNotes()) && Objects.equals(getAttendees(), that.getAttendees()) && Objects.equals(getLocation(), that.getLocation()) && Objects.equals(getStartTime(), that.getStartTime()) && Objects.equals(getEndTime(), that.getEndTime()) && Objects.equals(getRecurrenceRule(), that.getRecurrenceRule());
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(getDateTime(), isDateOnly());
+        return Objects.hash(getCalendarId(), getTitle(), getNotes(), getAttendees(), getLocation(), getStartTime(), getEndTime(), getRecurrenceRule());
     }
-  }
+
+    public static class CalendarEventTime {
+
+        private final OffsetDateTime dateTime;
+
+        private final boolean dateOnly;
+
+        @JsonCreator
+        public CalendarEventTime(@JsonProperty("dateTime") OffsetDateTime dateTime, @JsonProperty("dateOnly") boolean dateOnly) {
+            this.dateTime = dateTime;
+            this.dateOnly = dateOnly;
+        }
+
+        public OffsetDateTime getDateTime() {
+            return dateTime;
+        }
+
+        public boolean isDateOnly() {
+            return dateOnly;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
+            CalendarEventTime that = (CalendarEventTime) o;
+            return isDateOnly() == that.isDateOnly() && Objects.equals(getDateTime(), that.getDateTime());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(getDateTime(), isDateOnly());
+        }
+    }
 }

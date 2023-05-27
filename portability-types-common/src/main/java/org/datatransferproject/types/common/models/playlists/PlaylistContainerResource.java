@@ -7,19 +7,20 @@ import com.google.common.collect.ImmutableList;
 import java.util.Collection;
 import org.datatransferproject.types.common.models.ContainerResource;
 
-/** A Wrapper for a group of playlists. */
+/**
+ * A Wrapper for a group of playlists.
+ */
 @JsonTypeName("PlaylistContainerResource")
 public class PlaylistContainerResource extends ContainerResource {
-  private final Collection<MusicPlaylist> playlists;
 
-  @JsonCreator
-  public PlaylistContainerResource(
-      @JsonProperty("playlists") Collection<MusicPlaylist> playlists) {
-    this.playlists = playlists == null ? ImmutableList.of() : playlists;
-  }
+    private final Collection<MusicPlaylist> playlists;
 
-  public Collection<MusicPlaylist> getLists() {
-    return playlists;
-  }
+    @JsonCreator
+    public PlaylistContainerResource(@JsonProperty("playlists") Collection<MusicPlaylist> playlists) {
+        this.playlists = playlists == null ? ImmutableList.of() : playlists;
+    }
 
+    public Collection<MusicPlaylist> getLists() {
+        return playlists;
+    }
 }

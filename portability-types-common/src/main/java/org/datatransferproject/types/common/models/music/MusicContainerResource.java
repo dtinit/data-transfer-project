@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.types.common.models.music;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -33,66 +32,57 @@ import org.datatransferproject.types.common.models.ContainerResource;
 @JsonTypeName("MusicContainerResource")
 public class MusicContainerResource extends ContainerResource {
 
-  private final Collection<MusicPlaylist> playlists;
-  private final List<MusicPlaylistItem> playlistItems;
-  private final Collection<MusicRecording> tracks;
-  private final Collection<MusicRelease> releases;
+    private final Collection<MusicPlaylist> playlists;
 
-  @JsonCreator
-  public MusicContainerResource(
-      @JsonProperty("playlists") Collection<MusicPlaylist> playlists,
-      @JsonProperty("playlistItems") List<MusicPlaylistItem> playlistItems,
-      @JsonProperty("tracks") Collection<MusicRecording> tracks,
-      @JsonProperty("releases") Collection<MusicRelease> releases) {
-    this.playlists = playlists == null ? ImmutableList.of() : playlists;
-    this.playlistItems = playlistItems == null ? ImmutableList.of() : playlistItems;
-    this.tracks = tracks == null ? ImmutableList.of() : tracks;
-    this.releases = releases == null ? ImmutableList.of() : releases;
-  }
+    private final List<MusicPlaylistItem> playlistItems;
 
-  public Collection<MusicPlaylist> getPlaylists() {
-    return playlists;
-  }
+    private final Collection<MusicRecording> tracks;
 
-  public List<MusicPlaylistItem> getPlaylistItems() {
-    return playlistItems;
-  }
+    private final Collection<MusicRelease> releases;
 
-  public Collection<MusicRecording> getTracks() {
-    return tracks;
-  }
-
-  public Collection<MusicRelease> getReleases() {
-    return releases;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
+    @JsonCreator
+    public MusicContainerResource(@JsonProperty("playlists") Collection<MusicPlaylist> playlists, @JsonProperty("playlistItems") List<MusicPlaylistItem> playlistItems, @JsonProperty("tracks") Collection<MusicRecording> tracks, @JsonProperty("releases") Collection<MusicRelease> releases) {
+        this.playlists = playlists == null ? ImmutableList.of() : playlists;
+        this.playlistItems = playlistItems == null ? ImmutableList.of() : playlistItems;
+        this.tracks = tracks == null ? ImmutableList.of() : tracks;
+        this.releases = releases == null ? ImmutableList.of() : releases;
     }
-    if (!(o instanceof MusicContainerResource)) {
-      return false;
+
+    public Collection<MusicPlaylist> getPlaylists() {
+        return playlists;
     }
-    MusicContainerResource that = (MusicContainerResource) o;
-    return Iterables.elementsEqual(getPlaylists(), that.getPlaylists())
-        && Objects.equals(getPlaylistItems(), that.getPlaylistItems())
-        && Iterables.elementsEqual(getTracks(), that.getTracks())
-        && Iterables.elementsEqual(getReleases(), that.getReleases());
-  }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(getPlaylists(), getPlaylistItems(), getTracks(), getReleases());
-  }
+    public List<MusicPlaylistItem> getPlaylistItems() {
+        return playlistItems;
+    }
 
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("playlists", getPlaylists())
-        .add("playlistItems", getPlaylistItems())
-        .add("tracks", getTracks())
-        .add("releases", getReleases())
-        .toString();
-  }
+    public Collection<MusicRecording> getTracks() {
+        return tracks;
+    }
+
+    public Collection<MusicRelease> getReleases() {
+        return releases;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof MusicContainerResource)) {
+            return false;
+        }
+        MusicContainerResource that = (MusicContainerResource) o;
+        return Iterables.elementsEqual(getPlaylists(), that.getPlaylists()) && Objects.equals(getPlaylistItems(), that.getPlaylistItems()) && Iterables.elementsEqual(getTracks(), that.getTracks()) && Iterables.elementsEqual(getReleases(), that.getReleases());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getPlaylists(), getPlaylistItems(), getTracks(), getReleases());
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this).add("playlists", getPlaylists()).add("playlistItems", getPlaylistItems()).add("tracks", getTracks()).add("releases", getReleases()).toString();
+    }
 }

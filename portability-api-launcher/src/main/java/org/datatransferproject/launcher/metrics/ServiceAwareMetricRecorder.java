@@ -17,43 +17,42 @@ package org.datatransferproject.launcher.metrics;
 
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.api.launcher.MetricRecorder;
-
 import java.time.Duration;
 import org.datatransferproject.types.common.models.DataVertical;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A {@link MetricRecorder} that is aware of the service it is being used in
  * that forwards metric events on to a {@link DtpInternalMetricRecorder}.
- **/
+ */
 public class ServiceAwareMetricRecorder implements MetricRecorder {
-  private final String service;
-  private final DtpInternalMetricRecorder metricRecorder;
 
-  public ServiceAwareMetricRecorder(
-      String service,
-      DtpInternalMetricRecorder metricRecorder) {
-    this.service = service;
-    this.metricRecorder = checkNotNull(metricRecorder, "metricRecorder can't be null");
-  }
-  @Override
-  public void recordMetric(DataVertical dataType, String tag) {
-    metricRecorder.recordGenericMetric(dataType, service, tag);
-  }
+    private final String service;
 
-  @Override
-  public void recordMetric(DataVertical dataType, String tag, boolean bool) {
-    metricRecorder.recordGenericMetric(dataType, service, tag, bool);
-  }
+    private final DtpInternalMetricRecorder metricRecorder;
 
-  @Override
-  public void recordMetric(DataVertical dataType, String tag, Duration duration) {
-    metricRecorder.recordGenericMetric(dataType, service, tag, duration);
-  }
+    public ServiceAwareMetricRecorder(String service, DtpInternalMetricRecorder metricRecorder) {
+        this.service = service;
+        this.metricRecorder = checkNotNull(metricRecorder, "metricRecorder can't be null");
+    }
 
-  @Override
-  public void recordMetric(DataVertical dataType, String tag, int value) {
-    metricRecorder.recordGenericMetric(dataType, service, tag, value);
-  }
+    @Override
+    public void recordMetric(DataVertical dataType, String tag) {
+        metricRecorder.recordGenericMetric(dataType, service, tag);
+    }
+
+    @Override
+    public void recordMetric(DataVertical dataType, String tag, boolean bool) {
+        metricRecorder.recordGenericMetric(dataType, service, tag, bool);
+    }
+
+    @Override
+    public void recordMetric(DataVertical dataType, String tag, Duration duration) {
+        metricRecorder.recordGenericMetric(dataType, service, tag, duration);
+    }
+
+    @Override
+    public void recordMetric(DataVertical dataType, String tag, int value) {
+        metricRecorder.recordGenericMetric(dataType, service, tag, value);
+    }
 }

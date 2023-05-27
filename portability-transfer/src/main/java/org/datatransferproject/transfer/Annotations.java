@@ -19,12 +19,19 @@ import javax.inject.Qualifier;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-/** Package private Guice annotations. **/
+/**
+ * Package private Guice annotations. *
+ */
 final class Annotations {
-  /** A scheduler for for checking if a job has been canceled. */
-  @Qualifier
-  @Retention(RetentionPolicy.RUNTIME)
-  @interface CancelScheduler {}
 
-  private Annotations() {}
+    /**
+     * A scheduler for for checking if a job has been canceled.
+     */
+    @Qualifier
+    @Retention(RetentionPolicy.RUNTIME)
+    @interface CancelScheduler {
+    }
+
+    private Annotations() {
+    }
 }

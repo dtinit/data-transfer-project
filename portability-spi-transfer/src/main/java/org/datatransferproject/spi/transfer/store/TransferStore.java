@@ -9,31 +9,31 @@ import org.datatransferproject.types.common.PortableType;
  */
 public interface TransferStore {
 
-  /**
-   * Creates a data entry.
-   *
-   * @param entity the entry
-   */
-  void create(PortableType entity);
+    /**
+     * Creates a data entry.
+     *
+     * @param entity the entry
+     */
+    void create(PortableType entity);
 
-  /**
-   * Updates an existing entry.
-   *
-   * @param entity the entry
-   */
-  void update(PortableType entity);
+    /**
+     * Updates an existing entry.
+     *
+     * @param entity the entry
+     */
+    void update(PortableType entity);
 
-  /**
-   * Returns an existing entry or null if not found.
-   *
-   * @param id the entry id
-   */
-  PortableType find(String id);
+    /**
+     * Returns an existing entry or null if not found.
+     *
+     * @param id the entry id
+     */
+    PortableType find(String id);
 
-  /**
-   * Removes and entry
-   *
-   * @param id the entry id
-   */
-  void remove(String id);
+    /**
+     * Removes and entry
+     *
+     * @param id the entry id
+     */
+    void remove(String id);
 }

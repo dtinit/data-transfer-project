@@ -13,12 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.transfer.deezer.playlists;
 
-
 import static java.lang.String.format;
-
 import com.google.api.client.http.HttpTransport;
 import com.google.common.collect.ImmutableList;
 import org.datatransferproject.api.launcher.Monitor;
@@ -37,7 +34,6 @@ import org.datatransferproject.types.common.models.playlists.MusicRecording;
 import org.datatransferproject.types.common.models.playlists.PlaylistContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,65 +42,47 @@ import java.util.UUID;
 
 /**
  * Exports playlists from Deezer.
- **/
-public class DeezerPlaylistExporter implements
-    Exporter<TokensAndUrlAuthData, PlaylistContainerResource> {
+ */
+public class DeezerPlaylistExporter implements Exporter<TokensAndUrlAuthData, PlaylistContainerResource> {
 
-  private final Monitor monitor;
-  private final HttpTransport httpTransport;
-  private final TransferServiceConfig transferServiceConfig;
+    private final Monitor monitor;
 
-  public DeezerPlaylistExporter(
-      Monitor monitor,
-      HttpTransport httpTransport,
-      TransferServiceConfig transferServiceConfig) {
-    this.monitor = monitor;
-    this.httpTransport = httpTransport;
-    this.transferServiceConfig = transferServiceConfig;
-  }
+    private final HttpTransport httpTransport;
 
-  @Override
-  public ExportResult<PlaylistContainerResource> export(UUID jobId,
-      TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation)
-      throws Exception {
-    DeezerApi api = new DeezerApi(authData.getAccessToken(), httpTransport, transferServiceConfig);
+    private final TransferServiceConfig transferServiceConfig;
 
-    return new ExportResult<>(
-        ResultType.END, enumeratePlaylists(api));
-  }
-
-  private PlaylistContainerResource enumeratePlaylists(DeezerApi api)
-      throws IOException {
-    List<MusicPlaylist> results = new ArrayList<>();
-    for (PlaylistSummary playlistSummary : api.getPlaylists()) {
-      results.add(new MusicPlaylist(
-          playlistSummary.getLink(),
-          playlistSummary.getTitle(),
-          fetchPlaylist(api, playlistSummary.getId())));
+    public DeezerPlaylistExporter(Monitor monitor, HttpTransport httpTransport, TransferServiceConfig transferServiceConfig) {
+        this.monitor = monitor;
+        this.httpTransport = httpTransport;
+        this.transferServiceConfig = transferServiceConfig;
     }
-    return new PlaylistContainerResource(results);
-  }
 
-  private ImmutableList<MusicRecording> fetchPlaylist(DeezerApi api, long playlistId)
-      throws IOException {
+    @Override
+    public ExportResult<PlaylistContainerResource> export(UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) throws Exception {
+        DeezerApi api = new DeezerApi(authData.getAccessToken(), httpTransport, transferServiceConfig);
+        return new ExportResult<>(ResultType.END, enumeratePlaylists(api));
+    }
 
-    ImmutableList.Builder<MusicRecording> results = new ImmutableList.Builder<>();
+    private PlaylistContainerResource enumeratePlaylists(DeezerApi api) throws IOException {
+        List<MusicPlaylist> results = new ArrayList<>();
+        for (PlaylistSummary playlistSummary : api.getPlaylists()) {
+            results.add(new MusicPlaylist(playlistSummary.getLink(), playlistSummary.getTitle(), fetchPlaylist(api, playlistSummary.getId())));
+        }
+        return new PlaylistContainerResource(results);
+    }
 
-      monitor.debug(() -> format("Fetching playlist's %s tracks", playlistId));
-      PlaylistDetails playlistDetails = api.getPlaylistDetails(playlistId);
-      for (Track track : playlistDetails.getTrackCollection().getTracks()) {
-        results.add(convertTrack(api, track.getId()));
-      }
-    return results.build();
-  }
+    private ImmutableList<MusicRecording> fetchPlaylist(DeezerApi api, long playlistId) throws IOException {
+        ImmutableList.Builder<MusicRecording> results = new ImmutableList.Builder<>();
+        monitor.debug(() -> format("Fetching playlist's %s tracks", playlistId));
+        PlaylistDetails playlistDetails = api.getPlaylistDetails(playlistId);
+        for (Track track : playlistDetails.getTrackCollection().getTracks()) {
+            results.add(convertTrack(api, track.getId()));
+        }
+        return results.build();
+    }
 
-  private MusicRecording convertTrack(DeezerApi api, long trackId) throws IOException {
-    Track track = api.getTrack(trackId);
-    return new MusicRecording(
-        track.getLink(),
-        track.getTitle(),
-        track.getIsrc(),
-        new MusicAlbum(track.getAlbum().getLink(), track.getAlbum().getTitle()),
-        new MusicGroup(track.getAlbum().getTitle()));
-  }
+    private MusicRecording convertTrack(DeezerApi api, long trackId) throws IOException {
+        Track track = api.getTrack(trackId);
+        return new MusicRecording(track.getLink(), track.getTitle(), track.getIsrc(), new MusicAlbum(track.getAlbum().getLink(), track.getAlbum().getTitle()), new MusicGroup(track.getAlbum().getTitle()));
+    }
 }

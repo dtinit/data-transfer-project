@@ -22,54 +22,54 @@ import com.google.common.collect.ImmutableList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
-
 import com.google.common.collect.ImmutableMap;
 import org.datatransferproject.types.common.models.ContainerResource;
 
-/** A Wrapper for all the possible objects that can be returned by a calendar exporter. */
+/**
+ * A Wrapper for all the possible objects that can be returned by a calendar exporter.
+ */
 @JsonTypeName("CalendarContainerResource")
 public class CalendarContainerResource extends ContainerResource {
-  public static final String CALENDARS_COUNT_DATA_NAME = "calendarsCount";
-  public static final String EVENTS_COUNT_DATA_NAME = "eventsCount";
 
-  private final Collection<CalendarModel> calendars;
-  private final Collection<CalendarEventModel> events;
+    public static final String CALENDARS_COUNT_DATA_NAME = "calendarsCount";
 
-  @JsonCreator
-  public CalendarContainerResource(
-      @JsonProperty("calendars") Collection<CalendarModel> calendars,
-      @JsonProperty("events") Collection<CalendarEventModel> events) {
-    this.calendars = calendars == null ? ImmutableList.of() : calendars;
-    this.events = events == null ? ImmutableList.of() : events;
-  }
+    public static final String EVENTS_COUNT_DATA_NAME = "eventsCount";
 
-  public Collection<CalendarModel> getCalendars() {
-    return calendars;
-  }
+    private final Collection<CalendarModel> calendars;
 
-  public Collection<CalendarEventModel> getEvents() {
-    return events;
-  }
+    private final Collection<CalendarEventModel> events;
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    CalendarContainerResource that = (CalendarContainerResource) o;
-    return Objects.equals(getCalendars(), that.getCalendars()) &&
-            Objects.equals(getEvents(), that.getEvents());
-  }
+    @JsonCreator
+    public CalendarContainerResource(@JsonProperty("calendars") Collection<CalendarModel> calendars, @JsonProperty("events") Collection<CalendarEventModel> events) {
+        this.calendars = calendars == null ? ImmutableList.of() : calendars;
+        this.events = events == null ? ImmutableList.of() : events;
+    }
 
-  @Override
-  public Map<String, Integer> getCounts() {
-    return new ImmutableMap.Builder<String, Integer>()
-            .put(CALENDARS_COUNT_DATA_NAME, calendars.size())
-            .put(EVENTS_COUNT_DATA_NAME, events.size())
-            .build();
-  }
+    public Collection<CalendarModel> getCalendars() {
+        return calendars;
+    }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(getCalendars(), getEvents());
-  }
+    public Collection<CalendarEventModel> getEvents() {
+        return events;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        CalendarContainerResource that = (CalendarContainerResource) o;
+        return Objects.equals(getCalendars(), that.getCalendars()) && Objects.equals(getEvents(), that.getEvents());
+    }
+
+    @Override
+    public Map<String, Integer> getCounts() {
+        return new ImmutableMap.Builder<String, Integer>().put(CALENDARS_COUNT_DATA_NAME, calendars.size()).put(EVENTS_COUNT_DATA_NAME, events.size()).build();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getCalendars(), getEvents());
+    }
 }

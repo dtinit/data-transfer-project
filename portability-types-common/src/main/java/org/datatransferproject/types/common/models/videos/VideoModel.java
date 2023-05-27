@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.types.common.models.videos;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -28,133 +27,106 @@ import org.datatransferproject.types.common.models.MediaObject;
 
 public class VideoModel extends MediaObject implements DownloadableFile {
 
-  private String dataId;
-  private String albumId;
-  private boolean inTempStore;
-  private Date uploadedTime;
+    private String dataId;
 
-  @JsonCreator
-  public VideoModel(
-      @JsonProperty("name") String name,
-      @JsonProperty("contentUrl") String contentUrl,
-      @JsonProperty("description") String description,
-      @JsonProperty("encodingFormat") String encodingFormat,
-      @JsonProperty("dataId") String dataId,
-      @JsonProperty("albumId") String albumId,
-      @JsonProperty("inTempStore") boolean inTempStore,
-      @JsonProperty("uploadedTime") Date uploadedTime) {
-    super(dataId);
-    setName(name);
-    setContentUrl(contentUrl);
-    setDescription(description);
-    setEncodingFormat(encodingFormat);
-    this.dataId = dataId;
-    this.albumId = albumId;
-    this.inTempStore = inTempStore;
-    this.uploadedTime = uploadedTime;
-  }
+    private String albumId;
 
-  // TODO(zacsh) remove this in favor of getFolderId
-  public String getAlbumId() {
-    return albumId;
-  }
+    private boolean inTempStore;
 
-  @JsonIgnore
-  // requirement of org.datatransferproject.types.common.FolderItem
-  public String getFolderId() {
-    return getAlbumId();
-  }
+    private Date uploadedTime;
 
-  @JsonIgnore
-  // requirement of org.datatransferproject.types.common.Fileable
-  public String getMimeType() {
-    return getEncodingFormat();
-  }
-
-  public String getDataId() {
-    return dataId;
-  }
-
-  @Override
-  public boolean isInTempStore() {
-    return inTempStore;
-  }
-
-  @JsonIgnore
-  @Override
-  public String getFetchableUrl() {
-    return getContentUrl().toString();
-  }
-
-  @JsonIgnore(false)
-  @Override
-  // required for org.datatransferproject.types.common.ImportableItem
-  public String getName() {
-    return super.getName();
-  }
-
-  public Date getUploadedTime() {
-    return uploadedTime;
-  }
-
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("name", getName())
-        .add("contentUrl", getContentUrl())
-        .add("description", getDescription())
-        .add("encodingFormat", getEncodingFormat())
-        .add("dataId", dataId)
-        .add("albumId", albumId)
-        .add("inTempStore", inTempStore)
-        .add("uploadedTime", uploadedTime)
-        .toString();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    VideoModel that = (VideoModel) o;
-    return Objects.equal(getName(), that.getName()) &&
-        Objects.equal(getContentUrl(), that.getContentUrl()) &&
-        Objects.equal(getDescription(), that.getDescription()) &&
-        Objects.equal(getEncodingFormat(), that.getEncodingFormat()) &&
-        Objects.equal(getDataId(), that.getDataId()) &&
-        Objects.equal(getAlbumId(), that.getAlbumId()) &&
-        Objects.equal(getUploadedTime(), that.getUploadedTime());
-  }
-
-  // Assign this video to a different album. Used in cases where an album is too large and
-  // needs to be divided into smaller albums, the videos will each get reassigned to new
-  // albumnIds.
-  public void reassignToAlbum(String newAlbum) {
-    this.albumId = newAlbum;
-  }
-
-  // remove all forbidden characters
-  public void cleanName(String forbiddenCharacters, char replacementCharacter, int maxLength) {
-    String name = getName().chars()
-        .mapToObj(c -> (char) c)
-        .map(c -> forbiddenCharacters.contains(Character.toString(c)) ? replacementCharacter : c)
-        .map(Object::toString)
-        .collect(Collectors.joining("")).trim();
-
-    if (maxLength <= 0) {
-      setName(name.trim());
-      return;
+    @JsonCreator
+    public VideoModel(@JsonProperty("name") String name, @JsonProperty("contentUrl") String contentUrl, @JsonProperty("description") String description, @JsonProperty("encodingFormat") String encodingFormat, @JsonProperty("dataId") String dataId, @JsonProperty("albumId") String albumId, @JsonProperty("inTempStore") boolean inTempStore, @JsonProperty("uploadedTime") Date uploadedTime) {
+        super(dataId);
+        setName(name);
+        setContentUrl(contentUrl);
+        setDescription(description);
+        setEncodingFormat(encodingFormat);
+        this.dataId = dataId;
+        this.albumId = albumId;
+        this.inTempStore = inTempStore;
+        this.uploadedTime = uploadedTime;
     }
 
-    setName(name.substring(0, Math.min(maxLength, name.length())).trim());
-  }
+    // TODO(zacsh) remove this in favor of getFolderId
+    public String getAlbumId() {
+        return albumId;
+    }
 
+    @JsonIgnore
+    public // requirement of org.datatransferproject.types.common.FolderItem
+    String getFolderId() {
+        return getAlbumId();
+    }
 
-  @Override
-  public int hashCode() {
-    return this.dataId.hashCode();
-  }
+    @JsonIgnore
+    public // requirement of org.datatransferproject.types.common.Fileable
+    String getMimeType() {
+        return getEncodingFormat();
+    }
+
+    public String getDataId() {
+        return dataId;
+    }
+
+    @Override
+    public boolean isInTempStore() {
+        return inTempStore;
+    }
+
+    @JsonIgnore
+    @Override
+    public String getFetchableUrl() {
+        return getContentUrl().toString();
+    }
+
+    @JsonIgnore(false)
+    @Override
+    public // required for org.datatransferproject.types.common.ImportableItem
+    String getName() {
+        return super.getName();
+    }
+
+    public Date getUploadedTime() {
+        return uploadedTime;
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this).add("name", getName()).add("contentUrl", getContentUrl()).add("description", getDescription()).add("encodingFormat", getEncodingFormat()).add("dataId", dataId).add("albumId", albumId).add("inTempStore", inTempStore).add("uploadedTime", uploadedTime).toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        VideoModel that = (VideoModel) o;
+        return Objects.equal(getName(), that.getName()) && Objects.equal(getContentUrl(), that.getContentUrl()) && Objects.equal(getDescription(), that.getDescription()) && Objects.equal(getEncodingFormat(), that.getEncodingFormat()) && Objects.equal(getDataId(), that.getDataId()) && Objects.equal(getAlbumId(), that.getAlbumId()) && Objects.equal(getUploadedTime(), that.getUploadedTime());
+    }
+
+    // Assign this video to a different album. Used in cases where an album is too large and
+    // needs to be divided into smaller albums, the videos will each get reassigned to new
+    // albumnIds.
+    public void reassignToAlbum(String newAlbum) {
+        this.albumId = newAlbum;
+    }
+
+    // remove all forbidden characters
+    public void cleanName(String forbiddenCharacters, char replacementCharacter, int maxLength) {
+        String name = getName().chars().mapToObj(c -> (char) c).map(c -> forbiddenCharacters.contains(Character.toString(c)) ? replacementCharacter : c).map(Object::toString).collect(Collectors.joining("")).trim();
+        if (maxLength <= 0) {
+            setName(name.trim());
+            return;
+        }
+        setName(name.substring(0, Math.min(maxLength, name.length())).trim());
+    }
+
+    @Override
+    public int hashCode() {
+        return this.dataId.hashCode();
+    }
 }

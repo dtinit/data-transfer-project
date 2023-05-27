@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.types.common.models.music;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -25,19 +24,19 @@ import com.google.common.base.MoreObjects;
  */
 public class MusicGroup {
 
-  private final String name;
+    private final String name;
 
-  @JsonCreator
-  public MusicGroup(@JsonProperty("name") String name) {
-    this.name = name;
-  }
+    @JsonCreator
+    public MusicGroup(@JsonProperty("name") String name) {
+        this.name = name;
+    }
 
-  public String getName() {
-    return name;
-  }
+    public String getName() {
+        return name;
+    }
 
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this).add("name", getName()).toString();
-  }
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this).add("name", getName()).toString();
+    }
 }

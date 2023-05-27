@@ -13,69 +13,68 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.types.common.models.social;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.datatransferproject.types.common.ImportableItem;
-
 import javax.annotation.Nonnull;
 import java.util.Objects;
 
 public class SocialActivityAttachment implements ImportableItem {
-  private SocialActivityAttachmentType type;
-  private String url;
-  private String name;
-  private String content;
 
-  @JsonCreator
-  public SocialActivityAttachment(
-      @JsonProperty("type") SocialActivityAttachmentType type,
-      @JsonProperty("url") String url,
-      @JsonProperty("name") String name,
-      @JsonProperty("content") String content) {
-    this.type = type;
-    this.url = url;
-    this.name = name;
-    this.content = content;
-  }
+    private SocialActivityAttachmentType type;
 
-  public String getUrl() {
-    return url;
-  }
+    private String url;
 
-  @JsonIgnore(false)
-  public String getName() {
-    return name;
-  }
+    private String name;
 
-  public String getContent() {
-    return content;
-  }
+    private String content;
 
-  public SocialActivityAttachmentType getType() {
-    return type;
-  }
+    @JsonCreator
+    public SocialActivityAttachment(@JsonProperty("type") SocialActivityAttachmentType type, @JsonProperty("url") String url, @JsonProperty("name") String name, @JsonProperty("content") String content) {
+        this.type = type;
+        this.url = url;
+        this.name = name;
+        this.content = content;
+    }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    SocialActivityAttachment that = (SocialActivityAttachment) o;
-    return getType() == that.getType()
-        && Objects.equals(getUrl(), that.getUrl())
-        && Objects.equals(getName(), that.getName())
-        && Objects.equals(getContent(), that.getContent());
-  }
+    public String getUrl() {
+        return url;
+    }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(getType(), getUrl(), getName(), getContent());
-  }
+    @JsonIgnore(false)
+    public String getName() {
+        return name;
+    }
 
-  @Nonnull
-  @Override
-  public String getIdempotentId() { return url; }
+    public String getContent() {
+        return content;
+    }
+
+    public SocialActivityAttachmentType getType() {
+        return type;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        SocialActivityAttachment that = (SocialActivityAttachment) o;
+        return getType() == that.getType() && Objects.equals(getUrl(), that.getUrl()) && Objects.equals(getName(), that.getName()) && Objects.equals(getContent(), that.getContent());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getType(), getUrl(), getName(), getContent());
+    }
+
+    @Nonnull
+    @Override
+    public String getIdempotentId() {
+        return url;
+    }
 }

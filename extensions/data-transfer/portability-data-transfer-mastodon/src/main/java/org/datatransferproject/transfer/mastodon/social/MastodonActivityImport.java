@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.transfer.mastodon.social;
-
 
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
@@ -24,52 +22,32 @@ import org.datatransferproject.types.common.models.social.SocialActivityContaine
 import org.datatransferproject.types.common.models.social.SocialActivityModel;
 import org.datatransferproject.types.common.models.social.SocialActivityType;
 import org.datatransferproject.types.transfer.auth.CookiesAndUrlAuthData;
-
 import java.io.IOException;
 import java.util.UUID;
-
 import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Imports post data to Mastodon.
  * <p> Currently only supports text and not images.
- **/
-public class MastodonActivityImport
-    implements Importer<CookiesAndUrlAuthData, SocialActivityContainerResource> {
+ */
+public class MastodonActivityImport implements Importer<CookiesAndUrlAuthData, SocialActivityContainerResource> {
 
-  @Override
-  public ImportResult importItem(UUID jobId,
-      IdempotentImportExecutor idempotentImportExecutor,
-      CookiesAndUrlAuthData authData,
-      SocialActivityContainerResource data) throws Exception {
-    checkState(authData.getCookies().size() == 1,
-        "Exactly 1 cookie expected: %s",
-        authData.getCookies());
-
-    MastodonHttpUtilities utilities = new MastodonHttpUtilities(
-        authData.getCookies().get(0),
-        authData.getUrl());
-
-
-    for (SocialActivityModel activity : data.getActivities()) {
-        if (activity.getType() == SocialActivityType.NOTE) {
-          idempotentImportExecutor.executeAndSwallowIOExceptions(
-                  activity.getId(),
-                  activity.getContent(),
-              () -> {
-                postNode(activity, utilities, jobId);
-                return 1;
-              });
+    @Override
+    public ImportResult importItem(UUID jobId, IdempotentImportExecutor idempotentImportExecutor, CookiesAndUrlAuthData authData, SocialActivityContainerResource data) throws Exception {
+        checkState(authData.getCookies().size() == 1, "Exactly 1 cookie expected: %s", authData.getCookies());
+        MastodonHttpUtilities utilities = new MastodonHttpUtilities(authData.getCookies().get(0), authData.getUrl());
+        for (SocialActivityModel activity : data.getActivities()) {
+            if (activity.getType() == SocialActivityType.NOTE) {
+                idempotentImportExecutor.executeAndSwallowIOExceptions(activity.getId(), activity.getContent(), () -> {
+                    postNode(activity, utilities, jobId);
+                    return 1;
+                });
+            }
         }
-      }
+        return ImportResult.OK;
+    }
 
-
-    return ImportResult.OK;
-  }
-
-  private void postNode(SocialActivityModel activity, MastodonHttpUtilities utilities, UUID jobId) throws IOException {
-    utilities.postStatus(
-        "Duplicated: " + activity.getContent(),
-        jobId + activity.getId());
-  }
+    private void postNode(SocialActivityModel activity, MastodonHttpUtilities utilities, UUID jobId) throws IOException {
+        utilities.postStatus("Duplicated: " + activity.getContent(), jobId + activity.getId());
+    }
 }

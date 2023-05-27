@@ -16,7 +16,6 @@
 package org.datatransferproject.config.yaml;
 
 import static com.google.common.truth.Truth.assertThat;
-
 import com.google.common.collect.ImmutableList;
 import java.io.InputStream;
 import org.datatransferproject.config.ConfigUtils;
@@ -27,42 +26,38 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class YamlSettingsExtensionTest {
 
-  /**
-   * baseUrl: https://localhost:3000 baseApiUrl: https://localhost:8080
-   */
-  private static String API_SETTINGS_1 = "api-1.yaml";
-  /**
-   * baseUrl: www.aBaseUrl.com
-   */
-  private static String API_SETTINGS_2 = "api-2.yaml";
+    /**
+     * baseUrl: https://localhost:3000 baseApiUrl: https://localhost:8080
+     */
+    private static String API_SETTINGS_1 = "api-1.yaml";
 
-  @Test
-  public void parse() {
-    ImmutableList<String> settingsFiles = ImmutableList.of(API_SETTINGS_1);
-    InputStream in = ConfigUtils.getCombinedInputStream(settingsFiles);
-    YamlSettingsExtension settingsExtension = new YamlSettingsExtension();
-    settingsExtension.parseSimple(in);
-    assertThat((String) settingsExtension.getSetting("baseUrl", null))
-        .isEqualTo("https://localhost:3000");
-    assertThat((String) settingsExtension.getSetting("baseApiUrl", null))
-        .isEqualTo("https://localhost:8080");
-  }
+    /**
+     * baseUrl: www.aBaseUrl.com
+     */
+    private static String API_SETTINGS_2 = "api-2.yaml";
 
-  @Test
-  public void parse_override() {
-    // www.aBaseUrl.com should override https://localhost:3000
-    ImmutableList<String> settingsFiles = ImmutableList.of(API_SETTINGS_1, API_SETTINGS_2);
-    YamlSettingsExtension settingsExtension = new YamlSettingsExtension();
-    InputStream in = ConfigUtils.getCombinedInputStream(settingsFiles);
-    settingsExtension.parseSimple(in);
-    assertThat((String) settingsExtension.getSetting("baseUrl", null))
-        .isEqualTo("www.aBaseUrl.com");
+    @Test
+    public void parse() {
+        ImmutableList<String> settingsFiles = ImmutableList.of(API_SETTINGS_1);
+        InputStream in = ConfigUtils.getCombinedInputStream(settingsFiles);
+        YamlSettingsExtension settingsExtension = new YamlSettingsExtension();
+        settingsExtension.parseSimple(in);
+        assertThat((String) settingsExtension.getSetting("baseUrl", null)).isEqualTo("https://localhost:3000");
+        assertThat((String) settingsExtension.getSetting("baseApiUrl", null)).isEqualTo("https://localhost:8080");
+    }
 
-    // reorder settings files - now https://localhost:3000 should override www.aBaseUrl.com
-    settingsFiles = ImmutableList.of(API_SETTINGS_2, API_SETTINGS_1);
-    in = ConfigUtils.getCombinedInputStream(settingsFiles);
-    settingsExtension.parseSimple(in);
-    assertThat((String) settingsExtension.getSetting("baseUrl", null))
-        .isEqualTo("https://localhost:3000");
-  }
+    @Test
+    public void parse_override() {
+        // www.aBaseUrl.com should override https://localhost:3000
+        ImmutableList<String> settingsFiles = ImmutableList.of(API_SETTINGS_1, API_SETTINGS_2);
+        YamlSettingsExtension settingsExtension = new YamlSettingsExtension();
+        InputStream in = ConfigUtils.getCombinedInputStream(settingsFiles);
+        settingsExtension.parseSimple(in);
+        assertThat((String) settingsExtension.getSetting("baseUrl", null)).isEqualTo("www.aBaseUrl.com");
+        // reorder settings files - now https://localhost:3000 should override www.aBaseUrl.com
+        settingsFiles = ImmutableList.of(API_SETTINGS_2, API_SETTINGS_1);
+        in = ConfigUtils.getCombinedInputStream(settingsFiles);
+        settingsExtension.parseSimple(in);
+        assertThat((String) settingsExtension.getSetting("baseUrl", null)).isEqualTo("https://localhost:3000");
+    }
 }

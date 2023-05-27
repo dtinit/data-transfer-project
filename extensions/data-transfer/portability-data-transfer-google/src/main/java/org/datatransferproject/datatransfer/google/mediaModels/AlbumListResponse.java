@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -22,17 +21,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * The response provided by the Google Photos API for an album query
  */
 public class AlbumListResponse {
-  @JsonProperty("albums")
-  private GoogleAlbum[] albums;
 
-  @JsonProperty("nextPageToken")
-  private String nextPageToken;
+    @JsonProperty("albums")
+    private GoogleAlbum[] albums;
 
-  public GoogleAlbum[] getAlbums() {
-    return albums;
-  }
+    @JsonProperty("nextPageToken")
+    private String nextPageToken;
 
-  public String getNextPageToken() {
-    return nextPageToken;
-  }
+    public GoogleAlbum[] getAlbums() {
+        return albums;
+    }
+
+    public String getNextPageToken() {
+        return nextPageToken;
+    }
 }

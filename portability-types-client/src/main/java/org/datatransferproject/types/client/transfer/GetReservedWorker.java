@@ -19,9 +19,12 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 
-/** Request to return the worker that was reserved for the given transfer job. */
+/**
+ * Request to return the worker that was reserved for the given transfer job.
+ */
 @ApiModel(description = "Returns the worker reserved for a given transfer job")
 public class GetReservedWorker {
+
     private final String id;
 
     @JsonCreator

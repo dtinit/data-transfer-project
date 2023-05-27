@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.auth.daybook;
 
 import org.datatransferproject.auth.OAuth2ServiceExtension;
@@ -27,5 +26,4 @@ public class DaybookAuthServiceExtension extends OAuth2ServiceExtension {
     public DaybookAuthServiceExtension() {
         super(new DaybookOAuthConfig());
     }
-
 }

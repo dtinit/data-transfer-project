@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.types.common.models.music;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -27,75 +26,64 @@ import java.util.Objects;
  */
 public class MusicRecording {
 
-  private final String isrcCode;
-  private final String title;
-  private final long durationMillis;
-  private final MusicRelease musicRelease;
-  private final List<MusicGroup> byArtists;
+    private final String isrcCode;
 
-  @JsonCreator
-  public MusicRecording(
-      @JsonProperty("isrcCode") String isrcCode,
-      @JsonProperty("title") String title,
-      @JsonProperty("durationMillis") long durationMillis,
-      @JsonProperty("musicRelease") MusicRelease musicRelease,
-      @JsonProperty("byArtists") List<MusicGroup> byArtists) {
-    this.isrcCode = isrcCode;
-    this.title = title;
-    this.durationMillis = durationMillis;
-    this.musicRelease = musicRelease;
-    this.byArtists = byArtists;
-  }
+    private final String title;
 
-  public String getIsrcCode() {
-    return isrcCode;
-  }
+    private final long durationMillis;
 
-  public String getTitle() {
-    return title;
-  }
+    private final MusicRelease musicRelease;
 
-  public long getDurationMillis() {
-    return durationMillis;
-  }
+    private final List<MusicGroup> byArtists;
 
-  public MusicRelease getMusicRelease() {
-    return musicRelease;
-  }
-
-  public List<MusicGroup> getByArtists() {
-    return byArtists;
-  }
-
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("isrcCode", getIsrcCode())
-        .add("title", getTitle())
-        .add("durationMillis", getDurationMillis())
-        .add("musicRelease", getMusicRelease())
-        .add("byArtists", getByArtists())
-        .toString();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
+    @JsonCreator
+    public MusicRecording(@JsonProperty("isrcCode") String isrcCode, @JsonProperty("title") String title, @JsonProperty("durationMillis") long durationMillis, @JsonProperty("musicRelease") MusicRelease musicRelease, @JsonProperty("byArtists") List<MusicGroup> byArtists) {
+        this.isrcCode = isrcCode;
+        this.title = title;
+        this.durationMillis = durationMillis;
+        this.musicRelease = musicRelease;
+        this.byArtists = byArtists;
     }
-    if (!(o instanceof MusicRecording)) {
-      return false;
-    }
-    MusicRecording that = (MusicRecording) o;
-    return Objects.equals(isrcCode, that.isrcCode)
-        && Objects.equals(title, that.title)
-        && Objects.equals(durationMillis, that.durationMillis)
-        && Objects.equals(musicRelease, that.musicRelease)
-        && Objects.equals(byArtists, that.byArtists);
-  }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(isrcCode, title, durationMillis, musicRelease, byArtists);
-  }
+    public String getIsrcCode() {
+        return isrcCode;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public long getDurationMillis() {
+        return durationMillis;
+    }
+
+    public MusicRelease getMusicRelease() {
+        return musicRelease;
+    }
+
+    public List<MusicGroup> getByArtists() {
+        return byArtists;
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this).add("isrcCode", getIsrcCode()).add("title", getTitle()).add("durationMillis", getDurationMillis()).add("musicRelease", getMusicRelease()).add("byArtists", getByArtists()).toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof MusicRecording)) {
+            return false;
+        }
+        MusicRecording that = (MusicRecording) o;
+        return Objects.equals(isrcCode, that.isrcCode) && Objects.equals(title, that.title) && Objects.equals(durationMillis, that.durationMillis) && Objects.equals(musicRelease, that.musicRelease) && Objects.equals(byArtists, that.byArtists);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(isrcCode, title, durationMillis, musicRelease, byArtists);
+    }
 }

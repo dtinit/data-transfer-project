@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.types.common.models;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,26 +20,21 @@ import com.google.common.truth.Truth;
 import org.junit.jupiter.api.Test;
 
 public class DateRangeContainerResourceTest {
-  @Test
-  public void verifySerializeDeserialize() throws Exception {
-    ObjectMapper objectMapper = new ObjectMapper();
-    objectMapper.registerSubtypes(DateRangeContainerResource.class);
 
-    int startDate = 1607784466;
-    int endDate = 1608648466;
-
-    ContainerResource data = new DateRangeContainerResource(startDate, endDate);
-
-    String serialized = objectMapper.writeValueAsString(data);
-
-    ContainerResource deserializedModel =
-            objectMapper.readValue(serialized, ContainerResource.class);
-
-    Truth.assertThat(deserializedModel).isNotNull();
-    Truth.assertThat(deserializedModel).isInstanceOf(DateRangeContainerResource.class);
-    DateRangeContainerResource deserialized = (DateRangeContainerResource) deserializedModel;
-    Truth.assertThat(deserialized.getStartDate()).isEqualTo(startDate);
-    Truth.assertThat(deserialized.getEndDate()).isEqualTo(endDate);
-    Truth.assertThat(deserialized).isEqualTo(data);
-  }
+    @Test
+    public void verifySerializeDeserialize() throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerSubtypes(DateRangeContainerResource.class);
+        int startDate = 1607784466;
+        int endDate = 1608648466;
+        ContainerResource data = new DateRangeContainerResource(startDate, endDate);
+        String serialized = objectMapper.writeValueAsString(data);
+        ContainerResource deserializedModel = objectMapper.readValue(serialized, ContainerResource.class);
+        Truth.assertThat(deserializedModel).isNotNull();
+        Truth.assertThat(deserializedModel).isInstanceOf(DateRangeContainerResource.class);
+        DateRangeContainerResource deserialized = (DateRangeContainerResource) deserializedModel;
+        Truth.assertThat(deserialized.getStartDate()).isEqualTo(startDate);
+        Truth.assertThat(deserialized.getEndDate()).isEqualTo(endDate);
+        Truth.assertThat(deserialized).isEqualTo(data);
+    }
 }

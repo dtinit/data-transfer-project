@@ -12,31 +12,29 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 // but right now that probably add more complexity in terms of extra cognitive load.
 public class DtpDigitalDocument {
 
-  private final String name;
-  // Rfc3339 encoded string of the last modified date
-  private final String dateModified;
-  private final String encodingFormat;
+    private final String name;
 
-  @JsonCreator
-  public DtpDigitalDocument(
-      @JsonProperty("name") String name,
-      @JsonProperty("dateModified") String dateModified,
-      @JsonProperty("encodingFormat") String encodingFormat
-  ) {
-    this.name = name;
-    this.dateModified = dateModified;
-    this.encodingFormat = encodingFormat;
-  }
+    // Rfc3339 encoded string of the last modified date
+    private final String dateModified;
 
-  public String getName() {
-    return name;
-  }
+    private final String encodingFormat;
 
-  public String getDateModified() {
-    return dateModified;
-  }
+    @JsonCreator
+    public DtpDigitalDocument(@JsonProperty("name") String name, @JsonProperty("dateModified") String dateModified, @JsonProperty("encodingFormat") String encodingFormat) {
+        this.name = name;
+        this.dateModified = dateModified;
+        this.encodingFormat = encodingFormat;
+    }
 
-  public String getEncodingFormat() {
-    return encodingFormat;
-  }
+    public String getName() {
+        return name;
+    }
+
+    public String getDateModified() {
+        return dateModified;
+    }
+
+    public String getEncodingFormat() {
+        return encodingFormat;
+    }
 }

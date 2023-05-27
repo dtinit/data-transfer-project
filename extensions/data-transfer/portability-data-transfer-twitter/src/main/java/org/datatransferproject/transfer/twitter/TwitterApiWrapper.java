@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.transfer.twitter;
 
 import org.datatransferproject.types.transfer.auth.AppCredentials;
@@ -23,18 +22,12 @@ import twitter4j.TwitterFactory;
 import twitter4j.conf.ConfigurationBuilder;
 
 final class TwitterApiWrapper {
-  static  Twitter getInstance(
-      AppCredentials appCredentials,
-      TokenSecretAuthData authData) {
 
-      ConfigurationBuilder cb = new ConfigurationBuilder();
-      cb.setDebugEnabled(false)
-          .setOAuthConsumerKey(appCredentials.getKey())
-          .setOAuthConsumerSecret(appCredentials.getSecret())
-          // TODO: I think the token/secret expire, we need to check into refreshing them
-          .setOAuthAccessToken(authData.getToken())
-          .setOAuthAccessTokenSecret(authData.getSecret());
-      TwitterFactory tf = new TwitterFactory(cb.build());
-      return tf.getInstance();
-  }
+    static Twitter getInstance(AppCredentials appCredentials, TokenSecretAuthData authData) {
+        ConfigurationBuilder cb = new ConfigurationBuilder();
+        cb.setDebugEnabled(false).setOAuthConsumerKey(appCredentials.getKey()).setOAuthConsumerSecret(appCredentials.getSecret()).// TODO: I think the token/secret expire, we need to check into refreshing them
+        setOAuthAccessToken(authData.getToken()).setOAuthAccessTokenSecret(authData.getSecret());
+        TwitterFactory tf = new TwitterFactory(cb.build());
+        return tf.getInstance();
+    }
 }

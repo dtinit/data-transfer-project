@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.apple.exceptions;
 
 import org.jetbrains.annotations.NotNull;
@@ -23,11 +22,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class AppleContentException extends Exception {
 
-  public AppleContentException(@NotNull final String message) {
-    super(message);
-  }
+    public AppleContentException(@NotNull final String message) {
+        super(message);
+    }
 
-  public AppleContentException(@NotNull final String message, @NotNull Throwable throwable) {
-    super(message, throwable);
-  }
+    public AppleContentException(@NotNull final String message, @NotNull Throwable throwable) {
+        super(message, throwable);
+    }
 }

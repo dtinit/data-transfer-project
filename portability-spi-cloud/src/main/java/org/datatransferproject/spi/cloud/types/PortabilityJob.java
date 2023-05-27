@@ -22,329 +22,267 @@ import org.datatransferproject.types.common.models.DataVertical;
 @AutoValue
 @JsonDeserialize(builder = PortabilityJob.Builder.class)
 public abstract class PortabilityJob {
-  public static final String AUTHORIZATION_STATE = "AUTHORIZATION_STATE";
-  // Keys for specific values in the key value store
-  private static final String DATA_TYPE_KEY = "DATA_TYPE";
-  private static final String EXPORT_SERVICE_KEY = "EXPORT_SERVICE";
-  private static final String IMPORT_SERVICE_KEY = "IMPORT_SERVICE";
-  private static final String EXPORT_INFORMATION_KEY = "EXPORT_INFORMATION";
-  private static final String ENCRYPTED_CREDS_KEY = "ENCRYPTED_CREDS_KEY";
-  private static final String ENCRYPTED_SESSION_KEY = "ENCRYPTED_SESSION_KEY";
-  private static final String ENCRYPTION_SCHEME = "ENCRYPTION_SCHEME";
-  private static final String WORKER_INSTANCE_PUBLIC_KEY = "WORKER_INSTANCE_PUBLIC_KEY";
-  private static final String WORKER_INSTANCE_ID = "INSTANCE_ID";
-  private static final String IMPORT_ENCRYPTED_INITIAL_AUTH_DATA =
-      "IMPORT_ENCRYPTED_INITIAL_AUTH_DATA";
-  private static final String EXPORT_ENCRYPTED_INITIAL_AUTH_DATA =
-      "EXPORT_ENCRYPTED_INITIAL_AUTH_DATA";
-  private static final String JOB_STATE = "JOB_STATE";
-  private static final String TRANSFER_MODE = "TRANSFER_MODE";
-  private static final String FAILURE_REASON = "FAILURE_REASON";
-  private static final String NUMBER_OF_FAILED_FILES_KEY = "NUM_FAILED_FILES";
-  private static final String USER_TIMEZONE = "USER_TIMEZONE";
-  private static final String USER_LOCALE = "USER_LOCALE";
 
-  public static PortabilityJob.Builder builder() {
-    Instant now = Instant.now();
-    // TODO: Fix so we don't need fully qualified name here. This is to get IntelliJ to recognize
-    // the class name due to a conflict in package names for our generated code, but the conflict
-    // doesn't cause any actual problems with building.
-    return new org.datatransferproject.spi.cloud.types.AutoValue_PortabilityJob.Builder()
-        .setState(State.NEW)
-        .setCreatedTimestamp(now)
-        .setLastUpdateTimestamp(now)
-        .setFailureReason(null);
-  }
+    public static final String AUTHORIZATION_STATE = "AUTHORIZATION_STATE";
 
-  public static PortabilityJob fromMap(Map<String, Object> properties) {
-    Instant now = Instant.now();
-    String encryptedAuthData =
-        properties.containsKey(ENCRYPTED_CREDS_KEY)
-            ? (String) properties.get(ENCRYPTED_CREDS_KEY)
-            : null;
-    String encodedPublicKey =
-        properties.containsKey(WORKER_INSTANCE_PUBLIC_KEY)
-            ? (String) properties.get(WORKER_INSTANCE_PUBLIC_KEY)
-            : null;
+    // Keys for specific values in the key value store
+    private static final String DATA_TYPE_KEY = "DATA_TYPE";
 
-    String instanceId =
-        properties.containsKey(WORKER_INSTANCE_ID)
-            ? (String) properties.get(WORKER_INSTANCE_ID)
-            : null;
+    private static final String EXPORT_SERVICE_KEY = "EXPORT_SERVICE";
 
-    String encryptedExportInitialAuthData =
-        properties.containsKey(EXPORT_ENCRYPTED_INITIAL_AUTH_DATA)
-            ? (String) properties.get(EXPORT_ENCRYPTED_INITIAL_AUTH_DATA)
-            : null;
+    private static final String IMPORT_SERVICE_KEY = "IMPORT_SERVICE";
 
-    String encryptedImportInitialAuthData =
-        properties.containsKey(IMPORT_ENCRYPTED_INITIAL_AUTH_DATA)
-            ? (String) properties.get(IMPORT_ENCRYPTED_INITIAL_AUTH_DATA)
-            : null;
+    private static final String EXPORT_INFORMATION_KEY = "EXPORT_INFORMATION";
 
-    State state =
-        properties.containsKey(JOB_STATE)
-            ? State.valueOf((String) properties.get(JOB_STATE))
-            : State.NEW;
+    private static final String ENCRYPTED_CREDS_KEY = "ENCRYPTED_CREDS_KEY";
 
-    String failureReason =
-        properties.containsKey(FAILURE_REASON) ? (String) properties.get(FAILURE_REASON) : null;
+    private static final String ENCRYPTED_SESSION_KEY = "ENCRYPTED_SESSION_KEY";
 
-    TimeZone userTimeZone =
-        properties.containsKey(USER_TIMEZONE) ? (TimeZone) properties.get(USER_TIMEZONE) : null;
+    private static final String ENCRYPTION_SCHEME = "ENCRYPTION_SCHEME";
 
-    String userLocale =
-        properties.containsKey(USER_LOCALE) ? (String) properties.get(USER_LOCALE) : null;
+    private static final String WORKER_INSTANCE_PUBLIC_KEY = "WORKER_INSTANCE_PUBLIC_KEY";
 
-    TransferMode transferMode =
-        properties.containsKey(TRANSFER_MODE)
-            ? TransferMode.valueOf((String) properties.get(TRANSFER_MODE))
-            : TransferMode.DATA_TRANSFER;
+    private static final String WORKER_INSTANCE_ID = "INSTANCE_ID";
 
-    DataVertical dataType =
-        properties.containsKey(DATA_TYPE_KEY)
-            ? DataVertical.fromDataType((String) properties.get(DATA_TYPE_KEY))
-            : null;
+    private static final String IMPORT_ENCRYPTED_INITIAL_AUTH_DATA = "IMPORT_ENCRYPTED_INITIAL_AUTH_DATA";
 
-    return PortabilityJob.builder()
-        .setState(state)
-        .setExportService((String) properties.get(EXPORT_SERVICE_KEY))
-        .setImportService((String) properties.get(IMPORT_SERVICE_KEY))
-        .setTransferDataType(dataType)
-        .setExportInformation((String) properties.get(EXPORT_INFORMATION_KEY))
-        .setCreatedTimestamp(now) // TODO: get from DB
-        .setLastUpdateTimestamp(now)
-        .setFailureReason(failureReason)
-        .setJobAuthorization(
-            JobAuthorization.builder()
-                .setState(
-                    JobAuthorization.State.valueOf((String) properties.get(AUTHORIZATION_STATE)))
-                .setEncryptionScheme((String) properties.get(ENCRYPTION_SCHEME))
-                .setEncryptedAuthData(encryptedAuthData)
-                .setInstanceId(instanceId)
-                .setSessionSecretKey((String) properties.get(ENCRYPTED_SESSION_KEY))
-                .setAuthPublicKey(encodedPublicKey)
-                .setEncryptedInitialExportAuthData(encryptedExportInitialAuthData)
-                .setEncryptedInitialImportAuthData(encryptedImportInitialAuthData)
-                .build())
-        .setUserTimeZone(userTimeZone)
-        .setUserLocale(userLocale)
-        .setTransferMode(transferMode)
-        .build();
-  }
+    private static final String EXPORT_ENCRYPTED_INITIAL_AUTH_DATA = "EXPORT_ENCRYPTED_INITIAL_AUTH_DATA";
 
-  /** Checks all {@code strings} are null or empty. */
-  private static void isUnset(String... strings) {
-    for (String str : strings) {
-      Preconditions.checkState(Strings.isNullOrEmpty(str));
-    }
-  }
+    private static final String JOB_STATE = "JOB_STATE";
 
-  /** Checks all {@code strings} are have non-null and non-empty values. */
-  private static void isSet(String... strings) {
-    for (String str : strings) {
-      Preconditions.checkState(!Strings.isNullOrEmpty(str));
-    }
-  }
+    private static final String TRANSFER_MODE = "TRANSFER_MODE";
 
-  @JsonProperty("state")
-  public abstract State state();
+    private static final String FAILURE_REASON = "FAILURE_REASON";
 
-  @JsonProperty("exportService")
-  public abstract String exportService();
+    private static final String NUMBER_OF_FAILED_FILES_KEY = "NUM_FAILED_FILES";
 
-  @JsonProperty("importService")
-  public abstract String importService();
+    private static final String USER_TIMEZONE = "USER_TIMEZONE";
 
-  @JsonProperty("transferDataType")
-  public abstract DataVertical transferDataType();
+    private static final String USER_LOCALE = "USER_LOCALE";
 
-  @Nullable
-  @JsonProperty("exportInformation")
-  public abstract String exportInformation();
-
-  @JsonProperty("createdTimestamp")
-  public abstract Instant createdTimestamp(); // ISO 8601 timestamp
-
-  @JsonProperty("lastUpdateTimestamp")
-  public abstract Instant lastUpdateTimestamp(); // ISO 8601 timestamp
-
-  @JsonProperty("jobAuthorization")
-  public abstract JobAuthorization jobAuthorization();
-
-  @Nullable
-  @JsonProperty("failureReason")
-  public abstract String failureReason();
-
-  @Nullable
-  @JsonProperty("userTimeZone")
-  public abstract TimeZone userTimeZone();
-
-  @Nullable
-  @JsonProperty("userLocale")
-  public abstract String userLocale();
-
-  @Nullable
-  @JsonProperty("transferMode")
-  public abstract TransferMode transferMode();
-
-  public abstract PortabilityJob.Builder toBuilder();
-
-  public Map<String, Object> toMap() {
-    ImmutableMap.Builder<String, Object> builder =
-        ImmutableMap.<String, Object>builder()
-            .put(DATA_TYPE_KEY, transferDataType().getDataType())
-            .put(EXPORT_SERVICE_KEY, exportService())
-            .put(IMPORT_SERVICE_KEY, importService())
-            .put(AUTHORIZATION_STATE, jobAuthorization().state().toString())
-            .put(JOB_STATE, state().toString());
-    if (jobAuthorization().sessionSecretKey() != null) {
-      builder.put(ENCRYPTED_SESSION_KEY, jobAuthorization().sessionSecretKey());
+    public static PortabilityJob.Builder builder() {
+        Instant now = Instant.now();
+        // TODO: Fix so we don't need fully qualified name here. This is to get IntelliJ to recognize
+        // the class name due to a conflict in package names for our generated code, but the conflict
+        // doesn't cause any actual problems with building.
+        return new org.datatransferproject.spi.cloud.types.AutoValue_PortabilityJob.Builder().setState(State.NEW).setCreatedTimestamp(now).setLastUpdateTimestamp(now).setFailureReason(null);
     }
 
-    if (null != exportInformation()) {
-      builder.put(EXPORT_INFORMATION_KEY, exportInformation());
+    public static PortabilityJob fromMap(Map<String, Object> properties) {
+        Instant now = Instant.now();
+        String encryptedAuthData = properties.containsKey(ENCRYPTED_CREDS_KEY) ? (String) properties.get(ENCRYPTED_CREDS_KEY) : null;
+        String encodedPublicKey = properties.containsKey(WORKER_INSTANCE_PUBLIC_KEY) ? (String) properties.get(WORKER_INSTANCE_PUBLIC_KEY) : null;
+        String instanceId = properties.containsKey(WORKER_INSTANCE_ID) ? (String) properties.get(WORKER_INSTANCE_ID) : null;
+        String encryptedExportInitialAuthData = properties.containsKey(EXPORT_ENCRYPTED_INITIAL_AUTH_DATA) ? (String) properties.get(EXPORT_ENCRYPTED_INITIAL_AUTH_DATA) : null;
+        String encryptedImportInitialAuthData = properties.containsKey(IMPORT_ENCRYPTED_INITIAL_AUTH_DATA) ? (String) properties.get(IMPORT_ENCRYPTED_INITIAL_AUTH_DATA) : null;
+        State state = properties.containsKey(JOB_STATE) ? State.valueOf((String) properties.get(JOB_STATE)) : State.NEW;
+        String failureReason = properties.containsKey(FAILURE_REASON) ? (String) properties.get(FAILURE_REASON) : null;
+        TimeZone userTimeZone = properties.containsKey(USER_TIMEZONE) ? (TimeZone) properties.get(USER_TIMEZONE) : null;
+        String userLocale = properties.containsKey(USER_LOCALE) ? (String) properties.get(USER_LOCALE) : null;
+        TransferMode transferMode = properties.containsKey(TRANSFER_MODE) ? TransferMode.valueOf((String) properties.get(TRANSFER_MODE)) : TransferMode.DATA_TRANSFER;
+        DataVertical dataType = properties.containsKey(DATA_TYPE_KEY) ? DataVertical.fromDataType((String) properties.get(DATA_TYPE_KEY)) : null;
+        return PortabilityJob.builder().setState(state).setExportService((String) properties.get(EXPORT_SERVICE_KEY)).setImportService((String) properties.get(IMPORT_SERVICE_KEY)).setTransferDataType(dataType).setExportInformation((String) properties.get(EXPORT_INFORMATION_KEY)).setCreatedTimestamp(// TODO: get from DB
+        now).setLastUpdateTimestamp(now).setFailureReason(failureReason).setJobAuthorization(JobAuthorization.builder().setState(JobAuthorization.State.valueOf((String) properties.get(AUTHORIZATION_STATE))).setEncryptionScheme((String) properties.get(ENCRYPTION_SCHEME)).setEncryptedAuthData(encryptedAuthData).setInstanceId(instanceId).setSessionSecretKey((String) properties.get(ENCRYPTED_SESSION_KEY)).setAuthPublicKey(encodedPublicKey).setEncryptedInitialExportAuthData(encryptedExportInitialAuthData).setEncryptedInitialImportAuthData(encryptedImportInitialAuthData).build()).setUserTimeZone(userTimeZone).setUserLocale(userLocale).setTransferMode(transferMode).build();
     }
-
-    if (null != jobAuthorization().authPublicKey()) {
-      builder.put(WORKER_INSTANCE_PUBLIC_KEY, jobAuthorization().authPublicKey());
-    }
-
-    if (null != jobAuthorization().instanceId()) {
-      builder.put(WORKER_INSTANCE_ID, jobAuthorization().instanceId());
-    }
-
-    if (null != jobAuthorization().encryptedAuthData()) {
-      builder.put(ENCRYPTED_CREDS_KEY, jobAuthorization().encryptedAuthData());
-    }
-
-    if (null != failureReason()) {
-      builder.put(FAILURE_REASON, failureReason());
-    }
-
-    builder.put(
-        ENCRYPTION_SCHEME,
-        null != jobAuthorization().encryptionScheme()
-            ? jobAuthorization().encryptionScheme()
-            : "jwe");
-
-    if (null != jobAuthorization().encryptedInitialExportAuthData()) {
-      builder.put(
-          EXPORT_ENCRYPTED_INITIAL_AUTH_DATA, jobAuthorization().encryptedInitialExportAuthData());
-    }
-
-    if (null != jobAuthorization().encryptedInitialImportAuthData()) {
-      builder.put(
-          IMPORT_ENCRYPTED_INITIAL_AUTH_DATA, jobAuthorization().encryptedInitialImportAuthData());
-    }
-
-    if (null != userTimeZone()) {
-      builder.put(USER_TIMEZONE, userTimeZone());
-    }
-
-    if (null != userLocale()) {
-      builder.put(USER_LOCALE, userLocale());
-    }
-
-    if (null != transferMode()) {
-      builder.put(TRANSFER_MODE, transferMode().toString());
-    }
-
-    return builder.build();
-  }
-
-  /** The job states. */
-  public enum State {
-    NEW,
-    IN_PROGRESS,
-    COMPLETE,
-    ERROR,
-    CANCELED,
-    PREEMPTED
-  }
-
-  public enum TransferMode {
-    /**
-     * Regular data transfer mode: export data from a service, then import into another service.
-     */
-    DATA_TRANSFER,
 
     /**
-     * Do not import the data. Instead, compute the size of every exported item and report the sizes
-     * to the job store.
+     * Checks all {@code strings} are null or empty.
      */
-    SIZE_CALCULATION
-  }
-
-  @AutoValue.Builder
-  public abstract static class Builder {
-    @JsonCreator
-    private static PortabilityJob.Builder create() {
-      return PortabilityJob.builder();
+    private static void isUnset(String... strings) {
+        for (String str : strings) {
+            Preconditions.checkState(Strings.isNullOrEmpty(str));
+        }
     }
 
-    public abstract PortabilityJob build();
+    /**
+     * Checks all {@code strings} are have non-null and non-empty values.
+     */
+    private static void isSet(String... strings) {
+        for (String str : strings) {
+            Preconditions.checkState(!Strings.isNullOrEmpty(str));
+        }
+    }
 
     @JsonProperty("state")
-    public abstract Builder setState(State state);
+    public abstract State state();
 
     @JsonProperty("exportService")
-    public abstract Builder setExportService(String exportService);
+    public abstract String exportService();
 
     @JsonProperty("importService")
-    public abstract Builder setImportService(String importService);
+    public abstract String importService();
 
     @JsonProperty("transferDataType")
-    public abstract Builder setTransferDataType(DataVertical transferDataType);
+    public abstract DataVertical transferDataType();
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @Nullable
     @JsonProperty("exportInformation")
-    public abstract Builder setExportInformation(String exportInformation);
+    public abstract String exportInformation();
 
     @JsonProperty("createdTimestamp")
-    public abstract Builder setCreatedTimestamp(Instant createdTimestamp);
+    public abstract Instant // ISO 8601 timestamp
+    createdTimestamp();
 
     @JsonProperty("lastUpdateTimestamp")
-    public abstract Builder setLastUpdateTimestamp(Instant lastUpdateTimestamp);
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonProperty("failureReason")
-    public abstract Builder setFailureReason(String failureReason);
+    public abstract Instant // ISO 8601 timestamp
+    lastUpdateTimestamp();
 
     @JsonProperty("jobAuthorization")
-    public Builder setAndValidateJobAuthorization(JobAuthorization jobAuthorization) {
-      switch (jobAuthorization.state()) {
-        case INITIAL:
-        case CREDS_AVAILABLE:
-          isUnset(jobAuthorization.encryptedAuthData());
-          break;
-        case CREDS_ENCRYPTION_KEY_GENERATED:
-          // Expected associated keys from the assigned transfer worker to be present
-          isSet(jobAuthorization.authPublicKey());
-          isUnset(jobAuthorization.encryptedAuthData());
-          break;
-        case CREDS_STORED:
-          isSet(jobAuthorization.authPublicKey(), jobAuthorization.encryptedAuthData());
-          break;
-        case TIMED_OUT:
-          throw new RuntimeException("Authorization timed out, can't validate.");
-      }
-      return setJobAuthorization(jobAuthorization);
+    public abstract JobAuthorization jobAuthorization();
+
+    @Nullable
+    @JsonProperty("failureReason")
+    public abstract String failureReason();
+
+    @Nullable
+    @JsonProperty("userTimeZone")
+    public abstract TimeZone userTimeZone();
+
+    @Nullable
+    @JsonProperty("userLocale")
+    public abstract String userLocale();
+
+    @Nullable
+    @JsonProperty("transferMode")
+    public abstract TransferMode transferMode();
+
+    public abstract PortabilityJob.Builder toBuilder();
+
+    public Map<String, Object> toMap() {
+        ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder().put(DATA_TYPE_KEY, transferDataType().getDataType()).put(EXPORT_SERVICE_KEY, exportService()).put(IMPORT_SERVICE_KEY, importService()).put(AUTHORIZATION_STATE, jobAuthorization().state().toString()).put(JOB_STATE, state().toString());
+        if (jobAuthorization().sessionSecretKey() != null) {
+            builder.put(ENCRYPTED_SESSION_KEY, jobAuthorization().sessionSecretKey());
+        }
+        if (null != exportInformation()) {
+            builder.put(EXPORT_INFORMATION_KEY, exportInformation());
+        }
+        if (null != jobAuthorization().authPublicKey()) {
+            builder.put(WORKER_INSTANCE_PUBLIC_KEY, jobAuthorization().authPublicKey());
+        }
+        if (null != jobAuthorization().instanceId()) {
+            builder.put(WORKER_INSTANCE_ID, jobAuthorization().instanceId());
+        }
+        if (null != jobAuthorization().encryptedAuthData()) {
+            builder.put(ENCRYPTED_CREDS_KEY, jobAuthorization().encryptedAuthData());
+        }
+        if (null != failureReason()) {
+            builder.put(FAILURE_REASON, failureReason());
+        }
+        builder.put(ENCRYPTION_SCHEME, null != jobAuthorization().encryptionScheme() ? jobAuthorization().encryptionScheme() : "jwe");
+        if (null != jobAuthorization().encryptedInitialExportAuthData()) {
+            builder.put(EXPORT_ENCRYPTED_INITIAL_AUTH_DATA, jobAuthorization().encryptedInitialExportAuthData());
+        }
+        if (null != jobAuthorization().encryptedInitialImportAuthData()) {
+            builder.put(IMPORT_ENCRYPTED_INITIAL_AUTH_DATA, jobAuthorization().encryptedInitialImportAuthData());
+        }
+        if (null != userTimeZone()) {
+            builder.put(USER_TIMEZONE, userTimeZone());
+        }
+        if (null != userLocale()) {
+            builder.put(USER_LOCALE, userLocale());
+        }
+        if (null != transferMode()) {
+            builder.put(TRANSFER_MODE, transferMode().toString());
+        }
+        return builder.build();
     }
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonProperty("userTimeZone")
-    public abstract Builder setUserTimeZone(TimeZone timeZone);
+    /**
+     * The job states.
+     */
+    public enum State {
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonProperty("userLocale")
-    public abstract Builder setUserLocale(String locale);
+        NEW,
+        IN_PROGRESS,
+        COMPLETE,
+        ERROR,
+        CANCELED,
+        PREEMPTED
+    }
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonProperty("transferMode")
-    public abstract Builder setTransferMode(TransferMode transferMode);
+    public enum TransferMode {
 
-    // For internal use only; clients should use setAndValidateJobAuthorization
-    protected abstract Builder setJobAuthorization(JobAuthorization jobAuthorization);
-  }
+        /**
+         * Regular data transfer mode: export data from a service, then import into another service.
+         */
+        DATA_TRANSFER,
+        /**
+         * Do not import the data. Instead, compute the size of every exported item and report the sizes
+         * to the job store.
+         */
+        SIZE_CALCULATION
+    }
+
+    @AutoValue.Builder
+    public abstract static class Builder {
+
+        @JsonCreator
+        private static PortabilityJob.Builder create() {
+            return PortabilityJob.builder();
+        }
+
+        public abstract PortabilityJob build();
+
+        @JsonProperty("state")
+        public abstract Builder setState(State state);
+
+        @JsonProperty("exportService")
+        public abstract Builder setExportService(String exportService);
+
+        @JsonProperty("importService")
+        public abstract Builder setImportService(String importService);
+
+        @JsonProperty("transferDataType")
+        public abstract Builder setTransferDataType(DataVertical transferDataType);
+
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        @JsonProperty("exportInformation")
+        public abstract Builder setExportInformation(String exportInformation);
+
+        @JsonProperty("createdTimestamp")
+        public abstract Builder setCreatedTimestamp(Instant createdTimestamp);
+
+        @JsonProperty("lastUpdateTimestamp")
+        public abstract Builder setLastUpdateTimestamp(Instant lastUpdateTimestamp);
+
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        @JsonProperty("failureReason")
+        public abstract Builder setFailureReason(String failureReason);
+
+        @JsonProperty("jobAuthorization")
+        public Builder setAndValidateJobAuthorization(JobAuthorization jobAuthorization) {
+            switch(jobAuthorization.state()) {
+                case INITIAL:
+                case CREDS_AVAILABLE:
+                    isUnset(jobAuthorization.encryptedAuthData());
+                    break;
+                case CREDS_ENCRYPTION_KEY_GENERATED:
+                    // Expected associated keys from the assigned transfer worker to be present
+                    isSet(jobAuthorization.authPublicKey());
+                    isUnset(jobAuthorization.encryptedAuthData());
+                    break;
+                case CREDS_STORED:
+                    isSet(jobAuthorization.authPublicKey(), jobAuthorization.encryptedAuthData());
+                    break;
+                case TIMED_OUT:
+                    throw new RuntimeException("Authorization timed out, can't validate.");
+            }
+            return setJobAuthorization(jobAuthorization);
+        }
+
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        @JsonProperty("userTimeZone")
+        public abstract Builder setUserTimeZone(TimeZone timeZone);
+
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        @JsonProperty("userLocale")
+        public abstract Builder setUserLocale(String locale);
+
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        @JsonProperty("transferMode")
+        public abstract Builder setTransferMode(TransferMode transferMode);
+
+        // For internal use only; clients should use setAndValidateJobAuthorization
+        protected abstract Builder setJobAuthorization(JobAuthorization jobAuthorization);
+    }
 }

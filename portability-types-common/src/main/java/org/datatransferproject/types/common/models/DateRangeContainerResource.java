@@ -13,45 +13,49 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.types.common.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
-
 import java.util.Objects;
 
-/** A date range container containing start and end date for filtering. */
+/**
+ * A date range container containing start and end date for filtering.
+ */
 @JsonTypeName("org.dataportability:DateRangeContainerResource")
 public class DateRangeContainerResource extends ContainerResource {
-  private final Integer startDate;
-  private final Integer endDate;
 
-  @JsonCreator
-  public DateRangeContainerResource(
-          @JsonProperty("startDate") Integer startDate,
-          @JsonProperty("endDate") Integer endDate) {
-    this.startDate = startDate;
-    this.endDate = endDate;
-  }
+    private final Integer startDate;
 
-  public Integer getStartDate() {
-    return startDate;
-  }
-  public Integer getEndDate() { return endDate; }
+    private final Integer endDate;
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    DateRangeContainerResource that = (DateRangeContainerResource) o;
-    return Objects.equals(startDate, that.startDate)
-            && Objects.equals(endDate, that.endDate);
-  }
+    @JsonCreator
+    public DateRangeContainerResource(@JsonProperty("startDate") Integer startDate, @JsonProperty("endDate") Integer endDate) {
+        this.startDate = startDate;
+        this.endDate = endDate;
+    }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(startDate, endDate);
-  }
+    public Integer getStartDate() {
+        return startDate;
+    }
+
+    public Integer getEndDate() {
+        return endDate;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        DateRangeContainerResource that = (DateRangeContainerResource) o;
+        return Objects.equals(startDate, that.startDate) && Objects.equals(endDate, that.endDate);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(startDate, endDate);
+    }
 }

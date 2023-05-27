@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.transfer.facebook.videos;
 
 import static org.mockito.Mockito.verify;
-
 import com.restfb.FacebookClient;
 import com.restfb.Parameter;
 import com.restfb.types.GraphResponse;
@@ -30,23 +28,19 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class FacebookVideosImporterTest {
 
-  private static final String VIDEO_URL = "https://www.example.com/photo.jpg";
-  private static final String VIDEO_DESCRIPTION = "description";
+    private static final String VIDEO_URL = "https://www.example.com/photo.jpg";
 
-  private FacebookVideosImporter importer = new FacebookVideosImporter(null);
-  @Mock
-  private FacebookClient client;
+    private static final String VIDEO_DESCRIPTION = "description";
 
-  @Test
-  public void testImportSingleVideo() {
-    importer.importSingleVideo(
-        client,
-        new VideoModel(
-            "title", VIDEO_URL, VIDEO_DESCRIPTION, "video/mp4", "videoId", null, false, null));
+    private FacebookVideosImporter importer = new FacebookVideosImporter(null);
 
-    Parameter[] params = {
-        Parameter.with("file_url", VIDEO_URL), Parameter.with("description", VIDEO_DESCRIPTION)
-    };
-    verify(client).publish("me/videos", GraphResponse.class, params);
-  }
+    @Mock
+    private FacebookClient client;
+
+    @Test
+    public void testImportSingleVideo() {
+        importer.importSingleVideo(client, new VideoModel("title", VIDEO_URL, VIDEO_DESCRIPTION, "video/mp4", "videoId", null, false, null));
+        Parameter[] params = { Parameter.with("file_url", VIDEO_URL), Parameter.with("description", VIDEO_DESCRIPTION) };
+        verify(client).publish("me/videos", GraphResponse.class, params);
+    }
 }

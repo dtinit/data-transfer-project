@@ -23,38 +23,38 @@ import org.datatransferproject.types.common.models.DataVertical;
  */
 public interface MetricRecorder {
 
-  /**
-   * Record a generic event metric.
-   *
-   * @param dataType the data type being processed
-   * @param tag      a tag to identify the metric, this should be a low cardinality value
-   */
-  void recordMetric(DataVertical dataType, String tag);
+    /**
+     * Record a generic event metric.
+     *
+     * @param dataType the data type being processed
+     * @param tag      a tag to identify the metric, this should be a low cardinality value
+     */
+    void recordMetric(DataVertical dataType, String tag);
 
-  /**
-   * Record a generic event metric with a boolean value.
-   *
-   * @param dataType the data type being processed
-   * @param tag      a tag to identify the metric, this should be a low cardinality value
-   * @param bool     a true/false value related to the event
-   */
-  void recordMetric(DataVertical dataType, String tag, boolean bool);
+    /**
+     * Record a generic event metric with a boolean value.
+     *
+     * @param dataType the data type being processed
+     * @param tag      a tag to identify the metric, this should be a low cardinality value
+     * @param bool     a true/false value related to the event
+     */
+    void recordMetric(DataVertical dataType, String tag, boolean bool);
 
-  /**
-   * Record a generic event metric with a boolean value.
-   *
-   * @param dataType the data type being processed
-   * @param tag      a tag to identify the metric, this should be a low cardinality value
-   * @param duration a duration related to the event
-   */
-  void recordMetric(DataVertical dataType, String tag, Duration duration);
+    /**
+     * Record a generic event metric with a boolean value.
+     *
+     * @param dataType the data type being processed
+     * @param tag      a tag to identify the metric, this should be a low cardinality value
+     * @param duration a duration related to the event
+     */
+    void recordMetric(DataVertical dataType, String tag, Duration duration);
 
-  /**
-   * Record a generic event metric with a integer value.
-   *
-   * @param dataType the data type being processed
-   * @param tag      a tag to identify the metric, this should be a low cardinality value
-   * @param value    a numeric value related to the event
-   */
-  void recordMetric(DataVertical dataType, String tag, int value);
+    /**
+     * Record a generic event metric with a integer value.
+     *
+     * @param dataType the data type being processed
+     * @param tag      a tag to identify the metric, this should be a low cardinality value
+     * @param value    a numeric value related to the event
+     */
+    void recordMetric(DataVertical dataType, String tag, int value);
 }

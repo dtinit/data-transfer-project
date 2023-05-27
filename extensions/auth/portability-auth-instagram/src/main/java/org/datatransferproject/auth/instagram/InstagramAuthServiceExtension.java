@@ -23,8 +23,7 @@ import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
  */
 public class InstagramAuthServiceExtension extends OAuth2ServiceExtension {
 
-  public InstagramAuthServiceExtension() {
-    super(new InstagramOAuthConfig());
-  }
-
+    public InstagramAuthServiceExtension() {
+        super(new InstagramOAuthConfig());
+    }
 }

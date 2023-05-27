@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.apple;
 
 /**
  * The Base Interface for all the {@link org.datatransferproject.types.common.models.DataVertical}s
  * that Apple Supports.
  */
-public interface AppleBaseInterface { }
+public interface AppleBaseInterface {
+}

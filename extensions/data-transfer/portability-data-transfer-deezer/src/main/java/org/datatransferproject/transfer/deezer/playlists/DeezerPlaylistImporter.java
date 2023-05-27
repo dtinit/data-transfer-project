@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.transfer.deezer.playlists;
-
 
 import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Strings;
@@ -32,109 +30,81 @@ import org.datatransferproject.types.common.models.playlists.MusicRecording;
 import org.datatransferproject.types.common.models.playlists.PlaylistContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.lang.String.format;
 
 /**
  * Imports playlists into Deezer.
- **/
-public class DeezerPlaylistImporter
-    implements Importer<TokensAndUrlAuthData, PlaylistContainerResource> {
-  private final Monitor monitor;
-  private final HttpTransport httpTransport;
-  private final TransferServiceConfig transferServiceConfig;
+ */
+public class DeezerPlaylistImporter implements Importer<TokensAndUrlAuthData, PlaylistContainerResource> {
 
-  public DeezerPlaylistImporter(
-      Monitor monitor,
-      HttpTransport httpTransport,
-      TransferServiceConfig transferServiceConfig) {
-    this.monitor = monitor;
-    this.httpTransport = httpTransport;
-    this.transferServiceConfig = transferServiceConfig;
-  }
+    private final Monitor monitor;
 
-  @Override
-  public ImportResult importItem(
-      UUID jobId,
-      IdempotentImportExecutor idempotentExecutor,
-      TokensAndUrlAuthData authData,
-      PlaylistContainerResource data) throws Exception {
-    DeezerApi api = new DeezerApi(
-        authData.getAccessToken(),
-        httpTransport,
-        transferServiceConfig);
-    for (MusicPlaylist playlist : data.getLists()) {
-      createPlaylist(idempotentExecutor, api, playlist);
-    }
-    return ImportResult.OK;
-  }
+    private final HttpTransport httpTransport;
 
-  private void createPlaylist(
-      IdempotentImportExecutor idempotentExecutor,
-      DeezerApi api,
-      MusicPlaylist playlist)
-      throws Exception {
-    Long newPlaylistId = idempotentExecutor.executeAndSwallowIOExceptions(
-        playlist.getIdentifier(),
-        playlist.getHeadline(),
-        () -> createPlaylist(api, playlist));
-    if (null == newPlaylistId) {
-      monitor.severe(() -> format("Couldn't create playlist: %s", playlist));
-      // Playlist couldn't be created error will be reported to user.
-      return;
+    private final TransferServiceConfig transferServiceConfig;
+
+    public DeezerPlaylistImporter(Monitor monitor, HttpTransport httpTransport, TransferServiceConfig transferServiceConfig) {
+        this.monitor = monitor;
+        this.httpTransport = httpTransport;
+        this.transferServiceConfig = transferServiceConfig;
     }
-    List<Long> ids = new ArrayList<>();
-    for (MusicRecording track : playlist.getTrack()) {
-      Long newSongId = idempotentExecutor.executeAndSwallowIOExceptions(
-          newPlaylistId + "-" + track.hashCode(),
-          "Track: " + track + " in " + playlist.getHeadline(),
-          () -> lookupTrack(api, track));
-      ids.add(newSongId);
-    }
-    idempotentExecutor.executeAndSwallowIOExceptions(
-        newPlaylistId + "-tracks",
-        "Playlist: " + playlist.getHeadline(),
-        () -> {
-          Error insertResponse = api.insertTracksInPlaylist(newPlaylistId, ids);
-          if (insertResponse != null) {
-            throw new IOException("problem inserting tracks into playlist: " + playlist + " error: "
-                + insertResponse);
-          }
-          return null;
+
+    @Override
+    public ImportResult importItem(UUID jobId, IdempotentImportExecutor idempotentExecutor, TokensAndUrlAuthData authData, PlaylistContainerResource data) throws Exception {
+        DeezerApi api = new DeezerApi(authData.getAccessToken(), httpTransport, transferServiceConfig);
+        for (MusicPlaylist playlist : data.getLists()) {
+            createPlaylist(idempotentExecutor, api, playlist);
         }
-    );
-  }
-
-  private Long createPlaylist(DeezerApi api, MusicPlaylist playlist) {
-    try {
-      InsertResponse createResponse = api.createPlaylist("Imported - " + playlist.getHeadline());
-      if (createResponse.getError() != null) {
-        throw new IOException("problem creating playlist: " + playlist + " error: "
-            + createResponse.getError());
-      }
-      if (createResponse.getError() != null) {
-        throw new IOException("Problem creating playlist: "
-            + playlist + ": " + createResponse.getError());
-      }
-
-      return createResponse.getId();
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
+        return ImportResult.OK;
     }
-  }
 
-  private Long lookupTrack(DeezerApi api, MusicRecording track) throws IOException {
-    checkArgument(!Strings.isNullOrEmpty(track.getIsrcCode()), "IRCS code is required");
-    Track foundTrack = api.lookupTrackByIsrc(track.getIsrcCode());
-    if (foundTrack == null) {
-      throw new IllegalArgumentException("Couldn't find matching Deezer track for: " + track);
+    private void createPlaylist(IdempotentImportExecutor idempotentExecutor, DeezerApi api, MusicPlaylist playlist) throws Exception {
+        Long newPlaylistId = idempotentExecutor.executeAndSwallowIOExceptions(playlist.getIdentifier(), playlist.getHeadline(), () -> createPlaylist(api, playlist));
+        if (null == newPlaylistId) {
+            monitor.severe(() -> format("Couldn't create playlist: %s", playlist));
+            // Playlist couldn't be created error will be reported to user.
+            return;
+        }
+        List<Long> ids = new ArrayList<>();
+        for (MusicRecording track : playlist.getTrack()) {
+            Long newSongId = idempotentExecutor.executeAndSwallowIOExceptions(newPlaylistId + "-" + track.hashCode(), "Track: " + track + " in " + playlist.getHeadline(), () -> lookupTrack(api, track));
+            ids.add(newSongId);
+        }
+        idempotentExecutor.executeAndSwallowIOExceptions(newPlaylistId + "-tracks", "Playlist: " + playlist.getHeadline(), () -> {
+            Error insertResponse = api.insertTracksInPlaylist(newPlaylistId, ids);
+            if (insertResponse != null) {
+                throw new IOException("problem inserting tracks into playlist: " + playlist + " error: " + insertResponse);
+            }
+            return null;
+        });
     }
-    return foundTrack.getId();
-  }
+
+    private Long createPlaylist(DeezerApi api, MusicPlaylist playlist) {
+        try {
+            InsertResponse createResponse = api.createPlaylist("Imported - " + playlist.getHeadline());
+            if (createResponse.getError() != null) {
+                throw new IOException("problem creating playlist: " + playlist + " error: " + createResponse.getError());
+            }
+            if (createResponse.getError() != null) {
+                throw new IOException("Problem creating playlist: " + playlist + ": " + createResponse.getError());
+            }
+            return createResponse.getId();
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private Long lookupTrack(DeezerApi api, MusicRecording track) throws IOException {
+        checkArgument(!Strings.isNullOrEmpty(track.getIsrcCode()), "IRCS code is required");
+        Track foundTrack = api.lookupTrackByIsrc(track.getIsrcCode());
+        if (foundTrack == null) {
+            throw new IllegalArgumentException("Couldn't find matching Deezer track for: " + track);
+        }
+        return foundTrack.getId();
+    }
 }

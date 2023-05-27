@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.google.mail;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -24,7 +23,6 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.Gmail.Users;
 import com.google.api.services.gmail.Gmail.Users.Labels;
@@ -55,74 +53,80 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class GoogleMailImporterTest {
 
-  private static final UUID JOB_ID = UUID.randomUUID();
+    private static final UUID JOB_ID = UUID.randomUUID();
 
-  private static final String MESSAGE_RAW = "message content";
-  private static final String LABEL1 = "label1";
-  private static final String LABEL2 = "label2";
-  private static final List<String> MESSAGE_LABELS = ImmutableList.of(LABEL1, LABEL2);
-  private static final MailMessageModel MESSAGE_MODEL =
-      new MailMessageModel(MESSAGE_RAW, MESSAGE_LABELS);
+    private static final String MESSAGE_RAW = "message content";
 
-  @Mock
-  private Gmail gmail;
-  @Mock
-  private Users users;
-  @Mock
-  private Messages messages;
-  @Mock
-  private Insert insert;
-  @Mock
-  private Labels labels;
-  @Mock
-  private Labels.List labelsList;
-  @Mock
-  private Labels.Create labelsCreate;
-  @Mock
-  private GoogleCredentialFactory googleCredentialFactory;
+    private static final String LABEL1 = "label1";
 
-  private ListLabelsResponse labelsListResponse;
-  private GoogleMailImporter googleMailImporter;
-  private IdempotentImportExecutor executor;
+    private static final String LABEL2 = "label2";
 
-  @BeforeEach
-  public void setUp() throws IOException {
-    Label label = new Label();
-    label.setId(LABEL1);
-    label.setName(LABEL1);
-    labelsListResponse = new ListLabelsResponse().setLabels(Collections.singletonList(label));
+    private static final List<String> MESSAGE_LABELS = ImmutableList.of(LABEL1, LABEL2);
 
-    Monitor monitor = new Monitor() {
-    };
-    googleMailImporter = new GoogleMailImporter(googleCredentialFactory, gmail, monitor);
-    executor = new FakeIdempotentImportExecutor();
+    private static final MailMessageModel MESSAGE_MODEL = new MailMessageModel(MESSAGE_RAW, MESSAGE_LABELS);
 
-    when(gmail.users()).thenReturn(users);
-    when(users.messages()).thenReturn(messages);
-    when(messages.insert(anyString(), any(Message.class))).thenReturn(insert);
-    when(insert.execute()).thenReturn(new Message().setId("fooBar"));
-    when(users.labels()).thenReturn(labels);
-    when(labels.list(anyString())).thenReturn(labelsList);
-    when(labelsList.execute()).thenReturn(labelsListResponse);
-    when(labels.create(anyString(), any(Label.class))).thenReturn(labelsCreate);
-    when(labelsCreate.execute()).thenReturn(label);
+    @Mock
+    private Gmail gmail;
 
-    verifyNoInteractions(googleCredentialFactory);
-  }
+    @Mock
+    private Users users;
 
-  @Test
-  public void importMessage() throws Exception {
-    MailContainerResource resource =
-        new MailContainerResource(null, Collections.singletonList(MESSAGE_MODEL));
+    @Mock
+    private Messages messages;
 
-    ImportResult result = googleMailImporter.importItem(JOB_ID, executor, null, resource);
+    @Mock
+    private Insert insert;
 
-    // Getting list of labels from Google
-    verify(labelsList, atLeastOnce()).execute();
-    // Importing message
-    ArgumentCaptor<Message> messageArgumentCaptor = ArgumentCaptor.forClass(Message.class);
-    verify(messages).insert(eq(GoogleMailImporter.USER), messageArgumentCaptor.capture());
-    assertThat(messageArgumentCaptor.getValue().getRaw()).isEqualTo(MESSAGE_RAW);
-    // TODO(olsona): test labels
-  }
+    @Mock
+    private Labels labels;
+
+    @Mock
+    private Labels.List labelsList;
+
+    @Mock
+    private Labels.Create labelsCreate;
+
+    @Mock
+    private GoogleCredentialFactory googleCredentialFactory;
+
+    private ListLabelsResponse labelsListResponse;
+
+    private GoogleMailImporter googleMailImporter;
+
+    private IdempotentImportExecutor executor;
+
+    @BeforeEach
+    public void setUp() throws IOException {
+        Label label = new Label();
+        label.setId(LABEL1);
+        label.setName(LABEL1);
+        labelsListResponse = new ListLabelsResponse().setLabels(Collections.singletonList(label));
+        Monitor monitor = new Monitor() {
+        };
+        googleMailImporter = new GoogleMailImporter(googleCredentialFactory, gmail, monitor);
+        executor = new FakeIdempotentImportExecutor();
+        when(gmail.users()).thenReturn(users);
+        when(users.messages()).thenReturn(messages);
+        when(messages.insert(anyString(), any(Message.class))).thenReturn(insert);
+        when(insert.execute()).thenReturn(new Message().setId("fooBar"));
+        when(users.labels()).thenReturn(labels);
+        when(labels.list(anyString())).thenReturn(labelsList);
+        when(labelsList.execute()).thenReturn(labelsListResponse);
+        when(labels.create(anyString(), any(Label.class))).thenReturn(labelsCreate);
+        when(labelsCreate.execute()).thenReturn(label);
+        verifyNoInteractions(googleCredentialFactory);
+    }
+
+    @Test
+    public void importMessage() throws Exception {
+        MailContainerResource resource = new MailContainerResource(null, Collections.singletonList(MESSAGE_MODEL));
+        ImportResult result = googleMailImporter.importItem(JOB_ID, executor, null, resource);
+        // Getting list of labels from Google
+        verify(labelsList, atLeastOnce()).execute();
+        // Importing message
+        ArgumentCaptor<Message> messageArgumentCaptor = ArgumentCaptor.forClass(Message.class);
+        verify(messages).insert(eq(GoogleMailImporter.USER), messageArgumentCaptor.capture());
+        assertThat(messageArgumentCaptor.getValue().getRaw()).isEqualTo(MESSAGE_RAW);
+        // TODO(olsona): test labels
+    }
 }

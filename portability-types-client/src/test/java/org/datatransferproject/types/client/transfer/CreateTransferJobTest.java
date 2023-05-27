@@ -13,41 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.types.client.transfer;
 
 import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 /* Test for CreateTransferJob */
 public class CreateTransferJobTest {
 
-  @Test
-  public void verifySerializeDeserialize() throws Exception {
-    ObjectMapper objectMapper = new ObjectMapper();
-
-    String serialized =
-        objectMapper.writeValueAsString(
-            new CreateTransferJob(
-                "testSource",
-                "testDestination",
-                "https://localhost:3000/callback/testSource",
-                "https://localhost:3000/callback/testDestination",
-                PHOTOS,
-                null,
-                "cleartext"));
-
-    CreateTransferJob deserialized = objectMapper.readValue(serialized, CreateTransferJob.class);
-
-    assertEquals(deserialized.getExportService(),"testSource");
-    assertEquals(deserialized.getImportService(),"testDestination");
-    assertEquals(
-         deserialized.getExportCallbackUrl(),"https://localhost:3000/callback/testSource");
-    assertEquals(
-         deserialized.getImportCallbackUrl(),"https://localhost:3000/callback/testDestination");
-    assertEquals(PHOTOS, deserialized.getDataType());
-  }
+    @Test
+    public void verifySerializeDeserialize() throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        String serialized = objectMapper.writeValueAsString(new CreateTransferJob("testSource", "testDestination", "https://localhost:3000/callback/testSource", "https://localhost:3000/callback/testDestination", PHOTOS, null, "cleartext"));
+        CreateTransferJob deserialized = objectMapper.readValue(serialized, CreateTransferJob.class);
+        assertEquals(deserialized.getExportService(), "testSource");
+        assertEquals(deserialized.getImportService(), "testDestination");
+        assertEquals(deserialized.getExportCallbackUrl(), "https://localhost:3000/callback/testSource");
+        assertEquals(deserialized.getImportCallbackUrl(), "https://localhost:3000/callback/testDestination");
+        assertEquals(PHOTOS, deserialized.getDataType());
+    }
 }

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.transfer.daybook.photos;
 
 import com.google.common.base.Preconditions;
@@ -42,132 +41,100 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 /**
  * Imports albums and photos to Daybook
  */
-public class DaybookPhotosImporter
-    implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
+public class DaybookPhotosImporter implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
 
-  private final OkHttpClient client;
-  private final TemporaryPerJobDataStore jobStore;
-  private final Monitor monitor;
-  private final String baseUrl;
-  private final String exportService;
+    private final OkHttpClient client;
 
-  public DaybookPhotosImporter(
-      Monitor monitor,
-      OkHttpClient client,
-      TemporaryPerJobDataStore jobStore,
-      String baseUrl,
-      String exportService) {
-    this.client = client;
-    this.jobStore = jobStore;
-    this.monitor = monitor;
-    this.baseUrl = baseUrl;
-    this.exportService = exportService;
-  }
+    private final TemporaryPerJobDataStore jobStore;
 
-  @Override
-  public ImportResult importItem(
-      UUID jobId,
-      IdempotentImportExecutor executor,
-      TokensAndUrlAuthData authData,
-      PhotosContainerResource resource)
-      throws Exception {
-    if (resource == null) {
-      // Nothing to import
-      return ImportResult.OK;
+    private final Monitor monitor;
+
+    private final String baseUrl;
+
+    private final String exportService;
+
+    public DaybookPhotosImporter(Monitor monitor, OkHttpClient client, TemporaryPerJobDataStore jobStore, String baseUrl, String exportService) {
+        this.client = client;
+        this.jobStore = jobStore;
+        this.monitor = monitor;
+        this.baseUrl = baseUrl;
+        this.exportService = exportService;
     }
 
-    monitor.debug(() -> String.format("Number of Photos: %d", resource.getPhotos().size()));
-
-    // Import albums
-    for (PhotoAlbum album : resource.getAlbums()) {
-      executor.executeAndSwallowIOExceptions(
-          album.getId(), album.getName(), () -> importAlbum(album));
+    @Override
+    public ImportResult importItem(UUID jobId, IdempotentImportExecutor executor, TokensAndUrlAuthData authData, PhotosContainerResource resource) throws Exception {
+        if (resource == null) {
+            // Nothing to import
+            return ImportResult.OK;
+        }
+        monitor.debug(() -> String.format("Number of Photos: %d", resource.getPhotos().size()));
+        // Import albums
+        for (PhotoAlbum album : resource.getAlbums()) {
+            executor.executeAndSwallowIOExceptions(album.getId(), album.getName(), () -> importAlbum(album));
+        }
+        // Import photos
+        for (PhotoModel photo : resource.getPhotos()) {
+            executor.importAndSwallowIOExceptions(photo, photoModel -> {
+                String albumId;
+                if (Strings.isNullOrEmpty(photo.getAlbumId())) {
+                    albumId = null;
+                } else {
+                    albumId = executor.getCachedValue(photo.getAlbumId());
+                }
+                return importPhoto(photo, jobId, authData, albumId);
+            });
+        }
+        // API to trigger daybook API
+        return new ImportResult(ImportResult.ResultType.OK);
     }
 
-    // Import photos
-    for (PhotoModel photo : resource.getPhotos()) {
-      executor.importAndSwallowIOExceptions(
-          photo,
-          photoModel -> {
-            String albumId;
-            if (Strings.isNullOrEmpty(photo.getAlbumId())) {
-              albumId = null;
-            } else {
-              albumId = executor.getCachedValue(photo.getAlbumId());
+    private String importAlbum(PhotoAlbum album) {
+        String description = album.getDescription();
+        String album_name = album.getName();
+        monitor.debug(() -> String.format("Album Name: %s", album_name));
+        if (!Strings.isNullOrEmpty(description)) {
+            monitor.debug(() -> String.format("Album description: %s", description));
+        }
+        return album_name;
+    }
+
+    private ItemImportResult<Integer> importPhoto(PhotoModel photoModel, UUID jobId, TokensAndUrlAuthData authData, String newAlbumId) throws IOException {
+        InputStream inputStream;
+        String imageDescription = photoModel.getDescription();
+        String title = photoModel.getTitle();
+        if (photoModel.isInTempStore()) {
+            inputStream = jobStore.getStream(jobId, photoModel.getFetchableUrl()).getStream();
+        } else if (photoModel.getFetchableUrl() != null) {
+            inputStream = new URL(photoModel.getFetchableUrl()).openStream();
+        } else {
+            String errorMessage = "Can't get inputStream for a photo";
+            monitor.severe(() -> errorMessage);
+            return ItemImportResult.error(new IOException(errorMessage), null);
+        }
+        byte[] imageBytes = ByteStreams.toByteArray(inputStream);
+        String imageData = Base64.getEncoder().encodeToString(imageBytes);
+        Request.Builder requestBuilder = new Request.Builder().url(baseUrl);
+        requestBuilder.header("token", authData.getAccessToken());
+        FormBody.Builder builder = new FormBody.Builder().add("image", imageData).add("exporter", exportService);
+        if (!Strings.isNullOrEmpty(newAlbumId)) {
+            builder.add("album", newAlbumId);
+        }
+        if (!Strings.isNullOrEmpty(title)) {
+            builder.add("title", title);
+        }
+        if (!Strings.isNullOrEmpty(imageDescription)) {
+            builder.add("description", imageDescription);
+        }
+        FormBody formBody = builder.build();
+        requestBuilder.post(formBody);
+        try (Response response = client.newCall(requestBuilder.build()).execute()) {
+            int code = response.code();
+            // Though sometimes it returns error code for success requests
+            Preconditions.checkArgument(code >= 200 && code <= 299, String.format("Error occurred in request for %s, code: %s, message: %s", baseUrl, code, response.message()));
+            if (photoModel.isInTempStore()) {
+                jobStore.removeData(jobId, photoModel.getFetchableUrl());
             }
-            return importPhoto(photo, jobId, authData, albumId);
-          });
+            return ItemImportResult.success(response.code(), (long) imageBytes.length);
+        }
     }
-
-    // API to trigger daybook API
-
-    return new ImportResult(ImportResult.ResultType.OK);
-  }
-
-  private String importAlbum(PhotoAlbum album) {
-    String description = album.getDescription();
-    String album_name = album.getName();
-    monitor.debug(() -> String.format("Album Name: %s", album_name));
-    if (!Strings.isNullOrEmpty(description)) {
-      monitor.debug(() -> String.format("Album description: %s", description));
-    }
-
-    return album_name;
-  }
-
-  private ItemImportResult<Integer> importPhoto(
-      PhotoModel photoModel, UUID jobId, TokensAndUrlAuthData authData, String newAlbumId)
-      throws IOException {
-    InputStream inputStream;
-    String imageDescription = photoModel.getDescription();
-    String title = photoModel.getTitle();
-
-    if (photoModel.isInTempStore()) {
-      inputStream = jobStore.getStream(jobId, photoModel.getFetchableUrl()).getStream();
-    } else if (photoModel.getFetchableUrl() != null) {
-      inputStream = new URL(photoModel.getFetchableUrl()).openStream();
-    } else {
-      String errorMessage = "Can't get inputStream for a photo";
-      monitor.severe(() -> errorMessage);
-      return ItemImportResult.error(new IOException(errorMessage), null);
-    }
-
-    byte[] imageBytes = ByteStreams.toByteArray(inputStream);
-    String imageData = Base64.getEncoder().encodeToString(imageBytes);
-
-    Request.Builder requestBuilder = new Request.Builder().url(baseUrl);
-    requestBuilder.header("token", authData.getAccessToken());
-
-    FormBody.Builder builder =
-        new FormBody.Builder().add("image", imageData).add("exporter", exportService);
-
-    if (!Strings.isNullOrEmpty(newAlbumId)) {
-      builder.add("album", newAlbumId);
-    }
-
-    if (!Strings.isNullOrEmpty(title)) {
-      builder.add("title", title);
-    }
-
-    if (!Strings.isNullOrEmpty(imageDescription)) {
-      builder.add("description", imageDescription);
-    }
-    FormBody formBody = builder.build();
-    requestBuilder.post(formBody);
-
-    try (Response response = client.newCall(requestBuilder.build()).execute()) {
-      int code = response.code();
-      // Though sometimes it returns error code for success requests
-      Preconditions.checkArgument(
-          code >= 200 && code <= 299,
-          String.format(
-              "Error occurred in request for %s, code: %s, message: %s",
-              baseUrl, code, response.message()));
-
-      if (photoModel.isInTempStore()) {
-        jobStore.removeData(jobId, photoModel.getFetchableUrl());
-      }
-      return ItemImportResult.success(response.code(), (long) imageBytes.length);
-    }
-  }
 }

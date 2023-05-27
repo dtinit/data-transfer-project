@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.types.common.models.blob;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,24 +23,18 @@ import org.junit.jupiter.api.Test;
 
 class BlobbyStorageContainerResourceTest {
 
-  @Test
-  public void verifySerializeDeserialize() throws Exception {
-    ObjectMapper objectMapper = new ObjectMapper();
-    objectMapper.registerSubtypes(BlobbyStorageContainerResource.class);
-
-    DigitalDocumentWrapper documentWrapper = new DigitalDocumentWrapper(
-        new DtpDigitalDocument("doc-name", "2020-02-02", "UTF-8"), "UTF-8", "123456");
-    BlobbyStorageContainerResource containerResource = new BlobbyStorageContainerResource("name",
-        "id", ImmutableList.of(documentWrapper), ImmutableList.of());
-    String serialized = objectMapper.writeValueAsString(containerResource);
-
-    ContainerResource deserializedModel = objectMapper.readValue(serialized,
-        ContainerResource.class);
-
-    Truth.assertThat(deserializedModel).isNotNull();
-    Truth.assertThat(deserializedModel).isInstanceOf(BlobbyStorageContainerResource.class);
-    BlobbyStorageContainerResource deserialized = (BlobbyStorageContainerResource) deserializedModel;
-    Truth.assertThat(deserialized.getFiles()).hasSize(1);
-    Truth.assertThat(deserialized.getFolders()).isEmpty();
-  }
+    @Test
+    public void verifySerializeDeserialize() throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerSubtypes(BlobbyStorageContainerResource.class);
+        DigitalDocumentWrapper documentWrapper = new DigitalDocumentWrapper(new DtpDigitalDocument("doc-name", "2020-02-02", "UTF-8"), "UTF-8", "123456");
+        BlobbyStorageContainerResource containerResource = new BlobbyStorageContainerResource("name", "id", ImmutableList.of(documentWrapper), ImmutableList.of());
+        String serialized = objectMapper.writeValueAsString(containerResource);
+        ContainerResource deserializedModel = objectMapper.readValue(serialized, ContainerResource.class);
+        Truth.assertThat(deserializedModel).isNotNull();
+        Truth.assertThat(deserializedModel).isInstanceOf(BlobbyStorageContainerResource.class);
+        BlobbyStorageContainerResource deserialized = (BlobbyStorageContainerResource) deserializedModel;
+        Truth.assertThat(deserialized.getFiles()).hasSize(1);
+        Truth.assertThat(deserialized.getFolders()).isEmpty();
+    }
 }

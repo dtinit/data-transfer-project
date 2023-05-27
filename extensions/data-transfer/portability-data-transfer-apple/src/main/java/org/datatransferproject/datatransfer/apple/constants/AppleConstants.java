@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.apple.constants;
 
 /**
@@ -21,9 +20,12 @@ package org.datatransferproject.datatransfer.apple.constants;
  */
 public class AppleConstants {
 
-  private AppleConstants() {}
+    private AppleConstants() {
+    }
 
-  public static final String DTP_SERVICE_ID = "Apple";
-  public static final String APPLE_KEY = "APPLE_KEY";
-  public static final String APPLE_SECRET = "APPLE_SECRET";
+    public static final String DTP_SERVICE_ID = "Apple";
+
+    public static final String APPLE_KEY = "APPLE_KEY";
+
+    public static final String APPLE_SECRET = "APPLE_SECRET";
 }

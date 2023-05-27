@@ -1,3 +1,4 @@
 package org.datatransferproject.types.common;
 
-public interface DownloadableFile extends DownloadableItem, FolderItem { }
+public interface DownloadableFile extends DownloadableItem, FolderItem {
+}

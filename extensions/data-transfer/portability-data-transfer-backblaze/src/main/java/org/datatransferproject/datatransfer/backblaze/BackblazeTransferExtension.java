@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.backblaze;
 
 import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
 import static org.datatransferproject.types.common.models.DataVertical.VIDEOS;
-
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -36,58 +34,48 @@ import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 
 public class BackblazeTransferExtension implements TransferExtension {
-  public static final String SERVICE_ID = "Backblaze";
-  private static final List<DataVertical> SUPPORTED_TYPES = ImmutableList.of(PHOTOS, VIDEOS);
 
-  private ImmutableMap<DataVertical, Importer> importerMap;
-  private boolean initialized = false;
+    public static final String SERVICE_ID = "Backblaze";
 
-  @Override
-  public String getServiceId() {
-    return SERVICE_ID;
-  }
+    private static final List<DataVertical> SUPPORTED_TYPES = ImmutableList.of(PHOTOS, VIDEOS);
 
-  @Override
-  public Exporter<?, ?> getExporter(DataVertical transferDataType) {
-    //TODO: Implement exporters as per https://github.com/google/data-transfer-project/issues/960
-    throw new IllegalArgumentException();
-  }
+    private ImmutableMap<DataVertical, Importer> importerMap;
 
-  @Override
-  public Importer<?, ?> getImporter(DataVertical transferDataType) {
-    Preconditions.checkArgument(
-        initialized, "Trying to call getImporter before initalizing BackblazeTransferExtension");
-    Preconditions.checkArgument(
-        SUPPORTED_TYPES.contains(transferDataType),
-        "Import of " + transferDataType + " not supported by Backblaze");
-    return importerMap.get(transferDataType);
-  }
+    private boolean initialized = false;
 
-  @Override
-  public void initialize(ExtensionContext context) {
-    Monitor monitor = context.getMonitor();
-    monitor.debug(() -> "Starting Backblaze initialization");
-    if (initialized) {
-      monitor.severe(() -> "BackblazeTransferExtension already initialized.");
-      return;
+    @Override
+    public String getServiceId() {
+        return SERVICE_ID;
     }
 
-    TemporaryPerJobDataStore jobStore = context.getService(TemporaryPerJobDataStore.class);
+    @Override
+    public Exporter<?, ?> getExporter(DataVertical transferDataType) {
+        //TODO: Implement exporters as per https://github.com/google/data-transfer-project/issues/960
+        throw new IllegalArgumentException();
+    }
 
-    ImmutableMap.Builder<DataVertical, Importer> importerBuilder = ImmutableMap.builder();
-    BackblazeDataTransferClientFactory backblazeDataTransferClientFactory =
-            new BackblazeDataTransferClientFactory(monitor);
-    ConnectionProvider isProvider = new ConnectionProvider(jobStore);
+    @Override
+    public Importer<?, ?> getImporter(DataVertical transferDataType) {
+        Preconditions.checkArgument(initialized, "Trying to call getImporter before initalizing BackblazeTransferExtension");
+        Preconditions.checkArgument(SUPPORTED_TYPES.contains(transferDataType), "Import of " + transferDataType + " not supported by Backblaze");
+        return importerMap.get(transferDataType);
+    }
 
-    importerBuilder.put(
-            PHOTOS,
-            new BackblazePhotosImporter(
-                    monitor, jobStore, isProvider, backblazeDataTransferClientFactory));
-    importerBuilder.put(
-            VIDEOS,
-            new BackblazeVideosImporter(
-                    monitor, jobStore, isProvider, backblazeDataTransferClientFactory));
-    importerMap = importerBuilder.build();
-    initialized = true;
-  }
+    @Override
+    public void initialize(ExtensionContext context) {
+        Monitor monitor = context.getMonitor();
+        monitor.debug(() -> "Starting Backblaze initialization");
+        if (initialized) {
+            monitor.severe(() -> "BackblazeTransferExtension already initialized.");
+            return;
+        }
+        TemporaryPerJobDataStore jobStore = context.getService(TemporaryPerJobDataStore.class);
+        ImmutableMap.Builder<DataVertical, Importer> importerBuilder = ImmutableMap.builder();
+        BackblazeDataTransferClientFactory backblazeDataTransferClientFactory = new BackblazeDataTransferClientFactory(monitor);
+        ConnectionProvider isProvider = new ConnectionProvider(jobStore);
+        importerBuilder.put(PHOTOS, new BackblazePhotosImporter(monitor, jobStore, isProvider, backblazeDataTransferClientFactory));
+        importerBuilder.put(VIDEOS, new BackblazeVideosImporter(monitor, jobStore, isProvider, backblazeDataTransferClientFactory));
+        importerMap = importerBuilder.build();
+        initialized = true;
+    }
 }

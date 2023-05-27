@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.transfer;
 
 import com.google.common.base.Stopwatch;
@@ -36,56 +35,45 @@ import org.mockito.Mockito;
 
 public class JobProcessorTest {
 
-  private UUID jobId;
-  private ExportInformation exportInfo;
-  private AuthData exportAuthData;
-  private AuthData importAuthData;
-  private InMemoryDataCopier copier;
+    private UUID jobId;
 
-  private static class TestJobProcessor extends JobProcessor {
+    private ExportInformation exportInfo;
 
-    public TestJobProcessor(InMemoryDataCopier copier) {
-      super(
-          Mockito.mock(JobStore.class),
-          Mockito.mock(JobHooks.class),
-          null,
-          copier,
-          null,
-          Mockito.mock(Monitor.class),
-          Mockito.mock(DtpInternalMetricRecorder.class)
-      );
+    private AuthData exportAuthData;
+
+    private AuthData importAuthData;
+
+    private InMemoryDataCopier copier;
+
+    private static class TestJobProcessor extends JobProcessor {
+
+        public TestJobProcessor(InMemoryDataCopier copier) {
+            super(Mockito.mock(JobStore.class), Mockito.mock(JobHooks.class), null, copier, null, Mockito.mock(Monitor.class), Mockito.mock(DtpInternalMetricRecorder.class));
+        }
     }
-  }
 
-  private TestJobProcessor processor;
+    private TestJobProcessor processor;
 
-  @Before
-  public void setUp() {
-    importAuthData = exportAuthData = Mockito.mock(AuthData.class);
-    jobId = UUID.randomUUID();
-    exportInfo = Mockito.mock(ExportInformation.class);
-    copier = Mockito.mock(InMemoryDataCopier.class);
-    processor = Mockito.spy(new TestJobProcessor(copier));
-    JobMetadata.reset();
-    JobMetadata.init(
-        jobId,
-        "".getBytes(),
-        DataVertical.BLOBS,
-        "",
-        "",
-        Stopwatch.createStarted());
-  }
+    @Before
+    public void setUp() {
+        importAuthData = exportAuthData = Mockito.mock(AuthData.class);
+        jobId = UUID.randomUUID();
+        exportInfo = Mockito.mock(ExportInformation.class);
+        copier = Mockito.mock(InMemoryDataCopier.class);
+        processor = Mockito.spy(new TestJobProcessor(copier));
+        JobMetadata.reset();
+        JobMetadata.init(jobId, "".getBytes(), DataVertical.BLOBS, "", "", Stopwatch.createStarted());
+    }
 
-  @After
-  public void cleanUp() {
-    JobMetadata.reset();
-  }
+    @After
+    public void cleanUp() {
+        JobMetadata.reset();
+    }
 
-  @Test
-  public void processJobGetsErrorsEvenWhenCopyThrows() throws CopyException, IOException {
-    Mockito.doThrow(new CopyException("error", new Exception())).when(copier)
-        .copy(importAuthData, exportAuthData, jobId, Optional.of(exportInfo));
-    processor.processJob();
-    Mockito.verify(copier).getErrors(jobId);
-  }
+    @Test
+    public void processJobGetsErrorsEvenWhenCopyThrows() throws CopyException, IOException {
+        Mockito.doThrow(new CopyException("error", new Exception())).when(copier).copy(importAuthData, exportAuthData, jobId, Optional.of(exportInfo));
+        processor.processJob();
+        Mockito.verify(copier).getErrors(jobId);
+    }
 }

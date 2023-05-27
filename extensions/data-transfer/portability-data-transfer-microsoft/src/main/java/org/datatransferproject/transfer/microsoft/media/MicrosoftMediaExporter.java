@@ -48,176 +48,146 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
  *
  * <p>Converts folders to media albums.
  */
-public class MicrosoftMediaExporter
-    implements Exporter<TokensAndUrlAuthData, MediaContainerResource> {
-  static final String DRIVE_TOKEN_PREFIX = "drive:";
+public class MicrosoftMediaExporter implements Exporter<TokensAndUrlAuthData, MediaContainerResource> {
 
-  private final MicrosoftCredentialFactory credentialFactory;
-  private final JsonFactory jsonFactory;
-  private final Monitor monitor;
-  private volatile MicrosoftMediaInterface photosInterface;
+    static final String DRIVE_TOKEN_PREFIX = "drive:";
 
-  public MicrosoftMediaExporter(
-      MicrosoftCredentialFactory credentialFactory, JsonFactory jsonFactory, Monitor monitor) {
-    this.credentialFactory = credentialFactory;
-    this.jsonFactory = jsonFactory;
-    this.monitor = monitor;
-  }
+    private final MicrosoftCredentialFactory credentialFactory;
 
-  @VisibleForTesting
-  public MicrosoftMediaExporter(MicrosoftCredentialFactory credentialFactory,
-      JsonFactory jsonFactory, MicrosoftMediaInterface photosInterface, Monitor monitor) {
-    this.credentialFactory = credentialFactory;
-    this.jsonFactory = jsonFactory;
-    this.photosInterface = photosInterface;
-    this.monitor = monitor;
-  }
+    private final JsonFactory jsonFactory;
 
-  @Override
-  public ExportResult<MediaContainerResource> export(UUID jobId, TokensAndUrlAuthData authData,
-      Optional<ExportInformation> exportInformation) throws IOException {
-    if (!exportInformation.isPresent()) {
-      return exportOneDrivePhotos(authData, Optional.empty(), Optional.empty(), jobId);
+    private final Monitor monitor;
+
+    private volatile MicrosoftMediaInterface photosInterface;
+
+    public MicrosoftMediaExporter(MicrosoftCredentialFactory credentialFactory, JsonFactory jsonFactory, Monitor monitor) {
+        this.credentialFactory = credentialFactory;
+        this.jsonFactory = jsonFactory;
+        this.monitor = monitor;
     }
 
-    IdOnlyContainerResource idOnlyContainerResource =
-        (IdOnlyContainerResource) exportInformation.get().getContainerResource();
-    StringPaginationToken paginationToken =
-        (StringPaginationToken) exportInformation.get().getPaginationData();
-
-    return exportOneDrivePhotos(authData, Optional.ofNullable(idOnlyContainerResource),
-        Optional.ofNullable(paginationToken), jobId);
-  }
-
-  // TODO make this private and tests the real export().
-  @VisibleForTesting
-  ExportResult<MediaContainerResource> exportOneDrivePhotos(TokensAndUrlAuthData authData,
-      Optional<IdOnlyContainerResource> albumData, Optional<PaginationData> paginationData,
-      UUID jobId) throws IOException {
-    Optional<String> albumId = Optional.empty();
-    if (albumData.isPresent()) {
-      albumId = Optional.of(albumData.get().getId());
-    }
-    Optional<String> paginationUrl = getDrivePaginationToken(paginationData);
-
-    MicrosoftDriveItemsResponse driveItemsResponse;
-    if (paginationData.isPresent() || albumData.isPresent()) {
-      driveItemsResponse =
-          getOrCreateMediaInterface(authData).getDriveItems(albumId, paginationUrl);
-    } else {
-      driveItemsResponse = getOrCreateMediaInterface(authData).getDriveItemsFromSpecialFolder(
-          MicrosoftSpecialFolder.FolderType.photos);
+    @VisibleForTesting
+    public MicrosoftMediaExporter(MicrosoftCredentialFactory credentialFactory, JsonFactory jsonFactory, MicrosoftMediaInterface photosInterface, Monitor monitor) {
+        this.credentialFactory = credentialFactory;
+        this.jsonFactory = jsonFactory;
+        this.photosInterface = photosInterface;
+        this.monitor = monitor;
     }
 
-    PaginationData nextPageData = setNextPageToken(driveItemsResponse);
-    ContinuationData continuationData = new ContinuationData(nextPageData);
-    MediaContainerResource containerResource;
-    MicrosoftDriveItem[] driveItems = driveItemsResponse.getDriveItems();
-    List<MediaAlbum> albums = new ArrayList<>();
-    List<PhotoModel> photos = new ArrayList<>();
-    List<VideoModel> videos = new ArrayList<>();
-
-    if (driveItems != null && driveItems.length > 0) {
-      for (MicrosoftDriveItem driveItem : driveItems) {
-        MediaAlbum album = tryConvertDriveItemToMediaAlbum(driveItem, jobId);
-        if (album != null) {
-          albums.add(album);
-          continuationData.addContainerResource(new IdOnlyContainerResource(driveItem.id));
-          continue;
+    @Override
+    public ExportResult<MediaContainerResource> export(UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) throws IOException {
+        if (!exportInformation.isPresent()) {
+            return exportOneDrivePhotos(authData, Optional.empty(), Optional.empty(), jobId);
         }
+        IdOnlyContainerResource idOnlyContainerResource = (IdOnlyContainerResource) exportInformation.get().getContainerResource();
+        StringPaginationToken paginationToken = (StringPaginationToken) exportInformation.get().getPaginationData();
+        return exportOneDrivePhotos(authData, Optional.ofNullable(idOnlyContainerResource), Optional.ofNullable(paginationToken), jobId);
+    }
 
-        PhotoModel photo = tryConvertDriveItemToPhotoModel(albumId, driveItem, jobId);
-        if (photo != null) {
-          photos.add(photo);
-          continue;
+    // TODO make this private and tests the real export().
+    @VisibleForTesting
+    ExportResult<MediaContainerResource> exportOneDrivePhotos(TokensAndUrlAuthData authData, Optional<IdOnlyContainerResource> albumData, Optional<PaginationData> paginationData, UUID jobId) throws IOException {
+        Optional<String> albumId = Optional.empty();
+        if (albumData.isPresent()) {
+            albumId = Optional.of(albumData.get().getId());
         }
-
-        VideoModel video = tryConvertDriveItemToVideoModel(albumId, driveItem, jobId);
-        if (video != null) {
-          videos.add(video);
-          continue;
+        Optional<String> paginationUrl = getDrivePaginationToken(paginationData);
+        MicrosoftDriveItemsResponse driveItemsResponse;
+        if (paginationData.isPresent() || albumData.isPresent()) {
+            driveItemsResponse = getOrCreateMediaInterface(authData).getDriveItems(albumId, paginationUrl);
+        } else {
+            driveItemsResponse = getOrCreateMediaInterface(authData).getDriveItemsFromSpecialFolder(MicrosoftSpecialFolder.FolderType.photos);
         }
-      }
+        PaginationData nextPageData = setNextPageToken(driveItemsResponse);
+        ContinuationData continuationData = new ContinuationData(nextPageData);
+        MediaContainerResource containerResource;
+        MicrosoftDriveItem[] driveItems = driveItemsResponse.getDriveItems();
+        List<MediaAlbum> albums = new ArrayList<>();
+        List<PhotoModel> photos = new ArrayList<>();
+        List<VideoModel> videos = new ArrayList<>();
+        if (driveItems != null && driveItems.length > 0) {
+            for (MicrosoftDriveItem driveItem : driveItems) {
+                MediaAlbum album = tryConvertDriveItemToMediaAlbum(driveItem, jobId);
+                if (album != null) {
+                    albums.add(album);
+                    continuationData.addContainerResource(new IdOnlyContainerResource(driveItem.id));
+                    continue;
+                }
+                PhotoModel photo = tryConvertDriveItemToPhotoModel(albumId, driveItem, jobId);
+                if (photo != null) {
+                    photos.add(photo);
+                    continue;
+                }
+                VideoModel video = tryConvertDriveItemToVideoModel(albumId, driveItem, jobId);
+                if (video != null) {
+                    videos.add(video);
+                    continue;
+                }
+            }
+        }
+        ExportResult.ResultType result = nextPageData == null ? ExportResult.ResultType.END : ExportResult.ResultType.CONTINUE;
+        containerResource = new MediaContainerResource(albums, photos, videos);
+        return new ExportResult<>(result, containerResource, continuationData);
     }
 
-    ExportResult.ResultType result =
-        nextPageData == null ? ExportResult.ResultType.END : ExportResult.ResultType.CONTINUE;
-    containerResource = new MediaContainerResource(albums, photos, videos);
-    return new ExportResult<>(result, containerResource, continuationData);
-  }
-
-  private MediaAlbum tryConvertDriveItemToMediaAlbum(MicrosoftDriveItem driveItem, UUID jobId) {
-    if (!driveItem.isFolder()) {
-      return null;
+    private MediaAlbum tryConvertDriveItemToMediaAlbum(MicrosoftDriveItem driveItem, UUID jobId) {
+        if (!driveItem.isFolder()) {
+            return null;
+        }
+        MediaAlbum mediaAlbum = new MediaAlbum(driveItem.id, driveItem.name, driveItem.description);
+        monitor.debug(() -> String.format("%s: Microsoft OneDrive exporting album: %s", jobId, mediaAlbum));
+        return mediaAlbum;
     }
 
-    MediaAlbum mediaAlbum = new MediaAlbum(driveItem.id, driveItem.name, driveItem.description);
-    monitor.debug(
-        () -> String.format("%s: Microsoft OneDrive exporting album: %s", jobId, mediaAlbum));
-    return mediaAlbum;
-  }
-
-  private PhotoModel tryConvertDriveItemToPhotoModel(
-      Optional<String> albumId, MicrosoftDriveItem driveItem, UUID jobId) {
-    if (!driveItem.isImage()) {
-      return null;
+    private PhotoModel tryConvertDriveItemToPhotoModel(Optional<String> albumId, MicrosoftDriveItem driveItem, UUID jobId) {
+        if (!driveItem.isImage()) {
+            return null;
+        }
+        PhotoModel photo = new PhotoModel(driveItem.name, driveItem.downloadUrl, driveItem.description, driveItem.file.mimeType, driveItem.id, albumId.orElse(null), false);
+        monitor.debug(() -> String.format("%s: Microsoft OneDrive exporting photo: %s", jobId, photo));
+        return photo;
     }
 
-    PhotoModel photo =
-        new PhotoModel(driveItem.name, driveItem.downloadUrl, driveItem.description,
-            driveItem.file.mimeType, driveItem.id, albumId.orElse(null), false /*inTempStore*/);
-    monitor.debug(
-        () -> String.format("%s: Microsoft OneDrive exporting photo: %s", jobId, photo));
-    return photo;
-  }
-
-  private VideoModel tryConvertDriveItemToVideoModel(
-      Optional<String> albumId, MicrosoftDriveItem driveItem, UUID jobId) {
-    if (!driveItem.isVideo()) {
-      return null;
+    private VideoModel tryConvertDriveItemToVideoModel(Optional<String> albumId, MicrosoftDriveItem driveItem, UUID jobId) {
+        if (!driveItem.isVideo()) {
+            return null;
+        }
+        VideoModel video = new VideoModel(driveItem.name, driveItem.downloadUrl, driveItem.description, driveItem.file.mimeType, driveItem.id, albumId.orElse(null), false, /*inTempStore*/
+        null);
+        monitor.debug(() -> String.format("%s: Microsoft OneDrive exporting video: %s", jobId, video));
+        return video;
     }
 
-    VideoModel video =
-        new VideoModel(driveItem.name, driveItem.downloadUrl, driveItem.description,
-            driveItem.file.mimeType, driveItem.id, albumId.orElse(null), false /*inTempStore*/, null);
-    monitor.debug(
-        () -> String.format("%s: Microsoft OneDrive exporting video: %s", jobId, video));
-    return video;
-  }
-
-  private PaginationData setNextPageToken(MicrosoftDriveItemsResponse driveItemsResponse) {
-    String url = driveItemsResponse.getNextPageLink();
-    if (Strings.isNullOrEmpty(url)) {
-      return null;
+    private PaginationData setNextPageToken(MicrosoftDriveItemsResponse driveItemsResponse) {
+        String url = driveItemsResponse.getNextPageLink();
+        if (Strings.isNullOrEmpty(url)) {
+            return null;
+        }
+        return new StringPaginationToken(DRIVE_TOKEN_PREFIX + url);
     }
-    return new StringPaginationToken(DRIVE_TOKEN_PREFIX + url);
-  }
 
-  private Optional<String> getDrivePaginationToken(Optional<PaginationData> paginationData) {
-    return getPaginationToken(paginationData, DRIVE_TOKEN_PREFIX);
-  }
-
-  private Optional<String> getPaginationToken(
-      Optional<PaginationData> paginationData, String tokenPrefix) {
-    Optional<String> paginationToken = Optional.empty();
-    if (paginationData.isPresent()) {
-      String token = ((StringPaginationToken) paginationData.get()).getToken();
-      Preconditions.checkArgument(
-          token.startsWith(tokenPrefix), "Invalid pagination token " + token);
-      if (token.length() > tokenPrefix.length()) {
-        paginationToken = Optional.of(token.substring(tokenPrefix.length()));
-      }
+    private Optional<String> getDrivePaginationToken(Optional<PaginationData> paginationData) {
+        return getPaginationToken(paginationData, DRIVE_TOKEN_PREFIX);
     }
-    return paginationToken;
-  }
 
-  private synchronized MicrosoftMediaInterface getOrCreateMediaInterface(
-      TokensAndUrlAuthData authData) {
-    return photosInterface == null ? makeMediaInterface(authData) : photosInterface;
-  }
+    private Optional<String> getPaginationToken(Optional<PaginationData> paginationData, String tokenPrefix) {
+        Optional<String> paginationToken = Optional.empty();
+        if (paginationData.isPresent()) {
+            String token = ((StringPaginationToken) paginationData.get()).getToken();
+            Preconditions.checkArgument(token.startsWith(tokenPrefix), "Invalid pagination token " + token);
+            if (token.length() > tokenPrefix.length()) {
+                paginationToken = Optional.of(token.substring(tokenPrefix.length()));
+            }
+        }
+        return paginationToken;
+    }
 
-  private synchronized MicrosoftMediaInterface makeMediaInterface(TokensAndUrlAuthData authData) {
-    Credential credential = credentialFactory.createCredential(authData);
-    return new MicrosoftMediaInterface(credential, jsonFactory);
-  }
+    private synchronized MicrosoftMediaInterface getOrCreateMediaInterface(TokensAndUrlAuthData authData) {
+        return photosInterface == null ? makeMediaInterface(authData) : photosInterface;
+    }
+
+    private synchronized MicrosoftMediaInterface makeMediaInterface(TokensAndUrlAuthData authData) {
+        Credential credential = credentialFactory.createCredential(authData);
+        return new MicrosoftMediaInterface(credential, jsonFactory);
+    }
 }

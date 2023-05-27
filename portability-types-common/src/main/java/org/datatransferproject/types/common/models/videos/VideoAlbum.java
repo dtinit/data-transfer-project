@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.types.common.models.videos;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -22,68 +21,65 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import org.datatransferproject.types.common.ImportableItem;
-
 import javax.annotation.Nonnull;
 import java.util.Objects;
 
 public class VideoAlbum implements ImportableItem {
-  private final String id;
-  private final String name;
-  private final String description;
 
-  /**
-   * The {@code id} is used to associate videos with this album. *
-   */
-  @JsonCreator
-  public VideoAlbum(
-          @JsonProperty("id") String id,
-          @JsonProperty("name") String name,
-          @JsonProperty("description") String description) {
-    Preconditions.checkNotNull(id);
-    this.id = id;
-    this.name = name;
-    this.description = description;
-  }
+    private final String id;
 
-  @JsonIgnore(false)
-  @Override
-  public String getName() {
-    return name;
-  }
+    private final String name;
 
-  public String getDescription() {
-    return description;
-  }
+    private final String description;
 
-  public String getId() {
-    return id;
-  }
+    /**
+     * The {@code id} is used to associate videos with this album. *
+     */
+    @JsonCreator
+    public VideoAlbum(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("description") String description) {
+        Preconditions.checkNotNull(id);
+        this.id = id;
+        this.name = name;
+        this.description = description;
+    }
 
-  @Nonnull
-  @Override
-  public String getIdempotentId() {
-    return getId();
-  }
+    @JsonIgnore(false)
+    @Override
+    public String getName() {
+        return name;
+    }
 
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("id", getId())
-        .add("name", getName())
-        .add("description", getDescription())
-        .toString();
-  }
+    public String getDescription() {
+        return description;
+    }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    VideoAlbum that = (VideoAlbum) o;
-    return Objects.equals(id, that.id);
-  }
+    public String getId() {
+        return id;
+    }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(id);
-  }
+    @Nonnull
+    @Override
+    public String getIdempotentId() {
+        return getId();
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this).add("id", getId()).add("name", getName()).add("description", getDescription()).toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        VideoAlbum that = (VideoAlbum) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }

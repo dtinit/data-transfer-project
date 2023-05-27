@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.auth.google;
 
 import static org.datatransferproject.types.common.models.DataVertical.SOCIAL_POSTS;
-
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Map;
@@ -30,31 +28,23 @@ import org.datatransferproject.types.common.models.DataVertical;
  */
 public class BloggerOAuthConfig extends GoogleOAuthConfig {
 
-  // https://developers.google.com/identity/protocols/OAuth2WebServer
+    // https://developers.google.com/identity/protocols/OAuth2WebServer
+    @Override
+    public String getServiceName() {
+        return "GoogleBlogger";
+    }
 
-  @Override
-  public String getServiceName() {
-    return "GoogleBlogger";
-  }
+    // See https://developers.google.com/identity/protocols/googlescopes
+    @Override
+    public Map<DataVertical, Set<String>> getExportScopes() {
+        return ImmutableMap.<DataVertical, Set<String>>builder().put(SOCIAL_POSTS, ImmutableSet.of("https://www.googleapis.com/auth/blogger.readonly")).build();
+    }
 
-  // See https://developers.google.com/identity/protocols/googlescopes
-  @Override
-  public Map<DataVertical, Set<String>> getExportScopes() {
-    return ImmutableMap.<DataVertical, Set<String>>builder()
-        .put(SOCIAL_POSTS, ImmutableSet.of("https://www.googleapis.com/auth/blogger.readonly"))
-        .build();
-  }
-
-  // See https://developers.google.com/identity/protocols/googlescopes
-  @Override
-  public Map<DataVertical, Set<String>> getImportScopes() {
-    return ImmutableMap.<DataVertical, Set<String>>builder()
-        .put(SOCIAL_POSTS, ImmutableSet.of(
-            "https://www.googleapis.com/auth/blogger",
-            // Any photos associated with the blog are stored in Drive.
-            // This permission only grants access to files created by this app
-            "https://www.googleapis.com/auth/drive.file"
-        ))
-        .build();
-  }
+    // See https://developers.google.com/identity/protocols/googlescopes
+    @Override
+    public Map<DataVertical, Set<String>> getImportScopes() {
+        return ImmutableMap.<DataVertical, Set<String>>builder().put(SOCIAL_POSTS, ImmutableSet.of("https://www.googleapis.com/auth/blogger", // Any photos associated with the blog are stored in Drive.
+        // This permission only grants access to files created by this app
+        "https://www.googleapis.com/auth/drive.file")).build();
+    }
 }

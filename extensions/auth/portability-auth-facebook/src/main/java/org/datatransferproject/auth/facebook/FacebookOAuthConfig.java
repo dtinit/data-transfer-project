@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.auth.facebook;
 
 import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
 import static org.datatransferproject.types.common.models.DataVertical.VIDEOS;
-
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.datatransferproject.auth.OAuth2Config;
-
 import java.util.Map;
 import java.util.Set;
 import org.datatransferproject.types.common.models.DataVertical;
@@ -31,13 +28,12 @@ import org.datatransferproject.types.common.models.DataVertical;
  * Class that supplies Facebook-specific OAuth2 info
  */
 public class FacebookOAuthConfig implements OAuth2Config {
-    private static final String AUTHORIZATION_SERVER_URL =
-            "https://www.facebook.com/v3.2/dialog/oauth";
-    private static final String TOKEN_SERVER_URL =
-            "https://graph.facebook.com/v3.2/oauth/access_token";
-    private static final String SERVICE_NAME =
-            "Facebook";
 
+    private static final String AUTHORIZATION_SERVER_URL = "https://www.facebook.com/v3.2/dialog/oauth";
+
+    private static final String TOKEN_SERVER_URL = "https://graph.facebook.com/v3.2/oauth/access_token";
+
+    private static final String SERVICE_NAME = "Facebook";
 
     @Override
     public String getServiceName() {
@@ -56,17 +52,11 @@ public class FacebookOAuthConfig implements OAuth2Config {
 
     @Override
     public Map<DataVertical, Set<String>> getExportScopes() {
-        return ImmutableMap.<DataVertical, Set<String>>builder()
-            .put(PHOTOS, ImmutableSet.of("user_photos"))
-            .put(VIDEOS, ImmutableSet.of("user_videos"))
-            .build();
+        return ImmutableMap.<DataVertical, Set<String>>builder().put(PHOTOS, ImmutableSet.of("user_photos")).put(VIDEOS, ImmutableSet.of("user_videos")).build();
     }
 
     @Override
     public Map<DataVertical, Set<String>> getImportScopes() {
-        return ImmutableMap.<DataVertical, Set<String>>builder()
-            .put(PHOTOS, ImmutableSet.of("user_photos"))
-            .put(VIDEOS, ImmutableSet.of("user_videos"))
-            .build();
+        return ImmutableMap.<DataVertical, Set<String>>builder().put(PHOTOS, ImmutableSet.of("user_photos")).put(VIDEOS, ImmutableSet.of("user_videos")).build();
     }
 }

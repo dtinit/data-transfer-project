@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.types.transfer.retry;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -28,41 +27,38 @@ import java.util.Arrays;
  */
 public class RetryMapping {
 
-  @JsonProperty("regexes")
-  private String[] regexes;
-  @JsonProperty("strategy")
-  private RetryStrategy strategy;
+    @JsonProperty("regexes")
+    private String[] regexes;
 
-  public RetryMapping(@JsonProperty("regexes") String[] regexes,
-      @JsonProperty("strategy") RetryStrategy strategy) {
-    this.regexes = regexes;
-    this.strategy = strategy;
-  }
+    @JsonProperty("strategy")
+    private RetryStrategy strategy;
 
-  public String[] getRegexes() {
-    return regexes;
-  }
-
-  public RetryStrategy getStrategy() {
-    return strategy;
-  }
-
-  public boolean matchesThrowable(Throwable throwable) {
-    // TODO: examine entire throwable, not just toString
-    String input = throwable.toString();
-    for (String regex : regexes) {
-      if (input.matches(regex)) {
-        return true;
-      }
+    public RetryMapping(@JsonProperty("regexes") String[] regexes, @JsonProperty("strategy") RetryStrategy strategy) {
+        this.regexes = regexes;
+        this.strategy = strategy;
     }
-    return false;
-  }
 
-  @Override
-  public String toString() {
-    return "RetryMapping{" +
-        "regexes=" + Arrays.toString(regexes) +
-        ", strategy=" + strategy +
-        '}';
-  }
+    public String[] getRegexes() {
+        return regexes;
+    }
+
+    public RetryStrategy getStrategy() {
+        return strategy;
+    }
+
+    public boolean matchesThrowable(Throwable throwable) {
+        // TODO: examine entire throwable, not just toString
+        String input = throwable.toString();
+        for (String regex : regexes) {
+            if (input.matches(regex)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        return "RetryMapping{" + "regexes=" + Arrays.toString(regexes) + ", strategy=" + strategy + '}';
+    }
 }

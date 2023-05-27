@@ -13,5 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/** Implements importers and exporters for Daybook services. */
+/**
+ * Implements importers and exporters for Daybook services.
+ */
 package org.datatransferproject.auth.daybook;
+

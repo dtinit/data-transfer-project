@@ -13,65 +13,62 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.types.common.models.social;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.datatransferproject.types.common.ImportableItem;
-
 import javax.annotation.Nonnull;
 import java.util.Objects;
 
 public class SocialActivityActor implements ImportableItem {
-  private String url;
-  private String name;
-  private String id;
 
-  @JsonCreator
-  public SocialActivityActor(
-      @JsonProperty("id") String id,
-      @JsonProperty("name") String name,
-      @JsonProperty("url") String url) {
+    private String url;
 
-    this.id = id;
-    this.name = name;
-    this.url = url;
-  }
+    private String name;
 
-  public String getUrl() {
-    return url;
-  }
+    private String id;
 
-  @JsonIgnore(false)
-  @Override
-  public String getName() {
-    return name;
-  }
+    @JsonCreator
+    public SocialActivityActor(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("url") String url) {
+        this.id = id;
+        this.name = name;
+        this.url = url;
+    }
 
-  public String getId() {
-    return id;
-  }
+    public String getUrl() {
+        return url;
+    }
 
-  @Nonnull
-  @Override
-  public String getIdempotentId() {
-    return getId();
-  }
+    @JsonIgnore(false)
+    @Override
+    public String getName() {
+        return name;
+    }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    SocialActivityActor actor = (SocialActivityActor) o;
-    return Objects.equals(getUrl(), actor.getUrl()) &&
-            Objects.equals(getName(), actor.getName()) &&
-            Objects.equals(getId(), actor.getId());
-  }
+    public String getId() {
+        return id;
+    }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(getUrl(), getName(), getId());
-  }
+    @Nonnull
+    @Override
+    public String getIdempotentId() {
+        return getId();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        SocialActivityActor actor = (SocialActivityActor) o;
+        return Objects.equals(getUrl(), actor.getUrl()) && Objects.equals(getName(), actor.getName()) && Objects.equals(getId(), actor.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getUrl(), getName(), getId());
+    }
 }

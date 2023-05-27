@@ -14,44 +14,43 @@ import org.datatransferproject.types.common.DownloadableItem;
 
 public class CallableSizeCalculator implements Callable<Map<String, Long>> {
 
-  private final UUID jobId;
-  private final ConnectionProvider connectionProvider;
-  private final Collection<? extends DownloadableItem> items;
+    private final UUID jobId;
 
-  public CallableSizeCalculator(
-      UUID jobId, ConnectionProvider connectionProvider, Collection<? extends DownloadableItem> items) {
-    this.jobId = Objects.requireNonNull(jobId);
-    this.connectionProvider = Objects.requireNonNull(connectionProvider);
-    this.items = Objects.requireNonNull(items);
-  }
+    private final ConnectionProvider connectionProvider;
 
-  @Override
-  public Map<String, Long> call() throws Exception {
-    Map<String, Long> result = new LinkedHashMap<>();
-    for (DownloadableItem item : items) {
-      InputStreamWrapper stream = connectionProvider.getInputStreamForItem(jobId, item);
-      long size = stream.getBytes();
-      if (size <= 0) {
-        size = computeSize(stream);
-      }
+    private final Collection<? extends DownloadableItem> items;
 
-      result.put(item.getIdempotentId(), size);
+    public CallableSizeCalculator(UUID jobId, ConnectionProvider connectionProvider, Collection<? extends DownloadableItem> items) {
+        this.jobId = Objects.requireNonNull(jobId);
+        this.connectionProvider = Objects.requireNonNull(connectionProvider);
+        this.items = Objects.requireNonNull(items);
     }
 
-    return result;
-  }
-
-  // Reads the input stream in full
-  private Long computeSize(InputStreamWrapper stream) throws IOException {
-    long size = 0;
-    try (InputStream inStream = stream.getStream()) {
-      byte[] buffer = new byte[1024 * 1024]; // 1MB
-      int chunkBytesRead;
-      while ((chunkBytesRead = inStream.read(buffer)) != -1) {
-        size += chunkBytesRead;
-      }
+    @Override
+    public Map<String, Long> call() throws Exception {
+        Map<String, Long> result = new LinkedHashMap<>();
+        for (DownloadableItem item : items) {
+            InputStreamWrapper stream = connectionProvider.getInputStreamForItem(jobId, item);
+            long size = stream.getBytes();
+            if (size <= 0) {
+                size = computeSize(stream);
+            }
+            result.put(item.getIdempotentId(), size);
+        }
+        return result;
     }
 
-    return size;
-  }
+    // Reads the input stream in full
+    private Long computeSize(InputStreamWrapper stream) throws IOException {
+        long size = 0;
+        try (InputStream inStream = stream.getStream()) {
+            // 1MB
+            byte[] buffer = new byte[1024 * 1024];
+            int chunkBytesRead;
+            while ((chunkBytesRead = inStream.read(buffer)) != -1) {
+                size += chunkBytesRead;
+            }
+        }
+        return size;
+    }
 }

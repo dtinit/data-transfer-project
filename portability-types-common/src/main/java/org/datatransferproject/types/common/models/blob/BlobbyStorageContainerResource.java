@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
 import org.datatransferproject.types.common.ImportableItem;
 import org.datatransferproject.types.common.models.ContainerResource;
-
 import javax.annotation.Nonnull;
 import java.util.Collection;
 
@@ -17,45 +16,43 @@ import java.util.Collection;
  */
 public class BlobbyStorageContainerResource extends ContainerResource implements ImportableItem {
 
-  private final String name;
-  private final String id;
-  private final Collection<DigitalDocumentWrapper> files;
-  private final Collection<BlobbyStorageContainerResource> folders;
+    private final String name;
 
-  @JsonCreator
-  public BlobbyStorageContainerResource(
-      @JsonProperty("name") String name,
-      @JsonProperty("id") String id,
-      @JsonProperty("files") Collection<DigitalDocumentWrapper> files,
-      @JsonProperty("folders") Collection<BlobbyStorageContainerResource> folders) {
-    this.name = name;
-    this.id = id;
-    this.files = files == null ? ImmutableList.of() : files;
-    this.folders = folders == null ? ImmutableList.of() : folders;
-  }
+    private final String id;
 
-  public Collection<DigitalDocumentWrapper> getFiles() {
-    return files;
-  }
+    private final Collection<DigitalDocumentWrapper> files;
 
-  public Collection<BlobbyStorageContainerResource> getFolders() {
-    return folders;
-  }
+    private final Collection<BlobbyStorageContainerResource> folders;
 
-  @JsonIgnore(false)
-  @Override
-  public String getName() {
-    return name;
-  }
+    @JsonCreator
+    public BlobbyStorageContainerResource(@JsonProperty("name") String name, @JsonProperty("id") String id, @JsonProperty("files") Collection<DigitalDocumentWrapper> files, @JsonProperty("folders") Collection<BlobbyStorageContainerResource> folders) {
+        this.name = name;
+        this.id = id;
+        this.files = files == null ? ImmutableList.of() : files;
+        this.folders = folders == null ? ImmutableList.of() : folders;
+    }
 
-  public String getId() {
-    return id;
-  }
+    public Collection<DigitalDocumentWrapper> getFiles() {
+        return files;
+    }
 
-  @Nonnull
-  @Override
-  public String getIdempotentId() {
-    return getId();
-  }
+    public Collection<BlobbyStorageContainerResource> getFolders() {
+        return folders;
+    }
 
+    @JsonIgnore(false)
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    @Nonnull
+    @Override
+    public String getIdempotentId() {
+        return getId();
+    }
 }

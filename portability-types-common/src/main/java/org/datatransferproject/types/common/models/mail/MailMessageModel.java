@@ -23,45 +23,48 @@ import java.util.List;
 import java.util.Objects;
 
 public final class MailMessageModel {
-  private final String rawString;
-  private final List<String> containerIds;
 
-  @JsonCreator
-  public MailMessageModel(
-      @JsonProperty("rawString") String rawString,
-      @JsonProperty("containerIds") List<String> containerIds) {
-    this.rawString = rawString;
-    this.containerIds = (containerIds == null) ? ImmutableList.of() : containerIds;
-  }
+    private final String rawString;
 
-  /** RFC 2822 formatted and base64url encoded string * */
-  public String getRawString() {
-    return rawString;
-  }
-  /** Container, e.g. folder or label, this message belongs to * */
-  public List<String> getContainerIds() {
-    return containerIds;
-  }
+    private final List<String> containerIds;
 
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("rawString", rawString.length())
-        .add("containerIds", containerIds.size())
-        .toString();
-  }
+    @JsonCreator
+    public MailMessageModel(@JsonProperty("rawString") String rawString, @JsonProperty("containerIds") List<String> containerIds) {
+        this.rawString = rawString;
+        this.containerIds = (containerIds == null) ? ImmutableList.of() : containerIds;
+    }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    MailMessageModel that = (MailMessageModel) o;
-    return Objects.equals(getRawString(), that.getRawString()) &&
-            Objects.equals(getContainerIds(), that.getContainerIds());
-  }
+    /**
+     * RFC 2822 formatted and base64url encoded string *
+     */
+    public String getRawString() {
+        return rawString;
+    }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(getRawString(), getContainerIds());
-  }
+    /**
+     * Container, e.g. folder or label, this message belongs to *
+     */
+    public List<String> getContainerIds() {
+        return containerIds;
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this).add("rawString", rawString.length()).add("containerIds", containerIds.size()).toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        MailMessageModel that = (MailMessageModel) o;
+        return Objects.equals(getRawString(), that.getRawString()) && Objects.equals(getContainerIds(), that.getContainerIds());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getRawString(), getContainerIds());
+    }
 }

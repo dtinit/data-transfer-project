@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.cloud.google;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.testing.LocalDatastoreHelper;
@@ -36,64 +34,58 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class GoogleJobStoreTest {
 
-  private static final String ITEM_NAME = "item1";
-  private static final UUID JOB_ID = UUID.randomUUID();
-  private static LocalDatastoreHelper localDatastoreHelper;
-  private static Datastore datastore;
+    private static final String ITEM_NAME = "item1";
 
-  @Mock
-  private static GoogleTempFileStore tempFileStore;
-  private static GoogleJobStore googleJobStore;
+    private static final UUID JOB_ID = UUID.randomUUID();
 
+    private static LocalDatastoreHelper localDatastoreHelper;
 
-  @BeforeEach
-  public void setUp() throws IOException, InterruptedException {
-    localDatastoreHelper = LocalDatastoreHelper.create();
-    localDatastoreHelper.start();
-    System.setProperty("DATASTORE_EMULATOR_HOST", "localhost:" + localDatastoreHelper.getPort());
+    private static Datastore datastore;
 
-    datastore = localDatastoreHelper.getOptions().getService();
-    googleJobStore = new GoogleJobStore(datastore, tempFileStore, new ObjectMapper());
+    @Mock
+    private static GoogleTempFileStore tempFileStore;
 
-  }
+    private static GoogleJobStore googleJobStore;
 
-  @Test
-  public void getDataKeyName() throws Exception {
-    assertEquals(
-        JOB_ID + "-tempTaskData",
-        GoogleJobStore.getDataKeyName(JOB_ID, "tempTaskData"));
-    assertEquals(
-        JOB_ID + "-tempCalendarData",
-        GoogleJobStore.getDataKeyName(JOB_ID, "tempCalendarData"));
-  }
+    @BeforeEach
+    public void setUp() throws IOException, InterruptedException {
+        localDatastoreHelper = LocalDatastoreHelper.create();
+        localDatastoreHelper.start();
+        System.setProperty("DATASTORE_EMULATOR_HOST", "localhost:" + localDatastoreHelper.getPort());
+        datastore = localDatastoreHelper.getOptions().getService();
+        googleJobStore = new GoogleJobStore(datastore, tempFileStore, new ObjectMapper());
+    }
 
-  @Test
-  public void addingNullDoesNotChangeTheCurrentCountsTest() throws IOException {
-    googleJobStore.addCounts(JOB_ID, null);
-    assertTrue(googleJobStore.getCounts(JOB_ID).isEmpty());
-  }
+    @Test
+    public void getDataKeyName() throws Exception {
+        assertEquals(JOB_ID + "-tempTaskData", GoogleJobStore.getDataKeyName(JOB_ID, "tempTaskData"));
+        assertEquals(JOB_ID + "-tempCalendarData", GoogleJobStore.getDataKeyName(JOB_ID, "tempCalendarData"));
+    }
 
-  @Test
-  public void canAddNewKeysToTheCurrentCountsTest() throws IOException {
-    addItemToJobStoreCounts(ITEM_NAME);
-    final Map<String, Integer> counts = googleJobStore.getCounts(JOB_ID);
-    Truth.assertThat(counts.size()).isEqualTo(1);
-    Truth.assertThat(counts.get(ITEM_NAME)).isEqualTo(1);
-  }
+    @Test
+    public void addingNullDoesNotChangeTheCurrentCountsTest() throws IOException {
+        googleJobStore.addCounts(JOB_ID, null);
+        assertTrue(googleJobStore.getCounts(JOB_ID).isEmpty());
+    }
 
-  @Test
-  public void canAddExistingKeysToCurrentCountsTest() throws IOException {
-    addItemToJobStoreCounts(ITEM_NAME);
-    addItemToJobStoreCounts(ITEM_NAME);
+    @Test
+    public void canAddNewKeysToTheCurrentCountsTest() throws IOException {
+        addItemToJobStoreCounts(ITEM_NAME);
+        final Map<String, Integer> counts = googleJobStore.getCounts(JOB_ID);
+        Truth.assertThat(counts.size()).isEqualTo(1);
+        Truth.assertThat(counts.get(ITEM_NAME)).isEqualTo(1);
+    }
 
-    final Map<String, Integer> counts = googleJobStore.getCounts(JOB_ID);
-    Truth.assertThat(counts.size()).isEqualTo(1);
-    Truth.assertThat(counts.get(ITEM_NAME)).isEqualTo(2);
-  }
+    @Test
+    public void canAddExistingKeysToCurrentCountsTest() throws IOException {
+        addItemToJobStoreCounts(ITEM_NAME);
+        addItemToJobStoreCounts(ITEM_NAME);
+        final Map<String, Integer> counts = googleJobStore.getCounts(JOB_ID);
+        Truth.assertThat(counts.size()).isEqualTo(1);
+        Truth.assertThat(counts.get(ITEM_NAME)).isEqualTo(2);
+    }
 
-  private void addItemToJobStoreCounts(final String itemName) throws IOException {
-    googleJobStore.addCounts(
-        JOB_ID, new ImmutableMap.Builder<String, Integer>().put(itemName, 1).build());
-  }
-
+    private void addItemToJobStoreCounts(final String itemName) throws IOException {
+        googleJobStore.addCounts(JOB_ID, new ImmutableMap.Builder<String, Integer>().put(itemName, 1).build());
+    }
 }

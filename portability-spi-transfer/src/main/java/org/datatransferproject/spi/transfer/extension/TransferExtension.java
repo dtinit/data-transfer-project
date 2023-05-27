@@ -20,17 +20,25 @@ import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 
-/** Transfer extensions implement this contract to be loaded in a transfer worker process. */
+/**
+ * Transfer extensions implement this contract to be loaded in a transfer worker process.
+ */
 public interface TransferExtension extends AbstractExtension {
 
-  /** The key associated with this extension's service. */
-  String getServiceId();
+    /**
+     * The key associated with this extension's service.
+     */
+    String getServiceId();
 
-  /** Returns initialized extension exporter.
-   * @param transferDataType*/
-  Exporter<?, ?> getExporter(DataVertical transferDataType);
+    /**
+     * Returns initialized extension exporter.
+     * @param transferDataType
+     */
+    Exporter<?, ?> getExporter(DataVertical transferDataType);
 
-  /** Returns initialized extension importer.
-   * @param transferDataType*/
-  Importer<?, ?> getImporter(DataVertical transferDataType);
+    /**
+     * Returns initialized extension importer.
+     * @param transferDataType
+     */
+    Importer<?, ?> getImporter(DataVertical transferDataType);
 }

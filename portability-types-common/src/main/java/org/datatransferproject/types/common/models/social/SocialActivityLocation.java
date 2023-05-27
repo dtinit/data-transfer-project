@@ -13,55 +13,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.types.common.models.social;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Objects;
 
 public class SocialActivityLocation {
 
-  private String name;
-  private double longitude;
-  private double latitude;
+    private String name;
 
-  @JsonCreator
-  public SocialActivityLocation(
-      @JsonProperty("name") String name,
-      @JsonProperty("longitude") double longitude,
-      @JsonProperty("latitude") double latitude) {
+    private double longitude;
 
-    this.name = name;
-    this.longitude = longitude;
-    this.latitude = latitude;
-  }
+    private double latitude;
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    SocialActivityLocation that = (SocialActivityLocation) o;
-    return Double.compare(that.longitude, longitude) == 0 &&
-            Double.compare(that.latitude, latitude) == 0 &&
-            Objects.equals(name, that.name);
-  }
+    @JsonCreator
+    public SocialActivityLocation(@JsonProperty("name") String name, @JsonProperty("longitude") double longitude, @JsonProperty("latitude") double latitude) {
+        this.name = name;
+        this.longitude = longitude;
+        this.latitude = latitude;
+    }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(name, longitude, latitude);
-  }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        SocialActivityLocation that = (SocialActivityLocation) o;
+        return Double.compare(that.longitude, longitude) == 0 && Double.compare(that.latitude, latitude) == 0 && Objects.equals(name, that.name);
+    }
 
-  public String getName() {
-    return name;
-  }
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, longitude, latitude);
+    }
 
-  public double getLongitude() {
-    return longitude;
-  }
+    public String getName() {
+        return name;
+    }
 
-  public double getLatitude() {
-    return latitude;
-  }
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public double getLatitude() {
+        return latitude;
+    }
 }

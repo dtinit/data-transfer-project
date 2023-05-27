@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.flickr;
 
 import static java.lang.String.format;
 import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
-
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import java.util.Set;
@@ -39,67 +37,62 @@ import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfi
 
 public class FlickrTransferExtension implements TransferExtension {
 
-  private static final String SERVICE_ID = "flickr";
-  private static final String FLICKR_KEY = "FLICKR_KEY";
-  private static final String FLICKR_SECRET = "FLICKR_SECRET";
+    private static final String SERVICE_ID = "flickr";
 
-  private final Set<DataVertical> supportedServices = ImmutableSet.of(PHOTOS);
+    private static final String FLICKR_KEY = "FLICKR_KEY";
 
-  private Importer importer;
-  private Exporter exporter;
-  private TemporaryPerJobDataStore jobStore;
-  private boolean initialized = false;
-  private AppCredentials appCredentials;
+    private static final String FLICKR_SECRET = "FLICKR_SECRET";
 
-  @Override
-  public String getServiceId() {
-    return SERVICE_ID;
-  }
+    private final Set<DataVertical> supportedServices = ImmutableSet.of(PHOTOS);
 
-  @Override
-  public Exporter<?, ?> getExporter(DataVertical transferDataType) {
-    Preconditions.checkArgument(initialized);
-    Preconditions.checkArgument(supportedServices.contains(transferDataType));
-    return exporter;
-  }
+    private Importer importer;
 
-  @Override
-  public Importer<?, ?> getImporter(DataVertical transferDataType) {
-    Preconditions.checkArgument(initialized);
-    Preconditions.checkArgument(supportedServices.contains(transferDataType));
-    return importer;
-  }
+    private Exporter exporter;
 
-  @Override
-  public void initialize(ExtensionContext context) {
-    if (initialized) {
-      return;
-    }
-    jobStore = context.getService(TemporaryPerJobDataStore.class);
-    Monitor monitor = context.getMonitor();
+    private TemporaryPerJobDataStore jobStore;
 
-    try {
-      appCredentials =
-          context.getService(AppCredentialStore.class).getAppCredentials(FLICKR_KEY, FLICKR_SECRET);
-    } catch (Exception e) {
-      monitor.info(
-          () ->
-              format(
-                  "Unable to retrieve Flickr AppCredentials. Did you set %s and %s?",
-                  FLICKR_KEY, FLICKR_SECRET),
-          e);
-      initialized = false;
-      return;
+    private boolean initialized = false;
+
+    private AppCredentials appCredentials;
+
+    @Override
+    public String getServiceId() {
+        return SERVICE_ID;
     }
 
-    TransferServiceConfig serviceConfig = context.getService(TransferServiceConfig.class);
+    @Override
+    public Exporter<?, ?> getExporter(DataVertical transferDataType) {
+        Preconditions.checkArgument(initialized);
+        Preconditions.checkArgument(supportedServices.contains(transferDataType));
+        return exporter;
+    }
 
-    IdempotentImportExecutor idempotentImportExecutor = context.getService(
-        IdempotentImportExecutorExtension.class).getRetryingIdempotentImportExecutor(context);
-    boolean enableRetrying = context.getSetting("enableRetrying", false);
+    @Override
+    public Importer<?, ?> getImporter(DataVertical transferDataType) {
+        Preconditions.checkArgument(initialized);
+        Preconditions.checkArgument(supportedServices.contains(transferDataType));
+        return importer;
+    }
 
-    importer = new FlickrPhotosImporter(appCredentials, jobStore, monitor, serviceConfig, idempotentImportExecutor, enableRetrying);
-    exporter = new FlickrPhotosExporter(appCredentials, serviceConfig);
-    initialized = true;
-  }
+    @Override
+    public void initialize(ExtensionContext context) {
+        if (initialized) {
+            return;
+        }
+        jobStore = context.getService(TemporaryPerJobDataStore.class);
+        Monitor monitor = context.getMonitor();
+        try {
+            appCredentials = context.getService(AppCredentialStore.class).getAppCredentials(FLICKR_KEY, FLICKR_SECRET);
+        } catch (Exception e) {
+            monitor.info(() -> format("Unable to retrieve Flickr AppCredentials. Did you set %s and %s?", FLICKR_KEY, FLICKR_SECRET), e);
+            initialized = false;
+            return;
+        }
+        TransferServiceConfig serviceConfig = context.getService(TransferServiceConfig.class);
+        IdempotentImportExecutor idempotentImportExecutor = context.getService(IdempotentImportExecutorExtension.class).getRetryingIdempotentImportExecutor(context);
+        boolean enableRetrying = context.getSetting("enableRetrying", false);
+        importer = new FlickrPhotosImporter(appCredentials, jobStore, monitor, serviceConfig, idempotentImportExecutor, enableRetrying);
+        exporter = new FlickrPhotosExporter(appCredentials, serviceConfig);
+        initialized = true;
+    }
 }

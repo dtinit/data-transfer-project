@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.transfer.mastodon.social;
 
 import com.google.common.base.Strings;
@@ -30,89 +29,55 @@ import org.datatransferproject.types.common.models.social.SocialActivityContaine
 import org.datatransferproject.types.common.models.social.SocialActivityModel;
 import org.datatransferproject.types.common.models.social.SocialActivityType;
 import org.datatransferproject.types.transfer.auth.CookiesAndUrlAuthData;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Exports post data from Mastodon.
  * <p> Currently only supports text and not images.
- **/
-public class MastodonActivityExport implements
-        Exporter<CookiesAndUrlAuthData, SocialActivityContainerResource> {
-  private static final Pattern RAW_CONTENT_PATTERN = Pattern.compile("<p>(.*)</p>");
+ */
+public class MastodonActivityExport implements Exporter<CookiesAndUrlAuthData, SocialActivityContainerResource> {
 
-  @Override
-  public ExportResult<SocialActivityContainerResource> export(UUID jobId,
-                                                              CookiesAndUrlAuthData authData, Optional<ExportInformation> exportInformation)
-          throws Exception {
-    checkState(authData.getCookies().size() == 1,
-            "Exactly 1 cookie expected: %s",
-            authData.getCookies());
+    private static final Pattern RAW_CONTENT_PATTERN = Pattern.compile("<p>(.*)</p>");
 
-    String maxId = null;
-    if (exportInformation.isPresent()) {
-      StringPaginationToken pageData =
-          (StringPaginationToken) exportInformation.get().getPaginationData();
-      if (!Strings.isNullOrEmpty(pageData.getToken())) {
-        maxId = pageData.getToken();
-      }
+    @Override
+    public ExportResult<SocialActivityContainerResource> export(UUID jobId, CookiesAndUrlAuthData authData, Optional<ExportInformation> exportInformation) throws Exception {
+        checkState(authData.getCookies().size() == 1, "Exactly 1 cookie expected: %s", authData.getCookies());
+        String maxId = null;
+        if (exportInformation.isPresent()) {
+            StringPaginationToken pageData = (StringPaginationToken) exportInformation.get().getPaginationData();
+            if (!Strings.isNullOrEmpty(pageData.getToken())) {
+                maxId = pageData.getToken();
+            }
+        }
+        MastodonHttpUtilities utilities = new MastodonHttpUtilities(authData.getCookies().get(0), authData.getUrl());
+        Account account = utilities.getAccount();
+        Status[] statuses = utilities.getStatuses(maxId);
+        List<SocialActivityModel> activityList = new ArrayList<>(statuses.length);
+        SocialActivityActor actor = new SocialActivityActor("acct:" + account.getUsername() + "@" + utilities.getHostName(), account.getDisplayName(), account.getUrl());
+        ContinuationData continuationData = null;
+        if (statuses.length > 0) {
+            String lastId = null;
+            for (Status status : statuses) {
+                activityList.add(statusToActivity(account, status, utilities));
+                lastId = status.getId();
+            }
+            continuationData = new ContinuationData(new StringPaginationToken(lastId));
+        }
+        return new ExportResult<>(continuationData == null ? ResultType.END : ResultType.CONTINUE, new SocialActivityContainerResource(account.getId() + maxId, actor, activityList), continuationData);
     }
 
-    MastodonHttpUtilities utilities = new MastodonHttpUtilities(
-            authData.getCookies().get(0),
-            authData.getUrl());
-
-    Account account = utilities.getAccount();
-
-    Status[] statuses = utilities.getStatuses(maxId);
-    List<SocialActivityModel> activityList = new ArrayList<>(statuses.length);
-
-    SocialActivityActor actor =
-        new SocialActivityActor(
-            "acct:" + account.getUsername() + "@" + utilities.getHostName(),
-            account.getDisplayName(),
-            account.getUrl());
-
-
-    ContinuationData continuationData = null;
-    if (statuses.length > 0) {
-      String lastId = null;
-      for (Status status : statuses) {
-        activityList.add(statusToActivity(account, status, utilities));
-        lastId = status.getId();
-      }
-      continuationData = new ContinuationData(new StringPaginationToken(lastId));
+    private SocialActivityModel statusToActivity(Account account, Status status, MastodonHttpUtilities utilities) {
+        String contentString = status.getContent();
+        Matcher matcher = RAW_CONTENT_PATTERN.matcher(contentString);
+        if (matcher.matches()) {
+            contentString = matcher.group(1);
+        }
+        return new SocialActivityModel(status.getUri(), status.getCreatedAt(), SocialActivityType.NOTE, null, null, null, contentString, status.getUrl());
     }
-
-    return new ExportResult<>(
-        continuationData == null ? ResultType.END : ResultType.CONTINUE,
-        new SocialActivityContainerResource(account.getId() + maxId, actor, activityList),
-        continuationData);
-  }
-
-  private SocialActivityModel statusToActivity(
-      Account account, Status status, MastodonHttpUtilities utilities) {
-    String contentString = status.getContent();
-    Matcher matcher = RAW_CONTENT_PATTERN.matcher(contentString);
-    if (matcher.matches()) {
-      contentString = matcher.group(1);
-    }
-
-    return new SocialActivityModel(
-        status.getUri(),
-        status.getCreatedAt(),
-        SocialActivityType.NOTE,
-        null,
-        null,
-        null,
-        contentString,
-        status.getUrl());
-  }
 }

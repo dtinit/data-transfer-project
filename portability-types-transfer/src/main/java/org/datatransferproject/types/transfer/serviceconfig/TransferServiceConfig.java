@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.types.transfer.serviceconfig;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.util.concurrent.RateLimiter;
-
 import java.io.IOException;
 import java.io.InputStream;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -30,32 +27,32 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * settings for transfer extensions.
  */
 public final class TransferServiceConfig {
-  private static final ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
 
-  private final RateLimiter rateLimiter;
+    private static final ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
 
-  public static TransferServiceConfig create(InputStream s) throws IOException {
-    return new TransferServiceConfig(
-        YAML_OBJECT_MAPPER.readValue(s, TransferServiceConfigSpecification.class));
-  }
+    private final RateLimiter rateLimiter;
 
-  /** Gets a default instance for services that don't have a specific config. **/
-  public static TransferServiceConfig getDefaultInstance() {
-    return new TransferServiceConfig(
-        new TransferServiceConfigSpecification(
-            Double.MAX_VALUE));
-  }
+    public static TransferServiceConfig create(InputStream s) throws IOException {
+        return new TransferServiceConfig(YAML_OBJECT_MAPPER.readValue(s, TransferServiceConfigSpecification.class));
+    }
 
-  private TransferServiceConfig(TransferServiceConfigSpecification specification) {
-    checkNotNull(specification, "specification can't be null");
-    rateLimiter = RateLimiter.create(specification.getPerUserRateLimit());
-  }
+    /**
+     * Gets a default instance for services that don't have a specific config. *
+     */
+    public static TransferServiceConfig getDefaultInstance() {
+        return new TransferServiceConfig(new TransferServiceConfigSpecification(Double.MAX_VALUE));
+    }
 
-  /**
-   * A {@link RateLimiter} that enforces the per-user rate limit that is specified in
-   * the config/[service].yaml config file.
-   **/
-  public RateLimiter getPerUserRateLimiter() {
-    return rateLimiter;
-  }
+    private TransferServiceConfig(TransferServiceConfigSpecification specification) {
+        checkNotNull(specification, "specification can't be null");
+        rateLimiter = RateLimiter.create(specification.getPerUserRateLimit());
+    }
+
+    /**
+     * A {@link RateLimiter} that enforces the per-user rate limit that is specified in
+     * the config/[service].yaml config file.
+     */
+    public RateLimiter getPerUserRateLimiter() {
+        return rateLimiter;
+    }
 }

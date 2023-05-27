@@ -22,7 +22,6 @@ import org.datatransferproject.api.launcher.Flag;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.config.extension.SettingsExtension;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,77 +32,82 @@ import java.util.Map;
  */
 public class ApiExtensionContext implements ExtensionContext {
 
-  private final Map<Class<?>, Object> registered = new HashMap<>();
-  private final TypeManager typeManager;
-  private final SettingsExtension settingsExtension;
-  private final Monitor monitor;
+    private final Map<Class<?>, Object> registered = new HashMap<>();
 
-  // Required settings
-  private final String cloud;
-  private final Environment environment;
-  private final String baseUrl;
-  private final String baseApiUrl;
+    private final TypeManager typeManager;
 
-  public ApiExtensionContext(TypeManager typeManager, SettingsExtension settingsExtension, Monitor monitor) {
-    this.typeManager = typeManager;
-    this.settingsExtension = settingsExtension;
-    this.monitor = monitor;
-    registered.put(TypeManager.class, typeManager);
+    private final SettingsExtension settingsExtension;
 
-    cloud = settingsExtension.getSetting("cloud", null);
-    Preconditions.checkNotNull(cloud, "Required setting 'cloud' is missing");
-    environment = Environment.valueOf(settingsExtension.getSetting("environment", null));
-    Preconditions.checkNotNull(environment, "Required setting 'environment' is missing");
-    baseUrl = settingsExtension.getSetting("baseUrl", null);
-    Preconditions.checkNotNull(baseUrl, "Required setting 'baseUrl' is missing");
-    baseApiUrl = settingsExtension.getSetting("baseApiUrl", null);
-    Preconditions.checkNotNull(baseApiUrl, "Required setting 'baseApiUrl' is missing");
-  }
+    private final Monitor monitor;
 
-  @Override
-  public TypeManager getTypeManager() {
-    return typeManager;
-  }
+    // Required settings
+    private final String cloud;
 
-  @Override
-  public Monitor getMonitor() {
-    return monitor;
-  }
+    private final Environment environment;
 
-  @Override
-  public <T> T getService(Class<T> type) {
-    return type.cast(registered.get(type));
-  }
+    private final String baseUrl;
 
-  @Override
-  public <T> void registerService(Class<T> type, T service) {
-    registered.put(type, service);
-  }
+    private final String baseApiUrl;
 
-  @Override
-  public <T> T getSetting(String setting, T defaultValue) {
-    return settingsExtension.getSetting(setting, defaultValue);
-  }
+    public ApiExtensionContext(TypeManager typeManager, SettingsExtension settingsExtension, Monitor monitor) {
+        this.typeManager = typeManager;
+        this.settingsExtension = settingsExtension;
+        this.monitor = monitor;
+        registered.put(TypeManager.class, typeManager);
+        cloud = settingsExtension.getSetting("cloud", null);
+        Preconditions.checkNotNull(cloud, "Required setting 'cloud' is missing");
+        environment = Environment.valueOf(settingsExtension.getSetting("environment", null));
+        Preconditions.checkNotNull(environment, "Required setting 'environment' is missing");
+        baseUrl = settingsExtension.getSetting("baseUrl", null);
+        Preconditions.checkNotNull(baseUrl, "Required setting 'baseUrl' is missing");
+        baseApiUrl = settingsExtension.getSetting("baseApiUrl", null);
+        Preconditions.checkNotNull(baseApiUrl, "Required setting 'baseApiUrl' is missing");
+    }
 
-  @Override
-  @Flag
-  public String cloud() {
-    return cloud;
-  }
+    @Override
+    public TypeManager getTypeManager() {
+        return typeManager;
+    }
 
-  @Override
-  @Flag
-  public Environment environment() {
-    return environment;
-  }
+    @Override
+    public Monitor getMonitor() {
+        return monitor;
+    }
 
-  @Flag
-  public String baseUrl() {
-    return baseUrl;
-  }
+    @Override
+    public <T> T getService(Class<T> type) {
+        return type.cast(registered.get(type));
+    }
 
-  @Flag
-  public String baseApiUrl() {
-    return baseApiUrl;
-  }
+    @Override
+    public <T> void registerService(Class<T> type, T service) {
+        registered.put(type, service);
+    }
+
+    @Override
+    public <T> T getSetting(String setting, T defaultValue) {
+        return settingsExtension.getSetting(setting, defaultValue);
+    }
+
+    @Override
+    @Flag
+    public String cloud() {
+        return cloud;
+    }
+
+    @Override
+    @Flag
+    public Environment environment() {
+        return environment;
+    }
+
+    @Flag
+    public String baseUrl() {
+        return baseUrl;
+    }
+
+    @Flag
+    public String baseApiUrl() {
+        return baseApiUrl;
+    }
 }

@@ -20,7 +20,6 @@ import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.microsoft.spi.types.MicrosoftOfflineData;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
-
 import java.util.UUID;
 
 /**
@@ -30,13 +29,10 @@ import java.util.UUID;
  */
 public class OfflineDemoImporter implements Importer<TokenAuthData, MicrosoftOfflineData> {
 
-  @Override
-  public ImportResult importItem(UUID jobId,
-      IdempotentImportExecutor idempotentExecutor,
-      TokenAuthData authData,
-      MicrosoftOfflineData data) {
-    // Print to the console to simulate an import
-    System.out.println("Received offline data:\n" + data.getContents());
-    return ImportResult.OK;
-  }
+    @Override
+    public ImportResult importItem(UUID jobId, IdempotentImportExecutor idempotentExecutor, TokenAuthData authData, MicrosoftOfflineData data) {
+        // Print to the console to simulate an import
+        System.out.println("Received offline data:\n" + data.getContents());
+        return ImportResult.OK;
+    }
 }

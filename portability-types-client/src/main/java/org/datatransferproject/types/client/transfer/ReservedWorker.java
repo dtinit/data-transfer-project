@@ -19,9 +19,12 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 
-/** The worker that was reserved for a transfer job. */
+/**
+ * The worker that was reserved for a transfer job.
+ */
 @ApiModel(description = "The worker reserved for a transfer job")
 public class ReservedWorker {
+
     // null/missing until worker has been reserved
     private final String publicKey;
 

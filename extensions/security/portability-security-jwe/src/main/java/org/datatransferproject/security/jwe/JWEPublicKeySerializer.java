@@ -27,34 +27,37 @@ import java.util.UUID;
 import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
 import org.datatransferproject.spi.transfer.security.SecurityException;
 
-/** */
+/**
+ */
 public class JWEPublicKeySerializer implements PublicKeySerializer {
 
-  @Override
-  public boolean canHandle(String scheme) {
-    return "jwe".equals(scheme);
-  }
+    @Override
+    public boolean canHandle(String scheme) {
+        return "jwe".equals(scheme);
+    }
 
-  @Override
-  public String serialize(byte[] encodedPublicKey) throws SecurityException {
-    PublicKey publicKey = parse(encodedPublicKey);
-    return serialize(publicKey);
-  }
+    @Override
+    public String serialize(byte[] encodedPublicKey) throws SecurityException {
+        PublicKey publicKey = parse(encodedPublicKey);
+        return serialize(publicKey);
+    }
 
-  private String serialize(PublicKey publicKey) throws SecurityException {
-    String kid = UUID.randomUUID().toString();
-    JWK jwk = new RSAKey.Builder((RSAPublicKey) publicKey).keyID(kid).build();
-    return jwk.toString();
-  }
+    private String serialize(PublicKey publicKey) throws SecurityException {
+        String kid = UUID.randomUUID().toString();
+        JWK jwk = new RSAKey.Builder((RSAPublicKey) publicKey).keyID(kid).build();
+        return jwk.toString();
+    }
 
-  /** Creates a PublicKey from the encoded form. */
-  private static PublicKey parse(byte[] encoded) {
-    KeyFactory factory;
-    try {
-      factory = KeyFactory.getInstance(JWEKeyGenerator.ALGORITHM);
-      return factory.generatePublic(new X509EncodedKeySpec(encoded));
-    } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-      throw new RuntimeException(
-          "InvalidKeySpecException generating PublicKey, encoded: " + encoded, e);    }
-  }
+    /**
+     * Creates a PublicKey from the encoded form.
+     */
+    private static PublicKey parse(byte[] encoded) {
+        KeyFactory factory;
+        try {
+            factory = KeyFactory.getInstance(JWEKeyGenerator.ALGORITHM);
+            return factory.generatePublic(new X509EncodedKeySpec(encoded));
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            throw new RuntimeException("InvalidKeySpecException generating PublicKey, encoded: " + encoded, e);
+        }
+    }
 }

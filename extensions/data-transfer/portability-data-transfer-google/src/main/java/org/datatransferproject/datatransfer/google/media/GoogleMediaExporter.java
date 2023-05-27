@@ -61,72 +61,63 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, MediaContainerResource> {
 
-  static final String ALBUM_TOKEN_PREFIX = "album:";
-  static final String MEDIA_TOKEN_PREFIX = "media:";
+    static final String ALBUM_TOKEN_PREFIX = "album:";
 
-  private final GoogleCredentialFactory credentialFactory;
-  private final TemporaryPerJobDataStore jobStore;
-  private final JsonFactory jsonFactory;
-  private final Monitor monitor;
-  private volatile GooglePhotosInterface photosInterface;
+    static final String MEDIA_TOKEN_PREFIX = "media:";
 
-  public GoogleMediaExporter(
-      GoogleCredentialFactory credentialFactory,
-      TemporaryPerJobDataStore jobStore,
-      JsonFactory jsonFactory,
-      Monitor monitor) {
-    this.credentialFactory = credentialFactory;
-    this.jobStore = jobStore;
-    this.jsonFactory = jsonFactory;
-    this.monitor = monitor;
-  }
+    private final GoogleCredentialFactory credentialFactory;
 
-  @VisibleForTesting
-  GoogleMediaExporter(
-      GoogleCredentialFactory credentialFactory,
-      TemporaryPerJobDataStore jobStore,
-      JsonFactory jsonFactory,
-      GooglePhotosInterface photosInterface,
-      Monitor monitor) {
-    this.credentialFactory = credentialFactory;
-    this.jobStore = jobStore;
-    this.jsonFactory = jsonFactory;
-    this.photosInterface = photosInterface;
-    this.monitor = monitor;
-  }
+    private final TemporaryPerJobDataStore jobStore;
 
-  @VisibleForTesting
-  static InputStream convertJsonToInputStream(Object jsonObject) throws JsonProcessingException {
-    String tempString = new ObjectMapper().writeValueAsString(jsonObject);
-    return new ByteArrayInputStream(tempString.getBytes(StandardCharsets.UTF_8));
-  }
+    private final JsonFactory jsonFactory;
 
-  private static String createCacheKey() {
-    return "tempMediaData";
-  }
+    private final Monitor monitor;
 
-  @Override
-  public ExportResult<MediaContainerResource> export(
-      UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation)
-      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
-    if (!exportInformation.isPresent()) {
-      // Make list of photos contained in albums so they are not exported twice later on
-      populateContainedMediaList(jobId, authData);
-      return exportAlbums(authData, Optional.empty(), jobId);
-    } else if (exportInformation.get().getContainerResource() instanceof PhotosContainerResource) {
-      // if ExportInformation is a photos container, this is a request to only export the contents
-      // in that container instead of the whole user library
-      return exportPhotosContainer(
-          (PhotosContainerResource) exportInformation.get().getContainerResource(), authData);
-    } else if (exportInformation.get().getContainerResource() instanceof MediaContainerResource) {
-      // if ExportInformation is a media container, this is a request to only export the contents
-      // in that container instead of the whole user library (this is to support backwards
-      // compatibility with the GooglePhotosExporter)
-      return exportMediaContainer(
-          (MediaContainerResource) exportInformation.get().getContainerResource(), authData);
+    private volatile GooglePhotosInterface photosInterface;
+
+    public GoogleMediaExporter(GoogleCredentialFactory credentialFactory, TemporaryPerJobDataStore jobStore, JsonFactory jsonFactory, Monitor monitor) {
+        this.credentialFactory = credentialFactory;
+        this.jobStore = jobStore;
+        this.jsonFactory = jsonFactory;
+        this.monitor = monitor;
     }
 
-    /*
+    @VisibleForTesting
+    GoogleMediaExporter(GoogleCredentialFactory credentialFactory, TemporaryPerJobDataStore jobStore, JsonFactory jsonFactory, GooglePhotosInterface photosInterface, Monitor monitor) {
+        this.credentialFactory = credentialFactory;
+        this.jobStore = jobStore;
+        this.jsonFactory = jsonFactory;
+        this.photosInterface = photosInterface;
+        this.monitor = monitor;
+    }
+
+    @VisibleForTesting
+    static InputStream convertJsonToInputStream(Object jsonObject) throws JsonProcessingException {
+        String tempString = new ObjectMapper().writeValueAsString(jsonObject);
+        return new ByteArrayInputStream(tempString.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static String createCacheKey() {
+        return "tempMediaData";
+    }
+
+    @Override
+    public ExportResult<MediaContainerResource> export(UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+        if (!exportInformation.isPresent()) {
+            // Make list of photos contained in albums so they are not exported twice later on
+            populateContainedMediaList(jobId, authData);
+            return exportAlbums(authData, Optional.empty(), jobId);
+        } else if (exportInformation.get().getContainerResource() instanceof PhotosContainerResource) {
+            // if ExportInformation is a photos container, this is a request to only export the contents
+            // in that container instead of the whole user library
+            return exportPhotosContainer((PhotosContainerResource) exportInformation.get().getContainerResource(), authData);
+        } else if (exportInformation.get().getContainerResource() instanceof MediaContainerResource) {
+            // if ExportInformation is a media container, this is a request to only export the contents
+            // in that container instead of the whole user library (this is to support backwards
+            // compatibility with the GooglePhotosExporter)
+            return exportMediaContainer((MediaContainerResource) exportInformation.get().getContainerResource(), authData);
+        }
+        /*
      * Use the export information to determine whether this export call should export albums or
      * photos.
      *
@@ -142,281 +133,215 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
      * containing only MEDIA_TOKEN_PREFIX with no token attached, in order to differentiate this
      * case for the first step of export (no export information at all).
      */
-    StringPaginationToken paginationToken =
-        (StringPaginationToken) exportInformation.get().getPaginationData();
-    IdOnlyContainerResource idOnlyContainerResource =
-        (IdOnlyContainerResource) exportInformation.get().getContainerResource();
-
-    boolean containerResourcePresent = idOnlyContainerResource != null;
-    boolean paginationDataPresent = paginationToken != null;
-
-    if (!containerResourcePresent
-        && paginationDataPresent
-        && paginationToken.getToken().startsWith(ALBUM_TOKEN_PREFIX)) {
-      // were still listing out all of the albums since we have pagination data
-      return exportAlbums(authData, Optional.of(paginationToken), jobId);
-    } else {
-      return exportMedia(
-          authData,
-          Optional.ofNullable(idOnlyContainerResource),
-          Optional.ofNullable(paginationToken),
-          jobId);
-    }
-  }
-
-  /* Maintain this for backwards compatability, so that we can pull out the album information */
-  private ExportResult<MediaContainerResource> exportPhotosContainer(
-      PhotosContainerResource container, TokensAndUrlAuthData authData)
-      throws IOException, InvalidTokenException, PermissionDeniedException {
-    ImmutableList.Builder<MediaAlbum> albumBuilder = ImmutableList.builder();
-    ImmutableList.Builder<PhotoModel> photosBuilder = ImmutableList.builder();
-    List<IdOnlyContainerResource> subResources = new ArrayList<>();
-
-    for (PhotoAlbum album : container.getAlbums()) {
-      GoogleAlbum googleAlbum = getOrCreatePhotosInterface(authData).getAlbum(album.getId());
-      albumBuilder.add(new MediaAlbum(googleAlbum.getId(), googleAlbum.getTitle(), null));
-      // Adding subresources tells the framework to recall export to get all the photos
-      subResources.add(new IdOnlyContainerResource(googleAlbum.getId()));
+        StringPaginationToken paginationToken = (StringPaginationToken) exportInformation.get().getPaginationData();
+        IdOnlyContainerResource idOnlyContainerResource = (IdOnlyContainerResource) exportInformation.get().getContainerResource();
+        boolean containerResourcePresent = idOnlyContainerResource != null;
+        boolean paginationDataPresent = paginationToken != null;
+        if (!containerResourcePresent && paginationDataPresent && paginationToken.getToken().startsWith(ALBUM_TOKEN_PREFIX)) {
+            // were still listing out all of the albums since we have pagination data
+            return exportAlbums(authData, Optional.of(paginationToken), jobId);
+        } else {
+            return exportMedia(authData, Optional.ofNullable(idOnlyContainerResource), Optional.ofNullable(paginationToken), jobId);
+        }
     }
 
-    for (PhotoModel photo : container.getPhotos()) {
-      GoogleMediaItem googleMediaItem =
-          getOrCreatePhotosInterface(authData).getMediaItem(photo.getDataId());
-      photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), googleMediaItem));
+    /* Maintain this for backwards compatability, so that we can pull out the album information */
+    private ExportResult<MediaContainerResource> exportPhotosContainer(PhotosContainerResource container, TokensAndUrlAuthData authData) throws IOException, InvalidTokenException, PermissionDeniedException {
+        ImmutableList.Builder<MediaAlbum> albumBuilder = ImmutableList.builder();
+        ImmutableList.Builder<PhotoModel> photosBuilder = ImmutableList.builder();
+        List<IdOnlyContainerResource> subResources = new ArrayList<>();
+        for (PhotoAlbum album : container.getAlbums()) {
+            GoogleAlbum googleAlbum = getOrCreatePhotosInterface(authData).getAlbum(album.getId());
+            albumBuilder.add(new MediaAlbum(googleAlbum.getId(), googleAlbum.getTitle(), null));
+            // Adding subresources tells the framework to recall export to get all the photos
+            subResources.add(new IdOnlyContainerResource(googleAlbum.getId()));
+        }
+        for (PhotoModel photo : container.getPhotos()) {
+            GoogleMediaItem googleMediaItem = getOrCreatePhotosInterface(authData).getMediaItem(photo.getDataId());
+            photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), googleMediaItem));
+        }
+        MediaContainerResource mediaContainerResource = new MediaContainerResource(albumBuilder.build(), photosBuilder.build(), null);
+        ContinuationData continuationData = new ContinuationData(null);
+        subResources.forEach(resource -> continuationData.addContainerResource(resource));
+        return new ExportResult<>(ResultType.CONTINUE, mediaContainerResource, continuationData);
     }
 
-    MediaContainerResource mediaContainerResource =
-        new MediaContainerResource(albumBuilder.build(), photosBuilder.build(), null);
-    ContinuationData continuationData = new ContinuationData(null);
-    subResources.forEach(resource -> continuationData.addContainerResource(resource));
-    return new ExportResult<>(ResultType.CONTINUE, mediaContainerResource, continuationData);
-  }
-
-  /* Maintain this for backwards compatability, so that we can pull out the album information */
-  private ExportResult<MediaContainerResource> exportMediaContainer(
-      MediaContainerResource container, TokensAndUrlAuthData authData)
-      throws IOException, InvalidTokenException, PermissionDeniedException {
-    ImmutableList.Builder<MediaAlbum> albumBuilder = ImmutableList.builder();
-    ImmutableList.Builder<PhotoModel> photosBuilder = ImmutableList.builder();
-    ImmutableList.Builder<VideoModel> videosBuilder = ImmutableList.builder();
-
-    List<IdOnlyContainerResource> subResources = new ArrayList<>();
-
-    for (MediaAlbum album : container.getAlbums()) {
-      GoogleAlbum googleAlbum = getOrCreatePhotosInterface(authData).getAlbum(album.getId());
-      albumBuilder.add(new MediaAlbum(googleAlbum.getId(), googleAlbum.getTitle(), null));
-      // Adding subresources tells the framework to recall export to get all the photos
-      subResources.add(new IdOnlyContainerResource(googleAlbum.getId()));
+    /* Maintain this for backwards compatability, so that we can pull out the album information */
+    private ExportResult<MediaContainerResource> exportMediaContainer(MediaContainerResource container, TokensAndUrlAuthData authData) throws IOException, InvalidTokenException, PermissionDeniedException {
+        ImmutableList.Builder<MediaAlbum> albumBuilder = ImmutableList.builder();
+        ImmutableList.Builder<PhotoModel> photosBuilder = ImmutableList.builder();
+        ImmutableList.Builder<VideoModel> videosBuilder = ImmutableList.builder();
+        List<IdOnlyContainerResource> subResources = new ArrayList<>();
+        for (MediaAlbum album : container.getAlbums()) {
+            GoogleAlbum googleAlbum = getOrCreatePhotosInterface(authData).getAlbum(album.getId());
+            albumBuilder.add(new MediaAlbum(googleAlbum.getId(), googleAlbum.getTitle(), null));
+            // Adding subresources tells the framework to recall export to get all the photos
+            subResources.add(new IdOnlyContainerResource(googleAlbum.getId()));
+        }
+        for (PhotoModel photo : container.getPhotos()) {
+            GoogleMediaItem googleMediaItem = getOrCreatePhotosInterface(authData).getMediaItem(photo.getDataId());
+            photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), googleMediaItem));
+        }
+        for (VideoModel video : container.getVideos()) {
+            GoogleMediaItem googleMediaItem = getOrCreatePhotosInterface(authData).getMediaItem(video.getDataId());
+            videosBuilder.add(GoogleMediaItem.convertToVideoModel(Optional.empty(), googleMediaItem));
+        }
+        MediaContainerResource mediaContainerResource = new MediaContainerResource(albumBuilder.build(), photosBuilder.build(), videosBuilder.build());
+        ContinuationData continuationData = new ContinuationData(null);
+        subResources.forEach(resource -> continuationData.addContainerResource(resource));
+        return new ExportResult<>(ResultType.CONTINUE, mediaContainerResource, continuationData);
     }
 
-    for (PhotoModel photo : container.getPhotos()) {
-      GoogleMediaItem googleMediaItem =
-          getOrCreatePhotosInterface(authData).getMediaItem(photo.getDataId());
-      photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), googleMediaItem));
-    }
-
-    for (VideoModel video : container.getVideos()) {
-      GoogleMediaItem googleMediaItem = getOrCreatePhotosInterface(authData).getMediaItem(video.getDataId());
-      videosBuilder.add(GoogleMediaItem.convertToVideoModel(Optional.empty(), googleMediaItem));
-    }
-
-    MediaContainerResource mediaContainerResource =
-        new MediaContainerResource(
-            albumBuilder.build(), photosBuilder.build(), videosBuilder.build());
-    ContinuationData continuationData = new ContinuationData(null);
-    subResources.forEach(resource -> continuationData.addContainerResource(resource));
-    return new ExportResult<>(ResultType.CONTINUE, mediaContainerResource, continuationData);
-  }
-
-  /**
-   * Note: not all accounts have albums to return. In that case, we just return an empty list of
-   * albums instead of trying to iterate through a null list.
-   */
-  @VisibleForTesting
-  ExportResult<MediaContainerResource> exportAlbums(
-      TokensAndUrlAuthData authData, Optional<PaginationData> paginationData, UUID jobId)
-      throws IOException, InvalidTokenException, PermissionDeniedException {
-    Optional<String> paginationToken = Optional.empty();
-    if (paginationData.isPresent()) {
-      String token = ((StringPaginationToken) paginationData.get()).getToken();
-      Preconditions.checkArgument(
-          token.startsWith(ALBUM_TOKEN_PREFIX), "Invalid pagination token " + token);
-      paginationToken = Optional.of(token.substring(ALBUM_TOKEN_PREFIX.length()));
-    }
-
-    AlbumListResponse albumListResponse;
-
-    albumListResponse = getOrCreatePhotosInterface(authData).listAlbums(paginationToken);
-
-    PaginationData nextPageData;
-    String token = albumListResponse.getNextPageToken();
-    List<MediaAlbum> albums = new ArrayList<>();
-    GoogleAlbum[] googleAlbums = albumListResponse.getAlbums();
-
-    if (Strings.isNullOrEmpty(token)) {
-      nextPageData = new StringPaginationToken(MEDIA_TOKEN_PREFIX);
-    } else {
-      nextPageData = new StringPaginationToken(ALBUM_TOKEN_PREFIX + token);
-    }
-    ContinuationData continuationData = new ContinuationData(nextPageData);
-
-    if (googleAlbums != null && googleAlbums.length > 0) {
-      for (GoogleAlbum googleAlbum : googleAlbums) {
-        // Add album info to list so album can be recreated later
-        MediaAlbum album = new MediaAlbum(googleAlbum.getId(), googleAlbum.getTitle(), null);
-        albums.add(album);
-
-        monitor.debug(
-            () -> String.format("%s: Google Photos exporting album: %s", jobId, album.getId()));
-
-        // Add album id to continuation data
-        continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getId()));
-      }
-    }
-
-    ResultType resultType = ResultType.CONTINUE;
-
-    MediaContainerResource containerResource = new MediaContainerResource(albums, null, null);
-    return new ExportResult<>(resultType, containerResource, continuationData);
-  }
-
-  @VisibleForTesting
-  ExportResult<MediaContainerResource> exportMedia(
-      TokensAndUrlAuthData authData,
-      Optional<IdOnlyContainerResource> albumData,
-      Optional<PaginationData> paginationData,
-      UUID jobId)
-      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
-    Optional<String> albumId = Optional.empty();
-    if (albumData.isPresent()) {
-      albumId = Optional.of(albumData.get().getId());
-    }
-    Optional<String> paginationToken = getPhotosPaginationToken(paginationData);
-
-    MediaItemSearchResponse mediaItemSearchResponse =
-        getOrCreatePhotosInterface(authData).listMediaItems(albumId, paginationToken);
-
-    PaginationData nextPageData = null;
-    if (!Strings.isNullOrEmpty(mediaItemSearchResponse.getNextPageToken())) {
-      nextPageData =
-          new StringPaginationToken(
-              MEDIA_TOKEN_PREFIX + mediaItemSearchResponse.getNextPageToken());
-    }
-    ContinuationData continuationData = new ContinuationData(nextPageData);
-
-    MediaContainerResource containerResource = null;
-    GoogleMediaItem[] mediaItems = mediaItemSearchResponse.getMediaItems();
-    if (mediaItems != null && mediaItems.length > 0) {
-      containerResource = convertMediaListToResource(albumId, mediaItems, jobId);
-    }
-
-    ResultType resultType = ResultType.CONTINUE;
-    if (nextPageData == null) {
-      resultType = ResultType.END;
-    }
-
-    return new ExportResult<>(resultType, containerResource, continuationData);
-  }
-
-  /** Method for storing a list of all photos that are already contained in albums */
-  void populateContainedMediaList(UUID jobId, TokensAndUrlAuthData authData)
-      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
-    // This method is only called once at the beginning of the transfer, so we can start by
-    // initializing a new TempMediaData to be store in the job store.
-    TempMediaData tempMediaData = new TempMediaData(jobId);
-
-    String albumToken = null;
-    AlbumListResponse albumListResponse;
-    MediaItemSearchResponse containedMediaSearchResponse;
-    do {
-      albumListResponse =
-          getOrCreatePhotosInterface(authData).listAlbums(Optional.ofNullable(albumToken));
-      if (albumListResponse.getAlbums() != null) {
-        for (GoogleAlbum album : albumListResponse.getAlbums()) {
-          String albumId = album.getId();
-          String photoToken = null;
-          do {
-            containedMediaSearchResponse =
-                getOrCreatePhotosInterface(authData)
-                    .listMediaItems(Optional.of(albumId), Optional.ofNullable(photoToken));
-            if (containedMediaSearchResponse.getMediaItems() != null) {
-              for (GoogleMediaItem mediaItem : containedMediaSearchResponse.getMediaItems()) {
-                tempMediaData.addContainedPhotoId(mediaItem.getId());
-              }
+    /**
+     * Note: not all accounts have albums to return. In that case, we just return an empty list of
+     * albums instead of trying to iterate through a null list.
+     */
+    @VisibleForTesting
+    ExportResult<MediaContainerResource> exportAlbums(TokensAndUrlAuthData authData, Optional<PaginationData> paginationData, UUID jobId) throws IOException, InvalidTokenException, PermissionDeniedException {
+        Optional<String> paginationToken = Optional.empty();
+        if (paginationData.isPresent()) {
+            String token = ((StringPaginationToken) paginationData.get()).getToken();
+            Preconditions.checkArgument(token.startsWith(ALBUM_TOKEN_PREFIX), "Invalid pagination token " + token);
+            paginationToken = Optional.of(token.substring(ALBUM_TOKEN_PREFIX.length()));
+        }
+        AlbumListResponse albumListResponse;
+        albumListResponse = getOrCreatePhotosInterface(authData).listAlbums(paginationToken);
+        PaginationData nextPageData;
+        String token = albumListResponse.getNextPageToken();
+        List<MediaAlbum> albums = new ArrayList<>();
+        GoogleAlbum[] googleAlbums = albumListResponse.getAlbums();
+        if (Strings.isNullOrEmpty(token)) {
+            nextPageData = new StringPaginationToken(MEDIA_TOKEN_PREFIX);
+        } else {
+            nextPageData = new StringPaginationToken(ALBUM_TOKEN_PREFIX + token);
+        }
+        ContinuationData continuationData = new ContinuationData(nextPageData);
+        if (googleAlbums != null && googleAlbums.length > 0) {
+            for (GoogleAlbum googleAlbum : googleAlbums) {
+                // Add album info to list so album can be recreated later
+                MediaAlbum album = new MediaAlbum(googleAlbum.getId(), googleAlbum.getTitle(), null);
+                albums.add(album);
+                monitor.debug(() -> String.format("%s: Google Photos exporting album: %s", jobId, album.getId()));
+                // Add album id to continuation data
+                continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getId()));
             }
-            photoToken = containedMediaSearchResponse.getNextPageToken();
-          } while (photoToken != null);
         }
-      }
-      albumToken = albumListResponse.getNextPageToken();
-    } while (albumToken != null);
-
-    // TODO: if we see complaints about objects being too large for JobStore in other places, we
-    // should consider putting logic in JobStore itself to handle it
-    InputStream stream = convertJsonToInputStream(tempMediaData);
-    jobStore.create(jobId, createCacheKey(), stream);
-  }
-
-  private Optional<String> getPhotosPaginationToken(Optional<PaginationData> paginationData) {
-    Optional<String> paginationToken = Optional.empty();
-    if (paginationData.isPresent()) {
-      String token = ((StringPaginationToken) paginationData.get()).getToken();
-      Preconditions.checkArgument(
-          token.startsWith(MEDIA_TOKEN_PREFIX), "Invalid pagination token " + token);
-      if (token.length() > MEDIA_TOKEN_PREFIX.length()) {
-        paginationToken = Optional.of(token.substring(MEDIA_TOKEN_PREFIX.length()));
-      }
-    }
-    return paginationToken;
-  }
-
-  private MediaContainerResource convertMediaListToResource(
-      Optional<String> albumId, GoogleMediaItem[] mediaItems, UUID jobId) throws IOException {
-    List<PhotoModel> photos = new ArrayList<>(mediaItems.length);
-    List<VideoModel> videos = new ArrayList<>(mediaItems.length);
-
-    TempMediaData tempMediaData = null;
-    InputStream stream = jobStore.getStream(jobId, createCacheKey()).getStream();
-    if (stream != null) {
-      tempMediaData = new ObjectMapper().readValue(stream, TempMediaData.class);
-      stream.close();
+        ResultType resultType = ResultType.CONTINUE;
+        MediaContainerResource containerResource = new MediaContainerResource(albums, null, null);
+        return new ExportResult<>(resultType, containerResource, continuationData);
     }
 
-    for (GoogleMediaItem mediaItem : mediaItems) {
-      boolean shouldUpload = albumId.isPresent();
-
-      if (tempMediaData != null) {
-        shouldUpload = shouldUpload || !tempMediaData.isContainedPhotoId(mediaItem.getId());
-      }
-
-      if (mediaItem.isPhoto()) {
-        if (shouldUpload) {
-          PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(albumId, mediaItem);
-          photos.add(photoModel);
-
-          monitor.debug(
-              () -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
+    @VisibleForTesting
+    ExportResult<MediaContainerResource> exportMedia(TokensAndUrlAuthData authData, Optional<IdOnlyContainerResource> albumData, Optional<PaginationData> paginationData, UUID jobId) throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+        Optional<String> albumId = Optional.empty();
+        if (albumData.isPresent()) {
+            albumId = Optional.of(albumData.get().getId());
         }
-      } else if (mediaItem.isVideo()) {
-        if (shouldUpload) {
-          VideoModel videoModel = GoogleMediaItem.convertToVideoModel(albumId, mediaItem);
-          videos.add(videoModel);
-          monitor.debug(
-              () -> String.format("%s: Google exporting video: %s", jobId, videoModel.getDataId()));
+        Optional<String> paginationToken = getPhotosPaginationToken(paginationData);
+        MediaItemSearchResponse mediaItemSearchResponse = getOrCreatePhotosInterface(authData).listMediaItems(albumId, paginationToken);
+        PaginationData nextPageData = null;
+        if (!Strings.isNullOrEmpty(mediaItemSearchResponse.getNextPageToken())) {
+            nextPageData = new StringPaginationToken(MEDIA_TOKEN_PREFIX + mediaItemSearchResponse.getNextPageToken());
         }
-      }
+        ContinuationData continuationData = new ContinuationData(nextPageData);
+        MediaContainerResource containerResource = null;
+        GoogleMediaItem[] mediaItems = mediaItemSearchResponse.getMediaItems();
+        if (mediaItems != null && mediaItems.length > 0) {
+            containerResource = convertMediaListToResource(albumId, mediaItems, jobId);
+        }
+        ResultType resultType = ResultType.CONTINUE;
+        if (nextPageData == null) {
+            resultType = ResultType.END;
+        }
+        return new ExportResult<>(resultType, containerResource, continuationData);
     }
-    return new MediaContainerResource(null  /*albums*/, photos, videos);
-  }
 
-  private synchronized GooglePhotosInterface getOrCreatePhotosInterface(
-      TokensAndUrlAuthData authData) {
-    return photosInterface == null ? makePhotosInterface(authData) : photosInterface;
-  }
+    /**
+     * Method for storing a list of all photos that are already contained in albums
+     */
+    void populateContainedMediaList(UUID jobId, TokensAndUrlAuthData authData) throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+        // This method is only called once at the beginning of the transfer, so we can start by
+        // initializing a new TempMediaData to be store in the job store.
+        TempMediaData tempMediaData = new TempMediaData(jobId);
+        String albumToken = null;
+        AlbumListResponse albumListResponse;
+        MediaItemSearchResponse containedMediaSearchResponse;
+        do {
+            albumListResponse = getOrCreatePhotosInterface(authData).listAlbums(Optional.ofNullable(albumToken));
+            if (albumListResponse.getAlbums() != null) {
+                for (GoogleAlbum album : albumListResponse.getAlbums()) {
+                    String albumId = album.getId();
+                    String photoToken = null;
+                    do {
+                        containedMediaSearchResponse = getOrCreatePhotosInterface(authData).listMediaItems(Optional.of(albumId), Optional.ofNullable(photoToken));
+                        if (containedMediaSearchResponse.getMediaItems() != null) {
+                            for (GoogleMediaItem mediaItem : containedMediaSearchResponse.getMediaItems()) {
+                                tempMediaData.addContainedPhotoId(mediaItem.getId());
+                            }
+                        }
+                        photoToken = containedMediaSearchResponse.getNextPageToken();
+                    } while (photoToken != null);
+                }
+            }
+            albumToken = albumListResponse.getNextPageToken();
+        } while (albumToken != null);
+        // TODO: if we see complaints about objects being too large for JobStore in other places, we
+        // should consider putting logic in JobStore itself to handle it
+        InputStream stream = convertJsonToInputStream(tempMediaData);
+        jobStore.create(jobId, createCacheKey(), stream);
+    }
 
-  private synchronized GooglePhotosInterface makePhotosInterface(TokensAndUrlAuthData authData) {
-    Credential credential = credentialFactory.createCredential(authData);
-    return new GooglePhotosInterface(
-        credentialFactory, credential, jsonFactory, monitor, /* arbitrary writesPerSecond */ 1.0);
-  }
+    private Optional<String> getPhotosPaginationToken(Optional<PaginationData> paginationData) {
+        Optional<String> paginationToken = Optional.empty();
+        if (paginationData.isPresent()) {
+            String token = ((StringPaginationToken) paginationData.get()).getToken();
+            Preconditions.checkArgument(token.startsWith(MEDIA_TOKEN_PREFIX), "Invalid pagination token " + token);
+            if (token.length() > MEDIA_TOKEN_PREFIX.length()) {
+                paginationToken = Optional.of(token.substring(MEDIA_TOKEN_PREFIX.length()));
+            }
+        }
+        return paginationToken;
+    }
+
+    private MediaContainerResource convertMediaListToResource(Optional<String> albumId, GoogleMediaItem[] mediaItems, UUID jobId) throws IOException {
+        List<PhotoModel> photos = new ArrayList<>(mediaItems.length);
+        List<VideoModel> videos = new ArrayList<>(mediaItems.length);
+        TempMediaData tempMediaData = null;
+        InputStream stream = jobStore.getStream(jobId, createCacheKey()).getStream();
+        if (stream != null) {
+            tempMediaData = new ObjectMapper().readValue(stream, TempMediaData.class);
+            stream.close();
+        }
+        for (GoogleMediaItem mediaItem : mediaItems) {
+            boolean shouldUpload = albumId.isPresent();
+            if (tempMediaData != null) {
+                shouldUpload = shouldUpload || !tempMediaData.isContainedPhotoId(mediaItem.getId());
+            }
+            if (mediaItem.isPhoto()) {
+                if (shouldUpload) {
+                    PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(albumId, mediaItem);
+                    photos.add(photoModel);
+                    monitor.debug(() -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
+                }
+            } else if (mediaItem.isVideo()) {
+                if (shouldUpload) {
+                    VideoModel videoModel = GoogleMediaItem.convertToVideoModel(albumId, mediaItem);
+                    videos.add(videoModel);
+                    monitor.debug(() -> String.format("%s: Google exporting video: %s", jobId, videoModel.getDataId()));
+                }
+            }
+        }
+        return new MediaContainerResource(null, /*albums*/
+        photos, videos);
+    }
+
+    private synchronized GooglePhotosInterface getOrCreatePhotosInterface(TokensAndUrlAuthData authData) {
+        return photosInterface == null ? makePhotosInterface(authData) : photosInterface;
+    }
+
+    private synchronized GooglePhotosInterface makePhotosInterface(TokensAndUrlAuthData authData) {
+        Credential credential = credentialFactory.createCredential(authData);
+        return new GooglePhotosInterface(credentialFactory, credential, jsonFactory, monitor, /* arbitrary writesPerSecond */
+        1.0);
+    }
 }

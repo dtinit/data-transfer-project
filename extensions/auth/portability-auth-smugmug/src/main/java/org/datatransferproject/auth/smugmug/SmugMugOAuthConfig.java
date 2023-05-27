@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.auth.smugmug;
 
 import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.Collections;
@@ -33,49 +31,45 @@ import org.datatransferproject.types.common.models.DataVertical;
  */
 public class SmugMugOAuthConfig implements OAuth1Config {
 
-  private static final String ACCESS = "Access";
-  private static final String PERMISSIONS = "Permissions";
+    private static final String ACCESS = "Access";
 
-  @Override
-  public String getServiceName() {
-    return "SmugMug";
-  }
+    private static final String PERMISSIONS = "Permissions";
 
-  @Override
-  public String getRequestTokenUrl() {
-    return "https://secure.smugmug.com/services/oauth/1.0a/getRequestToken";
-  }
-
-  @Override
-  public String getAuthorizationUrl() {
-    return "https://secure.smugmug.com/services/oauth/1.0a/authorize";
-  }
-
-  @Override
-  public String getAccessTokenUrl() {
-    return "https://secure.smugmug.com/services/oauth/1.0a/getAccessToken";
-  }
-
-  @Override
-  public List<DataVertical> getExportTypes() {
-    return ImmutableList.of(PHOTOS);
-  }
-
-  @Override
-  public List<DataVertical> getImportTypes() {
-    return ImmutableList.of(PHOTOS);
-  }
-
-  public Map<String, String> getAdditionalUrlParameters(
-      DataVertical dataType, AuthMode mode, OAuth1Step step) {
-
-    if (dataType.equals(PHOTOS) && step == OAuth1Step.AUTHORIZATION) {
-      return (mode == AuthMode.EXPORT)
-          ? ImmutableMap.of(ACCESS, "Full", PERMISSIONS, "Read")
-          : ImmutableMap.of(ACCESS, "Full", PERMISSIONS, "Add");
+    @Override
+    public String getServiceName() {
+        return "SmugMug";
     }
 
-    // default
-    return Collections.emptyMap();
-  }
+    @Override
+    public String getRequestTokenUrl() {
+        return "https://secure.smugmug.com/services/oauth/1.0a/getRequestToken";
+    }
+
+    @Override
+    public String getAuthorizationUrl() {
+        return "https://secure.smugmug.com/services/oauth/1.0a/authorize";
+    }
+
+    @Override
+    public String getAccessTokenUrl() {
+        return "https://secure.smugmug.com/services/oauth/1.0a/getAccessToken";
+    }
+
+    @Override
+    public List<DataVertical> getExportTypes() {
+        return ImmutableList.of(PHOTOS);
+    }
+
+    @Override
+    public List<DataVertical> getImportTypes() {
+        return ImmutableList.of(PHOTOS);
+    }
+
+    public Map<String, String> getAdditionalUrlParameters(DataVertical dataType, AuthMode mode, OAuth1Step step) {
+        if (dataType.equals(PHOTOS) && step == OAuth1Step.AUTHORIZATION) {
+            return (mode == AuthMode.EXPORT) ? ImmutableMap.of(ACCESS, "Full", PERMISSIONS, "Read") : ImmutableMap.of(ACCESS, "Full", PERMISSIONS, "Add");
+        }
+        // default
+        return Collections.emptyMap();
+    }
 }

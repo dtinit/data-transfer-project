@@ -15,10 +15,11 @@
  */
 package org.datatransferproject.security;
 
-/** Provides compile-time constants for secure crypto transformations. For use 
-in creation of Encrypter/Decrypter */
+/**
+ *  Provides compile-time constants for secure crypto transformations. For use
+ * in creation of Encrypter/Decrypter
+ */
 public enum CryptoTransformation {
-	AES_CBC_NOPADDING,
-	RSA_ECB_PKCS1
-}
 
+    AES_CBC_NOPADDING, RSA_ECB_PKCS1
+}
