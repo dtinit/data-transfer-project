@@ -43,85 +43,78 @@ import org.datatransferproject.types.common.models.contacts.ContactsModelWrapper
  */
 public class MicrosoftContactsExporter implements Exporter<TokensAndUrlAuthData, ContactsModelWrapper> {
 
-  private static final String CONTACTS_SUBPATH = "/v1.0/me/contacts";
-  private static final String ODATA_NEXT = "@odata.nextLink";
+    private static final String CONTACTS_SUBPATH = "/v1.0/me/contacts";
 
-  private final String contactsUrl;
-  private final OkHttpClient client;
-  private final ObjectMapper objectMapper;
-  private final TransformerService transformerService;
+    private static final String ODATA_NEXT = "@odata.nextLink";
 
-  public MicrosoftContactsExporter(
-      String baseUrl,
-      OkHttpClient client,
-      ObjectMapper objectMapper,
-      TransformerService transformerService) {
-    this.contactsUrl = baseUrl + CONTACTS_SUBPATH;
-    this.client = client;
-    this.objectMapper = objectMapper;
-    this.transformerService = transformerService;
-  }
+    private final String contactsUrl;
 
-  @Override
-  public ExportResult<ContactsModelWrapper> export(
-      UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
-    GraphPagination graphPagination =
-        exportInformation.isPresent() ? (GraphPagination) exportInformation.get()
-            .getPaginationData() : null;
-    if (graphPagination != null && graphPagination.getNextLink() != null) {
-      return doExport(authData, graphPagination.getNextLink());
-    } else {
-      return doExport(authData, contactsUrl);
+    private final OkHttpClient client;
+
+    private final ObjectMapper objectMapper;
+
+    private final TransformerService transformerService;
+
+    public MicrosoftContactsExporter(String baseUrl, OkHttpClient client, ObjectMapper objectMapper, TransformerService transformerService) {
+        this.contactsUrl = baseUrl + CONTACTS_SUBPATH;
+        this.client = client;
+        this.objectMapper = objectMapper;
+        this.transformerService = transformerService;
     }
-  }
 
-  @SuppressWarnings("unchecked")
-  private ExportResult<ContactsModelWrapper> doExport(TokensAndUrlAuthData authData, String url) {
-    Request.Builder graphReqBuilder = new Request.Builder().url(url);
-    graphReqBuilder.header("Authorization", "Bearer " + authData.getAccessToken());
-
-    try (Response graphResponse = client.newCall(graphReqBuilder.build()).execute()) {
-      ResponseBody body = graphResponse.body();
-      if (body == null) {
-        return new ExportResult<>(new Exception( "Error retrieving contacts: response body was null"));
-      }
-      String graphBody = new String(body.bytes());
-      Map graphMap = objectMapper.reader().forType(Map.class).readValue(graphBody);
-
-      String nextLink = (String) graphMap.get(ODATA_NEXT);
-      ContinuationData continuationData =
-          nextLink == null ? null : new ContinuationData(new GraphPagination(nextLink));
-
-      List<Map<String, Object>> rawContacts = (List<Map<String, Object>>) graphMap.get("value");
-      if (rawContacts == null) {
-        return new ExportResult<>(ExportResult.ResultType.END);
-      }
-
-      ContactsModelWrapper wrapper = transform(rawContacts);
-      return new ExportResult<>(ExportResult.ResultType.CONTINUE, wrapper, continuationData);
-    } catch (IOException e) {
-      e.printStackTrace(); // FIXME log error
-      return new ExportResult<>(e);
-    }
-  }
-
-  private ContactsModelWrapper transform(List<Map<String, Object>> rawContacts) {
-    StringWriter stringWriter = new StringWriter();
-    try (JCardWriter writer = new JCardWriter(stringWriter)) {
-      for (Map<String, Object> rawContact : rawContacts) {
-        TransformResult<VCard> result = transformerService.transform(VCard.class, rawContact);
-        if (result.hasProblems()) {
-          // discard
-          // FIXME log problem
-          continue;
+    @Override
+    public ExportResult<ContactsModelWrapper> export(UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
+        GraphPagination graphPagination = exportInformation.isPresent() ? (GraphPagination) exportInformation.get().getPaginationData() : null;
+        if (graphPagination != null && graphPagination.getNextLink() != null) {
+            return doExport(authData, graphPagination.getNextLink());
+        } else {
+            return doExport(authData, contactsUrl);
         }
-        writer.write(result.getTransformed());
-      }
-    } catch (IOException e) {
-      // TODO log
-      e.printStackTrace();
-      return new ContactsModelWrapper("");
     }
-    return new ContactsModelWrapper(stringWriter.toString());
-  }
+
+    @SuppressWarnings("unchecked")
+    private ExportResult<ContactsModelWrapper> doExport(TokensAndUrlAuthData authData, String url) {
+        Request.Builder graphReqBuilder = new Request.Builder().url(url);
+        graphReqBuilder.header("Authorization", "Bearer " + authData.getAccessToken());
+        try (Response graphResponse = client.newCall(graphReqBuilder.build()).execute()) {
+            ResponseBody body = graphResponse.body();
+            if (body == null) {
+                return new ExportResult<>(new Exception("Error retrieving contacts: response body was null"));
+            }
+            String graphBody = new String(body.bytes());
+            Map graphMap = objectMapper.reader().forType(Map.class).readValue(graphBody);
+            String nextLink = (String) graphMap.get(ODATA_NEXT);
+            ContinuationData continuationData = nextLink == null ? null : new ContinuationData(new GraphPagination(nextLink));
+            List<Map<String, Object>> rawContacts = (List<Map<String, Object>>) graphMap.get("value");
+            if (rawContacts == null) {
+                return new ExportResult<>(ExportResult.ResultType.END);
+            }
+            ContactsModelWrapper wrapper = transform(rawContacts);
+            return new ExportResult<>(ExportResult.ResultType.CONTINUE, wrapper, continuationData);
+        } catch (IOException e) {
+            // FIXME log error
+            e.printStackTrace();
+            return new ExportResult<>(e);
+        }
+    }
+
+    private ContactsModelWrapper transform(List<Map<String, Object>> rawContacts) {
+        StringWriter stringWriter = new StringWriter();
+        try (JCardWriter writer = new JCardWriter(stringWriter)) {
+            for (Map<String, Object> rawContact : rawContacts) {
+                TransformResult<VCard> result = transformerService.transform(VCard.class, rawContact);
+                if (result.hasProblems()) {
+                    // discard
+                    // FIXME log problem
+                    continue;
+                }
+                writer.write(result.getTransformed());
+            }
+        } catch (IOException e) {
+            // TODO log
+            e.printStackTrace();
+            return new ContactsModelWrapper("");
+        }
+        return new ContactsModelWrapper(stringWriter.toString());
+    }
 }

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.types.common.models.music;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -27,56 +26,50 @@ import java.util.Objects;
  */
 public class MusicRelease {
 
-  private final String icpnCode;
-  private final String title;
-  private List<MusicGroup> byArtists;
+    private final String icpnCode;
 
-  @JsonCreator
-  public MusicRelease(
-      @JsonProperty("icpnCode") String icpnCode,
-      @JsonProperty("title") String title,
-      @JsonProperty("byArtists") List<MusicGroup> byArtists) {
-    this.icpnCode = icpnCode;
-    this.title = title;
-    this.byArtists = byArtists;
-  }
+    private final String title;
 
-  public String getIcpnCode() {
-    return icpnCode;
-  }
+    private List<MusicGroup> byArtists;
 
-  public String getTitle() {
-    return title;
-  }
-
-  public List<MusicGroup> getByArtists() {
-    return byArtists;
-  }
-
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("icpnCode", getIcpnCode())
-        .add("title", getTitle())
-        .add("byArtists", getByArtists())
-        .toString();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
+    @JsonCreator
+    public MusicRelease(@JsonProperty("icpnCode") String icpnCode, @JsonProperty("title") String title, @JsonProperty("byArtists") List<MusicGroup> byArtists) {
+        this.icpnCode = icpnCode;
+        this.title = title;
+        this.byArtists = byArtists;
     }
-    if (!(o instanceof MusicRelease)) {
-      return false;
-    }
-    MusicRelease that = (MusicRelease) o;
-    return Objects.equals(icpnCode, that.icpnCode) && Objects.equals(title, that.title)
-        && Objects.equals(byArtists, that.byArtists);
-  }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(icpnCode, title, byArtists);
-  }
+    public String getIcpnCode() {
+        return icpnCode;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public List<MusicGroup> getByArtists() {
+        return byArtists;
+    }
+
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this).add("icpnCode", getIcpnCode()).add("title", getTitle()).add("byArtists", getByArtists()).toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof MusicRelease)) {
+            return false;
+        }
+        MusicRelease that = (MusicRelease) o;
+        return Objects.equals(icpnCode, that.icpnCode) && Objects.equals(title, that.title) && Objects.equals(byArtists, that.byArtists);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(icpnCode, title, byArtists);
+    }
 }

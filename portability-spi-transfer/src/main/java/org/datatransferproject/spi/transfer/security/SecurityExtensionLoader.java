@@ -20,19 +20,17 @@ import com.google.common.collect.ImmutableList;
 import java.util.ServiceLoader;
 import org.datatransferproject.api.launcher.ExtensionContext;
 
-/** Helper for loading the security extensions in a runtime. */
+/**
+ * Helper for loading the security extensions in a runtime.
+ */
 public class SecurityExtensionLoader {
 
-  public static SecurityExtension getSecurityExtension(ExtensionContext context) {
-    ImmutableList.Builder<SecurityExtension> builder = ImmutableList.builder();
-    ServiceLoader.load(SecurityExtension.class)
-        .iterator()
-        .forEachRemaining(builder::add);
-    ImmutableList<SecurityExtension> extensions = builder.build();
-    Preconditions.checkState(
-        extensions.size() == 1,
-        "Exactly one SecurityExtension is required, but found " + extensions.size());
-    extensions.forEach(e -> e.initialize(context));
-    return extensions.get(0);
-  }
+    public static SecurityExtension getSecurityExtension(ExtensionContext context) {
+        ImmutableList.Builder<SecurityExtension> builder = ImmutableList.builder();
+        ServiceLoader.load(SecurityExtension.class).iterator().forEachRemaining(builder::add);
+        ImmutableList<SecurityExtension> extensions = builder.build();
+        Preconditions.checkState(extensions.size() == 1, "Exactly one SecurityExtension is required, but found " + extensions.size());
+        extensions.forEach(e -> e.initialize(context));
+        return extensions.get(0);
+    }
 }

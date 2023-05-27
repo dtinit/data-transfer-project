@@ -21,42 +21,41 @@ import org.datatransferproject.api.action.ActionUtils;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry;
 import org.datatransferproject.types.client.transfer.TransferServices;
 import org.datatransferproject.types.client.transfer.GetTransferServices;
-
 import java.util.Set;
 import org.datatransferproject.types.common.models.DataVertical;
 
-/** Returns the import and export services available for a given data type. */
-public final class GetTransferServicesAction
-    implements Action<GetTransferServices, TransferServices> {
+/**
+ * Returns the import and export services available for a given data type.
+ */
+public final class GetTransferServicesAction implements Action<GetTransferServices, TransferServices> {
 
-  private final AuthServiceProviderRegistry registry;
+    private final AuthServiceProviderRegistry registry;
 
-  @Inject
-  GetTransferServicesAction(AuthServiceProviderRegistry registry) {
-    this.registry = registry;
-  }
-
-  @Override
-  public Class<GetTransferServices> getRequestType() {
-    return GetTransferServices.class;
-  }
-
-  /** Lists the services available for export and import for a given data type. */
-  @Override
-  public TransferServices handle(GetTransferServices request) {
-    DataVertical transferDataType = request.getTransferDataType();
-    // Validate incoming data type parameter
-    if (!ActionUtils.isValidTransferDataType(transferDataType)) {
-      throw new IllegalArgumentException("Invalid transferDataType: " + transferDataType);
+    @Inject
+    GetTransferServicesAction(AuthServiceProviderRegistry registry) {
+        this.registry = registry;
     }
 
-    Set<String> importServices = registry.getImportServices(transferDataType);
-    Set<String> exportServices = registry.getExportServices(transferDataType);
-
-    if (importServices.isEmpty() || exportServices.isEmpty()) {
-      throw new IllegalArgumentException(
-          "[" + transferDataType + "] does not have an import and export service");
+    @Override
+    public Class<GetTransferServices> getRequestType() {
+        return GetTransferServices.class;
     }
-    return new TransferServices(transferDataType, exportServices,importServices);
-  }
+
+    /**
+     * Lists the services available for export and import for a given data type.
+     */
+    @Override
+    public TransferServices handle(GetTransferServices request) {
+        DataVertical transferDataType = request.getTransferDataType();
+        // Validate incoming data type parameter
+        if (!ActionUtils.isValidTransferDataType(transferDataType)) {
+            throw new IllegalArgumentException("Invalid transferDataType: " + transferDataType);
+        }
+        Set<String> importServices = registry.getImportServices(transferDataType);
+        Set<String> exportServices = registry.getExportServices(transferDataType);
+        if (importServices.isEmpty() || exportServices.isEmpty()) {
+            throw new IllegalArgumentException("[" + transferDataType + "] does not have an import and export service");
+        }
+        return new TransferServices(transferDataType, exportServices, importServices);
+    }
 }

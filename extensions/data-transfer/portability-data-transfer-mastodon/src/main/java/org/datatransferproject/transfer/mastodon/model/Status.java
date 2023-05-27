@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.transfer.mastodon.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -27,71 +26,73 @@ import java.time.Instant;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Status {
-  private String id;
-  private String uri;
-  @Nullable private String url;
-  private Account account;
-  @Nullable private String inReplyToId;
-  @Nullable private String inReplyToAccountId;
-  private String content;
-  private String createdAtTime;
 
+    private String id;
 
-  public Status(
-      @JsonProperty("id") String id,
-      @JsonProperty("uri") String uri,
-      @JsonProperty("url") @Nullable String url,
-      @JsonProperty("account") Account account,
-      @JsonProperty("in_reply_to_id") @Nullable String inReplyToId,
-      @JsonProperty("in_reply_to_account_id") @Nullable String inReplyToAccountId,
-      @JsonProperty("created_at") String createdAtTime,
-      @JsonProperty("content") String content) {
-    this.id = id;
-    this.uri = uri;
-    this.url = url;
-    this.account = account;
-    this.inReplyToId = inReplyToId;
-    this.inReplyToAccountId = inReplyToAccountId;
-    this.createdAtTime = createdAtTime;
-    this.content = content;
-  }
+    private String uri;
 
-  public String getId() {
-    return id;
-  }
+    @Nullable
+    private String url;
 
-  public String getUri() {
-    return uri;
-  }
+    private Account account;
 
-  @Nullable
-  public String getUrl() {
-    return url;
-  }
+    @Nullable
+    private String inReplyToId;
 
-  public Account getAccount() {
-    return account;
-  }
+    @Nullable
+    private String inReplyToAccountId;
 
-  @Nullable
-  public String getInReplyToId() {
-    return inReplyToId;
-  }
+    private String content;
 
-  @Nullable
-  public String getInReplyToAccountId() {
-    return inReplyToAccountId;
-  }
+    private String createdAtTime;
 
-  public String getCreatedAtTime() {
-    return createdAtTime;
-  }
+    public Status(@JsonProperty("id") String id, @JsonProperty("uri") String uri, @JsonProperty("url") @Nullable String url, @JsonProperty("account") Account account, @JsonProperty("in_reply_to_id") @Nullable String inReplyToId, @JsonProperty("in_reply_to_account_id") @Nullable String inReplyToAccountId, @JsonProperty("created_at") String createdAtTime, @JsonProperty("content") String content) {
+        this.id = id;
+        this.uri = uri;
+        this.url = url;
+        this.account = account;
+        this.inReplyToId = inReplyToId;
+        this.inReplyToAccountId = inReplyToAccountId;
+        this.createdAtTime = createdAtTime;
+        this.content = content;
+    }
 
-  public Instant getCreatedAt() {
-    return Instant.parse(createdAtTime);
-  }
+    public String getId() {
+        return id;
+    }
 
-  public String getContent() {
-    return content;
-  }
+    public String getUri() {
+        return uri;
+    }
+
+    @Nullable
+    public String getUrl() {
+        return url;
+    }
+
+    public Account getAccount() {
+        return account;
+    }
+
+    @Nullable
+    public String getInReplyToId() {
+        return inReplyToId;
+    }
+
+    @Nullable
+    public String getInReplyToAccountId() {
+        return inReplyToAccountId;
+    }
+
+    public String getCreatedAtTime() {
+        return createdAtTime;
+    }
+
+    public Instant getCreatedAt() {
+        return Instant.parse(createdAtTime);
+    }
+
+    public String getContent() {
+        return content;
+    }
 }

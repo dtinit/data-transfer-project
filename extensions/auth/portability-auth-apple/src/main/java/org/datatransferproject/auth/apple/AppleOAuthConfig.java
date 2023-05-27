@@ -13,17 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.auth.apple;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.datatransferproject.auth.OAuth2Config;
 import org.datatransferproject.types.common.models.DataVertical;
-
 import java.util.Map;
 import java.util.Set;
-
 import static org.datatransferproject.types.common.models.DataVertical.MEDIA;
 import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
 import static org.datatransferproject.types.common.models.DataVertical.VIDEOS;
@@ -32,10 +29,14 @@ import static org.datatransferproject.types.common.models.DataVertical.VIDEOS;
  *  OAuth Configuration for Apple Services.
  */
 public class AppleOAuthConfig implements OAuth2Config {
+
     private static final String PHOTOS_APPEND_ONLY = "photos-appendonly";
+
     private static final String VIDEOS_APPEND_ONLY = "videos-appendonly";
-  private static final String PHOTOS_READONLY_ONLY = "photos-readonly";
-  private static final String VIDEOS_READONLY_ONLY = "videos-readonly";
+
+    private static final String PHOTOS_READONLY_ONLY = "photos-readonly";
+
+    private static final String VIDEOS_READONLY_ONLY = "videos-readonly";
 
     @Override
     public String getServiceName() {
@@ -54,19 +55,11 @@ public class AppleOAuthConfig implements OAuth2Config {
 
     @Override
     public Map<DataVertical, Set<String>> getExportScopes() {
-      return ImmutableMap.<DataVertical, Set<String>>builder()
-        .put(PHOTOS, ImmutableSet.of(PHOTOS_READONLY_ONLY))
-        .put(VIDEOS, ImmutableSet.of(VIDEOS_READONLY_ONLY))
-        .put(MEDIA, ImmutableSet.of(PHOTOS_READONLY_ONLY, VIDEOS_READONLY_ONLY))
-        .build();
+        return ImmutableMap.<DataVertical, Set<String>>builder().put(PHOTOS, ImmutableSet.of(PHOTOS_READONLY_ONLY)).put(VIDEOS, ImmutableSet.of(VIDEOS_READONLY_ONLY)).put(MEDIA, ImmutableSet.of(PHOTOS_READONLY_ONLY, VIDEOS_READONLY_ONLY)).build();
     }
 
     @Override
     public Map<DataVertical, Set<String>> getImportScopes() {
-        return ImmutableMap.<DataVertical, Set<String>>builder()
-                .put(PHOTOS, ImmutableSet.of(PHOTOS_APPEND_ONLY))
-                .put(VIDEOS, ImmutableSet.of(VIDEOS_APPEND_ONLY))
-                .put(MEDIA, ImmutableSet.of(PHOTOS_APPEND_ONLY, VIDEOS_APPEND_ONLY))
-                .build();
+        return ImmutableMap.<DataVertical, Set<String>>builder().put(PHOTOS, ImmutableSet.of(PHOTOS_APPEND_ONLY)).put(VIDEOS, ImmutableSet.of(VIDEOS_APPEND_ONLY)).put(MEDIA, ImmutableSet.of(PHOTOS_APPEND_ONLY, VIDEOS_APPEND_ONLY)).build();
     }
 }

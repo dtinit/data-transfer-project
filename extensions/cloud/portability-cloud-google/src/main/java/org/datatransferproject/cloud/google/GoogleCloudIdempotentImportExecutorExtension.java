@@ -9,35 +9,29 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorExtension;
 
-public class GoogleCloudIdempotentImportExecutorExtension implements
-    IdempotentImportExecutorExtension {
+public class GoogleCloudIdempotentImportExecutorExtension implements IdempotentImportExecutorExtension {
 
-  private Datastore datastore;
+    private Datastore datastore;
 
-  @Override
-  public IdempotentImportExecutor getIdempotentImportExecutor(ExtensionContext extensionContext) {
-    Monitor monitor = extensionContext.getMonitor();
-    try {
-      return new GoogleCloudIdempotentImportExecutor(getDatastore(), monitor);
-    } catch (IOException e) {
-      monitor.severe(() -> "Error initializing datastore: " + e);
-      throw new IllegalStateException(e);
-    }
-  }
-
-  @Override
-  public void initialize() {
-  }
-
-  private synchronized Datastore getDatastore() throws IOException {
-    if (datastore == null) {
-      datastore = DatastoreOptions.newBuilder()
-          .setProjectId(GoogleCloudUtils.getProjectId())
-          .setCredentials(GoogleCredentials.getApplicationDefault())
-          .build()
-          .getService();
+    @Override
+    public IdempotentImportExecutor getIdempotentImportExecutor(ExtensionContext extensionContext) {
+        Monitor monitor = extensionContext.getMonitor();
+        try {
+            return new GoogleCloudIdempotentImportExecutor(getDatastore(), monitor);
+        } catch (IOException e) {
+            monitor.severe(() -> "Error initializing datastore: " + e);
+            throw new IllegalStateException(e);
+        }
     }
 
-    return datastore;
-  }
+    @Override
+    public void initialize() {
+    }
+
+    private synchronized Datastore getDatastore() throws IOException {
+        if (datastore == null) {
+            datastore = DatastoreOptions.newBuilder().setProjectId(GoogleCloudUtils.getProjectId()).setCredentials(GoogleCredentials.getApplicationDefault()).build().getService();
+        }
+        return datastore;
+    }
 }

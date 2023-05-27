@@ -23,14 +23,16 @@ import java.util.UUID;
  */
 public interface JobHooks {
 
-  /** Called when a job starts processing on a worker. */
-  default void jobStarted(UUID jobId) {
-  }
+    /**
+     * Called when a job starts processing on a worker.
+     */
+    default void jobStarted(UUID jobId) {
+    }
 
-  /**
-   * Called when a job finishes processing on a worker. The {@code success} parameter indicates
-   * whether the transfer was succesful or not.
-   */
-  default void jobFinished(UUID jobId, boolean success) {
-  }
+    /**
+     * Called when a job finishes processing on a worker. The {@code success} parameter indicates
+     * whether the transfer was succesful or not.
+     */
+    default void jobFinished(UUID jobId, boolean success) {
+    }
 }

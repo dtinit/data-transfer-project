@@ -31,73 +31,55 @@ import org.datatransferproject.types.common.models.tasks.TaskContainerResource;
 import org.datatransferproject.types.common.models.tasks.TaskListModel;
 import org.datatransferproject.types.common.models.tasks.TaskModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-
 import java.io.IOException;
 import java.util.UUID;
 
-
 public class GoogleTasksImporter implements Importer<TokensAndUrlAuthData, TaskContainerResource> {
 
-  private final GoogleCredentialFactory credentialFactory;
-  private Tasks tasksClient;
+    private final GoogleCredentialFactory credentialFactory;
 
-  public GoogleTasksImporter(GoogleCredentialFactory credentialFactory) {
-    this(credentialFactory, null);
-  }
+    private Tasks tasksClient;
 
-  @VisibleForTesting
-  GoogleTasksImporter(GoogleCredentialFactory credentialFactory,
-      Tasks tasksClient) {
-    this.credentialFactory = credentialFactory;
-    this.tasksClient = tasksClient;
-  }
-
-  @Override
-  public ImportResult importItem(
-      UUID jobId,
-      IdempotentImportExecutor idempotentImportExecutor,
-      TokensAndUrlAuthData authData,
-      TaskContainerResource data) throws Exception {
-    Tasks tasksService = getOrCreateTasksService(authData);
-
-    for (TaskListModel oldTasksList : data.getLists()) {
-      TaskList newTaskList = new TaskList().setTitle("Imported copy - " + oldTasksList.getName());
-      idempotentImportExecutor.executeAndSwallowIOExceptions(
-          oldTasksList.getId(),
-          oldTasksList.getName(),
-          () -> tasksService.tasklists().insert(newTaskList).execute().getId());
+    public GoogleTasksImporter(GoogleCredentialFactory credentialFactory) {
+        this(credentialFactory, null);
     }
 
-    for (TaskModel oldTask : data.getTasks()) {
-      Task newTask = new Task().setTitle(oldTask.getText()).setNotes(oldTask.getNotes());
-      if (oldTask.getCompletedTime() != null) {
-        newTask.setCompleted(new DateTime(oldTask.getCompletedTime().toEpochMilli()));
-      }
-      if (oldTask.getDueTime() != null) {
-        newTask.setDue(new DateTime(oldTask.getDueTime().toEpochMilli()));
-      }
-      // If its not cached that means the task list create failed.
-      if (idempotentImportExecutor.isKeyCached(oldTask.getTaskListId())) {
-        String newTaskListId = idempotentImportExecutor.getCachedValue(oldTask.getTaskListId());
-        idempotentImportExecutor.executeAndSwallowIOExceptions(
-            oldTask.getTaskListId() + oldTask.getText(),
-            oldTask.getText(),
-            () -> tasksService.tasks().insert(newTaskListId, newTask).execute().getId());
-      }
+    @VisibleForTesting
+    GoogleTasksImporter(GoogleCredentialFactory credentialFactory, Tasks tasksClient) {
+        this.credentialFactory = credentialFactory;
+        this.tasksClient = tasksClient;
     }
 
-    return new ImportResult(ResultType.OK);
-  }
+    @Override
+    public ImportResult importItem(UUID jobId, IdempotentImportExecutor idempotentImportExecutor, TokensAndUrlAuthData authData, TaskContainerResource data) throws Exception {
+        Tasks tasksService = getOrCreateTasksService(authData);
+        for (TaskListModel oldTasksList : data.getLists()) {
+            TaskList newTaskList = new TaskList().setTitle("Imported copy - " + oldTasksList.getName());
+            idempotentImportExecutor.executeAndSwallowIOExceptions(oldTasksList.getId(), oldTasksList.getName(), () -> tasksService.tasklists().insert(newTaskList).execute().getId());
+        }
+        for (TaskModel oldTask : data.getTasks()) {
+            Task newTask = new Task().setTitle(oldTask.getText()).setNotes(oldTask.getNotes());
+            if (oldTask.getCompletedTime() != null) {
+                newTask.setCompleted(new DateTime(oldTask.getCompletedTime().toEpochMilli()));
+            }
+            if (oldTask.getDueTime() != null) {
+                newTask.setDue(new DateTime(oldTask.getDueTime().toEpochMilli()));
+            }
+            // If its not cached that means the task list create failed.
+            if (idempotentImportExecutor.isKeyCached(oldTask.getTaskListId())) {
+                String newTaskListId = idempotentImportExecutor.getCachedValue(oldTask.getTaskListId());
+                idempotentImportExecutor.executeAndSwallowIOExceptions(oldTask.getTaskListId() + oldTask.getText(), oldTask.getText(), () -> tasksService.tasks().insert(newTaskListId, newTask).execute().getId());
+            }
+        }
+        return new ImportResult(ResultType.OK);
+    }
 
-  private Tasks getOrCreateTasksService(TokensAndUrlAuthData authData) {
-    return tasksClient == null ? makeTasksService(authData) : tasksClient;
-  }
+    private Tasks getOrCreateTasksService(TokensAndUrlAuthData authData) {
+        return tasksClient == null ? makeTasksService(authData) : tasksClient;
+    }
 
-  private synchronized Tasks makeTasksService(TokensAndUrlAuthData authData) {
-    Credential credential = credentialFactory.createCredential(authData);
-    return new Tasks.Builder(
-        credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
-        .setApplicationName(GoogleStaticObjects.APP_NAME)
-        .build();
-  }
+    private synchronized Tasks makeTasksService(TokensAndUrlAuthData authData) {
+        Credential credential = credentialFactory.createCredential(authData);
+        return new Tasks.Builder(credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential).setApplicationName(GoogleStaticObjects.APP_NAME).build();
+    }
 }

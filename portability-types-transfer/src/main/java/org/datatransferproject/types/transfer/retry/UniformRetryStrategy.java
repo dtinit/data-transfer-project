@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.types.transfer.retry;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -24,46 +23,42 @@ import com.google.common.base.Preconditions;
  */
 public class UniformRetryStrategy implements RetryStrategy {
 
-  @JsonProperty("maxAttempts")
-  private int maxAttempts;
-  @JsonProperty("intervalMillis")
-  private long intervalMillis;
-  @JsonProperty("identifier")
-  private String identifier;
+    @JsonProperty("maxAttempts")
+    private int maxAttempts;
 
-  public UniformRetryStrategy(@JsonProperty("maxAttempts") int maxAttempts,
-      @JsonProperty("intervalMillis") long intervalMillis,
-      @JsonProperty("identifier") String identifier) {
-    Preconditions.checkArgument(maxAttempts > 0, "Max attempts should be > 0");
-    Preconditions.checkArgument(intervalMillis > 0L, "Interval should be > 0");
-    // TODO: enforce stronger requirements (e.g., interval > 500ms)
-    this.maxAttempts = maxAttempts;
-    this.intervalMillis = intervalMillis;
-    this.identifier = identifier;
-  }
+    @JsonProperty("intervalMillis")
+    private long intervalMillis;
 
-  @Override
-  public boolean canTryAgain(int tries) {
-    return tries <= maxAttempts;
-  }
+    @JsonProperty("identifier")
+    private String identifier;
 
-  @Override
-  public long getNextIntervalMillis(int tries) {
-    return intervalMillis;
-  }
+    public UniformRetryStrategy(@JsonProperty("maxAttempts") int maxAttempts, @JsonProperty("intervalMillis") long intervalMillis, @JsonProperty("identifier") String identifier) {
+        Preconditions.checkArgument(maxAttempts > 0, "Max attempts should be > 0");
+        Preconditions.checkArgument(intervalMillis > 0L, "Interval should be > 0");
+        // TODO: enforce stronger requirements (e.g., interval > 500ms)
+        this.maxAttempts = maxAttempts;
+        this.intervalMillis = intervalMillis;
+        this.identifier = identifier;
+    }
 
-  @Override
-  public long getRemainingIntervalMillis(int tries, long elapsedMillis) {
-    Preconditions.checkArgument(tries <= maxAttempts, "No retries left");
-    return intervalMillis - elapsedMillis;
-  }
+    @Override
+    public boolean canTryAgain(int tries) {
+        return tries <= maxAttempts;
+    }
 
-  @Override
-  public String toString() {
-    return "UniformRetryStrategy{" +
-        "maxAttempts=" + maxAttempts +
-        ", intervalMillis=" + intervalMillis +
-        ", identifier=" + identifier +
-        '}';
-  }
+    @Override
+    public long getNextIntervalMillis(int tries) {
+        return intervalMillis;
+    }
+
+    @Override
+    public long getRemainingIntervalMillis(int tries, long elapsedMillis) {
+        Preconditions.checkArgument(tries <= maxAttempts, "No retries left");
+        return intervalMillis - elapsedMillis;
+    }
+
+    @Override
+    public String toString() {
+        return "UniformRetryStrategy{" + "maxAttempts=" + maxAttempts + ", intervalMillis=" + intervalMillis + ", identifier=" + identifier + '}';
+    }
 }

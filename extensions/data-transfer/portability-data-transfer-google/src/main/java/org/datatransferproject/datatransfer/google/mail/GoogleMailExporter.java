@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.google.mail;
 
 import com.google.api.client.auth.oauth2.Credential;
@@ -41,86 +40,78 @@ import org.datatransferproject.types.common.models.mail.MailContainerResource;
 import org.datatransferproject.types.common.models.mail.MailMessageModel;
 
 public class GoogleMailExporter implements Exporter<TokensAndUrlAuthData, MailContainerResource> {
-  @VisibleForTesting
-  static final long PAGE_SIZE = 50; // TODO configure this in production
-  @VisibleForTesting
-  // The special value me can be used to indicate the authenticated user to the gmail api
-  static final String USER = "me";
 
-  private final GoogleCredentialFactory credentialFactory;
-  private volatile Gmail gmail;
+    @VisibleForTesting
+    static final long // TODO configure this in production
+    PAGE_SIZE = 50;
 
-  public GoogleMailExporter(GoogleCredentialFactory credentialFactory) {
-    this.credentialFactory = credentialFactory;
-    this.gmail = null;
-  }
+    @VisibleForTesting
+    static final String // The special value me can be used to indicate the authenticated user to the gmail api
+    USER = "me";
 
-  @VisibleForTesting
-  GoogleMailExporter(GoogleCredentialFactory credentialFactory, Gmail gmail) {
-    this.credentialFactory = credentialFactory;
-    this.gmail = gmail;
-  }
+    private final GoogleCredentialFactory credentialFactory;
 
-  @Override
-  public ExportResult<MailContainerResource> export(UUID id,
-      TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
-    // Create a new gmail service for the authorized user
-    Gmail gmail = getOrCreateGmail(authData);
+    private volatile Gmail gmail;
 
-    Messages.List request = null;
-    try {
-      request = gmail.users().messages().list(USER).setMaxResults(PAGE_SIZE);
-    } catch (IOException e) {
-      return new ExportResult<>(e);
+    public GoogleMailExporter(GoogleCredentialFactory credentialFactory) {
+        this.credentialFactory = credentialFactory;
+        this.gmail = null;
     }
 
-    if (exportInformation.isPresent() && exportInformation.get().getPaginationData() != null) {
-      request.setPageToken(
-          ((StringPaginationToken) exportInformation.get().getPaginationData()).getToken());
+    @VisibleForTesting
+    GoogleMailExporter(GoogleCredentialFactory credentialFactory, Gmail gmail) {
+        this.credentialFactory = credentialFactory;
+        this.gmail = gmail;
     }
 
-    ListMessagesResponse response = null;
-    try {
-      response = request.execute();
-    } catch (IOException e) {
-      return new ExportResult<>(e);
+    @Override
+    public ExportResult<MailContainerResource> export(UUID id, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation) {
+        // Create a new gmail service for the authorized user
+        Gmail gmail = getOrCreateGmail(authData);
+        Messages.List request = null;
+        try {
+            request = gmail.users().messages().list(USER).setMaxResults(PAGE_SIZE);
+        } catch (IOException e) {
+            return new ExportResult<>(e);
+        }
+        if (exportInformation.isPresent() && exportInformation.get().getPaginationData() != null) {
+            request.setPageToken(((StringPaginationToken) exportInformation.get().getPaginationData()).getToken());
+        }
+        ListMessagesResponse response = null;
+        try {
+            response = request.execute();
+        } catch (IOException e) {
+            return new ExportResult<>(e);
+        }
+        List<MailMessageModel> results = new ArrayList<>(response.getMessages().size());
+        // TODO: this is a good indication we need to swap the interface
+        // as we can't store all the mail messages in memory at once.
+        for (Message listMessage : response.getMessages()) {
+            Message getResponse = null;
+            try {
+                getResponse = gmail.users().messages().get(USER, listMessage.getId()).setFormat("raw").execute();
+            } catch (IOException e) {
+                return new ExportResult<>(e);
+            }
+            // TODO: note this doesn't transfer things like labels
+            results.add(new MailMessageModel(getResponse.getRaw(), getResponse.getLabelIds()));
+        }
+        PaginationData newPage = null;
+        ResultType resultType = ResultType.END;
+        if (response.getNextPageToken() != null) {
+            newPage = new StringPaginationToken(response.getNextPageToken());
+            resultType = ResultType.CONTINUE;
+        }
+        MailContainerResource mailContainerResource = new MailContainerResource(null, results);
+        return new ExportResult<>(resultType, mailContainerResource, new ContinuationData(newPage));
     }
 
-    List<MailMessageModel> results = new ArrayList<>(response.getMessages().size());
-    // TODO: this is a good indication we need to swap the interface
-    // as we can't store all the mail messages in memory at once.
-    for (Message listMessage : response.getMessages()) {
-      Message getResponse = null;
-      try {
-        getResponse =
-            gmail.users().messages().get(USER, listMessage.getId()).setFormat("raw").execute();
-      } catch (IOException e) {
-        return new ExportResult<>(e);
-      }
-      // TODO: note this doesn't transfer things like labels
-      results.add(new MailMessageModel(getResponse.getRaw(), getResponse.getLabelIds()));
+    private Gmail getOrCreateGmail(TokensAndUrlAuthData authData) {
+        return gmail == null ? makeGmailService(authData) : gmail;
     }
 
-    PaginationData newPage = null;
-    ResultType resultType = ResultType.END;
-    if (response.getNextPageToken() != null) {
-      newPage = new StringPaginationToken(response.getNextPageToken());
-      resultType = ResultType.CONTINUE;
+    private synchronized Gmail makeGmailService(TokensAndUrlAuthData authData) {
+        Credential credential = credentialFactory.createCredential(authData);
+        return new Gmail.Builder(credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential).setApplicationName(GoogleStaticObjects.APP_NAME).build();
     }
-
-    MailContainerResource mailContainerResource = new MailContainerResource(null, results);
-    return new ExportResult<>(resultType, mailContainerResource, new ContinuationData(newPage));
-  }
-
-  private Gmail getOrCreateGmail(TokensAndUrlAuthData authData) {
-    return gmail == null ? makeGmailService(authData) : gmail;
-  }
-
-  private synchronized Gmail makeGmailService(TokensAndUrlAuthData authData) {
-    Credential credential = credentialFactory.createCredential(authData);
-    return new Gmail.Builder(
-        credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
-        .setApplicationName(GoogleStaticObjects.APP_NAME)
-        .build();
-  }
 }

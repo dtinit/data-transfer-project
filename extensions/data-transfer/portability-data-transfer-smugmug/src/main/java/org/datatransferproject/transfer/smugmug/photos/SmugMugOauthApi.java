@@ -13,29 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.transfer.smugmug.photos;
 
 import com.github.scribejava.core.builder.api.DefaultApi10a;
- 
+
 /* Smugmug API to use with Scribe Service Builder
  * URLs provided from the Oauth1.0a flow described here:
  * https://api.smugmug.com/api/v2/doc/tutorial/authorization.html
  */
 public class SmugMugOauthApi extends DefaultApi10a {
 
-  @Override
-  public String getRequestTokenEndpoint() {
-    return "https://secure.smugmug.com/services/oauth/1.0a/getRequestToken";
-  }
+    @Override
+    public String getRequestTokenEndpoint() {
+        return "https://secure.smugmug.com/services/oauth/1.0a/getRequestToken";
+    }
 
-  @Override
-  public String getAccessTokenEndpoint() {
-    return "https://secure.smugmug.com/services/oauth/1.0a/getAccessToken";
-  }
+    @Override
+    public String getAccessTokenEndpoint() {
+        return "https://secure.smugmug.com/services/oauth/1.0a/getAccessToken";
+    }
 
-  @Override
-  protected String getAuthorizationBaseUrl() {
-    return "https://secure.smugmug.com/services/oauth/1.0a/authorize";
-  }
+    @Override
+    protected String getAuthorizationBaseUrl() {
+        return "https://secure.smugmug.com/services/oauth/1.0a/authorize";
+    }
 }

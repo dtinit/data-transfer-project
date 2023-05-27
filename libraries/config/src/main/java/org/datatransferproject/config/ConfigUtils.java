@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.config;
 
 import com.google.common.collect.ImmutableList;
@@ -24,30 +23,29 @@ import java.io.SequenceInputStream;
  * Common utilities for parsing configuration from files on the classpath.
  */
 public class ConfigUtils {
-  /**
-   * Concatenates {@link InputStream}s to multiple configuration files on the classpath into a
-   * single {@link InputStream}.
-   */
-  public static InputStream getCombinedInputStream(ImmutableList<String> settingsFiles) {
-    return settingsFiles.stream()
-        .map(file -> ConfigUtils.class.getClassLoader().getResourceAsStream(file))
-        .reduce(null, (in1, in2) -> combineStreams(in1, in2));
-  }
 
-  /**
-   * Concatenates two {@link InputStream}s.
-   */
-  private static InputStream combineStreams(InputStream in1, InputStream in2) {
-    if (in1 != null) {
-      if (in2 != null) {
-        return new SequenceInputStream(in1, in2);
-      }
-      return in1;
+    /**
+     * Concatenates {@link InputStream}s to multiple configuration files on the classpath into a
+     * single {@link InputStream}.
+     */
+    public static InputStream getCombinedInputStream(ImmutableList<String> settingsFiles) {
+        return settingsFiles.stream().map(file -> ConfigUtils.class.getClassLoader().getResourceAsStream(file)).reduce(null, (in1, in2) -> combineStreams(in1, in2));
     }
-    // in1 == null
-    if (in2 != null) {
-      return in2;
+
+    /**
+     * Concatenates two {@link InputStream}s.
+     */
+    private static InputStream combineStreams(InputStream in1, InputStream in2) {
+        if (in1 != null) {
+            if (in2 != null) {
+                return new SequenceInputStream(in1, in2);
+            }
+            return in1;
+        }
+        // in1 == null
+        if (in2 != null) {
+            return in2;
+        }
+        return null;
     }
-    return null;
-  }
 }

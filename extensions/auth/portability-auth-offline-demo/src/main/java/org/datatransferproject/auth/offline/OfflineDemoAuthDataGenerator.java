@@ -19,7 +19,6 @@ import org.datatransferproject.spi.api.auth.AuthDataGenerator;
 import org.datatransferproject.spi.api.types.AuthFlowConfiguration;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
-
 import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol;
 import static org.datatransferproject.types.common.PortabilityCommon.AuthProtocol.OAUTH_2;
 
@@ -30,18 +29,18 @@ import static org.datatransferproject.types.common.PortabilityCommon.AuthProtoco
  * to the callback address.
  */
 public class OfflineDemoAuthDataGenerator implements AuthDataGenerator {
-  private static final AuthProtocol AUTH_PROTOCOL = OAUTH_2;
 
-  @Override
-  public AuthFlowConfiguration generateConfiguration(String callbackBaseUrl, String id) {
-    return new AuthFlowConfiguration(callbackBaseUrl + "/callback/offline-demo?code=123", AUTH_PROTOCOL, getTokenUrl());
-  }
+    private static final AuthProtocol AUTH_PROTOCOL = OAUTH_2;
 
-  @Override
-  public AuthData generateAuthData(
-      String callbackBaseUrl, String authCode, String id, AuthData initialAuthData, String extra) {
-    // create a simulated token; since this is a demo extension that does not perform an actual
-    // import, OAuth is bypassed.
-    return new TokenAuthData("123");
-  }
+    @Override
+    public AuthFlowConfiguration generateConfiguration(String callbackBaseUrl, String id) {
+        return new AuthFlowConfiguration(callbackBaseUrl + "/callback/offline-demo?code=123", AUTH_PROTOCOL, getTokenUrl());
+    }
+
+    @Override
+    public AuthData generateAuthData(String callbackBaseUrl, String authCode, String id, AuthData initialAuthData, String extra) {
+        // create a simulated token; since this is a demo extension that does not perform an actual
+        // import, OAuth is bypassed.
+        return new TokenAuthData("123");
+    }
 }

@@ -19,7 +19,6 @@ import static org.datatransferproject.config.extension.SettingsExtensionLoader.g
 import static org.datatransferproject.launcher.monitor.MonitorLoader.loadMonitor;
 import static org.datatransferproject.spi.cloud.extension.CloudExtensionLoader.getCloudExtension;
 import static org.datatransferproject.spi.transfer.hooks.JobHooksLoader.loadJobHooks;
-
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
@@ -56,112 +55,73 @@ import org.datatransferproject.spi.transfer.security.SecurityExtensionLoader;
  */
 public class WorkerMain {
 
-  private Worker worker;
+    private Worker worker;
 
-  public static void main(String[] args) {
-    Thread.setDefaultUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit());
-
-    WorkerMain workerMain = new WorkerMain();
-    workerMain.initialize();
-    workerMain.poll();
-
-    System.exit(0);
-  }
-
-  public void initialize() {
-    Monitor monitor = loadMonitor();
-
-    SettingsExtension settingsExtension = getSettingsExtension();
-    settingsExtension.initialize();
-    WorkerExtensionContext extensionContext =
-        new WorkerExtensionContext(settingsExtension, monitor);
-
-    // TODO this should be moved into a service extension
-    extensionContext.registerService(HttpTransport.class, new NetHttpTransport());
-    extensionContext.registerService(OkHttpClient.class, new OkHttpClient.Builder().build());
-    extensionContext.registerService(JsonFactory.class, GsonFactory.getDefaultInstance());
-
-    ServiceLoader.load(ServiceExtension.class)
-        .iterator()
-        .forEachRemaining(serviceExtension -> serviceExtension.initialize(extensionContext));
-
-    // TODO: verify that this is the cloud extension that is specified in the configuration
-    CloudExtension cloudExtension = getCloudExtension();
-    cloudExtension.initialize(extensionContext);
-    monitor.info(() -> "Using CloudExtension: " + cloudExtension.getClass().getName());
-
-    JobStore jobStore = cloudExtension.getJobStore();
-    extensionContext.registerService(JobStore.class, jobStore);
-    extensionContext.registerService(TemporaryPerJobDataStore.class, jobStore);
-
-    AppCredentialStore appCredentialStore = cloudExtension.getAppCredentialStore();
-    extensionContext.registerService(AppCredentialStore.class, appCredentialStore);
-
-    List<TransferExtension> transferExtensions = getTransferExtensions(monitor);
-
-    // Load security extension and services
-    SecurityExtension securityExtension =
-        SecurityExtensionLoader.getSecurityExtension(extensionContext);
-    monitor.info(() -> "Using SecurityExtension: " + securityExtension.getClass().getName());
-
-    IdempotentImportExecutorExtension idempotentImportExecutorExtension =
-        IdempotentImportExecutorLoader.load(extensionContext);
-
-    extensionContext.registerService(
-        IdempotentImportExecutorExtension.class, idempotentImportExecutorExtension);
-
-    monitor.info(
-        () -> "Using IdempotentImportExecutor: " + idempotentImportExecutorExtension.getClass().getName());
-
-    // TODO: make configurable
-    SymmetricKeyGenerator symmetricKeyGenerator = new AesSymmetricKeyGenerator(monitor);
-
-    JobHooks jobHooks = loadJobHooks();
-
-    Injector injector = null;
-    try {
-      injector =
-          Guice.createInjector(
-              new WorkerModule(
-                  extensionContext,
-                  cloudExtension,
-                  transferExtensions,
-                  securityExtension,
-                  idempotentImportExecutorExtension.getIdempotentImportExecutor(extensionContext),
-                  symmetricKeyGenerator,
-                  jobHooks,
-                  new TransferCompatibilityProvider()));
-    } catch (Exception e) {
-      monitor.severe(() -> "Unable to initialize Guice in Worker", e);
-      throw e;
+    public static void main(String[] args) {
+        Thread.setDefaultUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit());
+        WorkerMain workerMain = new WorkerMain();
+        workerMain.initialize();
+        workerMain.poll();
+        System.exit(0);
     }
-    worker = injector.getInstance(Worker.class);
 
-    // Reset the JobMetadata in case set previously when running SingleVMMain
-    JobMetadata.reset();
-  }
+    public void initialize() {
+        Monitor monitor = loadMonitor();
+        SettingsExtension settingsExtension = getSettingsExtension();
+        settingsExtension.initialize();
+        WorkerExtensionContext extensionContext = new WorkerExtensionContext(settingsExtension, monitor);
+        // TODO this should be moved into a service extension
+        extensionContext.registerService(HttpTransport.class, new NetHttpTransport());
+        extensionContext.registerService(OkHttpClient.class, new OkHttpClient.Builder().build());
+        extensionContext.registerService(JsonFactory.class, GsonFactory.getDefaultInstance());
+        ServiceLoader.load(ServiceExtension.class).iterator().forEachRemaining(serviceExtension -> serviceExtension.initialize(extensionContext));
+        // TODO: verify that this is the cloud extension that is specified in the configuration
+        CloudExtension cloudExtension = getCloudExtension();
+        cloudExtension.initialize(extensionContext);
+        monitor.info(() -> "Using CloudExtension: " + cloudExtension.getClass().getName());
+        JobStore jobStore = cloudExtension.getJobStore();
+        extensionContext.registerService(JobStore.class, jobStore);
+        extensionContext.registerService(TemporaryPerJobDataStore.class, jobStore);
+        AppCredentialStore appCredentialStore = cloudExtension.getAppCredentialStore();
+        extensionContext.registerService(AppCredentialStore.class, appCredentialStore);
+        List<TransferExtension> transferExtensions = getTransferExtensions(monitor);
+        // Load security extension and services
+        SecurityExtension securityExtension = SecurityExtensionLoader.getSecurityExtension(extensionContext);
+        monitor.info(() -> "Using SecurityExtension: " + securityExtension.getClass().getName());
+        IdempotentImportExecutorExtension idempotentImportExecutorExtension = IdempotentImportExecutorLoader.load(extensionContext);
+        extensionContext.registerService(IdempotentImportExecutorExtension.class, idempotentImportExecutorExtension);
+        monitor.info(() -> "Using IdempotentImportExecutor: " + idempotentImportExecutorExtension.getClass().getName());
+        // TODO: make configurable
+        SymmetricKeyGenerator symmetricKeyGenerator = new AesSymmetricKeyGenerator(monitor);
+        JobHooks jobHooks = loadJobHooks();
+        Injector injector = null;
+        try {
+            injector = Guice.createInjector(new WorkerModule(extensionContext, cloudExtension, transferExtensions, securityExtension, idempotentImportExecutorExtension.getIdempotentImportExecutor(extensionContext), symmetricKeyGenerator, jobHooks, new TransferCompatibilityProvider()));
+        } catch (Exception e) {
+            monitor.severe(() -> "Unable to initialize Guice in Worker", e);
+            throw e;
+        }
+        worker = injector.getInstance(Worker.class);
+        // Reset the JobMetadata in case set previously when running SingleVMMain
+        JobMetadata.reset();
+    }
 
-  public void poll() {
-    worker.doWork();
-  }
+    public void poll() {
+        worker.doWork();
+    }
 
-  private static List<TransferExtension> getTransferExtensions(Monitor monitor) {
-    // TODO: Next version should ideally not load every TransferExtension impl, look into
-    // solutions where we selectively invoke class loader.
-    ImmutableList.Builder<TransferExtension> extensionsBuilder = ImmutableList.builder();
-    // Note that initialization of the TransferExtension is done in the WorkerModule since they're
-    // initialized as they're requested.
-    ServiceLoader.load(TransferExtension.class)
-        .iterator()
-        .forEachRemaining(
-            ext -> {
-              monitor.info(
-                  () -> "Loading transfer extension: " + ext + " for " + ext.getServiceId());
-              extensionsBuilder.add(ext);
-            });
-    ImmutableList<TransferExtension> extensions = extensionsBuilder.build();
-    Preconditions.checkState(
-        !extensions.isEmpty(), "Could not find any implementations of TransferExtension");
-    return extensions;
-  }
+    private static List<TransferExtension> getTransferExtensions(Monitor monitor) {
+        // TODO: Next version should ideally not load every TransferExtension impl, look into
+        // solutions where we selectively invoke class loader.
+        ImmutableList.Builder<TransferExtension> extensionsBuilder = ImmutableList.builder();
+        // Note that initialization of the TransferExtension is done in the WorkerModule since they're
+        // initialized as they're requested.
+        ServiceLoader.load(TransferExtension.class).iterator().forEachRemaining(ext -> {
+            monitor.info(() -> "Loading transfer extension: " + ext + " for " + ext.getServiceId());
+            extensionsBuilder.add(ext);
+        });
+        ImmutableList<TransferExtension> extensions = extensionsBuilder.build();
+        Preconditions.checkState(!extensions.isEmpty(), "Could not find any implementations of TransferExtension");
+        return extensions;
+    }
 }

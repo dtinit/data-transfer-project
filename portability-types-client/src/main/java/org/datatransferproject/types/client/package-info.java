@@ -18,3 +18,4 @@
  * resources a client has access to.
  */
 package org.datatransferproject.types.client;
+

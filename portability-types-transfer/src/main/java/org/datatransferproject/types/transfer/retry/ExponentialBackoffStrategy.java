@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.types.transfer.retry;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -24,50 +23,47 @@ import com.google.common.base.Preconditions;
  */
 public class ExponentialBackoffStrategy implements RetryStrategy {
 
-  @JsonProperty("maxAttempts")
-  private int maxAttempts;
-  @JsonProperty("initialIntervalMillis")
-  private long initialIntervalMillis;
-  @JsonProperty("multiplier")
-  private double multiplier;
-  @JsonProperty("identifier")
-  private String identifier;
-  public ExponentialBackoffStrategy(@JsonProperty("maxAttempts") int maxAttempts,
-      @JsonProperty("initialIntervalMillis") long initialIntervalMillis,
-      @JsonProperty("multiplier") double multiplier,
-      @JsonProperty("identifier") String identifier) {
-    Preconditions.checkArgument(maxAttempts > 0, "Max attempts should be > 0");
-    Preconditions.checkArgument(initialIntervalMillis > 0L, "Initial interval should be > 0");
-    Preconditions.checkArgument(multiplier >= 1, "Multiplier should be >= 1");
-    this.maxAttempts = maxAttempts;
-    this.initialIntervalMillis = initialIntervalMillis;
-    this.multiplier = multiplier;
-    this.identifier = identifier;
-  }
-  @Override
-  public boolean canTryAgain(int tries) {
-    return tries <= maxAttempts;
-  }
+    @JsonProperty("maxAttempts")
+    private int maxAttempts;
 
-  @Override
-  public long getNextIntervalMillis(int tries) {
-    Preconditions.checkArgument(tries <= maxAttempts, "Too many attempts");
-    return (long) (initialIntervalMillis * Math.pow(multiplier, tries - 1));
-  }
+    @JsonProperty("initialIntervalMillis")
+    private long initialIntervalMillis;
 
-  @Override
-  public long getRemainingIntervalMillis(int tries, long elapsedMillis) {
-    Preconditions.checkArgument(tries <= maxAttempts, "Too many attempts");
-    return getNextIntervalMillis(tries) - elapsedMillis;
-  }
+    @JsonProperty("multiplier")
+    private double multiplier;
 
-  @Override
-  public String toString() {
-    return "ExponentialBackoffStrategy{" +
-        "maxAttempts=" + maxAttempts +
-        ", initialIntervalMillis=" + initialIntervalMillis +
-        ", multiplier=" + multiplier +
-        ", identifier=" + identifier +
-        '}';
-  }
+    @JsonProperty("identifier")
+    private String identifier;
+
+    public ExponentialBackoffStrategy(@JsonProperty("maxAttempts") int maxAttempts, @JsonProperty("initialIntervalMillis") long initialIntervalMillis, @JsonProperty("multiplier") double multiplier, @JsonProperty("identifier") String identifier) {
+        Preconditions.checkArgument(maxAttempts > 0, "Max attempts should be > 0");
+        Preconditions.checkArgument(initialIntervalMillis > 0L, "Initial interval should be > 0");
+        Preconditions.checkArgument(multiplier >= 1, "Multiplier should be >= 1");
+        this.maxAttempts = maxAttempts;
+        this.initialIntervalMillis = initialIntervalMillis;
+        this.multiplier = multiplier;
+        this.identifier = identifier;
+    }
+
+    @Override
+    public boolean canTryAgain(int tries) {
+        return tries <= maxAttempts;
+    }
+
+    @Override
+    public long getNextIntervalMillis(int tries) {
+        Preconditions.checkArgument(tries <= maxAttempts, "Too many attempts");
+        return (long) (initialIntervalMillis * Math.pow(multiplier, tries - 1));
+    }
+
+    @Override
+    public long getRemainingIntervalMillis(int tries, long elapsedMillis) {
+        Preconditions.checkArgument(tries <= maxAttempts, "Too many attempts");
+        return getNextIntervalMillis(tries) - elapsedMillis;
+    }
+
+    @Override
+    public String toString() {
+        return "ExponentialBackoffStrategy{" + "maxAttempts=" + maxAttempts + ", initialIntervalMillis=" + initialIntervalMillis + ", multiplier=" + multiplier + ", identifier=" + identifier + '}';
+    }
 }

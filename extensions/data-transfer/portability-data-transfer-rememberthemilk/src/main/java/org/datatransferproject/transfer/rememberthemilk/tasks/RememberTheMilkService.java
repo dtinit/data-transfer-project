@@ -16,7 +16,6 @@
 package org.datatransferproject.transfer.rememberthemilk.tasks;
 
 import static com.google.common.base.Preconditions.checkState;
-
 import com.fasterxml.jackson.xml.XmlMapper;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
@@ -43,142 +42,102 @@ import org.datatransferproject.transfer.rememberthemilk.model.tasks.TaskSeries;
 import org.datatransferproject.transfer.rememberthemilk.model.tasks.TimelineCreateResponse;
 
 class RememberTheMilkService {
-  private static final String BASE_URL = "https://api.rememberthemilk.com/services/rest/";
-  private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
-  private RememberTheMilkSignatureGenerator signatureGenerator;
-  private XmlMapper xmlMapper = new XmlMapper();
 
-  RememberTheMilkService(RememberTheMilkSignatureGenerator signatureGenerator) {
-    this.signatureGenerator = signatureGenerator;
-  }
+    private static final String BASE_URL = "https://api.rememberthemilk.com/services/rest/";
 
-  public String createTimeline() throws IOException {
-    TimelineCreateResponse timelineCreateResponse =
-        makeRequest(
-            ImmutableMap.of("method", RememberTheMilkMethods.TIMELINES_CREATE.getMethodName()),
-            TimelineCreateResponse.class);
-    checkState(!Strings.isNullOrEmpty(timelineCreateResponse.timeline));
-    return timelineCreateResponse.timeline;
-  }
+    private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
 
-  public ListInfo createTaskList(String name, String timeline) throws IOException {
-    Map<String, String> params =
-        ImmutableMap.of(
-            "method",
-            RememberTheMilkMethods.LISTS_ADD.getMethodName(),
-            "timeline",
-            timeline,
-            "name",
-            ("Copy of: " + name));
-    ListAddResponse response = makeRequest(params, ListAddResponse.class);
-    checkState(response.list != null, "Added list is null");
-    checkState(response.list.id != 0, "Added list has id of zero");
-    return response.list;
-  }
+    private RememberTheMilkSignatureGenerator signatureGenerator;
 
-  public TaskSeries createTask(String name, String timeline, String listId) throws IOException {
-    Map<String, String> params =
-        ImmutableMap.of(
-            "method",
-            RememberTheMilkMethods.TASKS_ADD.getMethodName(),
-            "timeline",
-            timeline,
-            "name",
-            name,
-            "list_id",
-            listId);
-    TaskUpdateResponse taskUpdateResponse = makeRequest(params, TaskUpdateResponse.class);
-    return taskUpdateResponse.list.taskseries.get(0);
-  }
+    private XmlMapper xmlMapper = new XmlMapper();
 
-  public void completeTask(String timeline, String listId, int seriesId, int taskId)
-      throws IOException {
-    // NB: The RTM API does not support setting an arbitrary completion time, so this method can
-    // only mark a task as having been completed.
-    Map<String, String> params =
-        ImmutableMap.of(
-            "method",
-            RememberTheMilkMethods.TASKS_COMPLETE.getMethodName(),
-            "timeline",
-            timeline,
-            "list_id",
-            listId,
-            "taskseries_id",
-            String.valueOf(seriesId),
-            "task_id",
-            String.valueOf(taskId)
-        );
-    makeRequest(params, TaskUpdateResponse.class);
-  }
-
-  public void setDueDate(String timeline, String listId, int seriesId, int taskId, Instant dueDate)
-      throws IOException {
-    // NB: does not set due time, merely due date
-    // TODO: address due times
-    Map<String, String> params = new LinkedHashMap<>();
-    params.put("method", RememberTheMilkMethods.TASKS_DUE_DATE.getMethodName());
-    params.put("timeline", timeline);
-    params.put("list_id", listId);
-    params.put("taskseries_id", String.valueOf(seriesId));
-    params.put("task_id", String.valueOf(taskId));
-    params.put("due", dueDate.toString());
-    makeRequest(params, TaskUpdateResponse.class);
-  }
-
-  public GetListResponse getList(String listId) throws IOException {
-    Map<String, String> params =
-        ImmutableMap.of(
-            "method", RememberTheMilkMethods.TASKS_GET_LIST.getMethodName(), "list_id", listId);
-    return makeRequest(params, GetListResponse.class);
-  }
-
-  public GetListsResponse getLists() throws IOException {
-    return makeRequest(
-        ImmutableMap.of("method", RememberTheMilkMethods.LISTS_GET_LIST.getMethodName()),
-        GetListsResponse.class);
-  }
-
-  private <T extends RememberTheMilkResponse> T makeRequest(
-      Map<String, String> parameters, Class<T> dataClass) throws IOException {
-
-    URL signedUrl = signatureGenerator.getSignature(BASE_URL, parameters);
-
-    HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory();
-    HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(signedUrl));
-    HttpResponse response = getRequest.execute();
-    int statusCode = response.getStatusCode();
-    if (statusCode != 200) {
-      throw new IOException(
-          "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
+    RememberTheMilkService(RememberTheMilkSignatureGenerator signatureGenerator) {
+        this.signatureGenerator = signatureGenerator;
     }
 
-    T parsedResponse = xmlMapper.readValue(response.getContent(), dataClass);
-
-    if (parsedResponse.error != null) {
-      throw new IOException(
-          "Error making call to " + signedUrl + " error: " + parsedResponse.error);
+    public String createTimeline() throws IOException {
+        TimelineCreateResponse timelineCreateResponse = makeRequest(ImmutableMap.of("method", RememberTheMilkMethods.TIMELINES_CREATE.getMethodName()), TimelineCreateResponse.class);
+        checkState(!Strings.isNullOrEmpty(timelineCreateResponse.timeline));
+        return timelineCreateResponse.timeline;
     }
 
-    return parsedResponse;
-  }
-
-  private enum RememberTheMilkMethods {
-    LISTS_GET_LIST("rtm.lists.getList"),
-    LISTS_ADD("rtm.lists.add"),
-    TASKS_ADD("rtm.tasks.add"),
-    TASKS_COMPLETE("rtm.tasks.complete"),
-    TASKS_DUE_DATE("rtm.tasks.setDueDate"),
-    TASKS_GET_LIST("rtm.tasks.getList"),
-    TIMELINES_CREATE("rtm.timelines.create");
-
-    private final String methodName;
-
-    RememberTheMilkMethods(String methodName) {
-      this.methodName = methodName;
+    public ListInfo createTaskList(String name, String timeline) throws IOException {
+        Map<String, String> params = ImmutableMap.of("method", RememberTheMilkMethods.LISTS_ADD.getMethodName(), "timeline", timeline, "name", ("Copy of: " + name));
+        ListAddResponse response = makeRequest(params, ListAddResponse.class);
+        checkState(response.list != null, "Added list is null");
+        checkState(response.list.id != 0, "Added list has id of zero");
+        return response.list;
     }
 
-    String getMethodName() {
-      return methodName;
+    public TaskSeries createTask(String name, String timeline, String listId) throws IOException {
+        Map<String, String> params = ImmutableMap.of("method", RememberTheMilkMethods.TASKS_ADD.getMethodName(), "timeline", timeline, "name", name, "list_id", listId);
+        TaskUpdateResponse taskUpdateResponse = makeRequest(params, TaskUpdateResponse.class);
+        return taskUpdateResponse.list.taskseries.get(0);
     }
-  }
+
+    public void completeTask(String timeline, String listId, int seriesId, int taskId) throws IOException {
+        // NB: The RTM API does not support setting an arbitrary completion time, so this method can
+        // only mark a task as having been completed.
+        Map<String, String> params = ImmutableMap.of("method", RememberTheMilkMethods.TASKS_COMPLETE.getMethodName(), "timeline", timeline, "list_id", listId, "taskseries_id", String.valueOf(seriesId), "task_id", String.valueOf(taskId));
+        makeRequest(params, TaskUpdateResponse.class);
+    }
+
+    public void setDueDate(String timeline, String listId, int seriesId, int taskId, Instant dueDate) throws IOException {
+        // NB: does not set due time, merely due date
+        // TODO: address due times
+        Map<String, String> params = new LinkedHashMap<>();
+        params.put("method", RememberTheMilkMethods.TASKS_DUE_DATE.getMethodName());
+        params.put("timeline", timeline);
+        params.put("list_id", listId);
+        params.put("taskseries_id", String.valueOf(seriesId));
+        params.put("task_id", String.valueOf(taskId));
+        params.put("due", dueDate.toString());
+        makeRequest(params, TaskUpdateResponse.class);
+    }
+
+    public GetListResponse getList(String listId) throws IOException {
+        Map<String, String> params = ImmutableMap.of("method", RememberTheMilkMethods.TASKS_GET_LIST.getMethodName(), "list_id", listId);
+        return makeRequest(params, GetListResponse.class);
+    }
+
+    public GetListsResponse getLists() throws IOException {
+        return makeRequest(ImmutableMap.of("method", RememberTheMilkMethods.LISTS_GET_LIST.getMethodName()), GetListsResponse.class);
+    }
+
+    private <T extends RememberTheMilkResponse> T makeRequest(Map<String, String> parameters, Class<T> dataClass) throws IOException {
+        URL signedUrl = signatureGenerator.getSignature(BASE_URL, parameters);
+        HttpRequestFactory requestFactory = HTTP_TRANSPORT.createRequestFactory();
+        HttpRequest getRequest = requestFactory.buildGetRequest(new GenericUrl(signedUrl));
+        HttpResponse response = getRequest.execute();
+        int statusCode = response.getStatusCode();
+        if (statusCode != 200) {
+            throw new IOException("Bad status code: " + statusCode + " error: " + response.getStatusMessage());
+        }
+        T parsedResponse = xmlMapper.readValue(response.getContent(), dataClass);
+        if (parsedResponse.error != null) {
+            throw new IOException("Error making call to " + signedUrl + " error: " + parsedResponse.error);
+        }
+        return parsedResponse;
+    }
+
+    private enum RememberTheMilkMethods {
+
+        LISTS_GET_LIST("rtm.lists.getList"),
+        LISTS_ADD("rtm.lists.add"),
+        TASKS_ADD("rtm.tasks.add"),
+        TASKS_COMPLETE("rtm.tasks.complete"),
+        TASKS_DUE_DATE("rtm.tasks.setDueDate"),
+        TASKS_GET_LIST("rtm.tasks.getList"),
+        TIMELINES_CREATE("rtm.timelines.create");
+
+        private final String methodName;
+
+        RememberTheMilkMethods(String methodName) {
+            this.methodName = methodName;
+        }
+
+        String getMethodName() {
+            return methodName;
+        }
+    }
 }

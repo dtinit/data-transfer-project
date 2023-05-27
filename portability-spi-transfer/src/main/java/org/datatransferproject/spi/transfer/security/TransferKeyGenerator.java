@@ -15,20 +15,31 @@
  */
 package org.datatransferproject.spi.transfer.security;
 
-/** Creates an instance id and asymmetric encryption key pair unique to each worker instance. */
+/**
+ * Creates an instance id and asymmetric encryption key pair unique to each worker instance.
+ */
 public interface TransferKeyGenerator {
 
-  interface WorkerKeyPair {
-    /** A unique id for the worker instance associated with this pair of asymmetric keys. */
-    String getInstanceId();
-    /** The encoded public key to encrypt data sent to this worker instance. */
-    byte[] getEncodedPublicKey();
-    /** The encoded private key to decrypt data sent to this worker instance. */
-    byte[] getEncodedPrivateKey();
-  }
+    interface WorkerKeyPair {
 
-  /**
-   * Generates a {@link WorkerKeyPair} representing encoded private key and associated privatekey
-   */
-  WorkerKeyPair generate();
+        /**
+         * A unique id for the worker instance associated with this pair of asymmetric keys.
+         */
+        String getInstanceId();
+
+        /**
+         * The encoded public key to encrypt data sent to this worker instance.
+         */
+        byte[] getEncodedPublicKey();
+
+        /**
+         * The encoded private key to decrypt data sent to this worker instance.
+         */
+        byte[] getEncodedPrivateKey();
+    }
+
+    /**
+     * Generates a {@link WorkerKeyPair} representing encoded private key and associated privatekey
+     */
+    WorkerKeyPair generate();
 }

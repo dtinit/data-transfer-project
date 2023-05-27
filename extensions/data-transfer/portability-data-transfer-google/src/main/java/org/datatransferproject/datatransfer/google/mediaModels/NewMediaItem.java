@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -29,29 +28,29 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
  * corresponding to the previously-uploaded content.
  */
 public class NewMediaItem {
-  @JsonProperty("description")
-  private String description;
 
-  @JsonProperty("simpleMediaItem")
-  private SimpleMediaItem simpleMediaItem;
+    @JsonProperty("description")
+    private String description;
 
-  @JsonCreator
-  public NewMediaItem(String description, SimpleMediaItem simpleMediaItem) {
-    this.description = description;
-    this.simpleMediaItem = simpleMediaItem;
-  }
+    @JsonProperty("simpleMediaItem")
+    private SimpleMediaItem simpleMediaItem;
 
-  public NewMediaItem(String description, String uploadToken) {
-    this.description = description;
-    this.simpleMediaItem = new SimpleMediaItem(uploadToken);
-  }
+    @JsonCreator
+    public NewMediaItem(String description, SimpleMediaItem simpleMediaItem) {
+        this.description = description;
+        this.simpleMediaItem = simpleMediaItem;
+    }
 
-  public SimpleMediaItem getSimpleMediaItem() {
-    return simpleMediaItem;
-  }
+    public NewMediaItem(String description, String uploadToken) {
+        this.description = description;
+        this.simpleMediaItem = new SimpleMediaItem(uploadToken);
+    }
 
-  public String getDescription() {
-    return description;
-  }
+    public SimpleMediaItem getSimpleMediaItem() {
+        return simpleMediaItem;
+    }
 
+    public String getDescription() {
+        return description;
+    }
 }

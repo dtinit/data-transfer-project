@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.config;
 
 import com.google.common.base.Preconditions;
@@ -31,26 +30,25 @@ import org.datatransferproject.config.extension.SettingsExtension;
  */
 public abstract class FlagBindingModule extends AbstractModule {
 
-  @SuppressWarnings("unchecked")
-  protected void bindFlags(ExtensionContext context) {
-    // Automatically bind all flags in our ExtensionContext to a Named annotation. e.g., binds:
-    // settingsExtension.cloud() to a String annotated with @Named("cloud"), so core classes
-    // may inject '@Named("cloud") String cloud'.
-    for (Method method : context.getClass().getMethods()) {
-      boolean isFlagMethod = method.isAnnotationPresent(Flag.class);
-      if (!isFlagMethod) {
-        continue;
-      }
-
-      Class returnType = method.getReturnType();
-      Object flagValue;
-      try {
-        flagValue = method.invoke(context);
-      } catch (IllegalAccessException | InvocationTargetException e) {
-        throw new RuntimeException("Could not get flag value by invoking: " + method.getName(), e);
-      }
-      Preconditions.checkNotNull(flagValue, "Required flag " + method.getName() + " was null");
-      bind(returnType).annotatedWith(Names.named(method.getName())).toInstance(flagValue);
+    @SuppressWarnings("unchecked")
+    protected void bindFlags(ExtensionContext context) {
+        // Automatically bind all flags in our ExtensionContext to a Named annotation. e.g., binds:
+        // settingsExtension.cloud() to a String annotated with @Named("cloud"), so core classes
+        // may inject '@Named("cloud") String cloud'.
+        for (Method method : context.getClass().getMethods()) {
+            boolean isFlagMethod = method.isAnnotationPresent(Flag.class);
+            if (!isFlagMethod) {
+                continue;
+            }
+            Class returnType = method.getReturnType();
+            Object flagValue;
+            try {
+                flagValue = method.invoke(context);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException("Could not get flag value by invoking: " + method.getName(), e);
+            }
+            Preconditions.checkNotNull(flagValue, "Required flag " + method.getName() + " was null");
+            bind(returnType).annotatedWith(Names.named(method.getName())).toInstance(flagValue);
+        }
     }
-  }
 }

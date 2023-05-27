@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.auth.instagram;
 
 import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
-
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Map;
@@ -30,32 +28,31 @@ import org.datatransferproject.types.common.models.DataVertical;
  */
 public class InstagramOAuthConfig implements OAuth2Config {
 
-  // https://www.instagram.com/developer/authentication/
+    // https://www.instagram.com/developer/authentication/
+    @Override
+    public String getServiceName() {
+        return "Instagram";
+    }
 
-  @Override
-  public String getServiceName() {
-    return "Instagram";
-  }
+    @Override
+    public String getAuthUrl() {
+        return "https://api.instagram.com/oauth/authorize";
+    }
 
-  @Override
-  public String getAuthUrl() {
-    return "https://api.instagram.com/oauth/authorize";
-  }
+    @Override
+    public String getTokenUrl() {
+        return "https://api.instagram.com/oauth/access_token";
+    }
 
-  @Override
-  public String getTokenUrl() {
-    return "https://api.instagram.com/oauth/access_token";
-  }
+    // See https://www.instagram.com/developer/authorization/
+    @Override
+    public Map<DataVertical, Set<String>> getExportScopes() {
+        return ImmutableMap.of(PHOTOS, ImmutableSet.of("basic"));
+    }
 
-  // See https://www.instagram.com/developer/authorization/
-  @Override
-  public Map<DataVertical, Set<String>> getExportScopes() {
-    return ImmutableMap.of(PHOTOS, ImmutableSet.of("basic"));
-  }
-
-  // Instagram does not provide an API for import; https://help.instagram.com/442418472487929
-  @Override
-  public Map<DataVertical, Set<String>> getImportScopes() {
-    return ImmutableMap.of();
-  }
+    // Instagram does not provide an API for import; https://help.instagram.com/442418472487929
+    @Override
+    public Map<DataVertical, Set<String>> getImportScopes() {
+        return ImmutableMap.of();
+    }
 }

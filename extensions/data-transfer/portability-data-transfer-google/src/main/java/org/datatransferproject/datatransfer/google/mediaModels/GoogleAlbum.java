@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -22,27 +21,40 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * Class representing an album as returned by the Google Photos API.
  */
 public class GoogleAlbum {
-  @JsonProperty("id")
-  private String id;
 
-  @JsonProperty("title")
-  private String title;
+    @JsonProperty("id")
+    private String id;
 
-  @JsonProperty("isWriteable")
-  private boolean isWriteable;
+    @JsonProperty("title")
+    private String title;
 
-  @JsonProperty("mediaItemsCount")
-  private long mediaItemsCount;
+    @JsonProperty("isWriteable")
+    private boolean isWriteable;
 
-  public String getId() { return id; }
+    @JsonProperty("mediaItemsCount")
+    private long mediaItemsCount;
 
-  public String getTitle() { return title; }
+    public String getId() {
+        return id;
+    }
 
-  public boolean getIsWriteable() { return isWriteable; }
+    public String getTitle() {
+        return title;
+    }
 
-  public long getMediaItemsCount() { return mediaItemsCount; }
+    public boolean getIsWriteable() {
+        return isWriteable;
+    }
 
-  public void setId(String id) { this.id = id; }
+    public long getMediaItemsCount() {
+        return mediaItemsCount;
+    }
 
-  public void setTitle(String title) { this.title = title; }
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
 }

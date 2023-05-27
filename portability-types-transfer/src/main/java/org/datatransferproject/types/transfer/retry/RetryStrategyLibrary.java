@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.types.transfer.retry;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -36,44 +35,41 @@ import java.util.List;
  */
 public class RetryStrategyLibrary {
 
-  @JsonProperty("strategyMappings")
-  private final List<RetryMapping> retryMappings;
-  @JsonProperty("defaultRetryStrategy")
-  private final RetryStrategy defaultRetryStrategy;
+    @JsonProperty("strategyMappings")
+    private final List<RetryMapping> retryMappings;
 
-  public RetryStrategyLibrary(@JsonProperty("strategyMappings") List<RetryMapping> retryMappings,
-      @JsonProperty("defaultRetryStrategy") RetryStrategy defaultRetryStrategy) {
-    Preconditions.checkArgument(defaultRetryStrategy != null, "Default retry strategy cannot be null");
-    this.retryMappings = retryMappings;
-    this.defaultRetryStrategy = defaultRetryStrategy;
-  }
+    @JsonProperty("defaultRetryStrategy")
+    private final RetryStrategy defaultRetryStrategy;
 
-  /**
-   * Returns the best {@link RetryStrategy} for a given Throwable.  If there are no matches, returns
-   * the default RetryStrategy.
-   *
-   * Right now it just looks at the message in the Throwable and tries to find a matching regex in
-   * its internal library.  Later on it will use more and more of the Throwable to make a decision.
-   */
-  public RetryStrategy checkoutRetryStrategy(Throwable throwable) {
-    // TODO: determine retry strategy based on full information in Throwable
-    for (RetryMapping mapping : retryMappings) {
-      if (mapping.matchesThrowable(throwable)) {
-        return mapping.getStrategy();
-      }
+    public RetryStrategyLibrary(@JsonProperty("strategyMappings") List<RetryMapping> retryMappings, @JsonProperty("defaultRetryStrategy") RetryStrategy defaultRetryStrategy) {
+        Preconditions.checkArgument(defaultRetryStrategy != null, "Default retry strategy cannot be null");
+        this.retryMappings = retryMappings;
+        this.defaultRetryStrategy = defaultRetryStrategy;
     }
-    return defaultRetryStrategy;
-  }
 
-  public RetryStrategy getDefaultRetryStrategy() {
-    return defaultRetryStrategy;
-  }
+    /**
+     * Returns the best {@link RetryStrategy} for a given Throwable.  If there are no matches, returns
+     * the default RetryStrategy.
+     *
+     * Right now it just looks at the message in the Throwable and tries to find a matching regex in
+     * its internal library.  Later on it will use more and more of the Throwable to make a decision.
+     */
+    public RetryStrategy checkoutRetryStrategy(Throwable throwable) {
+        // TODO: determine retry strategy based on full information in Throwable
+        for (RetryMapping mapping : retryMappings) {
+            if (mapping.matchesThrowable(throwable)) {
+                return mapping.getStrategy();
+            }
+        }
+        return defaultRetryStrategy;
+    }
 
-  @Override
-  public String toString() {
-    return "RetryStrategyLibrary{" +
-        "retryMappings=" + retryMappings +
-        ", defaultRetryStrategy=" + defaultRetryStrategy +
-        '}';
-  }
+    public RetryStrategy getDefaultRetryStrategy() {
+        return defaultRetryStrategy;
+    }
+
+    @Override
+    public String toString() {
+        return "RetryStrategyLibrary{" + "retryMappings=" + retryMappings + ", defaultRetryStrategy=" + defaultRetryStrategy + '}';
+    }
 }

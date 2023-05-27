@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.flickr.photos;
 
 import com.flickr4java.flickr.Flickr;
@@ -49,206 +48,154 @@ import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfi
 
 public class FlickrPhotosImporter implements Importer<AuthData, PhotosContainerResource> {
 
-  @VisibleForTesting
-  static final String ORIGINAL_ALBUM_PREFIX = "original-album-";
+    @VisibleForTesting
+    static final String ORIGINAL_ALBUM_PREFIX = "original-album-";
 
-  private final TemporaryPerJobDataStore jobStore;
-  private final Flickr flickr;
-  private final Uploader uploader;
-  private final ConnectionProvider connectionProvider;
-  private final PhotosetsInterface photosetsInterface;
-  private final Monitor monitor;
-  private final RateLimiter perUserRateLimiter;
-  private IdempotentImportExecutor retryingIdempotentExecutor;
-  private Boolean enableRetrying;
+    private final TemporaryPerJobDataStore jobStore;
 
-  public FlickrPhotosImporter(
-      AppCredentials appCredentials,
-      TemporaryPerJobDataStore jobStore,
-      Monitor monitor,
-      TransferServiceConfig serviceConfig,
-      IdempotentImportExecutor retryingIdempotentExecutor,
-      boolean enableRetrying) {
-    this.jobStore = jobStore;
-    this.flickr = new Flickr(appCredentials.getKey(), appCredentials.getSecret(), new REST());
-    this.uploader = flickr.getUploader();
-    this.connectionProvider = new ConnectionProvider(jobStore);
-    this.photosetsInterface = flickr.getPhotosetsInterface();
-    this.monitor = monitor;
-    this.perUserRateLimiter = serviceConfig.getPerUserRateLimiter();
-    this.retryingIdempotentExecutor = retryingIdempotentExecutor;
-    this.enableRetrying = enableRetrying;
-  }
+    private final Flickr flickr;
 
-  public FlickrPhotosImporter(
-      AppCredentials appCredentials,
-      TemporaryPerJobDataStore jobStore,
-      Monitor monitor,
-      TransferServiceConfig serviceConfig) {
-    this(appCredentials, jobStore, monitor, serviceConfig, null /*retryingIdempotentExecutor*/, false  /*enableRetrying*/);
-  }
+    private final Uploader uploader;
 
-  @VisibleForTesting
-  FlickrPhotosImporter(
-      Flickr flickr,
-      TemporaryPerJobDataStore jobstore,
-      ConnectionProvider connectionProvider,
-      Monitor monitor,
-      TransferServiceConfig serviceConfig) {
-    this.flickr = flickr;
-    this.connectionProvider = connectionProvider;
-    this.jobStore = jobstore;
-    this.uploader = flickr.getUploader();
-    this.photosetsInterface = flickr.getPhotosetsInterface();
-    this.monitor = monitor;
-    this.perUserRateLimiter = serviceConfig.getPerUserRateLimiter();
-  }
+    private final ConnectionProvider connectionProvider;
 
-  @Override
-  public ImportResult importItem(
-      UUID jobId,
-      IdempotentImportExecutor idempotentExecutor,
-      AuthData authData,
-      PhotosContainerResource data)
-      throws Exception, IOException {
-    Auth auth;
-    try {
-      auth = FlickrUtils.getAuth(authData, flickr);
-    } catch (FlickrException e) {
-      return new ImportResult(e);
-    }
-    RequestContext.getRequestContext().setAuth(auth);
+    private final PhotosetsInterface photosetsInterface;
 
-    Preconditions.checkArgument(
-        data.getAlbums() != null || data.getPhotos() != null, "Error: There is no data to import");
+    private final Monitor monitor;
 
-    if (data.getAlbums() != null) {
-      storeAlbums(jobId, data.getAlbums());
+    private final RateLimiter perUserRateLimiter;
+
+    private IdempotentImportExecutor retryingIdempotentExecutor;
+
+    private Boolean enableRetrying;
+
+    public FlickrPhotosImporter(AppCredentials appCredentials, TemporaryPerJobDataStore jobStore, Monitor monitor, TransferServiceConfig serviceConfig, IdempotentImportExecutor retryingIdempotentExecutor, boolean enableRetrying) {
+        this.jobStore = jobStore;
+        this.flickr = new Flickr(appCredentials.getKey(), appCredentials.getSecret(), new REST());
+        this.uploader = flickr.getUploader();
+        this.connectionProvider = new ConnectionProvider(jobStore);
+        this.photosetsInterface = flickr.getPhotosetsInterface();
+        this.monitor = monitor;
+        this.perUserRateLimiter = serviceConfig.getPerUserRateLimiter();
+        this.retryingIdempotentExecutor = retryingIdempotentExecutor;
+        this.enableRetrying = enableRetrying;
     }
 
-    IdempotentImportExecutor executor =
-        (retryingIdempotentExecutor != null && enableRetrying) ? retryingIdempotentExecutor : idempotentExecutor;
+    public FlickrPhotosImporter(AppCredentials appCredentials, TemporaryPerJobDataStore jobStore, Monitor monitor, TransferServiceConfig serviceConfig) {
+        this(appCredentials, jobStore, monitor, serviceConfig, null, /*retryingIdempotentExecutor*/
+        false);
+    }
 
-    if (data.getPhotos() != null) {
-      for (PhotoModel photo : data.getPhotos()) {
+    @VisibleForTesting
+    FlickrPhotosImporter(Flickr flickr, TemporaryPerJobDataStore jobstore, ConnectionProvider connectionProvider, Monitor monitor, TransferServiceConfig serviceConfig) {
+        this.flickr = flickr;
+        this.connectionProvider = connectionProvider;
+        this.jobStore = jobstore;
+        this.uploader = flickr.getUploader();
+        this.photosetsInterface = flickr.getPhotosetsInterface();
+        this.monitor = monitor;
+        this.perUserRateLimiter = serviceConfig.getPerUserRateLimiter();
+    }
+
+    @Override
+    public ImportResult importItem(UUID jobId, IdempotentImportExecutor idempotentExecutor, AuthData authData, PhotosContainerResource data) throws Exception, IOException {
+        Auth auth;
         try {
-          importSinglePhoto(executor, jobId, photo);
+            auth = FlickrUtils.getAuth(authData, flickr);
         } catch (FlickrException e) {
-          if (e.getMessage().contains("Upload limit reached")) {
-            throw new DestinationMemoryFullException("Flickr destination memory reached", e);
-          } else if (e.getMessage().contains("Photo already in set")) {
-            // This can happen if we got a server error on our end, but the request went through.
-            // When our retry strategy kicked in the request was complete and the photo already
-            // uploaded
-            continue;
-          }
-          throw new IOException(e);
+            return new ImportResult(e);
         }
-      }
+        RequestContext.getRequestContext().setAuth(auth);
+        Preconditions.checkArgument(data.getAlbums() != null || data.getPhotos() != null, "Error: There is no data to import");
+        if (data.getAlbums() != null) {
+            storeAlbums(jobId, data.getAlbums());
+        }
+        IdempotentImportExecutor executor = (retryingIdempotentExecutor != null && enableRetrying) ? retryingIdempotentExecutor : idempotentExecutor;
+        if (data.getPhotos() != null) {
+            for (PhotoModel photo : data.getPhotos()) {
+                try {
+                    importSinglePhoto(executor, jobId, photo);
+                } catch (FlickrException e) {
+                    if (e.getMessage().contains("Upload limit reached")) {
+                        throw new DestinationMemoryFullException("Flickr destination memory reached", e);
+                    } else if (e.getMessage().contains("Photo already in set")) {
+                        // This can happen if we got a server error on our end, but the request went through.
+                        // When our retry strategy kicked in the request was complete and the photo already
+                        // uploaded
+                        continue;
+                    }
+                    throw new IOException(e);
+                }
+            }
+        }
+        return new ImportResult(ImportResult.ResultType.OK);
     }
 
-    return new ImportResult(ImportResult.ResultType.OK);
-  }
-
-  // Store any album data in the cache because Flickr only allows you to create an album with a
-  // photo in it, so we have to wait for the first photo to create the album
-  private void storeAlbums(UUID jobId, Collection<PhotoAlbum> albums) throws IOException {
-    for (PhotoAlbum album : albums) {
-      jobStore.create(
-          jobId,
-          ORIGINAL_ALBUM_PREFIX + album.getId(),
-          new FlickrTempPhotoData(album.getName(), album.getDescription()));
-    }
-  }
-
-  private void importSinglePhoto(
-      IdempotentImportExecutor idempotentExecutor, UUID id, PhotoModel photo) throws Exception {
-    String photoId =
-        idempotentExecutor.executeAndSwallowIOExceptions(
-            photo.getIdempotentId(),
-            photo.getTitle(),
-            () -> uploadPhoto(photo, id));
-    if (photoId == null) {
-      return;
+    // Store any album data in the cache because Flickr only allows you to create an album with a
+    // photo in it, so we have to wait for the first photo to create the album
+    private void storeAlbums(UUID jobId, Collection<PhotoAlbum> albums) throws IOException {
+        for (PhotoAlbum album : albums) {
+            jobStore.create(jobId, ORIGINAL_ALBUM_PREFIX + album.getId(), new FlickrTempPhotoData(album.getName(), album.getDescription()));
+        }
     }
 
-    String oldAlbumId = photo.getAlbumId();
-
-    // If the photo wasn't associated with an album, we don't have to do anything else, since we've
-    // already uploaded it above. This will mean it lives in the user's cameraroll and not in an
-    // album.
-    // If the uploadPhoto() call fails above, an exception will be thrown, so we don't have to worry
-    // about the photo not being uploaded here.
-    if (Strings.isNullOrEmpty(oldAlbumId)) {
-      return;
+    private void importSinglePhoto(IdempotentImportExecutor idempotentExecutor, UUID id, PhotoModel photo) throws Exception {
+        String photoId = idempotentExecutor.executeAndSwallowIOExceptions(photo.getIdempotentId(), photo.getTitle(), () -> uploadPhoto(photo, id));
+        if (photoId == null) {
+            return;
+        }
+        String oldAlbumId = photo.getAlbumId();
+        // If the photo wasn't associated with an album, we don't have to do anything else, since we've
+        // already uploaded it above. This will mean it lives in the user's cameraroll and not in an
+        // album.
+        // If the uploadPhoto() call fails above, an exception will be thrown, so we don't have to worry
+        // about the photo not being uploaded here.
+        if (Strings.isNullOrEmpty(oldAlbumId)) {
+            return;
+        }
+        createOrAddToAlbum(idempotentExecutor, id, photo.getAlbumId(), photoId);
     }
-    createOrAddToAlbum(idempotentExecutor, id, photo.getAlbumId(), photoId);
-  }
 
-  private void createOrAddToAlbum(
-      IdempotentImportExecutor idempotentExecutor, UUID jobId, String oldAlbumId, String photoId)
-      throws Exception {
-    if (idempotentExecutor.isKeyCached(oldAlbumId)) {
-      String newAlbumId = idempotentExecutor.getCachedValue(oldAlbumId);
-      // We've already created the album this photo belongs in, simply add it to the new album
-      photosetsInterface.addPhoto(newAlbumId, photoId);
-    } else {
-      createAlbum(idempotentExecutor, jobId, oldAlbumId, photoId);
+    private void createOrAddToAlbum(IdempotentImportExecutor idempotentExecutor, UUID jobId, String oldAlbumId, String photoId) throws Exception {
+        if (idempotentExecutor.isKeyCached(oldAlbumId)) {
+            String newAlbumId = idempotentExecutor.getCachedValue(oldAlbumId);
+            // We've already created the album this photo belongs in, simply add it to the new album
+            photosetsInterface.addPhoto(newAlbumId, photoId);
+        } else {
+            createAlbum(idempotentExecutor, jobId, oldAlbumId, photoId);
+        }
     }
-  }
 
-  private void createAlbum(
-      IdempotentImportExecutor idempotentExecutor,
-      UUID jobId,
-      String oldAlbumId,
-      String firstPhotoId)
-      throws Exception {
-    // This means that we havent created the new album yet, create the photoset
-    FlickrTempPhotoData album =
-        jobStore.findData(jobId, ORIGINAL_ALBUM_PREFIX + oldAlbumId, FlickrTempPhotoData.class);
-
-    // TODO: handle what happens if the album doesn't exist. One of the things we can do here is
-    // throw them into a default album or add a finalize() step in the Importer which can deal
-    // with these (in case the album exists later).
-    Preconditions.checkNotNull(album, "Album not found: " + oldAlbumId);
-
-    idempotentExecutor.executeAndSwallowIOExceptions(
-        oldAlbumId,
-        album.getName(),
-        () -> {
-          String albumName =
-              Strings.isNullOrEmpty(album.getName()) ? "untitled" : album.getName();
-          String albumDescription = cleanString(album.getDescription());
-
-          perUserRateLimiter.acquire();
-          Photoset photoset = photosetsInterface.create(albumName, albumDescription, firstPhotoId);
-          monitor.debug(() -> String.format("Flickr importer created album: %s", album));
-          return photoset.getId();
+    private void createAlbum(IdempotentImportExecutor idempotentExecutor, UUID jobId, String oldAlbumId, String firstPhotoId) throws Exception {
+        // This means that we havent created the new album yet, create the photoset
+        FlickrTempPhotoData album = jobStore.findData(jobId, ORIGINAL_ALBUM_PREFIX + oldAlbumId, FlickrTempPhotoData.class);
+        // TODO: handle what happens if the album doesn't exist. One of the things we can do here is
+        // throw them into a default album or add a finalize() step in the Importer which can deal
+        // with these (in case the album exists later).
+        Preconditions.checkNotNull(album, "Album not found: " + oldAlbumId);
+        idempotentExecutor.executeAndSwallowIOExceptions(oldAlbumId, album.getName(), () -> {
+            String albumName = Strings.isNullOrEmpty(album.getName()) ? "untitled" : album.getName();
+            String albumDescription = cleanString(album.getDescription());
+            perUserRateLimiter.acquire();
+            Photoset photoset = photosetsInterface.create(albumName, albumDescription, firstPhotoId);
+            monitor.debug(() -> String.format("Flickr importer created album: %s", album));
+            return photoset.getId();
         });
-  }
-
-  private String uploadPhoto(PhotoModel photo, UUID jobId) throws IOException, FlickrException {
-    String photoTitle =
-        Strings.isNullOrEmpty(photo.getTitle()) ? "" : photo.getTitle();
-    String photoDescription = cleanString(photo.getDescription());
-
-    UploadMetaData uploadMetaData =
-        new UploadMetaData()
-            .setAsync(false)
-            .setPublicFlag(false)
-            .setFriendFlag(false)
-            .setFamilyFlag(false)
-            .setTitle(photoTitle)
-            .setDescription(photoDescription);
-    perUserRateLimiter.acquire();
-    try (InputStream is = connectionProvider.getInputStreamForItem(jobId, photo).getStream()) {
-      String uploadResult = uploader.upload(is, uploadMetaData);
-      monitor.debug(() -> String.format("%s: Flickr importer uploading photo: %s", jobId, photo));
-      return uploadResult;
     }
-  }
 
-  private static String cleanString(String string) {
-    return Strings.isNullOrEmpty(string) ? "" : string;
-  }
+    private String uploadPhoto(PhotoModel photo, UUID jobId) throws IOException, FlickrException {
+        String photoTitle = Strings.isNullOrEmpty(photo.getTitle()) ? "" : photo.getTitle();
+        String photoDescription = cleanString(photo.getDescription());
+        UploadMetaData uploadMetaData = new UploadMetaData().setAsync(false).setPublicFlag(false).setFriendFlag(false).setFamilyFlag(false).setTitle(photoTitle).setDescription(photoDescription);
+        perUserRateLimiter.acquire();
+        try (InputStream is = connectionProvider.getInputStreamForItem(jobId, photo).getStream()) {
+            String uploadResult = uploader.upload(is, uploadMetaData);
+            monitor.debug(() -> String.format("%s: Flickr importer uploading photo: %s", jobId, photo));
+            return uploadResult;
+        }
+    }
+
+    private static String cleanString(String string) {
+        return Strings.isNullOrEmpty(string) ? "" : string;
+    }
 }

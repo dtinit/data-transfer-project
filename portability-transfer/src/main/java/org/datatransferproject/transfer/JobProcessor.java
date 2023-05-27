@@ -16,7 +16,6 @@
 package org.datatransferproject.transfer;
 
 import static java.lang.String.format;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
@@ -50,162 +49,129 @@ import org.datatransferproject.types.transfer.errors.ErrorDetail;
  * (2)Run the copy job
  */
 class JobProcessor {
-  private final JobStore store;
-  private final JobHooks hooks;
-  private final ObjectMapper objectMapper;
-  private final InMemoryDataCopier copier;
-  private final AuthDataDecryptService decryptService;
-  private final Monitor monitor;
-  private final DtpInternalMetricRecorder dtpInternalMetricRecorder;
 
-  @Inject
-  JobProcessor(
-      JobStore store,
-      JobHooks hooks,
-      ObjectMapper objectMapper,
-      InMemoryDataCopier copier,
-      AuthDataDecryptService decryptService,
-      Monitor monitor,
-      DtpInternalMetricRecorder dtpInternalMetricRecorder) {
-    this.store = store;
-    this.hooks = hooks;
-    this.objectMapper = objectMapper;
-    this.copier = copier;
-    this.decryptService = decryptService;
-    this.monitor = monitor;
-    this.dtpInternalMetricRecorder = dtpInternalMetricRecorder;
-  }
+    private final JobStore store;
 
-  /** Process our job, whose metadata is available via {@link JobMetadata}. */
-  void processJob() {
-    boolean success = false;
-    UUID jobId = JobMetadata.getJobId();
-    monitor.debug(() -> format("Begin processing jobId: %s", jobId), EventCode.WORKER_JOB_STARTED);
+    private final JobHooks hooks;
 
-    try {
-      markJobStarted(jobId);
-      hooks.jobStarted(jobId);
+    private final ObjectMapper objectMapper;
 
-      PortabilityJob job = store.findJob(jobId);
-      JobAuthorization jobAuthorization = job.jobAuthorization();
+    private final InMemoryDataCopier copier;
 
-      monitor.debug(
-          () ->
-              format(
-                  "Starting copy job, id: %s, source: %s, destination: %s",
-                  jobId, job.exportService(), job.importService()));
+    private final AuthDataDecryptService decryptService;
 
-      String scheme = jobAuthorization.encryptionScheme();
-      AuthDataDecryptService decryptService = getAuthDecryptService(scheme);
-      if (decryptService == null) {
-        monitor.severe(
-            () ->
-                format(
-                    "No auth decrypter found for scheme %s while processing job: %s",
-                    scheme, jobId));
-        return;
-      }
+    private final Monitor monitor;
 
-      String encrypted = jobAuthorization.encryptedAuthData();
-      byte[] encodedPrivateKey = JobMetadata.getPrivateKey();
-      AuthDataPair pair = decryptService.decrypt(encrypted, encodedPrivateKey);
-      AuthData exportAuthData = objectMapper.readValue(pair.getExportAuthData(), AuthData.class);
-      AuthData importAuthData = objectMapper.readValue(pair.getImportAuthData(), AuthData.class);
+    private final DtpInternalMetricRecorder dtpInternalMetricRecorder;
 
-      String exportInfoStr = job.exportInformation();
-      Optional<ExportInformation> exportInfo = Optional.empty();
-      if (!Strings.isNullOrEmpty(exportInfoStr)) {
-        exportInfo = Optional.ofNullable(objectMapper.readValue(exportInfoStr, ExportInformation.class));
-      }
-
-      // Copy the data
-      dtpInternalMetricRecorder.startedJob(
-          JobMetadata.getDataType(),
-          JobMetadata.getExportService(),
-          JobMetadata.getImportService());
-      JobMetadata.getStopWatch().start();
-      copier.copy(exportAuthData, importAuthData, jobId, exportInfo);
-      success = true;
-    } catch (CopyExceptionWithFailureReason e) {
-      String failureReason = e.getFailureReason();
-      if (failureReason.contains(FailureReasons.DESTINATION_FULL.toString())) {
-        monitor.info(() -> "The remaining storage in the user's account is not enough to perform this operation.", e);
-      } else if (failureReason.contains(FailureReasons.INVALID_TOKEN.toString())  ||
-              failureReason.contains(FailureReasons.SESSION_INVALIDATED.toString())  ||
-              failureReason.contains(FailureReasons.UNCONFIRMED_USER.toString())  ||
-              failureReason.contains(FailureReasons.USER_CHECKPOINTED.toString())) {
-        monitor.info(() -> "Got token error", e);
-      } else {
-        monitor.severe(
-                () ->
-                        format(
-                                "Error with failure code '%s' while processing jobId: %s",
-                                failureReason, jobId),
-                e,
-                EventCode.WORKER_JOB_ERRORED);
-      }
-      addFailureReasonToJob(jobId, failureReason);
-    } catch (IOException | CopyException | RuntimeException e) {
-      monitor.severe(() -> "Error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
-    } finally {
-      // The errors returned by copier.getErrors are those logged by the idempotentImportExecutor
-      // and are distinct from the exceptions thrown by copier.copy
-      final Collection<ErrorDetail> loggedErrors = copier.getErrors(jobId);
-      final int numErrors = loggedErrors.size();
-      // success is set to true above if copy returned without throwing
-      success &= loggedErrors.isEmpty();
-      monitor.debug(
-          () -> format("Finished processing jobId: %s with %d error(s).", jobId, numErrors),
-          EventCode.WORKER_JOB_FINISHED);
-      addErrorsAndMarkJobFinished(jobId, success, loggedErrors);
-      hooks.jobFinished(jobId, success);
-      dtpInternalMetricRecorder.finishedJob(
-          JobMetadata.getDataType(),
-          JobMetadata.getExportService(),
-          JobMetadata.getImportService(),
-          success,
-          JobMetadata.getStopWatch().elapsed());
-      monitor.flushLogs();
-      JobMetadata.reset();
+    @Inject
+    JobProcessor(JobStore store, JobHooks hooks, ObjectMapper objectMapper, InMemoryDataCopier copier, AuthDataDecryptService decryptService, Monitor monitor, DtpInternalMetricRecorder dtpInternalMetricRecorder) {
+        this.store = store;
+        this.hooks = hooks;
+        this.objectMapper = objectMapper;
+        this.copier = copier;
+        this.decryptService = decryptService;
+        this.monitor = monitor;
+        this.dtpInternalMetricRecorder = dtpInternalMetricRecorder;
     }
-  }
 
-  @Nullable
-  private AuthDataDecryptService getAuthDecryptService(String scheme) {
-    if (decryptService.canHandle(scheme)) {
-      return decryptService;
+    /**
+     * Process our job, whose metadata is available via {@link JobMetadata}.
+     */
+    void processJob() {
+        boolean success = false;
+        UUID jobId = JobMetadata.getJobId();
+        monitor.debug(() -> format("Begin processing jobId: %s", jobId), EventCode.WORKER_JOB_STARTED);
+        try {
+            markJobStarted(jobId);
+            hooks.jobStarted(jobId);
+            PortabilityJob job = store.findJob(jobId);
+            JobAuthorization jobAuthorization = job.jobAuthorization();
+            monitor.debug(() -> format("Starting copy job, id: %s, source: %s, destination: %s", jobId, job.exportService(), job.importService()));
+            String scheme = jobAuthorization.encryptionScheme();
+            AuthDataDecryptService decryptService = getAuthDecryptService(scheme);
+            if (decryptService == null) {
+                monitor.severe(() -> format("No auth decrypter found for scheme %s while processing job: %s", scheme, jobId));
+                return;
+            }
+            String encrypted = jobAuthorization.encryptedAuthData();
+            byte[] encodedPrivateKey = JobMetadata.getPrivateKey();
+            AuthDataPair pair = decryptService.decrypt(encrypted, encodedPrivateKey);
+            AuthData exportAuthData = objectMapper.readValue(pair.getExportAuthData(), AuthData.class);
+            AuthData importAuthData = objectMapper.readValue(pair.getImportAuthData(), AuthData.class);
+            String exportInfoStr = job.exportInformation();
+            Optional<ExportInformation> exportInfo = Optional.empty();
+            if (!Strings.isNullOrEmpty(exportInfoStr)) {
+                exportInfo = Optional.ofNullable(objectMapper.readValue(exportInfoStr, ExportInformation.class));
+            }
+            // Copy the data
+            dtpInternalMetricRecorder.startedJob(JobMetadata.getDataType(), JobMetadata.getExportService(), JobMetadata.getImportService());
+            JobMetadata.getStopWatch().start();
+            copier.copy(exportAuthData, importAuthData, jobId, exportInfo);
+            success = true;
+        } catch (CopyExceptionWithFailureReason e) {
+            String failureReason = e.getFailureReason();
+            if (failureReason.contains(FailureReasons.DESTINATION_FULL.toString())) {
+                monitor.info(() -> "The remaining storage in the user's account is not enough to perform this operation.", e);
+            } else if (failureReason.contains(FailureReasons.INVALID_TOKEN.toString()) || failureReason.contains(FailureReasons.SESSION_INVALIDATED.toString()) || failureReason.contains(FailureReasons.UNCONFIRMED_USER.toString()) || failureReason.contains(FailureReasons.USER_CHECKPOINTED.toString())) {
+                monitor.info(() -> "Got token error", e);
+            } else {
+                monitor.severe(() -> format("Error with failure code '%s' while processing jobId: %s", failureReason, jobId), e, EventCode.WORKER_JOB_ERRORED);
+            }
+            addFailureReasonToJob(jobId, failureReason);
+        } catch (IOException | CopyException | RuntimeException e) {
+            monitor.severe(() -> "Error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
+        } finally {
+            // The errors returned by copier.getErrors are those logged by the idempotentImportExecutor
+            // and are distinct from the exceptions thrown by copier.copy
+            final Collection<ErrorDetail> loggedErrors = copier.getErrors(jobId);
+            final int numErrors = loggedErrors.size();
+            // success is set to true above if copy returned without throwing
+            success &= loggedErrors.isEmpty();
+            monitor.debug(() -> format("Finished processing jobId: %s with %d error(s).", jobId, numErrors), EventCode.WORKER_JOB_FINISHED);
+            addErrorsAndMarkJobFinished(jobId, success, loggedErrors);
+            hooks.jobFinished(jobId, success);
+            dtpInternalMetricRecorder.finishedJob(JobMetadata.getDataType(), JobMetadata.getExportService(), JobMetadata.getImportService(), success, JobMetadata.getStopWatch().elapsed());
+            monitor.flushLogs();
+            JobMetadata.reset();
+        }
     }
-    return null;
-  }
 
-  private void addErrorsAndMarkJobFinished(
-      UUID jobId, boolean success, Collection<ErrorDetail> errors) {
-    try {
-      store.addErrorsToJob(jobId, errors);
-    } catch (IOException | RuntimeException e) {
-      success = false;
-      monitor.severe(() -> "Problem adding errors to JobStore", e);
+    @Nullable
+    private AuthDataDecryptService getAuthDecryptService(String scheme) {
+        if (decryptService.canHandle(scheme)) {
+            return decryptService;
+        }
+        return null;
     }
-    try {
-      store.markJobAsFinished(jobId, success ? State.COMPLETE : State.ERROR);
-    } catch (IOException e) {
-      monitor.severe(() -> format("Could not mark job %s as finished.", jobId));
-    }
-  }
 
-  private void addFailureReasonToJob(UUID jobId, String failureReason) {
-    try {
-      store.addFailureReasonToJob(jobId, failureReason);
-    } catch (IOException e) {
-      monitor.severe(() -> "Problem adding failure reason to JobStore", e);
+    private void addErrorsAndMarkJobFinished(UUID jobId, boolean success, Collection<ErrorDetail> errors) {
+        try {
+            store.addErrorsToJob(jobId, errors);
+        } catch (IOException | RuntimeException e) {
+            success = false;
+            monitor.severe(() -> "Problem adding errors to JobStore", e);
+        }
+        try {
+            store.markJobAsFinished(jobId, success ? State.COMPLETE : State.ERROR);
+        } catch (IOException e) {
+            monitor.severe(() -> format("Could not mark job %s as finished.", jobId));
+        }
     }
-  }
 
-  private void markJobStarted(UUID jobId) {
-    try {
-      store.markJobAsStarted(jobId);
-    } catch (IOException e) {
-      monitor.severe(() -> format("Could not mark job %s as %s", jobId, State.IN_PROGRESS), e);
+    private void addFailureReasonToJob(UUID jobId, String failureReason) {
+        try {
+            store.addFailureReasonToJob(jobId, failureReason);
+        } catch (IOException e) {
+            monitor.severe(() -> "Problem adding failure reason to JobStore", e);
+        }
     }
-  }
+
+    private void markJobStarted(UUID jobId) {
+        try {
+            store.markJobAsStarted(jobId);
+        } catch (IOException e) {
+            monitor.severe(() -> format("Could not mark job %s as %s", jobId, State.IN_PROGRESS), e);
+        }
+    }
 }

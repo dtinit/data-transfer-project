@@ -13,27 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.google.musicModels;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Class containing the response from batch creating {@code GooglePlaylistItem}s to the Google Music
  * API.
  */
 public class BatchPlaylistItemResponse {
 
-  @JsonProperty("newPlaylistItemResults")
-  private NewPlaylistItemResult[] results;
+    @JsonProperty("newPlaylistItemResults")
+    private NewPlaylistItemResult[] results;
 
-  @JsonCreator
-  public BatchPlaylistItemResponse(
-      @JsonProperty("newPlaylistItemResults") NewPlaylistItemResult[] results) {
-    this.results = results;
-  }
+    @JsonCreator
+    public BatchPlaylistItemResponse(@JsonProperty("newPlaylistItemResults") NewPlaylistItemResult[] results) {
+        this.results = results;
+    }
 
-  public NewPlaylistItemResult[] getResults() {
-    return results;
-  }
+    public NewPlaylistItemResult[] getResults() {
+        return results;
+    }
 }

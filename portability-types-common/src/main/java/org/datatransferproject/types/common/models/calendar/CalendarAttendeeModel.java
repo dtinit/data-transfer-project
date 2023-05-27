@@ -17,48 +17,47 @@ package org.datatransferproject.types.common.models.calendar;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Objects;
 
 public class CalendarAttendeeModel {
-  private final String displayName;
-  private final String email;
-  private final boolean optional;
 
-  @JsonCreator
-  public CalendarAttendeeModel(
-      @JsonProperty("displayName") String displayName,
-      @JsonProperty("email") String email,
-      @JsonProperty("optional") boolean optional) {
-    this.displayName = displayName;
-    this.email = email;
-    this.optional = optional;
-  }
+    private final String displayName;
 
-  public boolean getOptional() {
-    return optional;
-  }
+    private final String email;
 
-  public String getEmail() {
-    return email;
-  }
+    private final boolean optional;
 
-  public String getDisplayName() {
-    return displayName;
-  }
+    @JsonCreator
+    public CalendarAttendeeModel(@JsonProperty("displayName") String displayName, @JsonProperty("email") String email, @JsonProperty("optional") boolean optional) {
+        this.displayName = displayName;
+        this.email = email;
+        this.optional = optional;
+    }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    CalendarAttendeeModel that = (CalendarAttendeeModel) o;
-    return getOptional() == that.getOptional() &&
-            Objects.equals(getDisplayName(), that.getDisplayName()) &&
-            Objects.equals(getEmail(), that.getEmail());
-  }
+    public boolean getOptional() {
+        return optional;
+    }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(getDisplayName(), getEmail(), getOptional());
-  }
+    public String getEmail() {
+        return email;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        CalendarAttendeeModel that = (CalendarAttendeeModel) o;
+        return getOptional() == that.getOptional() && Objects.equals(getDisplayName(), that.getDisplayName()) && Objects.equals(getEmail(), that.getEmail());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getDisplayName(), getEmail(), getOptional());
+    }
 }

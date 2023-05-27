@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.apple;
 
 import com.google.common.base.Preconditions;
@@ -31,31 +30,20 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
  */
 public class AppleInterfaceFactory {
 
-  private static String errorMessage = "%s is required";
-  private Map<UUID, AppleBaseInterface> interfacesByAuthData = new HashMap<>();
-  public synchronized AppleMediaInterface getOrCreateMediaInterface(
-    UUID jobId,
-    TokensAndUrlAuthData authData,
-    AppCredentials appCredentials,
-    String exportingService,
-    Monitor monitor) {
-    AppleMediaInterface mediaInterface = (AppleMediaInterface)interfacesByAuthData
-      .computeIfAbsent(jobId, key ->  makeMediaInterface(authData, appCredentials,
-        exportingService, monitor));
-    return mediaInterface;
-  }
+    private static String errorMessage = "%s is required";
 
-  protected synchronized AppleMediaInterface makeMediaInterface(
-    TokensAndUrlAuthData authData,
-    AppCredentials appCredentials,
-    String exportingService,
-    Monitor monitor) {
+    private Map<UUID, AppleBaseInterface> interfacesByAuthData = new HashMap<>();
 
-    Preconditions.checkNotNull(authData, errorMessage, "authData");
-    Preconditions.checkNotNull(appCredentials, errorMessage, "appCredentials");
-    Preconditions.checkNotNull(exportingService, errorMessage, "exportingService");
-    Preconditions.checkNotNull(monitor, errorMessage, "monitor");
+    public synchronized AppleMediaInterface getOrCreateMediaInterface(UUID jobId, TokensAndUrlAuthData authData, AppCredentials appCredentials, String exportingService, Monitor monitor) {
+        AppleMediaInterface mediaInterface = (AppleMediaInterface) interfacesByAuthData.computeIfAbsent(jobId, key -> makeMediaInterface(authData, appCredentials, exportingService, monitor));
+        return mediaInterface;
+    }
 
-    return new AppleMediaInterface(authData, appCredentials, exportingService, monitor);
-  }
+    protected synchronized AppleMediaInterface makeMediaInterface(TokensAndUrlAuthData authData, AppCredentials appCredentials, String exportingService, Monitor monitor) {
+        Preconditions.checkNotNull(authData, errorMessage, "authData");
+        Preconditions.checkNotNull(appCredentials, errorMessage, "appCredentials");
+        Preconditions.checkNotNull(exportingService, errorMessage, "exportingService");
+        Preconditions.checkNotNull(monitor, errorMessage, "monitor");
+        return new AppleMediaInterface(authData, appCredentials, exportingService, monitor);
+    }
 }

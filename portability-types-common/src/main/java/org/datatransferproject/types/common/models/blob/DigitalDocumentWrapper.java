@@ -13,37 +13,35 @@ import org.datatransferproject.types.common.models.DataModel;
  */
 public class DigitalDocumentWrapper extends DataModel {
 
-  private final DtpDigitalDocument dtpDigitalDocument;
-  private final String originalEncodingFormat;
-  // This isn't in the schema.org spec and is only needed to store the bytes DTP will transfer
-  private final String cachedContentId;
+    private final DtpDigitalDocument dtpDigitalDocument;
 
-  @JsonCreator
-  public DigitalDocumentWrapper(
-      @JsonProperty("DtpDigitalDocument") DtpDigitalDocument dtpDigitalDocument,
-      @JsonProperty("originalEncodingFormat") String originalEncodingFormat,
-      @JsonProperty("cachedContentId") String cachedContentId
-  ) {
-    this.dtpDigitalDocument = dtpDigitalDocument;
-    this.originalEncodingFormat = originalEncodingFormat;
-    this.cachedContentId = cachedContentId;
-  }
+    private final String originalEncodingFormat;
 
-  public DtpDigitalDocument getDtpDigitalDocument() {
-    return dtpDigitalDocument;
-  }
+    // This isn't in the schema.org spec and is only needed to store the bytes DTP will transfer
+    private final String cachedContentId;
 
-  public String getCachedContentId() {
-    return cachedContentId;
-  }
+    @JsonCreator
+    public DigitalDocumentWrapper(@JsonProperty("DtpDigitalDocument") DtpDigitalDocument dtpDigitalDocument, @JsonProperty("originalEncodingFormat") String originalEncodingFormat, @JsonProperty("cachedContentId") String cachedContentId) {
+        this.dtpDigitalDocument = dtpDigitalDocument;
+        this.originalEncodingFormat = originalEncodingFormat;
+        this.cachedContentId = cachedContentId;
+    }
 
-  public String getOriginalEncodingFormat() {
-    return originalEncodingFormat;
-  }
+    public DtpDigitalDocument getDtpDigitalDocument() {
+        return dtpDigitalDocument;
+    }
 
-  @JsonIgnore
-  @Override
-  public Map<String, Integer> getCounts() {
-    return super.getCounts();
-  }
+    public String getCachedContentId() {
+        return cachedContentId;
+    }
+
+    public String getOriginalEncodingFormat() {
+        return originalEncodingFormat;
+    }
+
+    @JsonIgnore
+    @Override
+    public Map<String, Integer> getCounts() {
+        return super.getCounts();
+    }
 }

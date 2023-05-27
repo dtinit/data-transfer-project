@@ -4,8 +4,11 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
 
-/** Request to reserve a worker to process a transfer job. */
+/**
+ * Request to reserve a worker to process a transfer job.
+ */
 public class ReserveWorker {
+
     private final String id;
 
     @JsonCreator
@@ -13,8 +16,7 @@ public class ReserveWorker {
         this.id = id;
     }
 
-    @ApiModelProperty(value = "The id of the job for which we are requesting a worker", dataType = "string",
-            required = true)
+    @ApiModelProperty(value = "The id of the job for which we are requesting a worker", dataType = "string", required = true)
     public String getId() {
         return id;
     }

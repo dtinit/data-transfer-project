@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -23,141 +22,126 @@ import java.util.Optional;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 
-/** Media item returned by queries to the Google Photos API. Represents what is stored by Google. */
+/**
+ * Media item returned by queries to the Google Photos API. Represents what is stored by Google.
+ */
 public class GoogleMediaItem {
-  @JsonProperty("id")
-  private String id;
 
-  @JsonProperty("description")
-  private String description;
+    @JsonProperty("id")
+    private String id;
 
-  @JsonProperty("baseUrl")
-  private String baseUrl;
+    @JsonProperty("description")
+    private String description;
 
-  @JsonProperty("mimeType")
-  private String mimeType;
+    @JsonProperty("baseUrl")
+    private String baseUrl;
 
-  @JsonProperty("mediaMetadata")
-  private MediaMetadata mediaMetadata;
+    @JsonProperty("mimeType")
+    private String mimeType;
 
-  @JsonProperty("filename")
-  private String filename;
+    @JsonProperty("mediaMetadata")
+    private MediaMetadata mediaMetadata;
 
-  @JsonProperty("productUrl")
-  private String productUrl;
+    @JsonProperty("filename")
+    private String filename;
 
-  @JsonProperty("uploadedTime")
-  private Date uploadedTime;
+    @JsonProperty("productUrl")
+    private String productUrl;
 
-  public boolean isPhoto() {
-    return this.getMediaMetadata().getPhoto() != null;
-  }
-  public boolean isVideo() {
-    return this.getMediaMetadata().getVideo() != null;
-  }
+    @JsonProperty("uploadedTime")
+    private Date uploadedTime;
 
-
-  public String getFetchableUrl() {
-    if (this.isPhoto()) {
-      return this.getBaseUrl() + "=d";
-    } else if (this.isVideo()) {
-      // dv = download video otherwise you only get a thumbnail
-      return this.getBaseUrl() + "=dv";
-    } else {
-      throw new IllegalArgumentException("unimplemented media type");
+    public boolean isPhoto() {
+        return this.getMediaMetadata().getPhoto() != null;
     }
-  }
 
-  public static VideoModel convertToVideoModel(
-      Optional<String> albumId, GoogleMediaItem mediaItem) {
-    Preconditions.checkArgument(mediaItem.isVideo());
+    public boolean isVideo() {
+        return this.getMediaMetadata().getVideo() != null;
+    }
 
-    return new VideoModel(
-        mediaItem.getFilename(),
-        mediaItem.getFetchableUrl(),
-        mediaItem.getDescription(),
-        mediaItem.getMimeType(),
-        mediaItem.getId(),
-        albumId.orElse(null),
-        false /*inTempStore*/,
+    public String getFetchableUrl() {
+        if (this.isPhoto()) {
+            return this.getBaseUrl() + "=d";
+        } else if (this.isVideo()) {
+            // dv = download video otherwise you only get a thumbnail
+            return this.getBaseUrl() + "=dv";
+        } else {
+            throw new IllegalArgumentException("unimplemented media type");
+        }
+    }
+
+    public static VideoModel convertToVideoModel(Optional<String> albumId, GoogleMediaItem mediaItem) {
+        Preconditions.checkArgument(mediaItem.isVideo());
+        return new VideoModel(mediaItem.getFilename(), mediaItem.getFetchableUrl(), mediaItem.getDescription(), mediaItem.getMimeType(), mediaItem.getId(), albumId.orElse(null), false, /*inTempStore*/
         mediaItem.getUploadedTime());
-  }
+    }
 
-  public static PhotoModel convertToPhotoModel(
-      Optional<String> albumId, GoogleMediaItem mediaItem) {
-    Preconditions.checkArgument(mediaItem.isPhoto());
-
-    return new PhotoModel(
-        mediaItem.getFilename(),
-        mediaItem.getFetchableUrl(),
-        mediaItem.getDescription(),
-        mediaItem.getMimeType(),
-        mediaItem.getId(),
-        albumId.orElse(null),
-        false  /*inTempStore*/,
-        null  /*sha1*/,
+    public static PhotoModel convertToPhotoModel(Optional<String> albumId, GoogleMediaItem mediaItem) {
+        Preconditions.checkArgument(mediaItem.isPhoto());
+        return new PhotoModel(mediaItem.getFilename(), mediaItem.getFetchableUrl(), mediaItem.getDescription(), mediaItem.getMimeType(), mediaItem.getId(), albumId.orElse(null), false, /*inTempStore*/
+        null, /*sha1*/
         mediaItem.getUploadedTime());
-  }
+    }
 
-  public String getId() {
-    return id;
-  }
+    public String getId() {
+        return id;
+    }
 
-  public void setId(String id) {
-    this.id = id;
-  }
+    public void setId(String id) {
+        this.id = id;
+    }
 
-  public String getDescription() {
-    return description;
-  }
+    public String getDescription() {
+        return description;
+    }
 
-  public void setDescription(String description) {
-    this.description = description;
-  }
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-  public String getBaseUrl() {
-    return baseUrl;
-  }
+    public String getBaseUrl() {
+        return baseUrl;
+    }
 
-  public void setBaseUrl(String baseUrl) {
-    this.baseUrl = baseUrl;
-  }
+    public void setBaseUrl(String baseUrl) {
+        this.baseUrl = baseUrl;
+    }
 
-  public String getMimeType() {
-    return mimeType;
-  }
+    public String getMimeType() {
+        return mimeType;
+    }
 
-  public void setMimeType(String mimeType) {
-    this.mimeType = mimeType;
-  }
+    public void setMimeType(String mimeType) {
+        this.mimeType = mimeType;
+    }
 
-  public String getFilename() {
-    return filename;
-  }
+    public String getFilename() {
+        return filename;
+    }
 
-  public void setFilename(String filename) {
-    this.filename = filename;
-  }
+    public void setFilename(String filename) {
+        this.filename = filename;
+    }
 
-  // TODO(zacsh) investigate why/if there's no setter for this; do we need setters or does the java
-  // annotation do the work for us somehow?
-  public String getProductUrl() {
-    return productUrl;
-  }
+    // TODO(zacsh) investigate why/if there's no setter for this; do we need setters or does the java
+    // annotation do the work for us somehow?
+    public String getProductUrl() {
+        return productUrl;
+    }
 
-  public MediaMetadata getMediaMetadata() {
-    return mediaMetadata;
-  }
+    public MediaMetadata getMediaMetadata() {
+        return mediaMetadata;
+    }
 
-  public void setMediaMetadata(MediaMetadata mediaMetadata) {
-    this.mediaMetadata = mediaMetadata;
-  }
+    public void setMediaMetadata(MediaMetadata mediaMetadata) {
+        this.mediaMetadata = mediaMetadata;
+    }
 
-  public Date getUploadedTime() {
-    return this.uploadedTime;
-  }
+    public Date getUploadedTime() {
+        return this.uploadedTime;
+    }
 
-  public void setUploadedTime(Date date) {
-    this.uploadedTime = date;
-  }
+    public void setUploadedTime(Date date) {
+        this.uploadedTime = date;
+    }
 }

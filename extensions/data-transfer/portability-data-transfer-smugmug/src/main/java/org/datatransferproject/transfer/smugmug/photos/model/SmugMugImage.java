@@ -13,78 +13,76 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.transfer.smugmug.photos.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Map;
 
 public class SmugMugImage {
-  @JsonProperty("Title")
-  private String title;
 
-  @JsonProperty("Caption")
-  private String caption;
+    @JsonProperty("Title")
+    private String title;
 
-  @JsonProperty("Hidden")
-  private boolean hidden;
+    @JsonProperty("Caption")
+    private String caption;
 
-  @JsonProperty("FileName")
-  private String fileName;
+    @JsonProperty("Hidden")
+    private boolean hidden;
 
-  @JsonProperty("Format")
-  private String format;
+    @JsonProperty("FileName")
+    private String fileName;
 
-  @JsonProperty("IsArchive")
-  private Boolean isArchive;
+    @JsonProperty("Format")
+    private String format;
 
-  @JsonProperty("IsVideo")
-  private Boolean isVideo;
+    @JsonProperty("IsArchive")
+    private Boolean isArchive;
 
-  @JsonProperty("UploadKey")
-  private String uploadKey;
+    @JsonProperty("IsVideo")
+    private Boolean isVideo;
 
-  @JsonProperty("ArchivedUri")
-  private String archivedUri;
+    @JsonProperty("UploadKey")
+    private String uploadKey;
 
-  @JsonProperty("Uris")
-  private Map<String, SmugMugUrl> uris;
+    @JsonProperty("ArchivedUri")
+    private String archivedUri;
 
-  public void setTitle(String title) {
-    this.title = title;
-  }
+    @JsonProperty("Uris")
+    private Map<String, SmugMugUrl> uris;
 
-  public void setCaption(String caption) {
-    this.caption = caption;
-  }
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
-  public void setFileName(String fileName) {
-    this.fileName = fileName;
-  }
+    public void setCaption(String caption) {
+        this.caption = caption;
+    }
 
-  public String getTitle() {
-    return title;
-  }
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
 
-  public String getCaption() {
-    return caption;
-  }
+    public String getTitle() {
+        return title;
+    }
 
-  public String getFileName() {
-    return fileName;
-  }
+    public String getCaption() {
+        return caption;
+    }
 
-  public String getFormat() {
-    return format;
-  }
+    public String getFileName() {
+        return fileName;
+    }
 
-  public String getArchivedUri() {
-    return archivedUri;
-  }
+    public String getFormat() {
+        return format;
+    }
 
-  public Boolean isPhoto() {
-    return !isArchive && !isVideo;
-  }
+    public String getArchivedUri() {
+        return archivedUri;
+    }
 
+    public Boolean isPhoto() {
+        return !isArchive && !isVideo;
+    }
 }

@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.auth.deezer;
 
 import static org.datatransferproject.types.common.models.DataVertical.PLAYLISTS;
-
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
@@ -33,58 +31,52 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
  * Class that supplies Dezzer-specific OAuth2 info
  */
 public class DeezerOAuthConfig implements OAuth2Config {
-  private static Pattern AUTH_TOKEN_PATTERN = Pattern.compile("access_token=(\\w+)&expires=0");
 
-  // https://developers.deezer.com/api/oauth
+    private static Pattern AUTH_TOKEN_PATTERN = Pattern.compile("access_token=(\\w+)&expires=0");
 
-  @Override
-  public String getServiceName() {
-    return "Deezer";
-  }
-
-  @Override
-  public String getAuthUrl() {
-    return "https://connect.deezer.com/oauth/auth.php";
-  }
-
-  @Override
-  public String getTokenUrl() {
-    return "https://connect.deezer.com/oauth/access_token.php";
-  }
-
-
-  // For descriptions of scopes see: https://developers.deezer.com/api/permissions
-  @Override
-  public Map<DataVertical, Set<String>> getExportScopes() {
-    return ImmutableMap.<DataVertical, Set<String>>builder()
-        .put(PLAYLISTS, ImmutableSet.of("offline_access,manage_library"))
-        .build();
-  }
-
-  @Override
-  public Map<DataVertical, Set<String>> getImportScopes() {
-    return ImmutableMap.<DataVertical, Set<String>>builder()
-        .put(PLAYLISTS, ImmutableSet.of("offline_access,manage_library"))
-        .build();
-  }
-
-  @Override
-  public Map<String, String> getAdditionalAuthUrlParameters() {
-    return ImmutableMap.of();
-  }
-
-  @Override
-  public TokensAndUrlAuthData getResponseClass(String result) throws IOException {
-    Matcher matcher = AUTH_TOKEN_PATTERN.matcher(result);
-    if (!matcher.matches()) {
-      throw new IllegalArgumentException(result + " didn't match expected regex: "
-          + AUTH_TOKEN_PATTERN.pattern());
+    // https://developers.deezer.com/api/oauth
+    @Override
+    public String getServiceName() {
+        return "Deezer";
     }
 
-    return new TokensAndUrlAuthData(
-        matcher.group(1),
-        null,
-        getTokenUrl());
-  }
+    @Override
+    public String getAuthUrl() {
+        return "https://connect.deezer.com/oauth/auth.php";
+    }
 
+    @Override
+    public String getTokenUrl() {
+        return "https://connect.deezer.com/oauth/access_token.php";
+    }
+
+    // For descriptions of scopes see: https://developers.deezer.com/api/permissions
+    @Override
+    public Map<DataVertical, Set<String>> getExportScopes() {
+        return builderMethod();
+    }
+
+    @Override
+    public Map<DataVertical, Set<String>> getImportScopes() {
+        return builderMethod();
+    }
+
+    @Override
+    public Map<String, String> getAdditionalAuthUrlParameters() {
+        return ImmutableMap.of();
+    }
+
+    @Override
+    public TokensAndUrlAuthData getResponseClass(String result) throws IOException {
+        Matcher matcher = AUTH_TOKEN_PATTERN.matcher(result);
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException(result + " didn't match expected regex: " + AUTH_TOKEN_PATTERN.pattern());
+        }
+        return new TokensAndUrlAuthData(matcher.group(1), null, getTokenUrl());
+    }
+
+    // For descriptions of scopes see: https://developers.deezer.com/api/permissions
+    public Map<DataVertical, Set<String>> builderMethod() {
+        return ImmutableMap.<DataVertical, Set<String>>builder().put(PLAYLISTS, ImmutableSet.of("offline_access,manage_library")).build();
+    }
 }

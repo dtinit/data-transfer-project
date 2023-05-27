@@ -9,5 +9,4 @@ import org.datatransferproject.types.common.models.DataModel;
  * type descriminator used for deserialization.
  */
 public abstract class ItemResource extends DataModel {
-
 }

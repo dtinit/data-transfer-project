@@ -23,8 +23,7 @@ import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
  */
 public class BloggerAuthServiceExtension extends OAuth2ServiceExtension {
 
-  public BloggerAuthServiceExtension() {
-    super(new BloggerOAuthConfig());
-  }
-
+    public BloggerAuthServiceExtension() {
+        super(new BloggerOAuthConfig());
+    }
 }

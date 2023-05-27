@@ -16,12 +16,10 @@
 package org.datatransferproject.auth.offline;
 
 import static org.datatransferproject.types.common.models.DataVertical.OFFLINE_DATA;
-
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry.AuthMode;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
-
 import java.util.Collections;
 import java.util.List;
 import org.datatransferproject.types.common.models.DataVertical;
@@ -33,31 +31,36 @@ import org.datatransferproject.types.common.models.DataVertical;
  * the console.
  */
 public class OfflineDemoAuthServiceExtension implements AuthServiceExtension {
-  private static final String SERVICE_ID = "OFFLINE-DEMO";
 
-  private static final List<DataVertical> SUPPORTED_SERVICES = Collections.singletonList(OFFLINE_DATA);
+    private static final String SERVICE_ID = "OFFLINE-DEMO";
 
-  @Override
-  public String getServiceId() {
-    return SERVICE_ID;
-  }
+    private static final List<DataVertical> SUPPORTED_SERVICES = Collections.singletonList(OFFLINE_DATA);
 
-  @Override
-  public AuthDataGenerator getAuthDataGenerator(
-      DataVertical type, AuthMode mode) {
-    return new OfflineDemoAuthDataGenerator();
-  }
+    @Override
+    public String getServiceId() {
+        return SERVICE_ID;
+    }
 
-  @Override
-  public List<DataVertical> getImportTypes() {
-    return SUPPORTED_SERVICES;
-  }
+    @Override
+    public AuthDataGenerator getAuthDataGenerator(DataVertical type, AuthMode mode) {
+        return new OfflineDemoAuthDataGenerator();
+    }
 
-  @Override
-  public List<DataVertical> getExportTypes() {
-    return SUPPORTED_SERVICES;
-  }
+    @Override
+    public List<DataVertical> getImportTypes() {
+        return getSupportedServices();
+    }
 
-  @Override
-  public void initialize(ExtensionContext context) {}
+    @Override
+    public List<DataVertical> getExportTypes() {
+        return getSupportedServices();
+    }
+
+    @Override
+    public void initialize(ExtensionContext context) {
+    }
+
+    public List<DataVertical> getSupportedServices() {
+        return SUPPORTED_SERVICES;
+    }
 }

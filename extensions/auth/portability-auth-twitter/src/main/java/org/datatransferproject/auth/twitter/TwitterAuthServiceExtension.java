@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.auth.twitter;
 
 import org.datatransferproject.auth.OAuth1ServiceExtension;
@@ -24,7 +23,7 @@ import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
  */
 public class TwitterAuthServiceExtension extends OAuth1ServiceExtension {
 
-  public TwitterAuthServiceExtension() {
-    super(new TwitterOAuthConfig());
-  }
+    public TwitterAuthServiceExtension() {
+        super(new TwitterOAuthConfig());
+    }
 }

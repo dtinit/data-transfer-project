@@ -21,74 +21,72 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.common.ExportInformation;
-
 import javax.annotation.Nullable;
 
-/** Request to create a transfer job. */
+/**
+ * Request to create a transfer job.
+ */
 @ApiModel(description = "A request to create a data transfer job")
 public class CreateTransferJob {
-  private final String exportService;
-  private final String importService;
-  private final String exportCallbackUrl;
-  private final String importCallbackUrl;
-  private final DataVertical dataType;
-  private final ExportInformation exportInformation;
-  private final String encryptionScheme;
 
-  @JsonCreator
-  public CreateTransferJob(
-      @JsonProperty(value = "exportService", required = true) String exportService,
-      @JsonProperty(value = "importService", required = true) String importService,
-      @JsonProperty(value = "exportCallbackUrl", required = true) String exportCallbackUrl,
-      @JsonProperty(value = "importCallbackUrl", required = true) String importCallbackUrl,
-      @JsonProperty(value = "dataType", required = true) DataVertical dataType,
-      @JsonProperty(value = "exportInformation", required = false) ExportInformation exportInformation,
-      @JsonProperty(value = "encryptionScheme", required = true) String encryptionScheme) {
-    this.exportService = exportService;
-    this.importService = importService;
-    this.exportCallbackUrl = exportCallbackUrl;
-    this.importCallbackUrl = importCallbackUrl;
-    this.dataType = dataType;
-    this.exportInformation = exportInformation;
-    this.encryptionScheme = encryptionScheme;
-  }
+    private final String exportService;
 
-  @ApiModelProperty(
-      value = "The service to transfer data from",
-      dataType = "string",
-      required = true)
-  public String getExportService() {
-    return exportService;
-  }
+    private final String importService;
 
-  @ApiModelProperty(value = "The service to transfer data to", dataType = "string", required = true)
-  public String getImportService() {
-    return importService;
-  }
+    private final String exportCallbackUrl;
 
-  @ApiModelProperty(value = "The export auth callback URL", dataType = "string", required = true)
-  public String getExportCallbackUrl() {
-    return exportCallbackUrl;
-  }
+    private final String importCallbackUrl;
 
-  @ApiModelProperty(value = "The import auth callback URL", dataType = "string", required = true)
-  public String getImportCallbackUrl() {
-    return importCallbackUrl;
-  }
+    private final DataVertical dataType;
 
-  @ApiModelProperty(value = "The type of data to transfer", dataType = "string", required = true)
-  public DataVertical getDataType() {
-    return dataType;
-  }
+    private final ExportInformation exportInformation;
 
-  @Nullable
-  @ApiModelProperty(value = "The optional export information")
-  public ExportInformation getExportInformation() {
-    return exportInformation;
-  }
+    private final String encryptionScheme;
 
-  @ApiModelProperty(value = "The encryption scheme to use", dataType = "string", required = true)
-  public String getEncryptionScheme() {
-    return encryptionScheme;
-  }
+    @JsonCreator
+    public CreateTransferJob(@JsonProperty(value = "exportService", required = true) String exportService, @JsonProperty(value = "importService", required = true) String importService, @JsonProperty(value = "exportCallbackUrl", required = true) String exportCallbackUrl, @JsonProperty(value = "importCallbackUrl", required = true) String importCallbackUrl, @JsonProperty(value = "dataType", required = true) DataVertical dataType, @JsonProperty(value = "exportInformation", required = false) ExportInformation exportInformation, @JsonProperty(value = "encryptionScheme", required = true) String encryptionScheme) {
+        this.exportService = exportService;
+        this.importService = importService;
+        this.exportCallbackUrl = exportCallbackUrl;
+        this.importCallbackUrl = importCallbackUrl;
+        this.dataType = dataType;
+        this.exportInformation = exportInformation;
+        this.encryptionScheme = encryptionScheme;
+    }
+
+    @ApiModelProperty(value = "The service to transfer data from", dataType = "string", required = true)
+    public String getExportService() {
+        return exportService;
+    }
+
+    @ApiModelProperty(value = "The service to transfer data to", dataType = "string", required = true)
+    public String getImportService() {
+        return importService;
+    }
+
+    @ApiModelProperty(value = "The export auth callback URL", dataType = "string", required = true)
+    public String getExportCallbackUrl() {
+        return exportCallbackUrl;
+    }
+
+    @ApiModelProperty(value = "The import auth callback URL", dataType = "string", required = true)
+    public String getImportCallbackUrl() {
+        return importCallbackUrl;
+    }
+
+    @ApiModelProperty(value = "The type of data to transfer", dataType = "string", required = true)
+    public DataVertical getDataType() {
+        return dataType;
+    }
+
+    @Nullable
+    @ApiModelProperty(value = "The optional export information")
+    public ExportInformation getExportInformation() {
+        return exportInformation;
+    }
+
+    @ApiModelProperty(value = "The encryption scheme to use", dataType = "string", required = true)
+    public String getEncryptionScheme() {
+        return encryptionScheme;
+    }
 }

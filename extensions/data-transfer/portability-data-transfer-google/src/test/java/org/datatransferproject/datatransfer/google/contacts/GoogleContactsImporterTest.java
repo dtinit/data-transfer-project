@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.google.contacts;
 
 import static org.datatransferproject.datatransfer.google.common.GoogleStaticObjects.CONTACT_SOURCE_TYPE;
@@ -23,7 +22,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
 import com.google.api.services.people.v1.PeopleService;
 import com.google.api.services.people.v1.PeopleService.People;
 import com.google.api.services.people.v1.PeopleService.People.CreateContact;
@@ -42,50 +40,49 @@ import org.junit.jupiter.api.Test;
 
 public class GoogleContactsImporterTest {
 
-  private PeopleService peopleService;
-  private GoogleContactsImporter contactsService;
-  private People people;
-  private CreateContact createContact;
-  private IdempotentImportExecutor executor;
+    private PeopleService peopleService;
 
-  @BeforeEach
-  public void setup() throws IOException {
-    people = mock(People.class);
-    peopleService = mock(PeopleService.class);
-    createContact = mock(CreateContact.class);
+    private GoogleContactsImporter contactsService;
 
-    contactsService = new GoogleContactsImporter(peopleService);
-    executor = new FakeIdempotentImportExecutor();
+    private People people;
 
-    when(peopleService.people()).thenReturn(people);
-    when(people.createContact(any(Person.class))).thenReturn(createContact);
+    private CreateContact createContact;
 
-    Person person = new Person();
-    when(createContact.execute()).thenReturn(person);
-  }
+    private IdempotentImportExecutor executor;
 
-  @Test
-  public void importFirstResources() throws Exception {
-    // Set up: small number of VCards to be imported
-    int numberOfVCards = 5;
-    List<VCard> vCardList = new LinkedList<>();
-    for (int i = 0; i < numberOfVCards; i++) {
-      StructuredName structuredName = new StructuredName();
-      structuredName.setFamily("Family" + i);
-      structuredName.setParameter(SOURCE_PARAM_NAME_TYPE, CONTACT_SOURCE_TYPE);
-      VCard vCard = new VCard();
-      vCard.setStructuredName(structuredName);
-      vCard.setFormattedName("First " + structuredName.getFamily());
-      vCardList.add(vCard);
+    @BeforeEach
+    public void setup() throws IOException {
+        people = mock(People.class);
+        peopleService = mock(PeopleService.class);
+        createContact = mock(CreateContact.class);
+        contactsService = new GoogleContactsImporter(peopleService);
+        executor = new FakeIdempotentImportExecutor();
+        when(peopleService.people()).thenReturn(people);
+        when(people.createContact(any(Person.class))).thenReturn(createContact);
+        Person person = new Person();
+        when(createContact.execute()).thenReturn(person);
     }
-    String vCardString = GoogleContactsExporter.makeVCardString(vCardList);
-    ContactsModelWrapper wrapper = new ContactsModelWrapper(vCardString);
 
-    // Run test
-    contactsService.importItem(UUID.randomUUID(), executor,null, wrapper);
-
-    // Check that the right methods were called
-    verify(people, times(numberOfVCards)).createContact(any(Person.class));
-    verify(createContact, times(numberOfVCards)).execute();
-  }
+    @Test
+    public void importFirstResources() throws Exception {
+        // Set up: small number of VCards to be imported
+        int numberOfVCards = 5;
+        List<VCard> vCardList = new LinkedList<>();
+        for (int i = 0; i < numberOfVCards; i++) {
+            StructuredName structuredName = new StructuredName();
+            structuredName.setFamily("Family" + i);
+            structuredName.setParameter(SOURCE_PARAM_NAME_TYPE, CONTACT_SOURCE_TYPE);
+            VCard vCard = new VCard();
+            vCard.setStructuredName(structuredName);
+            vCard.setFormattedName("First " + structuredName.getFamily());
+            vCardList.add(vCard);
+        }
+        String vCardString = GoogleContactsExporter.makeVCardString(vCardList);
+        ContactsModelWrapper wrapper = new ContactsModelWrapper(vCardString);
+        // Run test
+        contactsService.importItem(UUID.randomUUID(), executor, null, wrapper);
+        // Check that the right methods were called
+        verify(people, times(numberOfVCards)).createContact(any(Person.class));
+        verify(createContact, times(numberOfVCards)).execute();
+    }
 }

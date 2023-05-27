@@ -8,23 +8,21 @@ import org.datatransferproject.types.common.models.DataModel;
 @JsonTypeName("org.dataportability:GoogleDriveFolderMapping")
 class DriveFolderMapping extends DataModel {
 
-  private final String oldId;
-  private final String newId;
+    private final String oldId;
 
-  @JsonCreator
-  DriveFolderMapping(
-      @JsonProperty("oldId") String oldId,
-      @JsonProperty("newId") String newId) {
+    private final String newId;
 
-    this.oldId = oldId;
-    this.newId = newId;
-  }
+    @JsonCreator
+    DriveFolderMapping(@JsonProperty("oldId") String oldId, @JsonProperty("newId") String newId) {
+        this.oldId = oldId;
+        this.newId = newId;
+    }
 
-  public String getNewId() {
-    return newId;
-  }
+    public String getNewId() {
+        return newId;
+    }
 
-  public String getOldId() {
-    return oldId;
-  }
+    public String getOldId() {
+        return oldId;
+    }
 }

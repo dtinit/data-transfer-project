@@ -12,29 +12,23 @@ import org.datatransferproject.types.transfer.auth.AuthData;
 /**
  *  Allows using existing Photo and Video adapters to create a Media adapter.
  */
-public class MediaImporterDecorator<AD extends AuthData> implements
-    Importer<AD, MediaContainerResource> {
+public class MediaImporterDecorator<AD extends AuthData> implements Importer<AD, MediaContainerResource> {
 
-  private final Importer<AD, PhotosContainerResource> photosImporter;
-  private final Importer<AD, VideosContainerResource> videosImporter;
+    private final Importer<AD, PhotosContainerResource> photosImporter;
 
-  public MediaImporterDecorator(Importer<AD, PhotosContainerResource> photosImporter,
-      Importer<AD, VideosContainerResource> videosImporter) {
-    this.photosImporter = photosImporter;
-    this.videosImporter = videosImporter;
-  }
+    private final Importer<AD, VideosContainerResource> videosImporter;
 
-  @Override
-  public ImportResult importItem(UUID jobId, IdempotentImportExecutor idempotentExecutor,
-      AD authData, MediaContainerResource data) throws Exception {
-    PhotosContainerResource photosResource = MediaContainerResource.mediaToPhoto(data);
-    ImportResult photosResult = photosImporter
-        .importItem(jobId, idempotentExecutor, authData, photosResource);
+    public MediaImporterDecorator(Importer<AD, PhotosContainerResource> photosImporter, Importer<AD, VideosContainerResource> videosImporter) {
+        this.photosImporter = photosImporter;
+        this.videosImporter = videosImporter;
+    }
 
-    VideosContainerResource videosResource = MediaContainerResource.mediaToVideo(data);
-    ImportResult videosResult = videosImporter
-        .importItem(jobId, idempotentExecutor, authData, videosResource);
-
-    return ImportResult.merge(photosResult, videosResult);
-  }
+    @Override
+    public ImportResult importItem(UUID jobId, IdempotentImportExecutor idempotentExecutor, AD authData, MediaContainerResource data) throws Exception {
+        PhotosContainerResource photosResource = MediaContainerResource.mediaToPhoto(data);
+        ImportResult photosResult = photosImporter.importItem(jobId, idempotentExecutor, authData, photosResource);
+        VideosContainerResource videosResource = MediaContainerResource.mediaToVideo(data);
+        ImportResult videosResult = videosImporter.importItem(jobId, idempotentExecutor, authData, videosResource);
+        return ImportResult.merge(photosResult, videosResult);
+    }
 }

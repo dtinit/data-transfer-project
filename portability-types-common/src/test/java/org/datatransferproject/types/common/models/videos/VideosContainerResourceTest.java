@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.types.common.models.videos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,33 +23,21 @@ import org.datatransferproject.types.common.models.ContainerResource;
 import org.junit.jupiter.api.Test;
 
 public class VideosContainerResourceTest {
-  @Test
-  public void verifySerializeDeserialize() throws Exception {
-    ObjectMapper objectMapper = new ObjectMapper();
-    objectMapper.registerSubtypes(VideosContainerResource.class);
 
-    List<VideoAlbum> albums =
-            ImmutableList.of(new VideoAlbum("id1", "album1", "This is a fake album"));
-
-    List<VideoModel> videos =
-            ImmutableList.of(
-                    new VideoModel("Vid1", "http://example.com/1.mp4", "A video", "video/mp4", "v1", "id1",
-                            false, null),
-                    new VideoModel(
-                            "Vid2", "https://example.com/2.mpeg", "A 2. video", "video/mpeg", "v2", "id1", false, null));
-    
-    ContainerResource data = new VideosContainerResource(albums, videos);
-
-    String serialized = objectMapper.writeValueAsString(data);
-
-    ContainerResource deserializedModel =
-            objectMapper.readValue(serialized, ContainerResource.class);
-
-    Truth.assertThat(deserializedModel).isNotNull();
-    Truth.assertThat(deserializedModel).isInstanceOf(VideosContainerResource.class);
-    VideosContainerResource deserialized = (VideosContainerResource) deserializedModel;
-    Truth.assertThat(deserialized.getAlbums()).hasSize(1);
-    Truth.assertThat(deserialized.getVideos()).hasSize(2);
-    Truth.assertThat(deserialized).isEqualTo(data);
-  }
+    @Test
+    public void verifySerializeDeserialize() throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerSubtypes(VideosContainerResource.class);
+        List<VideoAlbum> albums = ImmutableList.of(new VideoAlbum("id1", "album1", "This is a fake album"));
+        List<VideoModel> videos = ImmutableList.of(new VideoModel("Vid1", "http://example.com/1.mp4", "A video", "video/mp4", "v1", "id1", false, null), new VideoModel("Vid2", "https://example.com/2.mpeg", "A 2. video", "video/mpeg", "v2", "id1", false, null));
+        ContainerResource data = new VideosContainerResource(albums, videos);
+        String serialized = objectMapper.writeValueAsString(data);
+        ContainerResource deserializedModel = objectMapper.readValue(serialized, ContainerResource.class);
+        Truth.assertThat(deserializedModel).isNotNull();
+        Truth.assertThat(deserializedModel).isInstanceOf(VideosContainerResource.class);
+        VideosContainerResource deserialized = (VideosContainerResource) deserializedModel;
+        Truth.assertThat(deserialized.getAlbums()).hasSize(1);
+        Truth.assertThat(deserialized.getVideos()).hasSize(2);
+        Truth.assertThat(deserialized).isEqualTo(data);
+    }
 }

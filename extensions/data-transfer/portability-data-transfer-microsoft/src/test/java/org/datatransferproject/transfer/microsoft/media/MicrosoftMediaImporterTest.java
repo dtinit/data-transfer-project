@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.transfer.microsoft.media;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -25,7 +24,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.BearerToken;
@@ -64,180 +62,134 @@ import org.junit.Test;
  */
 public class MicrosoftMediaImporterTest {
 
-  private static final int CHUNK_SIZE = 32000 * 1024; // 32000KiB
-  private final static String BASE_URL = "https://www.baseurl.com";
-  private final static UUID uuid = UUID.randomUUID();
+    // 32000KiB
+    private static final int CHUNK_SIZE = 32000 * 1024;
 
-  MicrosoftMediaImporter importer;
-  OkHttpClient client;
-  ObjectMapper objectMapper;
-  TemporaryPerJobDataStore jobStore;
-  Monitor monitor;
-  Credential credential;
-  MicrosoftCredentialFactory credentialFactory;
-  IdempotentImportExecutor executor;
-  TokensAndUrlAuthData authData;
+    private final static String BASE_URL = "https://www.baseurl.com";
 
-  @Before
-  public void setUp() throws IOException {
-    executor = new FakeIdempotentImportExecutor();
-    authData = mock(TokensAndUrlAuthData.class);
-    client = mock(OkHttpClient.class);
-    objectMapper =
-        new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    // mocked on a per test basis
-    jobStore = mock(TemporaryPerJobDataStore.class);
-    monitor = new ConsoleMonitor(ConsoleMonitor.Level.INFO);
-    credentialFactory = mock(MicrosoftCredentialFactory.class);
-    credential = new Credential.Builder(BearerToken.authorizationHeaderAccessMethod()).build();
-    when(credentialFactory.createCredential(any())).thenReturn(credential);
-    when(credentialFactory.refreshCredential(any())).thenReturn(credential);
-    credential.setAccessToken("acc");
-    credential.setExpirationTimeMilliseconds(null);
-    importer = new MicrosoftMediaImporter(
-        BASE_URL, client, objectMapper, jobStore, monitor, credentialFactory);
-  }
+    private final static UUID uuid = UUID.randomUUID();
 
-  @Test
-  public void testCleanAlbumNames() throws Exception {
-    List<MediaAlbum> albums =
-        ImmutableList.of(new MediaAlbum("id1", "album1.", "This is a fake albumb"));
+    MicrosoftMediaImporter importer;
 
-    MediaContainerResource data = new MediaContainerResource(albums, null /*phots*/,
-        null /*videos*/);
+    OkHttpClient client;
 
-    Call call = mock(Call.class);
-    doReturn(call).when(client).newCall(argThat((Request r) -> {
-      String body = "";
+    ObjectMapper objectMapper;
 
-      try {
-        final Buffer buffer = new Buffer();
-        r.body().writeTo(buffer);
-        body = buffer.readUtf8();
-      } catch (IOException e) {
-        return false;
-      }
+    TemporaryPerJobDataStore jobStore;
 
-      return r.url().toString().equals(
-          "https://www.baseurl.com/v1.0/me/drive/special/photos/children")
-          && body.contains("album1_");
-    }));
-    Response response = mock(Response.class);
-    ResponseBody body = mock(ResponseBody.class);
-    when(body.bytes())
-        .thenReturn(
-            ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").bytes());
-    when(body.string())
-        .thenReturn(
-            ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").string());
-    when(response.code()).thenReturn(200);
-    when(response.body()).thenReturn(body);
-    when(call.execute()).thenReturn(response);
+    Monitor monitor;
 
-    ImportResult result = importer.importItem(uuid, executor, authData, data);
-    verify(client, times(1)).newCall(any());
-    assertThat(result).isEqualTo(ImportResult.OK);
-  }
+    Credential credential;
 
-  @Test
-  public void testImportItemPermissionDenied() throws Exception {
-    List<MediaAlbum> albums =
-        ImmutableList.of(new MediaAlbum("id1", "album1.", "This is a fake albumb"));
+    MicrosoftCredentialFactory credentialFactory;
 
-    MediaContainerResource data = new MediaContainerResource(albums, null /*photos*/,
-        null /*videos*/);
+    IdempotentImportExecutor executor;
 
-    Call call = mock(Call.class);
-    doReturn(call).when(client).newCall(
-        argThat((Request r)
-            -> r.url().toString().equals(
-            "https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
-    Response response = mock(Response.class);
-    ResponseBody body = mock(ResponseBody.class);
-    when(body.bytes())
-        .thenReturn(
-            ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").bytes());
-    when(body.string())
-        .thenReturn(
-            ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").string());
-    when(response.code()).thenReturn(403);
-    when(response.message()).thenReturn("Access Denied");
-    when(response.body()).thenReturn(body);
-    when(call.execute()).thenReturn(response);
+    TokensAndUrlAuthData authData;
 
-    assertThrows(PermissionDeniedException.class, () -> {
-      ImportResult result = importer.importItem(uuid, executor, authData, data);
-    });
-  }
+    @Before
+    public void setUp() throws IOException {
+        executor = new FakeIdempotentImportExecutor();
+        authData = mock(TokensAndUrlAuthData.class);
+        client = mock(OkHttpClient.class);
+        objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        // mocked on a per test basis
+        jobStore = mock(TemporaryPerJobDataStore.class);
+        monitor = new ConsoleMonitor(ConsoleMonitor.Level.INFO);
+        credentialFactory = mock(MicrosoftCredentialFactory.class);
+        credential = new Credential.Builder(BearerToken.authorizationHeaderAccessMethod()).build();
+        when(credentialFactory.createCredential(any())).thenReturn(credential);
+        when(credentialFactory.refreshCredential(any())).thenReturn(credential);
+        credential.setAccessToken("acc");
+        credential.setExpirationTimeMilliseconds(null);
+        importer = new MicrosoftMediaImporter(BASE_URL, client, objectMapper, jobStore, monitor, credentialFactory);
+    }
 
-  @Test
-  public void testImportItemAllSuccess() throws Exception {
-    List<MediaAlbum> albums =
-        ImmutableList.of(new MediaAlbum("id1", "albumb1", "This is a fake albumb"));
+    @Test
+    public void testCleanAlbumNames() throws Exception {
+        List<MediaAlbum> albums = ImmutableList.of(new MediaAlbum("id1", "album1.", "This is a fake albumb"));
+        MediaContainerResource data = new MediaContainerResource(albums, null, /*phots*/
+        null);
+        Call call = mock(Call.class);
+        doReturn(call).when(client).newCall(argThat((Request r) -> {
+            String body = "";
+            try {
+                final Buffer buffer = new Buffer();
+                r.body().writeTo(buffer);
+                body = buffer.readUtf8();
+            } catch (IOException e) {
+                return false;
+            }
+            return r.url().toString().equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children") && body.contains("album1_");
+        }));
+        Response response = mock(Response.class);
+        ResponseBody body = mock(ResponseBody.class);
+        when(body.bytes()).thenReturn(ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").bytes());
+        when(body.string()).thenReturn(ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").string());
+        when(response.code()).thenReturn(200);
+        when(response.body()).thenReturn(body);
+        when(call.execute()).thenReturn(response);
+        ImportResult result = importer.importItem(uuid, executor, authData, data);
+        verify(client, times(1)).newCall(any());
+        assertThat(result).isEqualTo(ImportResult.OK);
+    }
 
-    List<PhotoModel> photos = ImmutableList.of(
-        new PhotoModel("Pic1", "http://fake.com/1.jpg", "A pic", "image/jpg", "p1", "id1", true),
-        new PhotoModel(
-            "Pic2", "https://fake.com/2.png", "fine art", "image/png", "p2", "id1", true));
-    when(jobStore.getStream(uuid, "http://fake.com/1.jpg"))
-        .thenReturn(new InputStreamWrapper(new ByteArrayInputStream(new byte[CHUNK_SIZE])));
-    when(jobStore.getStream(uuid, "https://fake.com/2.png"))
-        .thenReturn(new InputStreamWrapper(new ByteArrayInputStream(new byte[CHUNK_SIZE])));
-    MediaContainerResource data = new MediaContainerResource(albums, photos, null /*videos*/);
+    @Test
+    public void testImportItemPermissionDenied() throws Exception {
+        List<MediaAlbum> albums = ImmutableList.of(new MediaAlbum("id1", "album1.", "This is a fake albumb"));
+        MediaContainerResource data = new MediaContainerResource(albums, null, /*photos*/
+        null);
+        Call call = mock(Call.class);
+        doReturn(call).when(client).newCall(argThat((Request r) -> r.url().toString().equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
+        Response response = mock(Response.class);
+        ResponseBody body = mock(ResponseBody.class);
+        when(body.bytes()).thenReturn(ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").bytes());
+        when(body.string()).thenReturn(ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").string());
+        when(response.code()).thenReturn(403);
+        when(response.message()).thenReturn("Access Denied");
+        when(response.body()).thenReturn(body);
+        when(call.execute()).thenReturn(response);
+        assertThrows(PermissionDeniedException.class, () -> {
+            ImportResult result = importer.importItem(uuid, executor, authData, data);
+        });
+    }
 
-    Call call = mock(Call.class);
-    doReturn(call).when(client).newCall(
-        argThat((Request r)
-            -> r.url().toString().equals(
-            "https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
-    Response response = mock(Response.class);
-    ResponseBody body = mock(ResponseBody.class);
-    when(body.bytes())
-        .thenReturn(
-            ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").bytes());
-    when(body.string())
-        .thenReturn(
-            ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").string());
-    when(response.code()).thenReturn(200);
-    when(response.body()).thenReturn(body);
-    when(call.execute()).thenReturn(response);
-
-    Call call2 = mock(Call.class);
-    doReturn(call2).when(client).newCall(
-        argThat((Request r) -> r.url().toString().contains("createUploadSession")));
-    Response response2 = mock(Response.class);
-    ResponseBody body2 = mock(ResponseBody.class);
-    when(body2.bytes())
-        .thenReturn(ResponseBody
-            .create(MediaType.parse("application/json"),
-                "{\"uploadUrl\": \"https://scalia.com/link\"}")
-            .bytes());
-    when(body2.string())
-        .thenReturn(ResponseBody
-            .create(MediaType.parse("application/json"),
-                "{\"uploadUrl\": \"https://scalia.com/link\"}")
-            .string());
-    when(response2.code()).thenReturn(200);
-    when(response2.body()).thenReturn(body2);
-    when(call2.execute()).thenReturn(response2);
-
-    Call call3 = mock(Call.class);
-    doReturn(call3).when(client).newCall(
-        argThat((Request r) -> r.url().toString().contains("scalia.com/link")));
-    Response response3 = mock(Response.class);
-    ResponseBody body3 = mock(ResponseBody.class);
-    when(body3.bytes())
-        .thenReturn(ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"rand1\"}")
-            .bytes());
-    when(body3.string())
-        .thenReturn(ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"rand1\"}")
-            .string());
-    when(response3.code()).thenReturn(200);
-    when(response3.body()).thenReturn(body3);
-    when(call3.execute()).thenReturn(response3);
-
-    ImportResult result = importer.importItem(uuid, executor, authData, data);
-    verify(client, times(5)).newCall(any());
-    assertThat(result).isEqualTo(ImportResult.OK);
-  }
+    @Test
+    public void testImportItemAllSuccess() throws Exception {
+        List<MediaAlbum> albums = ImmutableList.of(new MediaAlbum("id1", "albumb1", "This is a fake albumb"));
+        List<PhotoModel> photos = ImmutableList.of(new PhotoModel("Pic1", "http://fake.com/1.jpg", "A pic", "image/jpg", "p1", "id1", true), new PhotoModel("Pic2", "https://fake.com/2.png", "fine art", "image/png", "p2", "id1", true));
+        when(jobStore.getStream(uuid, "http://fake.com/1.jpg")).thenReturn(new InputStreamWrapper(new ByteArrayInputStream(new byte[CHUNK_SIZE])));
+        when(jobStore.getStream(uuid, "https://fake.com/2.png")).thenReturn(new InputStreamWrapper(new ByteArrayInputStream(new byte[CHUNK_SIZE])));
+        MediaContainerResource data = new MediaContainerResource(albums, photos, null);
+        Call call = mock(Call.class);
+        doReturn(call).when(client).newCall(argThat((Request r) -> r.url().toString().equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
+        Response response = mock(Response.class);
+        ResponseBody body = mock(ResponseBody.class);
+        when(body.bytes()).thenReturn(ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").bytes());
+        when(body.string()).thenReturn(ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").string());
+        when(response.code()).thenReturn(200);
+        when(response.body()).thenReturn(body);
+        when(call.execute()).thenReturn(response);
+        Call call2 = mock(Call.class);
+        doReturn(call2).when(client).newCall(argThat((Request r) -> r.url().toString().contains("createUploadSession")));
+        Response response2 = mock(Response.class);
+        ResponseBody body2 = mock(ResponseBody.class);
+        when(body2.bytes()).thenReturn(ResponseBody.create(MediaType.parse("application/json"), "{\"uploadUrl\": \"https://scalia.com/link\"}").bytes());
+        when(body2.string()).thenReturn(ResponseBody.create(MediaType.parse("application/json"), "{\"uploadUrl\": \"https://scalia.com/link\"}").string());
+        when(response2.code()).thenReturn(200);
+        when(response2.body()).thenReturn(body2);
+        when(call2.execute()).thenReturn(response2);
+        Call call3 = mock(Call.class);
+        doReturn(call3).when(client).newCall(argThat((Request r) -> r.url().toString().contains("scalia.com/link")));
+        Response response3 = mock(Response.class);
+        ResponseBody body3 = mock(ResponseBody.class);
+        when(body3.bytes()).thenReturn(ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"rand1\"}").bytes());
+        when(body3.string()).thenReturn(ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"rand1\"}").string());
+        when(response3.code()).thenReturn(200);
+        when(response3.body()).thenReturn(body3);
+        when(call3.execute()).thenReturn(response3);
+        ImportResult result = importer.importItem(uuid, executor, authData, data);
+        verify(client, times(5)).newCall(any());
+        assertThat(result).isEqualTo(ImportResult.OK);
+    }
 }

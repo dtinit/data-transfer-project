@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.auth.imgur;
 
 import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
-
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Map;
@@ -31,29 +29,34 @@ import org.datatransferproject.types.common.models.DataVertical;
  */
 public class ImgurOAuthConfig implements OAuth2Config {
 
-  @Override
-  public String getServiceName() {
-    return "Imgur";
-  }
+    @Override
+    public String getServiceName() {
+        return "Imgur";
+    }
 
-  @Override
-  public String getAuthUrl() {
-    return "https://api.imgur.com/oauth2/authorize";
-  }
+    @Override
+    public String getAuthUrl() {
+        return "https://api.imgur.com/oauth2/authorize";
+    }
 
-  @Override
-  public String getTokenUrl() {
-    return "https://api.imgur.com/oauth2/token";
-  }
+    @Override
+    public String getTokenUrl() {
+        return "https://api.imgur.com/oauth2/token";
+    }
 
-  // Imgur doesn't require scopes
-  @Override
-  public Map<DataVertical, Set<String>> getExportScopes() {
-    return ImmutableMap.of(PHOTOS, ImmutableSet.of(""));
-  }
+    // Imgur doesn't require scopes
+    @Override
+    public Map<DataVertical, Set<String>> getExportScopes() {
+        return generateImmutablePhotoMap();
+    }
 
-  @Override
-  public Map<DataVertical, Set<String>> getImportScopes() {
-    return ImmutableMap.of(PHOTOS, ImmutableSet.of(""));
-  }
+    @Override
+    public Map<DataVertical, Set<String>> getImportScopes() {
+        return generateImmutablePhotoMap();
+    }
+
+    // Imgur doesn't require scopes
+    public Map<DataVertical, Set<String>> generateImmutablePhotoMap() {
+        return ImmutableMap.of(PHOTOS, ImmutableSet.of(""));
+    }
 }

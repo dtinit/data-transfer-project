@@ -43,7 +43,6 @@ import org.datatransferproject.spi.service.extension.ServiceExtension;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;
@@ -53,167 +52,119 @@ import java.util.Collections;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.Set;
-
 import static org.datatransferproject.config.extension.SettingsExtensionLoader.getSettingsExtension;
 import static org.datatransferproject.launcher.monitor.MonitorLoader.loadMonitor;
 import static org.datatransferproject.spi.cloud.extension.CloudExtensionLoader.getCloudExtension;
 
-/** Starts the api server. */
+/**
+ * Starts the api server.
+ */
 public class ApiMain {
 
-  private final Monitor monitor;
-  private List<ServiceExtension> serviceExtensions = Collections.emptyList();
+    private final Monitor monitor;
 
-  /** Starts the api server, currently the reference implementation. */
-  public static void main(String[] args) {
+    private List<ServiceExtension> serviceExtensions = Collections.emptyList();
 
-    Monitor monitor = loadMonitor();
-    monitor.info(() -> "Starting API Server.");
-
-    Thread.setDefaultUncaughtExceptionHandler(
-        (thread, t) ->
-            monitor.severe(() -> "Uncaught exception in thread: " + thread.getName(), t));
-
-    ApiMain apiMain = new ApiMain(monitor);
-    apiMain.initializeHttp();
-    apiMain.start();
-  }
-
-  public ApiMain(Monitor monitor) {
-    this.monitor = monitor;
-  }
-
-  public void initializeHttp() {
-    initializeHttps(null, null, null);
-  }
-
-  public void initializeHttps(
-      TrustManagerFactory trustManagerFactory,
-      KeyManagerFactory keyManagerFactory,
-      KeyStore keyStore) {
-
-    // TODO init with types
-    TypeManager typeManager = new TypeManagerImpl();
-    typeManager.registerTypes(
-        TokenAuthData.class, TokensAndUrlAuthData.class, TokenSecretAuthData.class);
-
-    SettingsExtension settingsExtension = getSettingsExtension();
-
-    settingsExtension.initialize();
-    ApiExtensionContext extensionContext =
-        new ApiExtensionContext(typeManager, settingsExtension, monitor);
-
-    if (trustManagerFactory != null) {
-      extensionContext.registerService(TrustManagerFactory.class, trustManagerFactory);
+    /**
+     * Starts the api server, currently the reference implementation.
+     */
+    public static void main(String[] args) {
+        Monitor monitor = loadMonitor();
+        monitor.info(() -> "Starting API Server.");
+        Thread.setDefaultUncaughtExceptionHandler((thread, t) -> monitor.severe(() -> "Uncaught exception in thread: " + thread.getName(), t));
+        ApiMain apiMain = new ApiMain(monitor);
+        apiMain.initializeHttp();
+        apiMain.start();
     }
 
-    if (keyManagerFactory != null) {
-      extensionContext.registerService(KeyManagerFactory.class, keyManagerFactory);
+    public ApiMain(Monitor monitor) {
+        this.monitor = monitor;
     }
 
-    if (keyStore != null) {
-      extensionContext.registerService(KeyStore.class, keyStore);
+    public void initializeHttp() {
+        initializeHttps(null, null, null);
     }
 
-    extensionContext.registerService(HttpTransport.class, new NetHttpTransport());
-    extensionContext.registerService(JsonFactory.class, new JacksonFactory());
-
-    // Services that need to be shared between authServiceExtensions or load types in the
-    // typemanager get initialized first.
-    serviceExtensions = new ArrayList<>();
-    ServiceLoader.load(ServiceExtension.class).iterator().forEachRemaining(serviceExtensions::add);
-
-    serviceExtensions.forEach((se) -> se.initialize(extensionContext));
-
-    CloudExtension cloudExtension = getCloudExtension();
-    cloudExtension.initialize(extensionContext);
-
-    // Needed for GoogleAuthServiceExtension
-    extensionContext.registerService(HttpTransport.class, new NetHttpTransport());
-    extensionContext.registerService(JobStore.class, cloudExtension.getJobStore());
-    extensionContext.registerService(TemporaryPerJobDataStore.class, cloudExtension.getJobStore());
-    extensionContext.registerService(
-        AppCredentialStore.class, cloudExtension.getAppCredentialStore());
-
-    // TODO: Load up only "enabled" services
-    List<AuthServiceExtension> authServiceExtensions = new ArrayList<>();
-    ServiceLoader.load(AuthServiceExtension.class)
-        .iterator()
-        .forEachRemaining(
-            (authServiceExtension) -> {
-              authServiceExtension.initialize(extensionContext);
-              authServiceExtensions.add(authServiceExtension);
-            });
-
-    // TODO: make configurable
-    SymmetricKeyGenerator keyGenerator = new AesSymmetricKeyGenerator(monitor);
-    TokenManager tokenManager;
-
-    try {
-      // TODO: we store the JWT Token with the application credentials, but dont need to have a key
-      // consider using a blobstore type of thing or allowing the AppCredentialStore to return a
-      // cred that doesn't contain a key.
-      tokenManager =
-          new JWTTokenManager(
-              cloudExtension
-                  .getAppCredentialStore()
-                  .getAppCredentials(JWTTokenManager.JWT_KEY_NAME, JWTTokenManager.JWT_SECRET_NAME)
-                  .getSecret(),
-              monitor);
-    } catch (IOException e) {
-      monitor.info(
-          () -> "Unable to initialize JWTTokenManager, did you specify a JWT_KEY and JWT_SECRET?",
-          e);
-      throw new RuntimeException("Couldn't initialize JWTTokenManager", e);
+    public void initializeHttps(TrustManagerFactory trustManagerFactory, KeyManagerFactory keyManagerFactory, KeyStore keyStore) {
+        // TODO init with types
+        TypeManager typeManager = new TypeManagerImpl();
+        typeManager.registerTypes(TokenAuthData.class, TokensAndUrlAuthData.class, TokenSecretAuthData.class);
+        SettingsExtension settingsExtension = getSettingsExtension();
+        settingsExtension.initialize();
+        ApiExtensionContext extensionContext = new ApiExtensionContext(typeManager, settingsExtension, monitor);
+        if (trustManagerFactory != null) {
+            extensionContext.registerService(TrustManagerFactory.class, trustManagerFactory);
+        }
+        if (keyManagerFactory != null) {
+            extensionContext.registerService(KeyManagerFactory.class, keyManagerFactory);
+        }
+        if (keyStore != null) {
+            extensionContext.registerService(KeyStore.class, keyStore);
+        }
+        extensionContext.registerService(HttpTransport.class, new NetHttpTransport());
+        extensionContext.registerService(JsonFactory.class, new JacksonFactory());
+        // Services that need to be shared between authServiceExtensions or load types in the
+        // typemanager get initialized first.
+        serviceExtensions = new ArrayList<>();
+        ServiceLoader.load(ServiceExtension.class).iterator().forEachRemaining(serviceExtensions::add);
+        serviceExtensions.forEach((se) -> se.initialize(extensionContext));
+        CloudExtension cloudExtension = getCloudExtension();
+        cloudExtension.initialize(extensionContext);
+        // Needed for GoogleAuthServiceExtension
+        extensionContext.registerService(HttpTransport.class, new NetHttpTransport());
+        extensionContext.registerService(JobStore.class, cloudExtension.getJobStore());
+        extensionContext.registerService(TemporaryPerJobDataStore.class, cloudExtension.getJobStore());
+        extensionContext.registerService(AppCredentialStore.class, cloudExtension.getAppCredentialStore());
+        // TODO: Load up only "enabled" services
+        List<AuthServiceExtension> authServiceExtensions = new ArrayList<>();
+        ServiceLoader.load(AuthServiceExtension.class).iterator().forEachRemaining((authServiceExtension) -> {
+            authServiceExtension.initialize(extensionContext);
+            authServiceExtensions.add(authServiceExtension);
+        });
+        // TODO: make configurable
+        SymmetricKeyGenerator keyGenerator = new AesSymmetricKeyGenerator(monitor);
+        TokenManager tokenManager;
+        try {
+            // TODO: we store the JWT Token with the application credentials, but dont need to have a key
+            // consider using a blobstore type of thing or allowing the AppCredentialStore to return a
+            // cred that doesn't contain a key.
+            tokenManager = new JWTTokenManager(cloudExtension.getAppCredentialStore().getAppCredentials(JWTTokenManager.JWT_KEY_NAME, JWTTokenManager.JWT_SECRET_NAME).getSecret(), monitor);
+        } catch (IOException e) {
+            monitor.info(() -> "Unable to initialize JWTTokenManager, did you specify a JWT_KEY and JWT_SECRET?", e);
+            throw new RuntimeException("Couldn't initialize JWTTokenManager", e);
+        }
+        Injector injector;
+        try {
+            injector = Guice.createInjector(new ApiServicesModule(typeManager, cloudExtension.getJobStore(), keyGenerator, trustManagerFactory, keyManagerFactory, authServiceExtensions, tokenManager, extensionContext));
+        } catch (Exception e) {
+            monitor.info(() -> "Error initializing Guice", e);
+            throw e;
+        }
+        extensionContext.registerService(Injector.class, injector);
+        bindActions(injector, extensionContext);
     }
 
-    Injector injector;
-    try {
-       injector =
-          Guice.createInjector(
-              new ApiServicesModule(
-                  typeManager,
-                  cloudExtension.getJobStore(),
-                  keyGenerator,
-                  trustManagerFactory,
-                  keyManagerFactory,
-                  authServiceExtensions,
-                  tokenManager,
-                  extensionContext));
-
-    } catch (Exception e) {
-      monitor.info(
-          () -> "Error initializing Guice",
-          e);
-      throw e;
+    public void start() {
+        serviceExtensions.forEach(ServiceExtension::start);
     }
 
-    extensionContext.registerService(Injector.class, injector);
-
-    bindActions(injector, extensionContext);
-  }
-
-  public void start() {
-    serviceExtensions.forEach(ServiceExtension::start);
-  }
-
-  public void stop() {
-    serviceExtensions.forEach(ServiceExtension::shutdown);
-  }
-
-  private void bindActions(Injector injector, ApiExtensionContext context) {
-    TransportBinder binder = context.getService(TransportBinder.class);
-    if (binder == null) {
-      return;
+    public void stop() {
+        serviceExtensions.forEach(ServiceExtension::shutdown);
     }
-    TypeLiteral<Set<Action>> literal = setOf(Action.class);
-    Key<Set<Action>> key = Key.get(literal);
-    Set<Action> actions = injector.getInstance(key);
-    actions.forEach(binder::bind);
-  }
 
-  @SuppressWarnings("unchecked")
-  public static final <T> TypeLiteral<Set<T>> setOf(Class<T> type) {
-    return (TypeLiteral<Set<T>>) TypeLiteral.get(Types.setOf(type));
-  }
+    private void bindActions(Injector injector, ApiExtensionContext context) {
+        TransportBinder binder = context.getService(TransportBinder.class);
+        if (binder == null) {
+            return;
+        }
+        TypeLiteral<Set<Action>> literal = setOf(Action.class);
+        Key<Set<Action>> key = Key.get(literal);
+        Set<Action> actions = injector.getInstance(key);
+        actions.forEach(binder::bind);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static final <T> TypeLiteral<Set<T>> setOf(Class<T> type) {
+        return (TypeLiteral<Set<T>>) TypeLiteral.get(Types.setOf(type));
+    }
 }

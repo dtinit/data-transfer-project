@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.api.auth;
 
 import com.google.common.base.Preconditions;
@@ -24,7 +23,6 @@ import com.google.inject.Inject;
 import org.datatransferproject.spi.api.auth.AuthDataGenerator;
 import org.datatransferproject.spi.api.auth.AuthServiceProviderRegistry;
 import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,101 +30,67 @@ import java.util.stream.Collectors;
 import org.datatransferproject.types.common.models.DataVertical;
 
 public class PortabilityAuthServiceProviderRegistry implements AuthServiceProviderRegistry {
-  private final ImmutableMap<String, AuthServiceExtension> authServiceProviderMap;
-  private final ImmutableSet<DataVertical> supportedImportTypes;
-  private final ImmutableSet<DataVertical> supportedExportTypes;
 
-  @Inject
-  public PortabilityAuthServiceProviderRegistry(
-      Map<String, AuthServiceExtension> serviceProviderMap) {
+    private final ImmutableMap<String, AuthServiceExtension> authServiceProviderMap;
 
-    ImmutableMap.Builder<String, AuthServiceExtension> serviceProviderBuilder =
-        ImmutableMap.builder();
-    ImmutableSet.Builder<DataVertical> supportedImportTypesBuilder = ImmutableSet.builder();
-    ImmutableSet.Builder<DataVertical> supportedExportTypesBuilder = ImmutableSet.builder();
+    private final ImmutableSet<DataVertical> supportedImportTypes;
 
-    serviceProviderMap.forEach(
-        (service, provider) -> {
-          List<DataVertical> importTypes = provider.getImportTypes();
-          List<DataVertical> exportTypes = provider.getExportTypes();
-          for (DataVertical type : importTypes) {
-            Preconditions.checkArgument(
-                exportTypes.contains(type),
-                "TransferDataType [%s] is available for import but not export in [%s] AuthServiceExtension",
-                type,
-                service);
-            supportedImportTypesBuilder.add(type);
-          }
-          supportedExportTypesBuilder.addAll(exportTypes);
-          serviceProviderBuilder.put(service, provider);
+    private final ImmutableSet<DataVertical> supportedExportTypes;
+
+    @Inject
+    public PortabilityAuthServiceProviderRegistry(Map<String, AuthServiceExtension> serviceProviderMap) {
+        ImmutableMap.Builder<String, AuthServiceExtension> serviceProviderBuilder = ImmutableMap.builder();
+        ImmutableSet.Builder<DataVertical> supportedImportTypesBuilder = ImmutableSet.builder();
+        ImmutableSet.Builder<DataVertical> supportedExportTypesBuilder = ImmutableSet.builder();
+        serviceProviderMap.forEach((service, provider) -> {
+            List<DataVertical> importTypes = provider.getImportTypes();
+            List<DataVertical> exportTypes = provider.getExportTypes();
+            for (DataVertical type : importTypes) {
+                Preconditions.checkArgument(exportTypes.contains(type), "TransferDataType [%s] is available for import but not export in [%s] AuthServiceExtension", type, service);
+                supportedImportTypesBuilder.add(type);
+            }
+            supportedExportTypesBuilder.addAll(exportTypes);
+            serviceProviderBuilder.put(service, provider);
         });
-
-    authServiceProviderMap = serviceProviderBuilder.build();
-    supportedImportTypes = supportedImportTypesBuilder.build();
-    supportedExportTypes = supportedExportTypesBuilder.build();
-  }
-
-  @Override
-  public AuthDataGenerator getAuthDataGenerator(
-      String serviceId, DataVertical transferDataType, AuthMode mode) {
-    AuthServiceExtension provider = authServiceProviderMap.get(serviceId);
-    Preconditions.checkArgument(
-        provider != null, "AuthServiceExtension not found for serviceId [%s]", serviceId);
-    switch (mode) {
-      case EXPORT:
-        Preconditions.checkArgument(
-            supportedExportTypes.contains(transferDataType),
-            "AuthMode [%s] not valid for TransferDataType [%s]",
-            mode,
-            transferDataType);
-        break;
-      case IMPORT:
-        Preconditions.checkArgument(
-            supportedImportTypes.contains(transferDataType),
-            "AuthMode [%s] not valid for TransferDataType [%s]",
-            mode,
-            transferDataType);
-        break;
-      default:
-        throw new IllegalArgumentException("AuthMode [" + mode + "] not supported");
+        authServiceProviderMap = serviceProviderBuilder.build();
+        supportedImportTypes = supportedImportTypesBuilder.build();
+        supportedExportTypes = supportedExportTypesBuilder.build();
     }
 
-    return provider.getAuthDataGenerator(transferDataType, mode);
-  }
+    @Override
+    public AuthDataGenerator getAuthDataGenerator(String serviceId, DataVertical transferDataType, AuthMode mode) {
+        AuthServiceExtension provider = authServiceProviderMap.get(serviceId);
+        Preconditions.checkArgument(provider != null, "AuthServiceExtension not found for serviceId [%s]", serviceId);
+        switch(mode) {
+            case EXPORT:
+                Preconditions.checkArgument(supportedExportTypes.contains(transferDataType), "AuthMode [%s] not valid for TransferDataType [%s]", mode, transferDataType);
+                break;
+            case IMPORT:
+                Preconditions.checkArgument(supportedImportTypes.contains(transferDataType), "AuthMode [%s] not valid for TransferDataType [%s]", mode, transferDataType);
+                break;
+            default:
+                throw new IllegalArgumentException("AuthMode [" + mode + "] not supported");
+        }
+        return provider.getAuthDataGenerator(transferDataType, mode);
+    }
 
-  @Override
-  public Set<String> getImportServices(DataVertical transferDataType) {
-    Preconditions.checkArgument(
-        supportedImportTypes.contains(transferDataType),
-        "TransferDataType [%s] is not valid for import",
-        transferDataType);
-    return authServiceProviderMap
-        .values()
-        .stream()
-        .filter(
-            sp -> sp.getImportTypes().stream().anyMatch(e -> e == transferDataType))
-        .map(AuthServiceExtension::getServiceId)
-        .collect(Collectors.toSet());
-  }
+    @Override
+    public Set<String> getImportServices(DataVertical transferDataType) {
+        Preconditions.checkArgument(supportedImportTypes.contains(transferDataType), "TransferDataType [%s] is not valid for import", transferDataType);
+        return authServiceProviderMap.values().stream().filter(sp -> sp.getImportTypes().stream().anyMatch(e -> e == transferDataType)).map(AuthServiceExtension::getServiceId).collect(Collectors.toSet());
+    }
 
-  @Override
-  public Set<String> getExportServices(DataVertical transferDataType) {
-    Preconditions.checkArgument(
-        supportedExportTypes.contains(transferDataType),
-        "TransferDataType [%s] is not valid for export",
-        transferDataType);
-    return authServiceProviderMap
-        .values()
-        .stream()
-        .filter(
-            sp -> sp.getExportTypes().stream().anyMatch(e -> e == transferDataType))
-        .map(AuthServiceExtension::getServiceId)
-        .collect(Collectors.toSet());
-  }
+    @Override
+    public Set<String> getExportServices(DataVertical transferDataType) {
+        Preconditions.checkArgument(supportedExportTypes.contains(transferDataType), "TransferDataType [%s] is not valid for export", transferDataType);
+        return authServiceProviderMap.values().stream().filter(sp -> sp.getExportTypes().stream().anyMatch(e -> e == transferDataType)).map(AuthServiceExtension::getServiceId).collect(Collectors.toSet());
+    }
 
-  /** Returns the set of data types that support both import and export. */
-  @Override
-  public Set<DataVertical> getTransferDataTypes() {
-    return Sets.intersection(supportedExportTypes, supportedImportTypes);
-  }
+    /**
+     * Returns the set of data types that support both import and export.
+     */
+    @Override
+    public Set<DataVertical> getTransferDataTypes() {
+        return Sets.intersection(supportedExportTypes, supportedImportTypes);
+    }
 }

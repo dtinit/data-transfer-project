@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.types.transfer.retry;
 
 /**
@@ -21,26 +20,26 @@ package org.datatransferproject.types.transfer.retry;
  */
 public class NoRetryStrategy implements RetryStrategy {
 
-  public NoRetryStrategy() {}
+    public NoRetryStrategy() {
+    }
 
-  @Override
-  public boolean canTryAgain(int tries) {
-    return false;
-  }
+    @Override
+    public boolean canTryAgain(int tries) {
+        return false;
+    }
 
-  @Override
-  public long getNextIntervalMillis(int tries) {
-    return -1L;
-  }
+    @Override
+    public long getNextIntervalMillis(int tries) {
+        return -1L;
+    }
 
-  @Override
-  public long getRemainingIntervalMillis(int tries, long elapsedMillis) {
-    return -1L;
-  }
+    @Override
+    public long getRemainingIntervalMillis(int tries, long elapsedMillis) {
+        return -1L;
+    }
 
-  @Override
-  public String toString() {
-    return "NoRetryStrategy{}";
-  }
-
+    @Override
+    public String toString() {
+        return "NoRetryStrategy{}";
+    }
 }

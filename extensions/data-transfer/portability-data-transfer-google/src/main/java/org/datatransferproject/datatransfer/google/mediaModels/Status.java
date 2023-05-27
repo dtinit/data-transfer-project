@@ -22,17 +22,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class Status {
 
-  @JsonProperty("code")
-  private int code;
+    @JsonProperty("code")
+    private int code;
 
-  @JsonProperty("message")
-  private String message;
+    @JsonProperty("message")
+    private String message;
 
-  public int getCode() {
-    return code;
-  }
+    public int getCode() {
+        return code;
+    }
 
-  public String getMessage() {
-    return message;
-  }
+    public String getMessage() {
+        return message;
+    }
 }

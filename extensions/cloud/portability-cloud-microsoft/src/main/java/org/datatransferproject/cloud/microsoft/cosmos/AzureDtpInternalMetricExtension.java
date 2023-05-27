@@ -21,10 +21,8 @@ import org.datatransferproject.spi.service.extension.ServiceExtension;
 
 public class AzureDtpInternalMetricExtension implements ServiceExtension {
 
-  @Override
-  public void initialize(ExtensionContext context) {
-    context.registerService(
-        DtpInternalMetricRecorder.class,
-        new AzureDtpInternalMetricRecorder(context.getMonitor()));
-  }
+    @Override
+    public void initialize(ExtensionContext context) {
+        context.registerService(DtpInternalMetricRecorder.class, new AzureDtpInternalMetricRecorder(context.getMonitor()));
+    }
 }

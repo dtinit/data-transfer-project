@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.apple.photos;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -40,68 +39,40 @@ import org.jetbrains.annotations.NotNull;
  * An Apple importer to import the Videos into Apple iCloud-photos.
  */
 public class AppleVideosImporter implements Importer<TokensAndUrlAuthData, VideosContainerResource> {
-  private final AppCredentials appCredentials;
-  private final String exportingService;
 
-  protected final Monitor monitor;
-  private final AppleInterfaceFactory factory;
+    private final AppCredentials appCredentials;
 
-  public AppleVideosImporter(@NotNull final AppCredentials appCredentials, @NotNull final Monitor monitor) {
-    this(appCredentials, JobMetadata.getExportService(), monitor, new AppleInterfaceFactory());
-  }
+    private final String exportingService;
 
-  @VisibleForTesting
-  AppleVideosImporter(@NotNull final AppCredentials appCredentials,
-    @NotNull final String exportingService,
-    @NotNull final Monitor monitor,
-    @NotNull  AppleInterfaceFactory factory) {
-    this.appCredentials = appCredentials;
-    this.exportingService = exportingService;
-    this.monitor = monitor;
-    this.factory = factory;
-  }
+    protected final Monitor monitor;
 
-  @Override
-  public ImportResult importItem(
-      UUID jobId,
-      IdempotentImportExecutor idempotentImportExecutor,
-      TokensAndUrlAuthData authData,
-      VideosContainerResource data)
-      throws Exception {
-    if (data == null) {
-      // Nothing to do
-      return ImportResult.OK;
+    private final AppleInterfaceFactory factory;
+
+    public AppleVideosImporter(@NotNull final AppCredentials appCredentials, @NotNull final Monitor monitor) {
+        this(appCredentials, JobMetadata.getExportService(), monitor, new AppleInterfaceFactory());
     }
-    AppleMediaInterface mediaInterface = factory
-      .getOrCreateMediaInterface(jobId, authData, appCredentials, exportingService, monitor);
 
-    // Uploads album metadata
-    final int albumCount =
-        mediaInterface.importAlbums(
-            jobId,
-            idempotentImportExecutor,
-            data.getAlbums().stream()
-                .map(MediaAlbum::videoToMediaAlbum)
-                .collect(Collectors.toList()),
-          DataVertical.PHOTOS.getDataType());
-    final Map<String, Long> importPhotosResult =
-        mediaInterface.importAllMedia(
-            jobId,
-            idempotentImportExecutor,
-            data.getVideos(),
-          DataVertical.VIDEOS.getDataType());
+    @VisibleForTesting
+    AppleVideosImporter(@NotNull final AppCredentials appCredentials, @NotNull final String exportingService, @NotNull final Monitor monitor, @NotNull AppleInterfaceFactory factory) {
+        this.appCredentials = appCredentials;
+        this.exportingService = exportingService;
+        this.monitor = monitor;
+        this.factory = factory;
+    }
 
-    // generate import result
-    final ImportResult result = ImportResult.OK;
-    final Map<String, Integer> counts =
-        new ImmutableMap.Builder<String, Integer>()
-            .put(PhotosContainerResource.ALBUMS_COUNT_DATA_NAME, albumCount)
-            .put(
-                VideosContainerResource.VIDEOS_COUNT_DATA_NAME,
-                importPhotosResult.get(ApplePhotosConstants.COUNT_KEY).intValue())
-            .build();
-    return result
-        .copyWithBytes(importPhotosResult.get(ApplePhotosConstants.BYTES_KEY))
-        .copyWithCounts(counts);
-  }
+    @Override
+    public ImportResult importItem(UUID jobId, IdempotentImportExecutor idempotentImportExecutor, TokensAndUrlAuthData authData, VideosContainerResource data) throws Exception {
+        if (data == null) {
+            // Nothing to do
+            return ImportResult.OK;
+        }
+        AppleMediaInterface mediaInterface = factory.getOrCreateMediaInterface(jobId, authData, appCredentials, exportingService, monitor);
+        // Uploads album metadata
+        final int albumCount = mediaInterface.importAlbums(jobId, idempotentImportExecutor, data.getAlbums().stream().map(MediaAlbum::videoToMediaAlbum).collect(Collectors.toList()), DataVertical.PHOTOS.getDataType());
+        final Map<String, Long> importPhotosResult = mediaInterface.importAllMedia(jobId, idempotentImportExecutor, data.getVideos(), DataVertical.VIDEOS.getDataType());
+        // generate import result
+        final ImportResult result = ImportResult.OK;
+        final Map<String, Integer> counts = new ImmutableMap.Builder<String, Integer>().put(PhotosContainerResource.ALBUMS_COUNT_DATA_NAME, albumCount).put(VideosContainerResource.VIDEOS_COUNT_DATA_NAME, importPhotosResult.get(ApplePhotosConstants.COUNT_KEY).intValue()).build();
+        return result.copyWithBytes(importPhotosResult.get(ApplePhotosConstants.BYTES_KEY)).copyWithCounts(counts);
+    }
 }

@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.auth.flickr;
 
 import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.Collections;
@@ -33,48 +31,47 @@ import org.datatransferproject.types.common.models.DataVertical;
  */
 public class FlickrOAuthConfig implements OAuth1Config {
 
-  private static final String PERMS = "perms";
+    private static final String PERMS = "perms";
 
-  @Override
-  public String getServiceName() {
-    return "Flickr";
-  }
-
-  @Override
-  public String getRequestTokenUrl() {
-    return "https://www.flickr.com/services/oauth/request_token";
-  }
-
-  @Override
-  public String getAuthorizationUrl() {
-    return "https://www.flickr.com/services/oauth/authorize";
-  }
-
-  @Override
-  public String getAccessTokenUrl() {
-    return "https://www.flickr.com/services/oauth/access_token";
-  }
-
-  @Override
-  public List<DataVertical> getExportTypes() {
-    return ImmutableList.of(PHOTOS);
-  }
-
-  @Override
-  public List<DataVertical> getImportTypes() {
-    return ImmutableList.of(PHOTOS);
-  }
-
-  public Map<String, String> getAdditionalUrlParameters(
-      DataVertical dataType, AuthMode mode, OAuth1Step step) {
-
-    if (dataType.equals(PHOTOS) && step == OAuth1Step.AUTHORIZATION) {
-      return (mode == AuthMode.EXPORT)
-          ? ImmutableMap.of(PERMS, "read")
-          : ImmutableMap.of(PERMS, "write");
+    @Override
+    public String getServiceName() {
+        return "Flickr";
     }
 
-    // default
-    return Collections.emptyMap();
-  }
+    @Override
+    public String getRequestTokenUrl() {
+        return "https://www.flickr.com/services/oauth/request_token";
+    }
+
+    @Override
+    public String getAuthorizationUrl() {
+        return "https://www.flickr.com/services/oauth/authorize";
+    }
+
+    @Override
+    public String getAccessTokenUrl() {
+        return "https://www.flickr.com/services/oauth/access_token";
+    }
+
+    @Override
+    public List<DataVertical> getExportTypes() {
+        return generatePhotosListImmutable();
+    }
+
+    @Override
+    public List<DataVertical> getImportTypes() {
+        return generatePhotosListImmutable();
+    }
+
+    public Map<String, String> getAdditionalUrlParameters(DataVertical dataType, AuthMode mode, OAuth1Step step) {
+        if (dataType.equals(PHOTOS) && step == OAuth1Step.AUTHORIZATION) {
+            return (mode == AuthMode.EXPORT) ? ImmutableMap.of(PERMS, "read") : ImmutableMap.of(PERMS, "write");
+        }
+        // default
+        return Collections.emptyMap();
+    }
+
+    public List<DataVertical> generatePhotosListImmutable() {
+        return ImmutableList.of(PHOTOS);
+    }
 }

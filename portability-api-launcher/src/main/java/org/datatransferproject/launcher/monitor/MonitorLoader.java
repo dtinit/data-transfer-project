@@ -17,48 +17,48 @@ package org.datatransferproject.launcher.monitor;
 
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.MonitorExtension;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
-
 import static org.datatransferproject.launcher.monitor.ConsoleMonitor.Level.DEBUG;
 
-/** Helper for loading monitor extensions. */
+/**
+ * Helper for loading monitor extensions.
+ */
 public class MonitorLoader {
-  private static Monitor monitor;
-  public static synchronized Monitor loadMonitor() {
-    if (monitor == null) {
-      try {
-        List<Monitor> monitors = new ArrayList<>();
-        ServiceLoader.load(MonitorExtension.class)
-            .iterator()
-            .forEachRemaining(
-                extension -> {
-                  try {
-                  extension.initialize();
-                  monitors.add(extension.getMonitor());
-                  } catch (Throwable e) {
-                    System.out.println("Couldn't initialize: " + extension + ": " + e.getMessage());
-                    e.printStackTrace(System.out);
-                  }
-                });
-        if (monitors.isEmpty()) {
-          monitor = new ConsoleMonitor(DEBUG);
-        } else if (monitors.size() == 1) {
-          monitor = monitors.get(0);
-        } else {
-          Monitor[] monitorArray = new Monitor[monitors.size()];
-          monitorArray = monitors.toArray(monitorArray);
-          monitor = new MultiplexMonitor(monitorArray);
-        }
-      } catch (Throwable t) {
-        t.printStackTrace();
-        throw t;
-      }
-    }
-    return monitor;
-  }
 
-  private MonitorLoader() {}
+    private static Monitor monitor;
+
+    public static synchronized Monitor loadMonitor() {
+        if (monitor == null) {
+            try {
+                List<Monitor> monitors = new ArrayList<>();
+                ServiceLoader.load(MonitorExtension.class).iterator().forEachRemaining(extension -> {
+                    try {
+                        extension.initialize();
+                        monitors.add(extension.getMonitor());
+                    } catch (Throwable e) {
+                        System.out.println("Couldn't initialize: " + extension + ": " + e.getMessage());
+                        e.printStackTrace(System.out);
+                    }
+                });
+                if (monitors.isEmpty()) {
+                    monitor = new ConsoleMonitor(DEBUG);
+                } else if (monitors.size() == 1) {
+                    monitor = monitors.get(0);
+                } else {
+                    Monitor[] monitorArray = new Monitor[monitors.size()];
+                    monitorArray = monitors.toArray(monitorArray);
+                    monitor = new MultiplexMonitor(monitorArray);
+                }
+            } catch (Throwable t) {
+                t.printStackTrace();
+                throw t;
+            }
+        }
+        return monitor;
+    }
+
+    private MonitorLoader() {
+    }
 }

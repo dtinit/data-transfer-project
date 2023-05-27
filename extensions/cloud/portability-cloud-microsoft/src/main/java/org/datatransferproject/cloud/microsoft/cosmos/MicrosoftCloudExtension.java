@@ -5,9 +5,7 @@ import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.spi.cloud.extension.CloudExtension;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
-
 import java.util.Objects;
-
 import static java.lang.System.getenv;
 
 /**
@@ -56,96 +54,90 @@ import static java.lang.System.getenv;
  *   <li>Key Vault: JWT secrets JWTKEY and JWTSECRET must be added.
  */
 public class MicrosoftCloudExtension implements CloudExtension {
-  // Config for accessing the Azure Vault (sensitive)
-  static final String AZURE_VAULT_NAME = "AZURE_VAULT_NAME";
 
-  // Derived from the Active Directory tenant id
-  static final String AZURE_VAULT_TENANT_ID = "AZURE_VAULT_TENANT_ID";
+    // Config for accessing the Azure Vault (sensitive)
+    static final String AZURE_VAULT_NAME = "AZURE_VAULT_NAME";
 
-  // Derived from the Active Directory application registration id
-  static final String AZURE_VAULT_CLIENT_ID = "AZURE_VAULT_CLIENT_ID";
+    // Derived from the Active Directory tenant id
+    static final String AZURE_VAULT_TENANT_ID = "AZURE_VAULT_TENANT_ID";
 
-  // Derived from the Active Directory application registration secret key
-  static final String AZURE_VAULT_CLIENT_SECRET = "AZURE_VAULT_CLIENT_SECRET";
+    // Derived from the Active Directory application registration id
+    static final String AZURE_VAULT_CLIENT_ID = "AZURE_VAULT_CLIENT_ID";
 
-  // Non-sensitive configuration to access Cosmos DB
-  static final String AZURE_COSMOS_ACCOUNT_NAME = "AZURE_COSMOS_ACCOUNT_NAME";
-  static final String AZURE_COSMOS_PARTITION_KEY = "AZURE_COSMOS_PARTITION_KEY";
+    // Derived from the Active Directory application registration secret key
+    static final String AZURE_VAULT_CLIENT_SECRET = "AZURE_VAULT_CLIENT_SECRET";
 
-  // The key to access Cosmos DB stored in Azure Vault (sensitive)
-  static final String AZURE_COSMOS_ACCOUNT_KEY = "TABLESTOREACCOUNTKEY";
+    // Non-sensitive configuration to access Cosmos DB
+    static final String AZURE_COSMOS_ACCOUNT_NAME = "AZURE_COSMOS_ACCOUNT_NAME";
 
-  // The key to access Blob Storage stored in Azure Vault (sensitive)
-  static final String AZURE_BLOB_KEY = "AZUREBLOBKEY";
+    static final String AZURE_COSMOS_PARTITION_KEY = "AZURE_COSMOS_PARTITION_KEY";
 
-  private AzureTableStore jobStore;
-  private AzureKeyVaultStore vaultStore;
+    // The key to access Cosmos DB stored in Azure Vault (sensitive)
+    static final String AZURE_COSMOS_ACCOUNT_KEY = "TABLESTOREACCOUNTKEY";
 
-  @Override
-  public void initialize(ExtensionContext context) {
-    // load the configuration values to access the vault
+    // The key to access Blob Storage stored in Azure Vault (sensitive)
+    static final String AZURE_BLOB_KEY = "AZUREBLOBKEY";
 
-    // TODO should env vars be sourced from config?
-    String vaultName = loadSecretValue(AZURE_VAULT_NAME, true);
-    String tenantId = loadSecretValue(AZURE_VAULT_TENANT_ID, true);
-    String clientId = loadSecretValue(AZURE_VAULT_CLIENT_ID, true);
-    String clientSecret = loadSecretValue(AZURE_VAULT_CLIENT_SECRET, true);
+    private AzureTableStore jobStore;
 
-    // create the vault
-    vaultStore = new AzureKeyVaultStore(vaultName, tenantId, clientId, clientSecret);
+    private AzureKeyVaultStore vaultStore;
 
-    // load the configuration to access Cosmos DB
-    TableStoreConfiguration.Builder builder = TableStoreConfiguration.Builder.newInstance();
-
-    String accountKey = getVaultKey(AZURE_COSMOS_ACCOUNT_KEY);
-    builder.accountKey(accountKey);
-
-    String blobKey = getVaultKey(AZURE_BLOB_KEY);
-    builder.blobKey(blobKey);
-
-    String accountName = loadSecretValue(AZURE_COSMOS_ACCOUNT_NAME, true);
-    builder.accountName(accountName);
-
-    String partitionKey = loadSecretValue(AZURE_COSMOS_PARTITION_KEY, false);
-    if (partitionKey == null) {
-      partitionKey = "DefaultPartition";
+    @Override
+    public void initialize(ExtensionContext context) {
+        // load the configuration values to access the vault
+        // TODO should env vars be sourced from config?
+        String vaultName = loadSecretValue(AZURE_VAULT_NAME, true);
+        String tenantId = loadSecretValue(AZURE_VAULT_TENANT_ID, true);
+        String clientId = loadSecretValue(AZURE_VAULT_CLIENT_ID, true);
+        String clientSecret = loadSecretValue(AZURE_VAULT_CLIENT_SECRET, true);
+        // create the vault
+        vaultStore = new AzureKeyVaultStore(vaultName, tenantId, clientId, clientSecret);
+        // load the configuration to access Cosmos DB
+        TableStoreConfiguration.Builder builder = TableStoreConfiguration.Builder.newInstance();
+        String accountKey = getVaultKey(AZURE_COSMOS_ACCOUNT_KEY);
+        builder.accountKey(accountKey);
+        String blobKey = getVaultKey(AZURE_BLOB_KEY);
+        builder.blobKey(blobKey);
+        String accountName = loadSecretValue(AZURE_COSMOS_ACCOUNT_NAME, true);
+        builder.accountName(accountName);
+        String partitionKey = loadSecretValue(AZURE_COSMOS_PARTITION_KEY, false);
+        if (partitionKey == null) {
+            partitionKey = "DefaultPartition";
+        }
+        builder.partitionKey(partitionKey);
+        ObjectMapper mapper = context.getTypeManager().getMapper();
+        builder.mapper(mapper);
+        // create the connection to the database
+        jobStore = new AzureTableStore(builder.build());
+        jobStore.init();
     }
-    builder.partitionKey(partitionKey);
 
-    ObjectMapper mapper = context.getTypeManager().getMapper();
-    builder.mapper(mapper);
-
-    // create the connection to the database
-    jobStore = new AzureTableStore(builder.build());
-    jobStore.init();
-  }
-
-  @Override
-  public JobStore getJobStore() {
-    return jobStore;
-  }
-
-  @Override
-  public AppCredentialStore getAppCredentialStore() {
-    return vaultStore;
-  }
-
-  private String getVaultKey(String key) {
-    String secret = vaultStore.getSecret(key);
-    if (secret == null) {
-      throw new MicrosoftStorageException("Unable to retrieve secret from Azure Vault: " + key);
+    @Override
+    public JobStore getJobStore() {
+        return jobStore;
     }
-    return secret;
-  }
 
-  private String loadSecretValue(String key, boolean required) {
-    String tenantId = getenv(key);
-    if (tenantId == null) {
-      tenantId = System.getProperty(key);
+    @Override
+    public AppCredentialStore getAppCredentialStore() {
+        return vaultStore;
     }
-    if (required) {
-      Objects.requireNonNull(tenantId, key + " not set in environment or configuration");
+
+    private String getVaultKey(String key) {
+        String secret = vaultStore.getSecret(key);
+        if (secret == null) {
+            throw new MicrosoftStorageException("Unable to retrieve secret from Azure Vault: " + key);
+        }
+        return secret;
     }
-    return tenantId;
-  }
+
+    private String loadSecretValue(String key, boolean required) {
+        String tenantId = getenv(key);
+        if (tenantId == null) {
+            tenantId = System.getProperty(key);
+        }
+        if (required) {
+            Objects.requireNonNull(tenantId, key + " not set in environment or configuration");
+        }
+        return tenantId;
+    }
 }

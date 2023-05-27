@@ -19,58 +19,56 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.datatransferproject.types.common.ImportableItem;
-
 import javax.annotation.Nonnull;
 import java.util.Objects;
 
 public class CalendarModel implements ImportableItem {
-  private final String id;
-  private final String name;
-  private final String description;
 
-  @JsonCreator
-  public CalendarModel(
-      @JsonProperty("id") String id,
-      @JsonProperty("name") String name,
-      @JsonProperty("description") String description) {
-    this.id = id;
-    this.name = name;
-    this.description = description;
-  }
+    private final String id;
 
-  @JsonIgnore(false)
-  @Override
-  public String getName() {
-    return name;
-  }
+    private final String name;
 
-  public String getDescription() {
-    return description;
-  }
+    private final String description;
 
-  public String getId() {
-    return id;
-  }
+    @JsonCreator
+    public CalendarModel(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("description") String description) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+    }
 
-  @Nonnull
-  @Override
-  public String getIdempotentId() {
-    return getId();
-  }
+    @JsonIgnore(false)
+    @Override
+    public String getName() {
+        return name;
+    }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    CalendarModel that = (CalendarModel) o;
-    return Objects.equals(getId(), that.getId()) &&
-            Objects.equals(getName(), that.getName()) &&
-            Objects.equals(getDescription(), that.getDescription());
-  }
+    public String getDescription() {
+        return description;
+    }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(getId(), getName(), getDescription());
-  }
+    public String getId() {
+        return id;
+    }
 
+    @Nonnull
+    @Override
+    public String getIdempotentId() {
+        return getId();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        CalendarModel that = (CalendarModel) o;
+        return Objects.equals(getId(), that.getId()) && Objects.equals(getName(), that.getName()) && Objects.equals(getDescription(), that.getDescription());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId(), getName(), getDescription());
+    }
 }

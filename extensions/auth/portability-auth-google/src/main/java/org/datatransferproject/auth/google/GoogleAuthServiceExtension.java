@@ -23,8 +23,7 @@ import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
  */
 public class GoogleAuthServiceExtension extends OAuth2ServiceExtension {
 
-  public GoogleAuthServiceExtension() {
-    super(new GoogleOAuthConfig());
-  }
-
+    public GoogleAuthServiceExtension() {
+        super(new GoogleOAuthConfig());
+    }
 }

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -23,14 +22,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class SimpleMediaItem {
 
-  @JsonProperty("uploadToken")
-  private String uploadToken;
+    @JsonProperty("uploadToken")
+    private String uploadToken;
 
-  SimpleMediaItem(String uploadToken) {
-    this.uploadToken = uploadToken;
-  }
+    SimpleMediaItem(String uploadToken) {
+        this.uploadToken = uploadToken;
+    }
 
-  public String getUploadToken() {
-    return uploadToken;
-  }
+    public String getUploadToken() {
+        return uploadToken;
+    }
 }

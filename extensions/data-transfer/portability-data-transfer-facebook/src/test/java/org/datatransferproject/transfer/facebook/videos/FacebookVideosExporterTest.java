@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.transfer.facebook.videos;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
 import com.restfb.Connection;
 import com.restfb.types.Video;
 import java.util.ArrayList;
@@ -38,52 +36,43 @@ import org.junit.jupiter.api.Test;
 
 public class FacebookVideosExporterTest {
 
-  private static final String VIDEO_ID = "937644721";
-  private static final String VIDEO_SOURCE = "https://www.example.com/video.mp4";
-  private static final String VIDEO_NAME = "Example video";
-  private static final Date VIDEO_TIME = new Date(1234567890123L);
+    private static final String VIDEO_ID = "937644721";
 
-  private FacebookVideosExporter facebookVideosExporter;
-  private UUID uuid = UUID.randomUUID();
+    private static final String VIDEO_SOURCE = "https://www.example.com/video.mp4";
 
-  @BeforeEach
-  public void setUp() throws CopyExceptionWithFailureReason {
-    FacebookVideosInterface videosInterface = mock(FacebookVideosInterface.class);
+    private static final String VIDEO_NAME = "Example video";
 
-    // Set up example video
-    Video video = new Video();
-    video.setId(VIDEO_ID);
-    video.setSource(VIDEO_SOURCE);
-    video.setDescription(VIDEO_NAME);
-    video.setCreatedTime(VIDEO_TIME);
+    private static final Date VIDEO_TIME = new Date(1234567890123L);
 
-    ArrayList<Video> videos = new ArrayList<>();
-    videos.add(video);
+    private FacebookVideosExporter facebookVideosExporter;
 
-    @SuppressWarnings("unchecked")
-    Connection<Video> videoConnection = mock(Connection.class);
+    private UUID uuid = UUID.randomUUID();
 
-    when(videosInterface.getVideos(Optional.empty())).thenReturn(videoConnection);
-    when(videoConnection.getData()).thenReturn(videos);
+    @BeforeEach
+    public void setUp() throws CopyExceptionWithFailureReason {
+        FacebookVideosInterface videosInterface = mock(FacebookVideosInterface.class);
+        // Set up example video
+        Video video = new Video();
+        video.setId(VIDEO_ID);
+        video.setSource(VIDEO_SOURCE);
+        video.setDescription(VIDEO_NAME);
+        video.setCreatedTime(VIDEO_TIME);
+        ArrayList<Video> videos = new ArrayList<>();
+        videos.add(video);
+        @SuppressWarnings("unchecked")
+        Connection<Video> videoConnection = mock(Connection.class);
+        when(videosInterface.getVideos(Optional.empty())).thenReturn(videoConnection);
+        when(videoConnection.getData()).thenReturn(videos);
+        facebookVideosExporter = new FacebookVideosExporter(new AppCredentials("key", "secret"), videosInterface, null);
+    }
 
-    facebookVideosExporter =
-        new FacebookVideosExporter(new AppCredentials("key", "secret"), videosInterface, null);
-  }
-
-  @Test
-  public void testExportVideo() throws CopyExceptionWithFailureReason {
-    VideoModel expectedVideo = new VideoModel(VIDEO_ID + ".mp4", VIDEO_SOURCE, VIDEO_NAME,
-        "video/mp4", VIDEO_ID, null, false, VIDEO_TIME);
-
-    ExportResult<VideosContainerResource> result =
-        facebookVideosExporter.export(
-            uuid,
-            new TokensAndUrlAuthData("accessToken", null, null),
-            Optional.of(new ExportInformation(null, null)));
-
-    assertEquals(ExportResult.ResultType.END, result.getType());
-    VideosContainerResource exportedData = result.getExportedData();
-    assertEquals(1, exportedData.getVideos().size());
-    assertEquals(expectedVideo, exportedData.getVideos().toArray()[0]);
-  }
+    @Test
+    public void testExportVideo() throws CopyExceptionWithFailureReason {
+        VideoModel expectedVideo = new VideoModel(VIDEO_ID + ".mp4", VIDEO_SOURCE, VIDEO_NAME, "video/mp4", VIDEO_ID, null, false, VIDEO_TIME);
+        ExportResult<VideosContainerResource> result = facebookVideosExporter.export(uuid, new TokensAndUrlAuthData("accessToken", null, null), Optional.of(new ExportInformation(null, null)));
+        assertEquals(ExportResult.ResultType.END, result.getType());
+        VideosContainerResource exportedData = result.getExportedData();
+        assertEquals(1, exportedData.getVideos().size());
+        assertEquals(expectedVideo, exportedData.getVideos().toArray()[0]);
+    }
 }

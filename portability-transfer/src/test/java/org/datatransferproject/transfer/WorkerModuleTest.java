@@ -2,7 +2,6 @@ package org.datatransferproject.transfer;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import com.google.common.collect.ImmutableList;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.types.common.models.DataVertical;
@@ -10,63 +9,70 @@ import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.junit.jupiter.api.Test;
+
 public class WorkerModuleTest {
 
-  private static TransferExtension FOO_UPPER = createTransferExtension("FOO");
-  private static TransferExtension FOO_LOWER = createTransferExtension("foo");
-  private static TransferExtension BAR_UPPER = createTransferExtension("BAR");
-  private static TransferExtension BAR_LOWER = createTransferExtension("bar");
+    private static TransferExtension FOO_UPPER = createTransferExtension("FOO");
 
-  @Test
-  public void findTransferExtension() {
-    ImmutableList<TransferExtension> transferExtensions = ImmutableList.of(FOO_UPPER, BAR_UPPER);
-    assertThat(WorkerModule.findTransferExtension(transferExtensions, "FOO")).isEqualTo(FOO_UPPER);
-    assertThat(WorkerModule.findTransferExtension(transferExtensions, "foo")).isEqualTo(FOO_UPPER);
-  }
+    private static TransferExtension FOO_LOWER = createTransferExtension("foo");
 
-  @Test
-  public void findTransferExtension_mixedCasing() {
-    ImmutableList<TransferExtension> transferExtensions = ImmutableList.of(FOO_UPPER, BAR_LOWER);
-    assertThat(WorkerModule.findTransferExtension(transferExtensions, "FOO")).isEqualTo(FOO_UPPER);
-    assertThat(WorkerModule.findTransferExtension(transferExtensions, "foo")).isEqualTo(FOO_UPPER);
-    assertThat(WorkerModule.findTransferExtension(transferExtensions, "BAR")).isEqualTo(BAR_LOWER);
-    assertThat(WorkerModule.findTransferExtension(transferExtensions, "bar")).isEqualTo(BAR_LOWER);
-  }
+    private static TransferExtension BAR_UPPER = createTransferExtension("BAR");
 
-  @Test
-  public void findTransferExtension_noMatch() {
-    ImmutableList<TransferExtension> transferExtensions = ImmutableList.of(FOO_UPPER, BAR_UPPER);
-    assertThrows(IllegalStateException.class,
-        () -> WorkerModule.findTransferExtension(transferExtensions, "BAZ"));
-  }
+    private static TransferExtension BAR_LOWER = createTransferExtension("bar");
 
-  @Test
-  public void findTransferExtension_duplicateMatches() {
-    ImmutableList<TransferExtension> transferExtensions = ImmutableList.of(FOO_UPPER, FOO_LOWER);
-    assertThrows(IllegalStateException.class,
-        () -> WorkerModule.findTransferExtension(transferExtensions, "FOO"));
-  }
+    @Test
+    public void findTransferExtension() {
+        ImmutableList<TransferExtension> transferExtensions = ImmutableList.of(FOO_UPPER, BAR_UPPER);
+        assertThat(WorkerModule.findTransferExtension(transferExtensions, "FOO")).isEqualTo(FOO_UPPER);
+        assertThat(WorkerModule.findTransferExtension(transferExtensions, "foo")).isEqualTo(FOO_UPPER);
+    }
 
-  private static TransferExtension createTransferExtension(String serviceId) {
-    return new TransferExtension() {
-      @Override
-      public String getServiceId() {
-        return serviceId;
-      }
+    @Test
+    public void findTransferExtension_mixedCasing() {
+        ImmutableList<TransferExtension> transferExtensions = ImmutableList.of(FOO_UPPER, BAR_LOWER);
+        assertThat(WorkerModule.findTransferExtension(transferExtensions, "FOO")).isEqualTo(FOO_UPPER);
+        assertThat(WorkerModule.findTransferExtension(transferExtensions, "foo")).isEqualTo(FOO_UPPER);
+        assertThat(WorkerModule.findTransferExtension(transferExtensions, "BAR")).isEqualTo(BAR_LOWER);
+        assertThat(WorkerModule.findTransferExtension(transferExtensions, "bar")).isEqualTo(BAR_LOWER);
+    }
 
-      @Override
-      public Exporter<?, ?> getExporter(DataVertical transferDataType) {
+    @Test
+    public void findTransferExtension_noMatch() {
+        ImmutableList<TransferExtension> transferExtensions = ImmutableList.of(FOO_UPPER, BAR_UPPER);
+        assertThrows(IllegalStateException.class, () -> WorkerModule.findTransferExtension(transferExtensions, "BAZ"));
+    }
+
+    @Test
+    public void findTransferExtension_duplicateMatches() {
+        ImmutableList<TransferExtension> transferExtensions = ImmutableList.of(FOO_UPPER, FOO_LOWER);
+        assertThrows(IllegalStateException.class, () -> WorkerModule.findTransferExtension(transferExtensions, "FOO"));
+    }
+
+    private static TransferExtension createTransferExtension(String serviceId) {
+        return new TransferExtension() {
+
+            @Override
+            public String getServiceId() {
+                return serviceId;
+            }
+
+            @Override
+            public Exporter<?, ?> getExporter(DataVertical transferDataType) {
+                return emptyMethod(transferDataType);
+            }
+
+            @Override
+            public Importer<?, ?> getImporter(DataVertical transferDataType) {
+                return emptyMethod(transferDataType);
+            }
+
+            @Override
+            public void initialize(ExtensionContext context) {
+            }
+        };
+    }
+
+    public Exporter<?, ?> emptyMethod(DataVertical transferDataType) {
         return null;
-      }
-
-      @Override
-      public Importer<?, ?> getImporter(DataVertical transferDataType) {
-        return null;
-      }
-
-      @Override
-      public void initialize(ExtensionContext context) {
-      }
-    };
-  }
+    }
 }

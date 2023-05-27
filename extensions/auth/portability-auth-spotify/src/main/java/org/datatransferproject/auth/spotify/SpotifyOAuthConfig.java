@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.auth.spotify;
 
 import static org.datatransferproject.types.common.models.DataVertical.PLAYLISTS;
-
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Map;
@@ -30,39 +28,34 @@ import org.datatransferproject.types.common.models.DataVertical;
  */
 public class SpotifyOAuthConfig implements OAuth2Config {
 
-  // https://developer.spotify.com/documentation/general/guides/authorization-guide/#authorization-code-flow
+    // https://developer.spotify.com/documentation/general/guides/authorization-guide/#authorization-code-flow
+    @Override
+    public String getServiceName() {
+        return "Spotify";
+    }
 
-  @Override
-  public String getServiceName() {
-    return "Spotify";
-  }
+    @Override
+    public String getAuthUrl() {
+        return "https://accounts.spotify.com/authorize";
+    }
 
-  @Override
-  public String getAuthUrl() {
-    return "https://accounts.spotify.com/authorize";
-  }
+    @Override
+    public String getTokenUrl() {
+        return "https://accounts.spotify.com/api/token";
+    }
 
-  @Override
-  public String getTokenUrl() {
-    return "https://accounts.spotify.com/api/token";
-  }
+    @Override
+    public Map<DataVertical, Set<String>> getExportScopes() {
+        return ImmutableMap.<DataVertical, Set<String>>builder().put(PLAYLISTS, ImmutableSet.of("playlist-read-private")).build();
+    }
 
-  @Override
-  public Map<DataVertical, Set<String>> getExportScopes() {
-    return ImmutableMap.<DataVertical, Set<String>>builder()
-        .put(PLAYLISTS, ImmutableSet.of("playlist-read-private"))
-        .build();
-  }
+    @Override
+    public Map<DataVertical, Set<String>> getImportScopes() {
+        return ImmutableMap.<DataVertical, Set<String>>builder().put(PLAYLISTS, ImmutableSet.of("playlist-modify-private")).build();
+    }
 
-  @Override
-  public Map<DataVertical, Set<String>> getImportScopes() {
-    return ImmutableMap.<DataVertical, Set<String>>builder()
-        .put(PLAYLISTS, ImmutableSet.of("playlist-modify-private"))
-        .build();
-  }
-
-  @Override
-  public Map<String, String> getAdditionalAuthUrlParameters() {
-    return ImmutableMap.of("show_dialog", "true");
-  }
+    @Override
+    public Map<String, String> getAdditionalAuthUrlParameters() {
+        return ImmutableMap.of("show_dialog", "true");
+    }
 }

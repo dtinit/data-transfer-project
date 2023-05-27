@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.transfer.microsoft.common;
 
 import com.google.api.client.auth.oauth2.BearerToken;
@@ -29,55 +28,43 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import java.io.IOException;
 
 public class MicrosoftCredentialFactory {
-  // TODO: Determine correct duration in production
-  private static final long EXPIRE_TIME_IN_SECONDS = 0L;
 
-  private final HttpTransport httpTransport;
-  private final JsonFactory jsonFactory;
-  private final AppCredentials appCredentials;
+    // TODO: Determine correct duration in production
+    private static final long EXPIRE_TIME_IN_SECONDS = 0L;
 
-  public MicrosoftCredentialFactory(
-      HttpTransport httpTransport, JsonFactory jsonFactory, AppCredentials appCredentials) {
-    this.httpTransport = httpTransport;
-    this.jsonFactory = jsonFactory;
-    this.appCredentials = appCredentials;
-  }
+    private final HttpTransport httpTransport;
 
-  public HttpTransport getHttpTransport() {
-    return httpTransport;
-  }
+    private final JsonFactory jsonFactory;
 
-  public JsonFactory getJsonFactory() {
-    return jsonFactory;
-  }
+    private final AppCredentials appCredentials;
 
-  /**
-   * Creates a {@link Credential} objects with the given {@link TokensAndUrlAuthData} which supports
-   * refreshing tokens.
-   */
-  public Credential createCredential(TokensAndUrlAuthData authData) {
-    return new Credential.Builder(BearerToken.authorizationHeaderAccessMethod())
-        .setTransport(httpTransport)
-        .setJsonFactory(jsonFactory)
-        .setClientAuthentication(
-            new ClientParametersAuthentication(appCredentials.getKey(), appCredentials.getSecret()))
-        .setTokenServerEncodedUrl(authData.getTokenServerEncodedUrl())
-        .build()
-        .setAccessToken(authData.getAccessToken())
-        .setRefreshToken(authData.getRefreshToken())
-        .setExpiresInSeconds(EXPIRE_TIME_IN_SECONDS);
-  }
+    public MicrosoftCredentialFactory(HttpTransport httpTransport, JsonFactory jsonFactory, AppCredentials appCredentials) {
+        this.httpTransport = httpTransport;
+        this.jsonFactory = jsonFactory;
+        this.appCredentials = appCredentials;
+    }
 
-  /**
-  * Refreshes and updates the given credential
-  */
-  public Credential refreshCredential(Credential credential) throws IOException {
-    TokenResponse tokenResponse = new RefreshTokenRequest(httpTransport, jsonFactory,
-        new GenericUrl(credential.getTokenServerEncodedUrl()),
-        credential.getRefreshToken())
-        .setClientAuthentication(credential.getClientAuthentication())
-        .setRequestInitializer(credential.getRequestInitializer()).execute();
+    public HttpTransport getHttpTransport() {
+        return httpTransport;
+    }
 
-    return credential.setFromTokenResponse(tokenResponse);
-  }
+    public JsonFactory getJsonFactory() {
+        return jsonFactory;
+    }
+
+    /**
+     * Creates a {@link Credential} objects with the given {@link TokensAndUrlAuthData} which supports
+     * refreshing tokens.
+     */
+    public Credential createCredential(TokensAndUrlAuthData authData) {
+        return new Credential.Builder(BearerToken.authorizationHeaderAccessMethod()).setTransport(httpTransport).setJsonFactory(jsonFactory).setClientAuthentication(new ClientParametersAuthentication(appCredentials.getKey(), appCredentials.getSecret())).setTokenServerEncodedUrl(authData.getTokenServerEncodedUrl()).build().setAccessToken(authData.getAccessToken()).setRefreshToken(authData.getRefreshToken()).setExpiresInSeconds(EXPIRE_TIME_IN_SECONDS);
+    }
+
+    /**
+     * Refreshes and updates the given credential
+     */
+    public Credential refreshCredential(Credential credential) throws IOException {
+        TokenResponse tokenResponse = new RefreshTokenRequest(httpTransport, jsonFactory, new GenericUrl(credential.getTokenServerEncodedUrl()), credential.getRefreshToken()).setClientAuthentication(credential.getClientAuthentication()).setRequestInitializer(credential.getRequestInitializer()).execute();
+        return credential.setFromTokenResponse(tokenResponse);
+    }
 }

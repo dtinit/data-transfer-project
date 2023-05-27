@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.apple.photos;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -23,7 +22,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -51,242 +49,163 @@ import org.mockito.stubbing.Answer;
 
 public class AppleImporterTestBase {
 
-  static final String EXPORTING_SERVICE = "ExportingService";
-  protected AppleMediaInterface mediaInterface;
-  protected TokensAndUrlAuthData authData;
-  protected AppCredentials appCredentials;
-  protected Monitor monitor;
-  protected AppleInterfaceFactory factory;
+    static final String EXPORTING_SERVICE = "ExportingService";
 
-  protected static final String ALBUM_NAME_BASE = "albumName";
-  protected static final String ALBUM_DESCRIPTION_BASE = "albumDescription";
-  protected static final String ALBUM_DATAID_BASE = "albumDataId";
-  protected static final String ALBUM_RECORDID_BASE = "albumRecordId";
-  protected static final String MEDIA_NAME_BASE = "mediaName";
-  protected static final String PHOTOS_DATAID_BASE = "photosDataId";
-  protected static final String VIDEOS_DATAID_BASE = "videosDataId";
-  protected static final String MEDIA_RECORDID_BASE = "mediaRecordId";
-  protected static final Long PHOTOS_FILE_SIZE = 100L;
-  protected static final Long VIDEOS_FILE_SIZE = 1000L;
-  protected IdempotentImportExecutor executor;
-  protected UUID uuid = UUID.randomUUID();
+    protected AppleMediaInterface mediaInterface;
 
-  public void setup() throws Exception {
-    monitor = mock(Monitor.class);
-    authData = mock(TokensAndUrlAuthData.class);
-    appCredentials = mock(AppCredentials.class);
-    executor = new InMemoryIdempotentImportExecutor(monitor);
-    mediaInterface = setupMediaInterface();
-    factory = mock(AppleInterfaceFactory.class);
-    when(factory.getOrCreateMediaInterface(any(), any(), any(), anyString(), any()))
-      .thenReturn(mediaInterface);
-  }
+    protected TokensAndUrlAuthData authData;
 
-  private AppleMediaInterface setupMediaInterface() throws Exception {
-    AppleMediaInterface mediaInterface = mock(AppleMediaInterface.class);
-    Map<String, Object> fieldsToInject = new HashMap<>();
-    fieldsToInject.put("baseUrl", "https://dummy-apis.photos.apple.com");
-    fieldsToInject.put("appCredentials", new AppCredentials("key", "secret"));
-    fieldsToInject.put("exportingService", EXPORTING_SERVICE);
-    fieldsToInject.put("monitor", monitor);
+    protected AppCredentials appCredentials;
 
-    fieldsToInject.entrySet()
-      .forEach(entry -> {
-        try {
-          ReflectionUtils.findFields(
-              AppleMediaInterface.class,
-              f -> f.getName().equals(entry.getKey()),
-              HierarchyTraversalMode.TOP_DOWN)
-            .stream()
-            .findFirst()
-            .get()
-            .set(mediaInterface, entry.getValue());
-        } catch (IllegalAccessException e) {
-          throw new RuntimeException(e);
+    protected Monitor monitor;
+
+    protected AppleInterfaceFactory factory;
+
+    protected static final String ALBUM_NAME_BASE = "albumName";
+
+    protected static final String ALBUM_DESCRIPTION_BASE = "albumDescription";
+
+    protected static final String ALBUM_DATAID_BASE = "albumDataId";
+
+    protected static final String ALBUM_RECORDID_BASE = "albumRecordId";
+
+    protected static final String MEDIA_NAME_BASE = "mediaName";
+
+    protected static final String PHOTOS_DATAID_BASE = "photosDataId";
+
+    protected static final String VIDEOS_DATAID_BASE = "videosDataId";
+
+    protected static final String MEDIA_RECORDID_BASE = "mediaRecordId";
+
+    protected static final Long PHOTOS_FILE_SIZE = 100L;
+
+    protected static final Long VIDEOS_FILE_SIZE = 1000L;
+
+    protected IdempotentImportExecutor executor;
+
+    protected UUID uuid = UUID.randomUUID();
+
+    public void setup() throws Exception {
+        monitor = mock(Monitor.class);
+        authData = mock(TokensAndUrlAuthData.class);
+        appCredentials = mock(AppCredentials.class);
+        executor = new InMemoryIdempotentImportExecutor(monitor);
+        mediaInterface = setupMediaInterface();
+        factory = mock(AppleInterfaceFactory.class);
+        when(factory.getOrCreateMediaInterface(any(), any(), any(), anyString(), any())).thenReturn(mediaInterface);
+    }
+
+    private AppleMediaInterface setupMediaInterface() throws Exception {
+        AppleMediaInterface mediaInterface = mock(AppleMediaInterface.class);
+        Map<String, Object> fieldsToInject = new HashMap<>();
+        fieldsToInject.put("baseUrl", "https://dummy-apis.photos.apple.com");
+        fieldsToInject.put("appCredentials", new AppCredentials("key", "secret"));
+        fieldsToInject.put("exportingService", EXPORTING_SERVICE);
+        fieldsToInject.put("monitor", monitor);
+        fieldsToInject.entrySet().forEach(entry -> {
+            try {
+                ReflectionUtils.findFields(AppleMediaInterface.class, f -> f.getName().equals(entry.getKey()), HierarchyTraversalMode.TOP_DOWN).stream().findFirst().get().set(mediaInterface, entry.getValue());
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        when(mediaInterface.importAlbums(any(), any(), any(), any())).thenCallRealMethod();
+        when(mediaInterface.importAllMedia(any(), any(), any(), any())).thenCallRealMethod();
+        when(mediaInterface.importMediaBatch(any(), any(), any(), any())).thenCallRealMethod();
+        return mediaInterface;
+    }
+
+    protected void setUpGetUploadUrlResponse(@NotNull final Map<String, Integer> datatIdToStatus) throws IOException, CopyExceptionWithFailureReason {
+        when(mediaInterface.getUploadUrl(any(String.class), any(String.class), any(List.class))).thenAnswer((Answer<PhotosProtocol.GetUploadUrlsResponse>) invocation -> {
+            Object[] args = invocation.getArguments();
+            final List<String> dataIds = (List<String>) args[2];
+            final List<PhotosProtocol.AuthorizeUploadResponse> authorizeUploadResponseList = dataIds.stream().map(dataId -> PhotosProtocol.AuthorizeUploadResponse.newBuilder().setDataId(dataId).setUploadUrl("uploadURL").setStatus(PhotosProtocol.Status.newBuilder().setCode(datatIdToStatus.get(dataId)).build()).build()).collect(Collectors.toList());
+            return PhotosProtocol.GetUploadUrlsResponse.newBuilder().addAllUrlResponses(authorizeUploadResponseList).build();
+        });
+    }
+
+    protected void setUpUploadContentResponse(@NotNull final Map<String, Integer> datatIdToStatus) throws IOException, CopyExceptionWithFailureReason {
+        when(mediaInterface.uploadContent(any(Map.class), any(List.class))).thenAnswer((Answer<Map<String, String>>) invocation -> {
+            Object[] args = invocation.getArguments();
+            final List<PhotosProtocol.AuthorizeUploadResponse> authorizeUploadResponseList = (List<PhotosProtocol.AuthorizeUploadResponse>) args[1];
+            final Map<String, String> dataIdToSingleFileUploadResponseMap = authorizeUploadResponseList.stream().filter(authorizeUploadResponse -> datatIdToStatus.get(authorizeUploadResponse.getDataId()) == SC_OK).collect(Collectors.toMap(PhotosProtocol.AuthorizeUploadResponse::getDataId, authorizeUploadResponse -> "SingleUploadContentResponse"));
+            return dataIdToSingleFileUploadResponseMap;
+        });
+    }
+
+    protected void setUpCreateMediaResponse(@NotNull final Map<String, Integer> datatIdToStatus) throws IOException, CopyExceptionWithFailureReason {
+        when(mediaInterface.createMedia(any(String.class), any(String.class), any(List.class))).thenAnswer((Answer<PhotosProtocol.CreateMediaResponse>) invocation -> {
+            Object[] args = invocation.getArguments();
+            final List<PhotosProtocol.NewMediaRequest> newMediaRequestList = (List<PhotosProtocol.NewMediaRequest>) args[2];
+            final List<PhotosProtocol.NewMediaResponse> newMediaResponseList = newMediaRequestList.stream().map(newMediaRequest -> PhotosProtocol.NewMediaResponse.newBuilder().setRecordId(MEDIA_RECORDID_BASE + newMediaRequest.getDataId()).setDataId(newMediaRequest.getDataId()).setFilesize(newMediaRequest.getDataId().startsWith(PHOTOS_DATAID_BASE) ? PHOTOS_FILE_SIZE : VIDEOS_FILE_SIZE).setStatus(PhotosProtocol.Status.newBuilder().setCode(datatIdToStatus.get(newMediaRequest.getDataId())).build()).build()).collect(Collectors.toList());
+            return PhotosProtocol.CreateMediaResponse.newBuilder().addAllNewMediaResponses(newMediaResponseList).build();
+        });
+    }
+
+    protected Map<String, Integer> setUpErrors(@NotNull final List<String> dataIds, @NotNull final int startIndex, @NotNull final int errorCount) {
+        final Map<String, Integer> dataIdToStatus = new HashMap<>();
+        for (int i = 0; i < dataIds.size(); i++) {
+            if (i >= startIndex && i < startIndex + errorCount) {
+                dataIdToStatus.put(dataIds.get(i), SC_INTERNAL_SERVER_ERROR);
+            } else {
+                dataIdToStatus.put(dataIds.get(i), SC_OK);
+            }
         }
-      });
-
-    when(mediaInterface.importAlbums(any(), any(), any(), any())).thenCallRealMethod();
-    when(mediaInterface.importAllMedia(any(), any(), any(), any())).thenCallRealMethod();
-    when(mediaInterface.importMediaBatch(any(), any(), any(), any())).thenCallRealMethod();
-    return mediaInterface;
-  }
-
-  protected void setUpGetUploadUrlResponse(@NotNull final Map<String, Integer> datatIdToStatus)
-      throws IOException, CopyExceptionWithFailureReason {
-    when(mediaInterface.getUploadUrl(any(String.class), any(String.class), any(List.class)))
-        .thenAnswer(
-            (Answer<PhotosProtocol.GetUploadUrlsResponse>)
-                invocation -> {
-                  Object[] args = invocation.getArguments();
-                  final List<String> dataIds = (List<String>) args[2];
-                  final List<PhotosProtocol.AuthorizeUploadResponse> authorizeUploadResponseList =
-                      dataIds.stream()
-                          .map(
-                              dataId ->
-                                  PhotosProtocol.AuthorizeUploadResponse.newBuilder()
-                                      .setDataId(dataId)
-                                      .setUploadUrl("uploadURL")
-                                      .setStatus(
-                                          PhotosProtocol.Status.newBuilder()
-                                              .setCode(datatIdToStatus.get(dataId))
-                                              .build())
-                                      .build())
-                          .collect(Collectors.toList());
-                  return PhotosProtocol.GetUploadUrlsResponse.newBuilder()
-                      .addAllUrlResponses(authorizeUploadResponseList)
-                      .build();
-                });
-  }
-
-  protected void setUpUploadContentResponse(@NotNull final Map<String, Integer> datatIdToStatus)
-      throws IOException, CopyExceptionWithFailureReason {
-    when(mediaInterface.uploadContent(any(Map.class), any(List.class)))
-        .thenAnswer(
-            (Answer<Map<String, String>>)
-                invocation -> {
-                  Object[] args = invocation.getArguments();
-                  final List<PhotosProtocol.AuthorizeUploadResponse> authorizeUploadResponseList =
-                      (List<PhotosProtocol.AuthorizeUploadResponse>) args[1];
-                  final Map<String, String> dataIdToSingleFileUploadResponseMap =
-                      authorizeUploadResponseList.stream()
-                          .filter(
-                              authorizeUploadResponse ->
-                                  datatIdToStatus.get(authorizeUploadResponse.getDataId()) == SC_OK)
-                          .collect(
-                              Collectors.toMap(
-                                  PhotosProtocol.AuthorizeUploadResponse::getDataId,
-                                  authorizeUploadResponse -> "SingleUploadContentResponse"));
-                  return dataIdToSingleFileUploadResponseMap;
-                });
-  }
-
-  protected void setUpCreateMediaResponse(@NotNull final Map<String, Integer> datatIdToStatus)
-      throws IOException, CopyExceptionWithFailureReason {
-    when(mediaInterface.createMedia(any(String.class), any(String.class), any(List.class)))
-        .thenAnswer(
-            (Answer<PhotosProtocol.CreateMediaResponse>)
-                invocation -> {
-                  Object[] args = invocation.getArguments();
-                  final List<PhotosProtocol.NewMediaRequest> newMediaRequestList =
-                      (List<PhotosProtocol.NewMediaRequest>) args[2];
-                  final List<PhotosProtocol.NewMediaResponse> newMediaResponseList =
-                      newMediaRequestList.stream()
-                          .map(
-                              newMediaRequest ->
-                                  PhotosProtocol.NewMediaResponse.newBuilder()
-                                      .setRecordId(
-                                          MEDIA_RECORDID_BASE + newMediaRequest.getDataId())
-                                      .setDataId(newMediaRequest.getDataId())
-                                      .setFilesize(
-                                          newMediaRequest.getDataId().startsWith(PHOTOS_DATAID_BASE)
-                                              ? PHOTOS_FILE_SIZE
-                                              : VIDEOS_FILE_SIZE)
-                                      .setStatus(
-                                          PhotosProtocol.Status.newBuilder()
-                                              .setCode(
-                                                  datatIdToStatus.get(newMediaRequest.getDataId()))
-                                              .build())
-                                      .build())
-                          .collect(Collectors.toList());
-                  return PhotosProtocol.CreateMediaResponse.newBuilder()
-                      .addAllNewMediaResponses(newMediaResponseList)
-                      .build();
-                });
-  }
-
-  protected Map<String, Integer> setUpErrors(
-      @NotNull final List<String> dataIds,
-      @NotNull final int startIndex,
-      @NotNull final int errorCount) {
-    final Map<String, Integer> dataIdToStatus = new HashMap<>();
-    for (int i = 0; i < dataIds.size(); i++) {
-      if (i >= startIndex && i < startIndex + errorCount) {
-        dataIdToStatus.put(dataIds.get(i), SC_INTERNAL_SERVER_ERROR);
-      } else {
-        dataIdToStatus.put(dataIds.get(i), SC_OK);
-      }
+        return dataIdToStatus;
     }
-    return dataIdToStatus;
-  }
 
-  protected void checkKnownValues(@NotNull final Map<String, Serializable> expected) {
-    assertThat(
-        expected.entrySet().stream()
-            .allMatch(e -> e.getValue().equals(executor.getCachedValue(e.getKey()))));
-  }
-
-  protected void checkErrors(@NotNull final List<ErrorDetail> expected) {
-    final Map<String, ErrorDetail> actualIdToErrorDetail =
-        executor.getErrors().stream()
-            .collect(Collectors.toMap(ErrorDetail::id, errorDetail -> errorDetail));
-    assertThat(actualIdToErrorDetail.size() == expected.size());
-    for (ErrorDetail expectedErrorDetail : expected) {
-      validateError(expectedErrorDetail, actualIdToErrorDetail.get(expectedErrorDetail.id()));
+    protected void checkKnownValues(@NotNull final Map<String, Serializable> expected) {
+        assertThat(expected.entrySet().stream().allMatch(e -> e.getValue().equals(executor.getCachedValue(e.getKey()))));
     }
-  }
 
-  protected void checkRecentErrors(@NotNull final List<ErrorDetail> expected) {
-    final Map<String, ErrorDetail> actualIdToErrorDetail =
-        executor.getRecentErrors().stream()
-            .collect(Collectors.toMap(ErrorDetail::id, errorDetail -> errorDetail));
-    assertThat(actualIdToErrorDetail.size() == expected.size());
-    for (ErrorDetail expectedErrorDetail : expected) {
-      validateError(expectedErrorDetail, actualIdToErrorDetail.get(expectedErrorDetail.id()));
+    protected void checkErrors(@NotNull final List<ErrorDetail> expected) {
+        final Map<String, ErrorDetail> actualIdToErrorDetail = executor.getErrors().stream().collect(Collectors.toMap(ErrorDetail::id, errorDetail -> errorDetail));
+        assertThat(actualIdToErrorDetail.size() == expected.size());
+        for (ErrorDetail expectedErrorDetail : expected) {
+            validateError(expectedErrorDetail, actualIdToErrorDetail.get(expectedErrorDetail.id()));
+        }
     }
-  }
 
-  protected void validateError(
-      @NotNull final ErrorDetail expected, @NotNull final ErrorDetail actual) {
-    assertThat(actual.id()).isEqualTo(expected.id());
-    assertThat(actual.title()).isEqualTo(expected.title());
-    assertThat(actual.exception()).startsWith(expected.exception()); // the error message is a long stack trace, we just want to make sure
-    // we have the right error code and error message
-  }
-
-  protected List<PhotoAlbum> createTestAlbums(@NotNull final int count) {
-    final List<PhotoAlbum> photoAlbums = new ArrayList<>();
-    for (int i = 0; i < count; i++) {
-      PhotoAlbum albumModel =
-          new PhotoAlbum(ALBUM_DATAID_BASE + i, ALBUM_NAME_BASE + i, ALBUM_DESCRIPTION_BASE + i);
-      photoAlbums.add(albumModel);
+    protected void checkRecentErrors(@NotNull final List<ErrorDetail> expected) {
+        final Map<String, ErrorDetail> actualIdToErrorDetail = executor.getRecentErrors().stream().collect(Collectors.toMap(ErrorDetail::id, errorDetail -> errorDetail));
+        assertThat(actualIdToErrorDetail.size() == expected.size());
+        for (ErrorDetail expectedErrorDetail : expected) {
+            validateError(expectedErrorDetail, actualIdToErrorDetail.get(expectedErrorDetail.id()));
+        }
     }
-    return photoAlbums;
-  }
 
-  protected List<PhotoModel> createTestPhotos(@NotNull final int count) {
-    final List<PhotoModel> photos = new ArrayList<>();
-    for (int i = 0; i < count; i++) {
-      PhotoModel photoModel =
-          new PhotoModel(
-              MEDIA_NAME_BASE + i,
-              "fetchableUrl",
-              "description",
-              "mediaType",
-              PHOTOS_DATAID_BASE + i,
-              ALBUM_DATAID_BASE + i,
-              false,
-              (String) null);
-      photos.add(photoModel);
+    protected void validateError(@NotNull final ErrorDetail expected, @NotNull final ErrorDetail actual) {
+        assertThat(actual.id()).isEqualTo(expected.id());
+        assertThat(actual.title()).isEqualTo(expected.title());
+        // the error message is a long stack trace, we just want to make sure
+        assertThat(actual.exception()).startsWith(expected.exception());
+        // we have the right error code and error message
     }
-    return photos;
-  }
 
-  protected List<VideoModel> createTestVideos(@NotNull final int count) {
-    final List<VideoModel> videos = new ArrayList<>();
-    for (int i = 0; i < count; i++) {
-      VideoModel videoModel =
-          new VideoModel(
-              MEDIA_NAME_BASE + i,
-              "contentUrl",
-              "description",
-              "encodingFormat",
-              VIDEOS_DATAID_BASE + i,
-              ALBUM_DATAID_BASE + i,
-              false,
-              null);
-      videos.add(videoModel);
+    protected List<PhotoAlbum> createTestAlbums(@NotNull final int count) {
+        final List<PhotoAlbum> photoAlbums = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            PhotoAlbum albumModel = new PhotoAlbum(ALBUM_DATAID_BASE + i, ALBUM_NAME_BASE + i, ALBUM_DESCRIPTION_BASE + i);
+            photoAlbums.add(albumModel);
+        }
+        return photoAlbums;
     }
-    return videos;
-  }
+
+    protected List<PhotoModel> createTestPhotos(@NotNull final int count) {
+        final List<PhotoModel> photos = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            PhotoModel photoModel = new PhotoModel(MEDIA_NAME_BASE + i, "fetchableUrl", "description", "mediaType", PHOTOS_DATAID_BASE + i, ALBUM_DATAID_BASE + i, false, (String) null);
+            photos.add(photoModel);
+        }
+        return photos;
+    }
+
+    protected List<VideoModel> createTestVideos(@NotNull final int count) {
+        final List<VideoModel> videos = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            VideoModel videoModel = new VideoModel(MEDIA_NAME_BASE + i, "contentUrl", "description", "encodingFormat", VIDEOS_DATAID_BASE + i, ALBUM_DATAID_BASE + i, false, null);
+            videos.add(videoModel);
+        }
+        return videos;
+    }
 }

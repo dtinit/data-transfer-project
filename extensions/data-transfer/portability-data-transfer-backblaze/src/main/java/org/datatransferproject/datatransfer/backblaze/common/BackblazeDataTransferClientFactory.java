@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.backblaze.common;
 
 import java.io.IOException;
@@ -26,31 +25,29 @@ import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 
 public class BackblazeDataTransferClientFactory {
-  private final Map<UUID, BackblazeDataTransferClient> backblazeDataTransferClientMap;
-  private final Monitor monitor;
 
-  private static final long SIZE_THRESHOLD_FOR_MULTIPART_UPLOAD = 20 * 1024 * 1024; // 20 MB.
-  private static final long PART_SIZE_FOR_MULTIPART_UPLOAD = 5 * 1024 * 1024; // 5 MB.
+    private final Map<UUID, BackblazeDataTransferClient> backblazeDataTransferClientMap;
 
-  public BackblazeDataTransferClientFactory(Monitor monitor) {
-    this.monitor = monitor;
-    this.backblazeDataTransferClientMap = new HashMap<>();
-  }
+    private final Monitor monitor;
 
-  public BackblazeDataTransferClient getOrCreateB2Client( UUID jobId,
-      TokenSecretAuthData authData)
-      throws BackblazeCredentialsException, IOException {
-    if (!backblazeDataTransferClientMap.containsKey(jobId)) {
-      BackblazeDataTransferClient backblazeDataTransferClient =
-              new BackblazeDataTransferClient(
-                      monitor,
-                      new BaseBackblazeS3ClientFactory(),
-                      SIZE_THRESHOLD_FOR_MULTIPART_UPLOAD,
-                      PART_SIZE_FOR_MULTIPART_UPLOAD);
-      String exportService = JobMetadata.getExportService();
-      backblazeDataTransferClient.init(authData.getToken(), authData.getSecret(), exportService);
-      backblazeDataTransferClientMap.put(jobId, backblazeDataTransferClient);
+    // 20 MB.
+    private static final long SIZE_THRESHOLD_FOR_MULTIPART_UPLOAD = 20 * 1024 * 1024;
+
+    // 5 MB.
+    private static final long PART_SIZE_FOR_MULTIPART_UPLOAD = 5 * 1024 * 1024;
+
+    public BackblazeDataTransferClientFactory(Monitor monitor) {
+        this.monitor = monitor;
+        this.backblazeDataTransferClientMap = new HashMap<>();
     }
-    return backblazeDataTransferClientMap.get(jobId);
-  }
+
+    public BackblazeDataTransferClient getOrCreateB2Client(UUID jobId, TokenSecretAuthData authData) throws BackblazeCredentialsException, IOException {
+        if (!backblazeDataTransferClientMap.containsKey(jobId)) {
+            BackblazeDataTransferClient backblazeDataTransferClient = new BackblazeDataTransferClient(monitor, new BaseBackblazeS3ClientFactory(), SIZE_THRESHOLD_FOR_MULTIPART_UPLOAD, PART_SIZE_FOR_MULTIPART_UPLOAD);
+            String exportService = JobMetadata.getExportService();
+            backblazeDataTransferClient.init(authData.getToken(), authData.getSecret(), exportService);
+            backblazeDataTransferClientMap.put(jobId, backblazeDataTransferClient);
+        }
+        return backblazeDataTransferClientMap.get(jobId);
+    }
 }

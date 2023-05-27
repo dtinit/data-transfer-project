@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.auth;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpContent;
@@ -34,23 +32,19 @@ import java.io.InputStreamReader;
  */
 class OAuthUtils {
 
-  static String makeRawPostRequest(HttpTransport httpTransport, String url, HttpContent httpContent)
-      throws IOException {
-    HttpRequestFactory factory = httpTransport.createRequestFactory();
-    HttpRequest postRequest = factory.buildPostRequest(new GenericUrl(url), httpContent);
-    HttpResponse response = postRequest.execute();
-    int statusCode = response.getStatusCode();
-    if (statusCode != 200) {
-      throw new IOException(
-          "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
+    static String makeRawPostRequest(HttpTransport httpTransport, String url, HttpContent httpContent) throws IOException {
+        HttpRequestFactory factory = httpTransport.createRequestFactory();
+        HttpRequest postRequest = factory.buildPostRequest(new GenericUrl(url), httpContent);
+        HttpResponse response = postRequest.execute();
+        int statusCode = response.getStatusCode();
+        if (statusCode != 200) {
+            throw new IOException("Bad status code: " + statusCode + " error: " + response.getStatusMessage());
+        }
+        return CharStreams.toString(new InputStreamReader(response.getContent(), UTF_8));
     }
-    return CharStreams.toString(new InputStreamReader(response.getContent(), UTF_8));
-  }
 
-  static <T> T makePostRequest(HttpTransport httpTransport, String url, HttpContent httpContent,
-      Class<T> clazz) throws IOException {
-    String result = makeRawPostRequest(httpTransport, url, httpContent);
-
-    return new ObjectMapper().readValue(result, clazz);
-  }
+    static <T> T makePostRequest(HttpTransport httpTransport, String url, HttpContent httpContent, Class<T> clazz) throws IOException {
+        String result = makeRawPostRequest(httpTransport, url, httpContent);
+        return new ObjectMapper().readValue(result, clazz);
+    }
 }

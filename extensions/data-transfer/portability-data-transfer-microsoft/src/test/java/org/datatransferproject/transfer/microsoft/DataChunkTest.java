@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.transfer.microsoft.photos;
 
 import static com.google.common.truth.Truth.assertThat;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,69 +24,69 @@ import org.datatransferproject.transfer.microsoft.DataChunk;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-
-/** */
+/**
+ */
 public class DataChunkTest {
 
-  private static final int CHUNK_SIZE = 32000 * 1024; // 32000KiB
+    // 32000KiB
+    private static final int CHUNK_SIZE = 32000 * 1024;
 
-  InputStream inputStream;
+    InputStream inputStream;
 
-  @BeforeEach
-  public void setUp() throws IOException {
-  }
+    @BeforeEach
+    public void setUp() throws IOException {
+    }
 
-  @Test
-  public void testSplitDataSingleFullChunk() throws IOException {
-    inputStream = new ByteArrayInputStream(new byte[CHUNK_SIZE]);
-    List<DataChunk> l = DataChunk.splitData(inputStream);
-    assertThat(l).hasSize(1);
-    assertThat(l.get(0).getSize()).isEqualTo(CHUNK_SIZE);
-    assertThat(l.get(0).getStart()).isEqualTo(0);
-    assertThat(l.get(0).getEnd()).isEqualTo(CHUNK_SIZE - 1);
-  }
+    @Test
+    public void testSplitDataSingleFullChunk() throws IOException {
+        inputStream = new ByteArrayInputStream(new byte[CHUNK_SIZE]);
+        List<DataChunk> l = DataChunk.splitData(inputStream);
+        assertThat(l).hasSize(1);
+        assertThat(l.get(0).getSize()).isEqualTo(CHUNK_SIZE);
+        assertThat(l.get(0).getStart()).isEqualTo(0);
+        assertThat(l.get(0).getEnd()).isEqualTo(CHUNK_SIZE - 1);
+    }
 
-  @Test
-  public void testSplitDataSingleNotFullChunk() throws IOException {
-    inputStream = new ByteArrayInputStream(new byte[CHUNK_SIZE-1]);
-    List<DataChunk> l = DataChunk.splitData(inputStream);
-    assertThat(l).hasSize(1);
-    assertThat(l.get(0).getSize()).isEqualTo(CHUNK_SIZE - 1);
-    assertThat(l.get(0).getStart()).isEqualTo(0);
-    assertThat(l.get(0).getEnd()).isEqualTo(CHUNK_SIZE - 2);
-  }
+    @Test
+    public void testSplitDataSingleNotFullChunk() throws IOException {
+        inputStream = new ByteArrayInputStream(new byte[CHUNK_SIZE - 1]);
+        List<DataChunk> l = DataChunk.splitData(inputStream);
+        assertThat(l).hasSize(1);
+        assertThat(l.get(0).getSize()).isEqualTo(CHUNK_SIZE - 1);
+        assertThat(l.get(0).getStart()).isEqualTo(0);
+        assertThat(l.get(0).getEnd()).isEqualTo(CHUNK_SIZE - 2);
+    }
 
-  @Test
-  public void testSplitDataEmpty() throws IOException {
-    inputStream = new ByteArrayInputStream(new byte[0]);
-    List<DataChunk> l = DataChunk.splitData(inputStream);
-    assertThat(l).hasSize(0);
-  }
+    @Test
+    public void testSplitDataEmpty() throws IOException {
+        inputStream = new ByteArrayInputStream(new byte[0]);
+        List<DataChunk> l = DataChunk.splitData(inputStream);
+        assertThat(l).hasSize(0);
+    }
 
-  @Test
-  public void testSplitTwoEvenChunks() throws IOException {
-    inputStream = new ByteArrayInputStream(new byte[CHUNK_SIZE*2]);
-    List<DataChunk> l = DataChunk.splitData(inputStream);
-    assertThat(l).hasSize(2);
-    assertThat(l.get(0).getSize()).isEqualTo(CHUNK_SIZE);
-    assertThat(l.get(0).getStart()).isEqualTo(0);
-    assertThat(l.get(0).getEnd()).isEqualTo(CHUNK_SIZE - 1);
-    assertThat(l.get(1).getSize()).isEqualTo(CHUNK_SIZE);
-    assertThat(l.get(1).getStart()).isEqualTo(CHUNK_SIZE);
-    assertThat(l.get(1).getEnd()).isEqualTo(2*CHUNK_SIZE - 1);
-  }
+    @Test
+    public void testSplitTwoEvenChunks() throws IOException {
+        inputStream = new ByteArrayInputStream(new byte[CHUNK_SIZE * 2]);
+        List<DataChunk> l = DataChunk.splitData(inputStream);
+        assertThat(l).hasSize(2);
+        assertThat(l.get(0).getSize()).isEqualTo(CHUNK_SIZE);
+        assertThat(l.get(0).getStart()).isEqualTo(0);
+        assertThat(l.get(0).getEnd()).isEqualTo(CHUNK_SIZE - 1);
+        assertThat(l.get(1).getSize()).isEqualTo(CHUNK_SIZE);
+        assertThat(l.get(1).getStart()).isEqualTo(CHUNK_SIZE);
+        assertThat(l.get(1).getEnd()).isEqualTo(2 * CHUNK_SIZE - 1);
+    }
 
-  @Test
-  public void testSplitTwoChunksUneven() throws IOException {
-    inputStream = new ByteArrayInputStream(new byte[CHUNK_SIZE*2 - 10]);
-    List<DataChunk> l = DataChunk.splitData(inputStream);
-    assertThat(l).hasSize(2);
-    assertThat(l.get(0).getSize()).isEqualTo(CHUNK_SIZE);
-    assertThat(l.get(0).getStart()).isEqualTo(0);
-    assertThat(l.get(0).getEnd()).isEqualTo(CHUNK_SIZE - 1);
-    assertThat(l.get(1).getSize()).isEqualTo(CHUNK_SIZE - 10);
-    assertThat(l.get(1).getStart()).isEqualTo(CHUNK_SIZE);
-    assertThat(l.get(1).getEnd()).isEqualTo(2*CHUNK_SIZE - 11);
-  }
-
+    @Test
+    public void testSplitTwoChunksUneven() throws IOException {
+        inputStream = new ByteArrayInputStream(new byte[CHUNK_SIZE * 2 - 10]);
+        List<DataChunk> l = DataChunk.splitData(inputStream);
+        assertThat(l).hasSize(2);
+        assertThat(l.get(0).getSize()).isEqualTo(CHUNK_SIZE);
+        assertThat(l.get(0).getStart()).isEqualTo(0);
+        assertThat(l.get(0).getEnd()).isEqualTo(CHUNK_SIZE - 1);
+        assertThat(l.get(1).getSize()).isEqualTo(CHUNK_SIZE - 10);
+        assertThat(l.get(1).getStart()).isEqualTo(CHUNK_SIZE);
+        assertThat(l.get(1).getEnd()).isEqualTo(2 * CHUNK_SIZE - 11);
+    }
 }

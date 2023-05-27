@@ -24,47 +24,47 @@ import java.util.Collection;
 import java.util.Objects;
 import org.datatransferproject.types.common.models.ContainerResource;
 
-/** A Wrapper for all the possible objects that can be returned by a mail exporter. */
+/**
+ * A Wrapper for all the possible objects that can be returned by a mail exporter.
+ */
 @JsonTypeName("MailContainerResource")
 public class MailContainerResource extends ContainerResource {
-  private final Collection<MailContainerModel> folders;
-  private final Collection<MailMessageModel> messages;
 
-  @JsonCreator
-  public MailContainerResource(
-      @JsonProperty("folders") Collection<MailContainerModel> folders,
-      @JsonProperty("messages") Collection<MailMessageModel> messages) {
-    this.messages = (messages == null) ? ImmutableList.of() : messages;
-    this.folders = (folders == null) ? ImmutableList.of() : folders;
-  }
+    private final Collection<MailContainerModel> folders;
 
-  public Collection<MailMessageModel> getMessages() {
-    return messages;
-  }
+    private final Collection<MailMessageModel> messages;
 
-  public Collection<MailContainerModel> getFolders() {
-    return folders;
-  }
+    @JsonCreator
+    public MailContainerResource(@JsonProperty("folders") Collection<MailContainerModel> folders, @JsonProperty("messages") Collection<MailMessageModel> messages) {
+        this.messages = (messages == null) ? ImmutableList.of() : messages;
+        this.folders = (folders == null) ? ImmutableList.of() : folders;
+    }
 
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("folders", folders.size())
-        .add("messages", messages.size())
-        .toString();
-  }
+    public Collection<MailMessageModel> getMessages() {
+        return messages;
+    }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    MailContainerResource that = (MailContainerResource) o;
-    return Objects.equals(getFolders(), that.getFolders()) &&
-            Objects.equals(getMessages(), that.getMessages());
-  }
+    public Collection<MailContainerModel> getFolders() {
+        return folders;
+    }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(getFolders(), getMessages());
-  }
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this).add("folders", folders.size()).add("messages", messages.size()).toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        MailContainerResource that = (MailContainerResource) o;
+        return Objects.equals(getFolders(), that.getFolders()) && Objects.equals(getMessages(), that.getMessages());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getFolders(), getMessages());
+    }
 }

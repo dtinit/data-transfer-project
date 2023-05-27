@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.types.transfer.serviceconfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -24,19 +23,18 @@ import com.google.common.base.Preconditions;
  */
 public class TransferServiceConfigSpecification {
 
-  @JsonProperty("perUserRateLimit")
-  private final double perUserRateLimit;
+    @JsonProperty("perUserRateLimit")
+    private final double perUserRateLimit;
 
-  public TransferServiceConfigSpecification(
-      @JsonProperty("perUserRateLimit") double perUserRateLimit) {
-    Preconditions.checkArgument(
-        perUserRateLimit > 0,
-        "perUserRateLimit must be greater than zero");
-    this.perUserRateLimit = perUserRateLimit;
-  }
+    public TransferServiceConfigSpecification(@JsonProperty("perUserRateLimit") double perUserRateLimit) {
+        Preconditions.checkArgument(perUserRateLimit > 0, "perUserRateLimit must be greater than zero");
+        this.perUserRateLimit = perUserRateLimit;
+    }
 
-  /** The number of operations per second allowed for a user. **/
-  public double getPerUserRateLimit() {
-    return perUserRateLimit;
-  }
+    /**
+     * The number of operations per second allowed for a user. *
+     */
+    public double getPerUserRateLimit() {
+        return perUserRateLimit;
+    }
 }

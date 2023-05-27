@@ -21,28 +21,28 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 
 @JsonTypeName("org.dataportability:SmugMugAlbumResponse")
 public class SmugMugAlbumResponse {
-  private final String uri;
-  private final String locator;
-  private final String locatorType;
-  private final SmugMugAlbum album;
-  
-  @JsonCreator
-  public SmugMugAlbumResponse(
-    @JsonProperty("Uri") String uri, 
-    @JsonProperty("Locator") String locator, 
-    @JsonProperty("LocatorType") String locatorType, 
-    @JsonProperty("Album") SmugMugAlbum album){
-    this.uri = uri;
-    this.locator = locator;
-    this.locatorType = locatorType;
-    this.album = album;
-  }
 
-  public SmugMugAlbum getAlbum() {
-    return album;
-  }
+    private final String uri;
 
-  public String getUri() {
-    return uri;
-  }
+    private final String locator;
+
+    private final String locatorType;
+
+    private final SmugMugAlbum album;
+
+    @JsonCreator
+    public SmugMugAlbumResponse(@JsonProperty("Uri") String uri, @JsonProperty("Locator") String locator, @JsonProperty("LocatorType") String locatorType, @JsonProperty("Album") SmugMugAlbum album) {
+        this.uri = uri;
+        this.locator = locator;
+        this.locatorType = locatorType;
+        this.album = album;
+    }
+
+    public SmugMugAlbum getAlbum() {
+        return album;
+    }
+
+    public String getUri() {
+        return uri;
+    }
 }

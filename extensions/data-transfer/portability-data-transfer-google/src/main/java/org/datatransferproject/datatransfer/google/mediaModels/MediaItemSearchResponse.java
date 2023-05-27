@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -22,15 +21,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * Response returned by a search for GoogleMediaItems
  */
 public class MediaItemSearchResponse {
-  @JsonProperty("mediaItems")
-  private GoogleMediaItem[] mediaItems;
 
-  @JsonProperty("nextPageToken")
-  private String nextPageToken;
+    @JsonProperty("mediaItems")
+    private GoogleMediaItem[] mediaItems;
 
-  public GoogleMediaItem[] getMediaItems() { return mediaItems; }
+    @JsonProperty("nextPageToken")
+    private String nextPageToken;
 
-  public String getNextPageToken() {
-    return nextPageToken;
-  }
+    public GoogleMediaItem[] getMediaItems() {
+        return mediaItems;
+    }
+
+    public String getNextPageToken() {
+        return nextPageToken;
+    }
 }

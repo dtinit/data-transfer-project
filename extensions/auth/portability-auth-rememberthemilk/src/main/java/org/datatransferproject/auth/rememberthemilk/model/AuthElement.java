@@ -26,45 +26,45 @@ import com.google.api.client.util.Key;
  */
 public class AuthElement extends RememberTheMilkResponse {
 
-  @Key("auth")
-  public Auth auth;
-
-  @Override
-  public String toString() {
-    return "Auth(stat=" + stat + ", auth=" + auth + ")";
-  }
-
-  public static class Auth {
-
-    @Key("token")
-    public String token;
-
-    @Key("perms")
-    public String perms;
-
-    @Key("user")
-    public User user;
+    @Key("auth")
+    public Auth auth;
 
     @Override
     public String toString() {
-      return "Auth(token=" + token + ", perms=" + perms + ", user=" + user + ")";
+        return "Auth(stat=" + stat + ", auth=" + auth + ")";
     }
-  }
 
-  public static class User {
+    public static class Auth {
 
-    @Key("@id")
-    public int id;
+        @Key("token")
+        public String token;
 
-    @Key("@username")
-    public String username;
+        @Key("perms")
+        public String perms;
 
-    @Key("@fullname")
-    public String fullname;
+        @Key("user")
+        public User user;
 
-    @Override
-    public String toString() {
-      return "User(id=" + id + ", username=" + username + ", fullname=" + fullname + ")";
+        @Override
+        public String toString() {
+            return "Auth(token=" + token + ", perms=" + perms + ", user=" + user + ")";
+        }
     }
-  }
+
+    public static class User {
+
+        @Key("@id")
+        public int id;
+
+        @Key("@username")
+        public String username;
+
+        @Key("@fullname")
+        public String fullname;
+
+        @Override
+        public String toString() {
+            return "User(id=" + id + ", username=" + username + ", fullname=" + fullname + ")";
+        }
+    }
 }

@@ -18,44 +18,46 @@ package org.datatransferproject.types.common.models.mail;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
-
 import java.util.Objects;
 
 // Model for a mail folder or label, which may contain sub folders and messages
 public final class MailContainerModel {
-  private final String id;
-  private final String name;
 
-  @JsonCreator
-  public MailContainerModel(@JsonProperty("id") String id, @JsonProperty("name") String name) {
-    this.id = id;
-    this.name = name;
-  }
+    private final String id;
 
-  public String getId() {
-    return id;
-  }
+    private final String name;
 
-  public String getName() {
-    return name;
-  }
+    @JsonCreator
+    public MailContainerModel(@JsonProperty("id") String id, @JsonProperty("name") String name) {
+        this.id = id;
+        this.name = name;
+    }
 
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this).add("id", id).add("name", name).toString();
-  }
+    public String getId() {
+        return id;
+    }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    MailContainerModel that = (MailContainerModel) o;
-    return Objects.equals(getId(), that.getId()) &&
-            Objects.equals(getName(), that.getName());
-  }
+    public String getName() {
+        return name;
+    }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(getId(), getName());
-  }
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this).add("id", id).add("name", name).toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        MailContainerModel that = (MailContainerModel) o;
+        return Objects.equals(getId(), that.getId()) && Objects.equals(getName(), that.getName());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId(), getName());
+    }
 }

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -22,21 +21,22 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * Photo metadata - not the content of the photo itself!
  */
 public class Photo {
-  @JsonProperty("cameraMake")
-  private String cameraMake;
 
-  @JsonProperty("cameraModel")
-  private String cameraModel;
+    @JsonProperty("cameraMake")
+    private String cameraMake;
 
-  @JsonProperty("focalLength")
-  private double focalLength;
+    @JsonProperty("cameraModel")
+    private String cameraModel;
 
-  @JsonProperty("apertureFNumber")
-  private double apertureFNumber;
+    @JsonProperty("focalLength")
+    private double focalLength;
 
-  @JsonProperty("isoEquivalent")
-  private double isoEquivalent;
+    @JsonProperty("apertureFNumber")
+    private double apertureFNumber;
 
-  @JsonProperty("exposureTime")
-  private String exposureTime;
+    @JsonProperty("isoEquivalent")
+    private double isoEquivalent;
+
+    @JsonProperty("exposureTime")
+    private String exposureTime;
 }

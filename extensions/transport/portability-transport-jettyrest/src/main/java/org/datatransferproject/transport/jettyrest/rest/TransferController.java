@@ -17,7 +17,6 @@ package org.datatransferproject.transport.jettyrest.rest;
 
 import org.datatransferproject.api.action.Action;
 import org.datatransferproject.types.client.transfer.*;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -26,25 +25,26 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-/** */
-@Consumes({MediaType.APPLICATION_JSON})
-@Produces({MediaType.APPLICATION_JSON})
+/**
+ */
+@Consumes({ MediaType.APPLICATION_JSON })
+@Produces({ MediaType.APPLICATION_JSON })
 @Path("/transfer")
 public class TransferController {
+
     private final Action<CreateTransferJob, TransferJob> createJobAction;
+
     private final Action<GenerateServiceAuthData, ServiceAuthData> generateAuthDataAction;
+
     private final Action<ReserveWorker, ReservedWorker> reserveWorkerAction;
+
     private final Action<GetReservedWorker, ReservedWorker> getReservedWorkerAction;
+
     private final Action<StartTransferJob, TransferJob> startJobAction;
+
     private final Action<GetTransferJob, TransferJob> getJobAction;
 
-    public TransferController(
-            Action<CreateTransferJob, TransferJob> createJobAction,
-            Action<GenerateServiceAuthData, ServiceAuthData> generateAuthDataAction,
-            Action<ReserveWorker, ReservedWorker> reserveWorkerAction,
-            Action<GetReservedWorker, ReservedWorker> getReservedWorkerAction,
-            Action<StartTransferJob, TransferJob> startJobAction,
-            Action<GetTransferJob, TransferJob> getJobAction) {
+    public TransferController(Action<CreateTransferJob, TransferJob> createJobAction, Action<GenerateServiceAuthData, ServiceAuthData> generateAuthDataAction, Action<ReserveWorker, ReservedWorker> reserveWorkerAction, Action<GetReservedWorker, ReservedWorker> getReservedWorkerAction, Action<StartTransferJob, TransferJob> startJobAction, Action<GetTransferJob, TransferJob> getJobAction) {
         this.createJobAction = createJobAction;
         this.generateAuthDataAction = generateAuthDataAction;
         this.reserveWorkerAction = reserveWorkerAction;

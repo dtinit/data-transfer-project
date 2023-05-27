@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.transfer.microsoft.driveModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -24,65 +23,68 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class MicrosoftDriveItem {
 
-  @JsonProperty("id")
-  public String id;
+    @JsonProperty("id")
+    public String id;
 
-  @JsonProperty("name")
-  public String name;
+    @JsonProperty("name")
+    public String name;
 
-  @JsonProperty("folder")
-  public MicrosoftDriveFolder folder;
+    @JsonProperty("folder")
+    public MicrosoftDriveFolder folder;
 
-  @JsonProperty("photo")
-  public MicrosoftPhotoMetadata photo;
+    @JsonProperty("photo")
+    public MicrosoftPhotoMetadata photo;
 
-  @JsonProperty("video")
-  public MicrosoftVideoMetadata video;
+    @JsonProperty("video")
+    public MicrosoftVideoMetadata video;
 
-  @JsonProperty("file")
-  public MicrosoftFileMetadata file;
+    @JsonProperty("file")
+    public MicrosoftFileMetadata file;
 
-  @JsonProperty("description")
-  public String description;
+    @JsonProperty("description")
+    public String description;
 
-  @JsonProperty("@microsoft.graph.downloadUrl")
-  public String downloadUrl;
+    @JsonProperty("@microsoft.graph.downloadUrl")
+    public String downloadUrl;
 
-
-  public boolean isFolder() {
-    return folder != null;
-  }
-
-  public boolean isFile() {
-    return file != null;
-  }
-
-  /** Encodes mimetype tree for simple string matching. */
-  private enum MimeTypePrefix {
-    IMAGE("image"),
-    VIDEO("video")
-      ;
-
-    private final String prefix;
-    MimeTypePrefix(String prefix) {
-      this.prefix = prefix;
+    public boolean isFolder() {
+        return folder != null;
     }
 
-    /** Whether mimeType is contained by the current prefix. */
-    public boolean containsType(String mimeType) {
-      return mimeType != null && mimeType.startsWith(this.prefix + "/");
+    public boolean isFile() {
+        return file != null;
     }
-  }
 
-  private boolean isMimeType(MimeTypePrefix prefix) {
-    return prefix.containsType(file.mimeType);
-  }
+    /**
+     * Encodes mimetype tree for simple string matching.
+     */
+    private enum MimeTypePrefix {
 
-  public boolean isImage() {
-    return isFile() && isMimeType(MimeTypePrefix.IMAGE);
-  }
+        IMAGE("image"), VIDEO("video");
 
-  public boolean isVideo() {
-    return isFile() && isMimeType(MimeTypePrefix.VIDEO);
-  }
+        private final String prefix;
+
+        MimeTypePrefix(String prefix) {
+            this.prefix = prefix;
+        }
+
+        /**
+         * Whether mimeType is contained by the current prefix.
+         */
+        public boolean containsType(String mimeType) {
+            return mimeType != null && mimeType.startsWith(this.prefix + "/");
+        }
+    }
+
+    private boolean isMimeType(MimeTypePrefix prefix) {
+        return prefix.containsType(file.mimeType);
+    }
+
+    public boolean isImage() {
+        return isFile() && isMimeType(MimeTypePrefix.IMAGE);
+    }
+
+    public boolean isVideo() {
+        return isFile() && isMimeType(MimeTypePrefix.VIDEO);
+    }
 }

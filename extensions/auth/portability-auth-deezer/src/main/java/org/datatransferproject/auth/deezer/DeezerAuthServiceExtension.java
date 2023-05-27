@@ -23,8 +23,7 @@ import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
  */
 public class DeezerAuthServiceExtension extends OAuth2ServiceExtension {
 
-  public DeezerAuthServiceExtension() {
-    super(new DeezerOAuthConfig());
-  }
-
+    public DeezerAuthServiceExtension() {
+        super(new DeezerOAuthConfig());
+    }
 }

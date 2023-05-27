@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.datatransferproject.transfer.daybook.social;
 
 import static junit.framework.TestCase.assertEquals;
@@ -23,7 +22,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -54,65 +52,42 @@ import org.mockito.ArgumentCaptor;
 
 public class DaybookPostsImporterTest {
 
-  private Monitor monitor;
-  private IdempotentImportExecutor executor;
-  private TokensAndUrlAuthData authData;
-  private OkHttpClient client;
+    private Monitor monitor;
 
-  @TempDir
-  public Path folder;
+    private IdempotentImportExecutor executor;
 
-  @BeforeEach
-  public void setUp() {
-    monitor = mock(Monitor.class);
-    executor = new InMemoryIdempotentImportExecutor(monitor);
-    authData = new TokensAndUrlAuthData("access-token", "refresh-token", "http://example.com");
-    client = mock(OkHttpClient.class);
-  }
+    private TokensAndUrlAuthData authData;
 
-  @Test
-  public void testImportSingleActivity() throws Exception {
-    String postContent = "activityContent";
-    SocialActivityModel activity =
-        new SocialActivityModel(
-            "activityId",
-            Instant.now(),
-            SocialActivityType.POST,
-            Collections.emptyList(),
-            new SocialActivityLocation("test", 1.1, 2.2),
-            "activityTitle",
-            postContent,
-            "activityUrl");
-    SocialActivityContainerResource resource =
-        new SocialActivityContainerResource(
-            "123",
-            new SocialActivityActor("321", "John Doe", "url"),
-            Collections.singletonList(activity));
+    private OkHttpClient client;
 
-    Call call = mock(Call.class);
-    Response dummySuccessfulResponse =
-        new Response.Builder()
-            .code(200)
-            .request(new Request.Builder().url("http://example.com").build())
-            .protocol(Protocol.HTTP_1_1)
-            .message("all good!")
-            .body(ResponseBody.create(MediaType.parse("text/xml"), "<a>ok!</a>"))
-            .build();
-    when(call.execute()).thenReturn(dummySuccessfulResponse);
-    when(client.newCall(any())).thenReturn(call);
+    @TempDir
+    public Path folder;
 
-    DaybookPostsImporter importer =
-        new DaybookPostsImporter(
-            monitor, client, new ObjectMapper(), "http://example.com", "export-service");
-    importer.importItem(UUID.randomUUID(), executor, authData, resource);
-    ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
-    verify(client, times(1)).newCall(requestCaptor.capture());
+    @BeforeEach
+    public void setUp() {
+        monitor = mock(Monitor.class);
+        executor = new InMemoryIdempotentImportExecutor(monitor);
+        authData = new TokensAndUrlAuthData("access-token", "refresh-token", "http://example.com");
+        client = mock(OkHttpClient.class);
+    }
 
-    RequestBody untypedBody = requestCaptor.getValue().body();
-    assertTrue(untypedBody instanceof FormBody);
-    FormBody actual = (FormBody) untypedBody;
-    assertEquals(
-        "DaybookPostsImporter changed the order of fields in the body.", "content", actual.name(2));
-    assertEquals(postContent, actual.value(2));
-  }
+    @Test
+    public void testImportSingleActivity() throws Exception {
+        String postContent = "activityContent";
+        SocialActivityModel activity = new SocialActivityModel("activityId", Instant.now(), SocialActivityType.POST, Collections.emptyList(), new SocialActivityLocation("test", 1.1, 2.2), "activityTitle", postContent, "activityUrl");
+        SocialActivityContainerResource resource = new SocialActivityContainerResource("123", new SocialActivityActor("321", "John Doe", "url"), Collections.singletonList(activity));
+        Call call = mock(Call.class);
+        Response dummySuccessfulResponse = new Response.Builder().code(200).request(new Request.Builder().url("http://example.com").build()).protocol(Protocol.HTTP_1_1).message("all good!").body(ResponseBody.create(MediaType.parse("text/xml"), "<a>ok!</a>")).build();
+        when(call.execute()).thenReturn(dummySuccessfulResponse);
+        when(client.newCall(any())).thenReturn(call);
+        DaybookPostsImporter importer = new DaybookPostsImporter(monitor, client, new ObjectMapper(), "http://example.com", "export-service");
+        importer.importItem(UUID.randomUUID(), executor, authData, resource);
+        ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
+        verify(client, times(1)).newCall(requestCaptor.capture());
+        RequestBody untypedBody = requestCaptor.getValue().body();
+        assertTrue(untypedBody instanceof FormBody);
+        FormBody actual = (FormBody) untypedBody;
+        assertEquals("DaybookPostsImporter changed the order of fields in the body.", "content", actual.name(2));
+        assertEquals(postContent, actual.value(2));
+    }
 }

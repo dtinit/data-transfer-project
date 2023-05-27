@@ -16,7 +16,6 @@
 package org.datatransferproject.transfer.deezer;
 
 import static org.datatransferproject.types.common.models.DataVertical.PLAYLISTS;
-
 import com.google.api.client.http.HttpTransport;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -32,50 +31,47 @@ import org.datatransferproject.types.common.models.playlists.PlaylistContainerRe
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
 
-
 public class DeezerTransferExtension implements TransferExtension {
-  private static final ImmutableList<DataVertical> SUPPORTED_DATA_TYPES = ImmutableList.of(PLAYLISTS);
 
-  private Exporter<TokensAndUrlAuthData, PlaylistContainerResource> exporter;
-  private Importer<TokensAndUrlAuthData, PlaylistContainerResource> importer;
+    private static final ImmutableList<DataVertical> SUPPORTED_DATA_TYPES = ImmutableList.of(PLAYLISTS);
 
-  private boolean initialized = false;
+    private Exporter<TokensAndUrlAuthData, PlaylistContainerResource> exporter;
 
-  @Override
-  public String getServiceId() {
-    return "Deezer";
-  }
+    private Importer<TokensAndUrlAuthData, PlaylistContainerResource> importer;
 
-  @Override
-  public Exporter<?, ?> getExporter(DataVertical transferDataType) {
-    Preconditions.checkArgument(
-        initialized, "DeezerTransferExtension not initialized. Unable to get Exporter");
-    Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(transferDataType));
-    return exporter;
-  }
+    private boolean initialized = false;
 
-  @Override
-  public Importer<?, ?> getImporter(DataVertical transferDataType) {
-    Preconditions.checkArgument(
-        initialized, "DeezerTransferExtension not initialized. Unable to get Importer");
-    Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(transferDataType));
-    return importer;
-  }
-
-  @Override
-  public void initialize(ExtensionContext context) {
-    if (initialized) {
-      Monitor monitor = context.getMonitor();
-      monitor.severe(() -> "DeezerTransferExtension already initialized");
-      return;
+    @Override
+    public String getServiceId() {
+        return "Deezer";
     }
 
-    Monitor monitor = context.getMonitor();
-    HttpTransport httpTransport = context.getService(HttpTransport.class);
-    TransferServiceConfig transferServiceConfig = context.getService(TransferServiceConfig.class);
+    @Override
+    public Exporter<?, ?> getExporter(DataVertical transferDataType) {
+        Preconditions.checkArgument(initialized, "DeezerTransferExtension not initialized. Unable to get Exporter");
+        Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(transferDataType));
+        return exporter;
+    }
 
-    exporter = new DeezerPlaylistExporter(monitor, httpTransport, transferServiceConfig);
-    importer = new DeezerPlaylistImporter(monitor, httpTransport, transferServiceConfig);
-    initialized = true;
-  }
+    @Override
+    public Importer<?, ?> getImporter(DataVertical transferDataType) {
+        Preconditions.checkArgument(initialized, "DeezerTransferExtension not initialized. Unable to get Importer");
+        Preconditions.checkArgument(SUPPORTED_DATA_TYPES.contains(transferDataType));
+        return importer;
+    }
+
+    @Override
+    public void initialize(ExtensionContext context) {
+        if (initialized) {
+            Monitor monitor = context.getMonitor();
+            monitor.severe(() -> "DeezerTransferExtension already initialized");
+            return;
+        }
+        Monitor monitor = context.getMonitor();
+        HttpTransport httpTransport = context.getService(HttpTransport.class);
+        TransferServiceConfig transferServiceConfig = context.getService(TransferServiceConfig.class);
+        exporter = new DeezerPlaylistExporter(monitor, httpTransport, transferServiceConfig);
+        importer = new DeezerPlaylistImporter(monitor, httpTransport, transferServiceConfig);
+        initialized = true;
+    }
 }

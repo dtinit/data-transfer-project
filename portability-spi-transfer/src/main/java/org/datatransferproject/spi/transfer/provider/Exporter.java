@@ -19,23 +19,21 @@ import java.util.Optional;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.common.models.DataModel;
-
 import java.util.UUID;
 
 /**
  * Exports data from a source service.
  */
 public interface Exporter<A extends AuthData, T extends DataModel> {
-  // TODO: reconsider this model - can we avoid sending AuthData with every export call?
 
-  /**
-   * Performs an export operation, starting from the data specified by the continuation.
-   *
-   * @param jobId the job id
-   * @param authData authentication data for the operation
-   * @param exportInformation info about what data to export see {@link ExportInformation} for more
-   */
-  // We need to be able throw exceptions that can be caught by RetryingCallable.
-  ExportResult<T> export(UUID jobId, A authData, Optional<ExportInformation> exportInformation)
-      throws Exception;
+    // TODO: reconsider this model - can we avoid sending AuthData with every export call?
+    /**
+     * Performs an export operation, starting from the data specified by the continuation.
+     *
+     * @param jobId the job id
+     * @param authData authentication data for the operation
+     * @param exportInformation info about what data to export see {@link ExportInformation} for more
+     */
+    // We need to be able throw exceptions that can be caught by RetryingCallable.
+    ExportResult<T> export(UUID jobId, A authData, Optional<ExportInformation> exportInformation) throws Exception;
 }

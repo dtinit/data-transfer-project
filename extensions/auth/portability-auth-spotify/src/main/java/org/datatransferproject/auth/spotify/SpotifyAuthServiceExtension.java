@@ -23,8 +23,7 @@ import org.datatransferproject.spi.api.auth.extension.AuthServiceExtension;
  */
 public class SpotifyAuthServiceExtension extends OAuth2ServiceExtension {
 
-  public SpotifyAuthServiceExtension() {
-    super(new SpotifyOAuthConfig());
-  }
-
+    public SpotifyAuthServiceExtension() {
+        super(new SpotifyOAuthConfig());
+    }
 }
