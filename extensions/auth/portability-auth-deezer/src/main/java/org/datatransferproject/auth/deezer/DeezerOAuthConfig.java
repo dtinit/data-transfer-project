@@ -53,12 +53,12 @@ public class DeezerOAuthConfig implements OAuth2Config {
     // For descriptions of scopes see: https://developers.deezer.com/api/permissions
     @Override
     public Map<DataVertical, Set<String>> getExportScopes() {
-        return ImmutableMap.<DataVertical, Set<String>>builder().put(PLAYLISTS, ImmutableSet.of("offline_access,manage_library")).build();
+        return builderMethod();
     }
 
     @Override
     public Map<DataVertical, Set<String>> getImportScopes() {
-        return ImmutableMap.<DataVertical, Set<String>>builder().put(PLAYLISTS, ImmutableSet.of("offline_access,manage_library")).build();
+        return builderMethod();
     }
 
     @Override
@@ -73,5 +73,10 @@ public class DeezerOAuthConfig implements OAuth2Config {
             throw new IllegalArgumentException(result + " didn't match expected regex: " + AUTH_TOKEN_PATTERN.pattern());
         }
         return new TokensAndUrlAuthData(matcher.group(1), null, getTokenUrl());
+    }
+
+    // For descriptions of scopes see: https://developers.deezer.com/api/permissions
+    public Map<DataVertical, Set<String>> builderMethod() {
+        return ImmutableMap.<DataVertical, Set<String>>builder().put(PLAYLISTS, ImmutableSet.of("offline_access,manage_library")).build();
     }
 }

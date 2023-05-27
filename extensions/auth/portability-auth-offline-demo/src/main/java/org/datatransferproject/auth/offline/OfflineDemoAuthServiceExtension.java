@@ -48,15 +48,19 @@ public class OfflineDemoAuthServiceExtension implements AuthServiceExtension {
 
     @Override
     public List<DataVertical> getImportTypes() {
-        return SUPPORTED_SERVICES;
+        return getSupportedServices();
     }
 
     @Override
     public List<DataVertical> getExportTypes() {
-        return SUPPORTED_SERVICES;
+        return getSupportedServices();
     }
 
     @Override
     public void initialize(ExtensionContext context) {
+    }
+
+    public List<DataVertical> getSupportedServices() {
+        return SUPPORTED_SERVICES;
     }
 }

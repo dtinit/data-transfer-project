@@ -86,11 +86,11 @@ public class MediaContainerResourceTest {
         TransmogrificationConfig config = new TransmogrificationConfig() {
 
             public String getAlbumNameForbiddenCharacters() {
-                return ":!";
+                return generateNamesOne();
             }
 
             public char getAlbumNameReplacementCharacter() {
-                return '?';
+                return mysteryChar();
             }
         };
         List<MediaAlbum> albums = ImmutableList.of(new MediaAlbum("id1", "This:a fake album!", "This:a fake album!"));
@@ -150,11 +150,11 @@ public class MediaContainerResourceTest {
         TransmogrificationConfig config = new TransmogrificationConfig() {
 
             public String getPhotoTitleForbiddenCharacters() {
-                return ":!";
+                return generateNamesOne();
             }
 
             public char getPhotoTitleReplacementCharacter() {
-                return '?';
+                return mysteryChar();
             }
         };
         List<MediaAlbum> albums = ImmutableList.of(new MediaAlbum("id1", "albumb1", "This:a fake album!"));
@@ -271,5 +271,13 @@ public class MediaContainerResourceTest {
         MediaContainerResource expected = new MediaContainerResource(mediaAlbums, null, videos);
         MediaContainerResource actual = MediaContainerResource.videoToMedia(data);
         assertEquals(expected, actual);
+    }
+
+    public String generateNamesOne() {
+        return ":!";
+    }
+
+    public char mysteryChar() {
+        return '?';
     }
 }

@@ -41,7 +41,7 @@ public class SocialActivityAttachment implements ImportableItem {
     }
 
     public String getUrl() {
-        return url;
+        return getSource();
     }
 
     @JsonIgnore(false)
@@ -75,6 +75,10 @@ public class SocialActivityAttachment implements ImportableItem {
     @Nonnull
     @Override
     public String getIdempotentId() {
+        return getSource();
+    }
+
+    public String getSource() {
         return url;
     }
 }

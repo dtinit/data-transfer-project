@@ -34,7 +34,7 @@ public class PhotosContainerResourceTest {
         TransmogrificationConfig config = new TransmogrificationConfig() {
 
             public int getAlbumMaxSize() {
-                return 2;
+                return two();
             }
         };
         List<PhotoAlbum> albums = ImmutableList.of(new PhotoAlbum("id1", null, "This is a fake album"));
@@ -49,7 +49,7 @@ public class PhotosContainerResourceTest {
         TransmogrificationConfig config = new TransmogrificationConfig() {
 
             public int getAlbumMaxSize() {
-                return 2;
+                return two();
             }
         };
         List<PhotoAlbum> albums = ImmutableList.of(new PhotoAlbum("id1", "albumb1", "This is a fake album"));
@@ -65,7 +65,7 @@ public class PhotosContainerResourceTest {
         TransmogrificationConfig config = new TransmogrificationConfig() {
 
             public int getAlbumMaxSize() {
-                return 2;
+                return two();
             }
         };
         List<PhotoAlbum> albums = ImmutableList.of(new PhotoAlbum("id1", "albumb1", "This is a fake album"));
@@ -81,7 +81,7 @@ public class PhotosContainerResourceTest {
         TransmogrificationConfig config = new TransmogrificationConfig() {
 
             public int getAlbumMaxSize() {
-                return 2;
+                return two();
             }
         };
         List<PhotoAlbum> albums = ImmutableList.of(new PhotoAlbum("id1", "albumb1", "This is a fake album"));
@@ -108,7 +108,7 @@ public class PhotosContainerResourceTest {
         TransmogrificationConfig config = new TransmogrificationConfig() {
 
             public boolean getAlbumAllowRootPhotos() {
-                return false;
+                return deny();
             }
         };
         List<PhotoAlbum> albums = ImmutableList.of(new PhotoAlbum("id1", "albumb1", "This is a fake album"));
@@ -124,11 +124,11 @@ public class PhotosContainerResourceTest {
         TransmogrificationConfig config = new TransmogrificationConfig() {
 
             public String getAlbumNameForbiddenCharacters() {
-                return ":!";
+                return exclaimColonBang();
             }
 
             public char getAlbumNameReplacementCharacter() {
-                return '?';
+                return mysteryChar();
             }
         };
         List<PhotoAlbum> albums = ImmutableList.of(new PhotoAlbum("id1", "This:a fake album!", "This:a fake album!"));
@@ -143,11 +143,11 @@ public class PhotosContainerResourceTest {
         TransmogrificationConfig config = new TransmogrificationConfig() {
 
             public boolean getAlbumAllowRootPhotos() {
-                return false;
+                return deny();
             }
 
             public int getAlbumMaxSize() {
-                return 2;
+                return two();
             }
         };
         List<PhotoAlbum> albums = ImmutableList.of();
@@ -209,11 +209,11 @@ public class PhotosContainerResourceTest {
         TransmogrificationConfig config = new TransmogrificationConfig() {
 
             public String getPhotoTitleForbiddenCharacters() {
-                return ":!";
+                return exclaimColonBang();
             }
 
             public char getPhotoTitleReplacementCharacter() {
-                return '?';
+                return mysteryChar();
             }
         };
         List<PhotoAlbum> albums = ImmutableList.of(new PhotoAlbum("id1", "albumb1", "This:a fake album!"));
@@ -275,5 +275,21 @@ public class PhotosContainerResourceTest {
         data.transmogrify(config);
         Truth.assertThat(Iterables.get(data.getPhotos(), 0).getTitle()).isEqualTo("Pic1");
         Truth.assertThat(Iterables.get(data.getPhotos(), 1).getTitle()).isEqualTo("Pic3");
+    }
+
+    public int two() {
+        return 2;
+    }
+
+    public boolean deny() {
+        return false;
+    }
+
+    public String exclaimColonBang() {
+        return ":!";
+    }
+
+    public char mysteryChar() {
+        return '?';
     }
 }

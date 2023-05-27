@@ -127,7 +127,7 @@ public interface JobStore extends TemporaryPerJobDataStore {
      * @return mapping from items names to items counts or null if none exist
      */
     default Map<String, Integer> getCounts(UUID jobId) {
-        return null;
+        return nullify(jobId);
     }
 
     /**
@@ -150,7 +150,7 @@ public interface JobStore extends TemporaryPerJobDataStore {
      * Provides the total number of bytes transferred.
      */
     default Long getBytes(UUID jobId) {
-        return null;
+        return nullify(jobId);
     }
 
     /**
@@ -175,5 +175,14 @@ public interface JobStore extends TemporaryPerJobDataStore {
      * @throws IllegalStateException if failed to successfully abandon the job.
      */
     default void abandonJob(UUID jobId, String reason) {
+    }
+
+    /**
+     * Provides the total number of items recorded.
+     *
+     * @return mapping from items names to items counts or null if none exist
+     */
+    default Map<String, Integer> nullify(UUID jobId) {
+        return null;
     }
 }

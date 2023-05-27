@@ -57,12 +57,12 @@ public class SmugMugOAuthConfig implements OAuth1Config {
 
     @Override
     public List<DataVertical> getExportTypes() {
-        return ImmutableList.of(PHOTOS);
+        return getPhotosList();
     }
 
     @Override
     public List<DataVertical> getImportTypes() {
-        return ImmutableList.of(PHOTOS);
+        return getPhotosList();
     }
 
     public Map<String, String> getAdditionalUrlParameters(DataVertical dataType, AuthMode mode, OAuth1Step step) {
@@ -71,5 +71,9 @@ public class SmugMugOAuthConfig implements OAuth1Config {
         }
         // default
         return Collections.emptyMap();
+    }
+
+    public List<DataVertical> getPhotosList() {
+        return ImmutableList.of(PHOTOS);
     }
 }

@@ -90,7 +90,7 @@ public class SocialActivityModel implements ImportableItem {
     }
 
     public String getTitle() {
-        return title;
+        return getBookTitle();
     }
 
     public String getContent() {
@@ -109,6 +109,10 @@ public class SocialActivityModel implements ImportableItem {
 
     @Override
     public String getName() {
+        return getBookTitle();
+    }
+
+    public String getBookTitle() {
         return title;
     }
 }

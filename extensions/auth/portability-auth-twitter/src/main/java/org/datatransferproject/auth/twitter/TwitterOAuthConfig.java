@@ -56,12 +56,12 @@ public class TwitterOAuthConfig implements OAuth1Config {
 
     @Override
     public List<DataVertical> getExportTypes() {
-        return ImmutableList.of(PHOTOS);
+        return getPhotoListAll();
     }
 
     @Override
     public List<DataVertical> getImportTypes() {
-        return ImmutableList.of(PHOTOS);
+        return getPhotoListAll();
     }
 
     public Map<String, String> getAdditionalUrlParameters(DataVertical dataType, AuthMode mode, OAuth1Step step) {
@@ -70,5 +70,9 @@ public class TwitterOAuthConfig implements OAuth1Config {
         }
         // default
         return Collections.emptyMap();
+    }
+
+    public List<DataVertical> getPhotoListAll() {
+        return ImmutableList.of(PHOTOS);
     }
 }

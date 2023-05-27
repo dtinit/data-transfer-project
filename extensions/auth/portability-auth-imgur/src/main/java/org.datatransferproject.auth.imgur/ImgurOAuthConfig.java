@@ -47,11 +47,16 @@ public class ImgurOAuthConfig implements OAuth2Config {
     // Imgur doesn't require scopes
     @Override
     public Map<DataVertical, Set<String>> getExportScopes() {
-        return ImmutableMap.of(PHOTOS, ImmutableSet.of(""));
+        return generateImmutablePhotoMap();
     }
 
     @Override
     public Map<DataVertical, Set<String>> getImportScopes() {
+        return generateImmutablePhotoMap();
+    }
+
+    // Imgur doesn't require scopes
+    public Map<DataVertical, Set<String>> generateImmutablePhotoMap() {
         return ImmutableMap.of(PHOTOS, ImmutableSet.of(""));
     }
 }

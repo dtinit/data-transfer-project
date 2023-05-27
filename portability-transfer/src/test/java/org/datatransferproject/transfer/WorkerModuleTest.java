@@ -58,17 +58,21 @@ public class WorkerModuleTest {
 
             @Override
             public Exporter<?, ?> getExporter(DataVertical transferDataType) {
-                return null;
+                return emptyMethod(transferDataType);
             }
 
             @Override
             public Importer<?, ?> getImporter(DataVertical transferDataType) {
-                return null;
+                return emptyMethod(transferDataType);
             }
 
             @Override
             public void initialize(ExtensionContext context) {
             }
         };
+    }
+
+    public Exporter<?, ?> emptyMethod(DataVertical transferDataType) {
+        return null;
     }
 }
