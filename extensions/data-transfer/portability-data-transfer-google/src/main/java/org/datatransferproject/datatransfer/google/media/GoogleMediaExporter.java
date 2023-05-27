@@ -323,12 +323,10 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
                     photos.add(photoModel);
                     monitor.debug(() -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
                 }
-            } else if (mediaItem.isVideo()) {
-                if (shouldUpload) {
-                    VideoModel videoModel = GoogleMediaItem.convertToVideoModel(albumId, mediaItem);
-                    videos.add(videoModel);
-                    monitor.debug(() -> String.format("%s: Google exporting video: %s", jobId, videoModel.getDataId()));
-                }
+            } else if (mediaItem.isVideo() && shouldUpload) {
+                VideoModel videoModel = GoogleMediaItem.convertToVideoModel(albumId, mediaItem);
+                videos.add(videoModel);
+                monitor.debug(() -> String.format("%s: Google exporting video: %s", jobId, videoModel.getDataId()));
             }
         }
         return new MediaContainerResource(null, /*albums*/
