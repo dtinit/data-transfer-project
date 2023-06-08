@@ -8,14 +8,22 @@ import org.datatransferproject.api.launcher.ExtensionContext;
 public class InMemoryIdempotentImportExecutorExtension
     implements IdempotentImportExecutorExtension {
 
+  IdempotentImportExecutor idempotentImportExecutor;
+  IdempotentImportExecutor retryingIdempotentImportExecutor;
   @Override
   public IdempotentImportExecutor getIdempotentImportExecutor(ExtensionContext extensionContext) {
-    return new InMemoryIdempotentImportExecutor(extensionContext.getMonitor());
+    if (idempotentImportExecutor == null) {
+      idempotentImportExecutor = new InMemoryIdempotentImportExecutor(extensionContext.getMonitor());
+    }
+    return idempotentImportExecutor;
   }
 
   @Override
   public IdempotentImportExecutor getRetryingIdempotentImportExecutor(ExtensionContext extensionContext){
-    return new RetryingInMemoryIdempotentImportExecutor(extensionContext.getMonitor(), extensionContext.getSetting("retryLibrary", null));
+    if(retryingIdempotentImportExecutor == null) {
+      retryingIdempotentImportExecutor = new RetryingInMemoryIdempotentImportExecutor(extensionContext.getMonitor(), extensionContext.getSetting("retryLibrary", null));
+    }
+    return retryingIdempotentImportExecutor;
   }
 
   @Override
