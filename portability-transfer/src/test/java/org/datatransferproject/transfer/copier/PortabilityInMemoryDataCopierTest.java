@@ -60,6 +60,7 @@ public class PortabilityInMemoryDataCopierTest {
           null,
           Mockito.mock(Monitor.class),
           new FakeIdempotentImportExecutor(),
+          new FakeIdempotentImportExecutor(),
           null,
           null);
     }
@@ -85,6 +86,7 @@ public class PortabilityInMemoryDataCopierTest {
           null,
           null,
           Mockito.mock(Monitor.class),
+          new FakeIdempotentImportExecutor(),
           new FakeIdempotentImportExecutor(),
           null,
           (Mockito.mock(JobStore.class)));
