@@ -11,7 +11,7 @@ public class InMemoryIdempotentImportExecutorExtension
   IdempotentImportExecutor idempotentImportExecutor;
   IdempotentImportExecutor retryingIdempotentImportExecutor;
   @Override
-  public IdempotentImportExecutor getIdempotentImportExecutor(ExtensionContext extensionContext) {
+  public synchronized IdempotentImportExecutor getIdempotentImportExecutor(ExtensionContext extensionContext) {
     if (idempotentImportExecutor == null) {
       idempotentImportExecutor = new InMemoryIdempotentImportExecutor(extensionContext.getMonitor());
     }
@@ -19,7 +19,7 @@ public class InMemoryIdempotentImportExecutorExtension
   }
 
   @Override
-  public IdempotentImportExecutor getRetryingIdempotentImportExecutor(ExtensionContext extensionContext){
+  public synchronized IdempotentImportExecutor getRetryingIdempotentImportExecutor(ExtensionContext extensionContext){
     if(retryingIdempotentImportExecutor == null) {
       retryingIdempotentImportExecutor = new RetryingInMemoryIdempotentImportExecutor(extensionContext.getMonitor(), extensionContext.getSetting("retryLibrary", null));
     }
