@@ -15,11 +15,8 @@
  */
 package org.datatransferproject.transfer.copier;
 
-import static java.lang.String.format;
-
 import com.google.inject.Provider;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -33,10 +30,10 @@ import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.spi.transfer.types.CopyException;
+import org.datatransferproject.transfer.Annotations;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.transfer.auth.AuthData;
-import org.datatransferproject.types.transfer.errors.ErrorDetail;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 
 /** Implementation of {@link InMemoryDataCopier}. */
@@ -52,6 +49,7 @@ public class PortabilityInMemoryDataCopier extends PortabilityAbstractInMemoryDa
       Provider<RetryStrategyLibrary> retryStrategyLibraryProvider,
       Monitor monitor,
       IdempotentImportExecutor idempotentImportExecutor,
+      @Annotations.RetryingExecutor IdempotentImportExecutor retryingIdempotentImportExecutor,
       DtpInternalMetricRecorder dtpInternalMetricRecorder,
       JobStore jobStore) {
     super(
@@ -60,6 +58,7 @@ public class PortabilityInMemoryDataCopier extends PortabilityAbstractInMemoryDa
         retryStrategyLibraryProvider,
         monitor,
         idempotentImportExecutor,
+        retryingIdempotentImportExecutor,
         dtpInternalMetricRecorder,
         jobStore);
   }
@@ -78,6 +77,7 @@ public class PortabilityInMemoryDataCopier extends PortabilityAbstractInMemoryDa
       Optional<ExportInformation> exportInfo)
       throws IOException, CopyException {
     idempotentImportExecutor.setJobId(jobId);
+    retryingIdempotentImportExecutor.setJobId(jobId);
     copyHelper(exportAuthData, importAuthData, jobId, exportInfo);
   }
 
@@ -137,7 +137,8 @@ public class PortabilityInMemoryDataCopier extends PortabilityAbstractInMemoryDa
           monitor.debug(
               () ->
                   jobIdPrefix
-                      + "Starting off a new copy iteration with a new container resource, copy iteration: "
+                      + "Starting off a new copy iteration with a new container resource, copy"
+                      + " iteration: "
                       + copyIteration);
           copyHelper(
               exportAuthData,

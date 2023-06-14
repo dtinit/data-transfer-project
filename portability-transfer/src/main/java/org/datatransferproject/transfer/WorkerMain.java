@@ -43,7 +43,6 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.service.extension.ServiceExtension;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.hooks.JobHooks;
-import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorExtension;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorLoader;
 import org.datatransferproject.spi.transfer.provider.TransferCompatibilityProvider;
@@ -127,7 +126,7 @@ public class WorkerMain {
                   cloudExtension,
                   transferExtensions,
                   securityExtension,
-                  idempotentImportExecutorExtension.getIdempotentImportExecutor(extensionContext),
+                  idempotentImportExecutorExtension,
                   symmetricKeyGenerator,
                   jobHooks,
                   new TransferCompatibilityProvider()));
