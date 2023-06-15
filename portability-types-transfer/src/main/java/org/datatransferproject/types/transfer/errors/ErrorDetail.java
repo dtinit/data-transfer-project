@@ -46,7 +46,11 @@ public abstract class ErrorDetail {
   public abstract String title();
 
   @JsonProperty("exception")
-  public abstract String exception();
+  public String exception() {
+    return Throwables.getStackTraceAsString(throwable());
+  }
+
+  public abstract Throwable throwable();
 
   @AutoValue.Builder
   public abstract static class Builder {
@@ -63,7 +67,6 @@ public abstract class ErrorDetail {
     @JsonProperty("title")
     public abstract Builder setTitle(String title);
 
-    @JsonProperty("exception")
-    public abstract Builder setException(String exception);
+    public abstract Builder setThrowable(Throwable throwable);
   }
 }

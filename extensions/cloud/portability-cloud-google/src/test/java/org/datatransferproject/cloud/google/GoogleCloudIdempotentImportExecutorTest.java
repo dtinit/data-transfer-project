@@ -57,7 +57,7 @@ public class GoogleCloudIdempotentImportExecutorTest {
     assertEquals(googleExecutor.getCachedValue("id3"), "idempotentId3");
     assertEquals(googleExecutor.getErrors().size(), 1);
     assertTrue(googleExecutor.getErrors().contains(
-        ErrorDetail.builder().setId("id4").setTitle("title").setException("error").build()));
+        ErrorDetail.builder().setId("id4").setTitle("title").setThrowable(new IOException("error")).build()));
 
     // we shouldn't load any items belonging to JOB_ID_2
     assertFalse(googleExecutor.isKeyCached("id1_job2"));
@@ -68,7 +68,7 @@ public class GoogleCloudIdempotentImportExecutorTest {
     initializeDS();
     googleExecutor.setJobId(JOB_ID);
     assertTrue(googleExecutor.getErrors().contains(
-        ErrorDetail.builder().setId("id4").setTitle("title").setException("error").build()));
+        ErrorDetail.builder().setId("id4").setTitle("title").setThrowable(new IOException("error")).build()));
 
     // now execute a successful import of id4
     googleExecutor.executeAndSwallowIOExceptions("id4", ITEM_NAME, () -> "idempotentId4");
@@ -86,7 +86,7 @@ public class GoogleCloudIdempotentImportExecutorTest {
     t.put(googleExecutor.createResultEntity("id2", JOB_ID, "idempotentId2"));
     t.put(googleExecutor.createResultEntity("id3", JOB_ID, "idempotentId3"));
     t.put(googleExecutor.createErrorEntity("id4", JOB_ID,
-        ErrorDetail.builder().setId("id4").setTitle("title").setException("error").build()));
+        ErrorDetail.builder().setId("id4").setTitle("title").setThrowable(new IOException("error")).build()));
 
     t.put(googleExecutor.createResultEntity("id1_job2", JOB_ID_2, "idempotentId1_job2"));
     t.commit();

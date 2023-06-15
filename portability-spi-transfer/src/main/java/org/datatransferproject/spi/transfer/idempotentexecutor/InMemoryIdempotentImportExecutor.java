@@ -81,7 +81,7 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
           ErrorDetail.builder()
               .setId(idempotentId)
               .setTitle(itemName)
-              .setException(Throwables.getStackTraceAsString(e))
+              .setThrowable(e)
               .build();
       errors.put(idempotentId, errorDetail);
       recentErrors.put(idempotentId, errorDetail);
