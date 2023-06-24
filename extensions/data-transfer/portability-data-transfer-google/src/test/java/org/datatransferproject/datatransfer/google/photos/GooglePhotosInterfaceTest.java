@@ -42,9 +42,12 @@ import java.util.Optional;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
+import org.datatransferproject.datatransfer.google.mediaModels.BatchMediaItemResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
+import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemResult;
+import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.spi.transfer.types.UploadErrorException;
@@ -266,10 +269,32 @@ class GooglePhotosInterfaceTest {
   }
 
   @Test
-  void createPhotos() {
+  void createPhotos()throws Exception {
+    BatchMediaItemResponse batchMediaItemResponse = new BatchMediaItemResponse(new NewMediaItemResult[]{});
+    TypeReference<HashMap<String, Object>> typeRef = new TypeReference<HashMap<String, Object>>() {
+    };
+    Map<String, Object> albumMap = objectMapper.readValue(
+        objectMapper.writeValueAsString(batchMediaItemResponse), typeRef);
+    Map<String, Object> params = ImmutableMap.of("album", albumMap);
+
+
+    GooglePhotosInterface photosInterfaceSpy = Mockito.spy(this.googlePhotosInterface);
+    Mockito.doReturn(batchMediaItemResponse).when(photosInterfaceSpy)
+        .makePostRequest(anyString(), any(), any(), any(), any());
+
+    BatchMediaItemResponse apiResponse = googlePhotosInterface.createPhotos(any(NewMediaItemUpload.class));
+
+    ArgumentCaptor<String> urlStringCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<JsonHttpContent> contentCaptor = ArgumentCaptor.forClass(JsonHttpContent.class);
+    Mockito.verify(photosInterfaceSpy)
+        .makePostRequest(urlStringCaptor.capture(), any(), any(), contentCaptor.capture(), any());
+    assertEquals(batchMediaItemResponse, apiResponse);
+    assertEquals(BASE_URL + "albums", urlStringCaptor.getValue());
+    assertEquals(params, contentCaptor.getValue().getData());
   }
 
   @Test
   void makePostRequest() {
+    // Discussion: I Belive this method should be kept private for the interface to make sense
   }
 }

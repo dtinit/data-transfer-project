@@ -187,7 +187,7 @@ public class GooglePhotosInterface {
   public BatchMediaItemResponse createPhotos(NewMediaItemUpload newMediaItemUpload)
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     HashMap<String, Object> map = createJsonMap(newMediaItemUpload);
-    HttpContent httpContent = new JsonHttpContent(this.jsonFactory, map);
+    HttpContent httpContent = new JsonHttpContent(jsonFactory, map);
 
     return makePostRequest(BASE_URL + "mediaItems:batchCreate", Optional.empty(), Optional.empty(),
         httpContent, BatchMediaItemResponse.class);
