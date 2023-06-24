@@ -32,11 +32,14 @@ import com.google.api.client.http.ByteArrayContent;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.collect.ImmutableMap;
+import com.google.photos.types.proto.MediaItem;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.datatransferproject.api.launcher.Monitor;
@@ -46,6 +49,7 @@ import org.datatransferproject.datatransfer.google.mediaModels.BatchMediaItemRes
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
+import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemResult;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUpload;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
@@ -272,29 +276,30 @@ class GooglePhotosInterfaceTest {
   void createPhotos() throws Exception {
     BatchMediaItemResponse batchMediaItemResponse = new BatchMediaItemResponse(
         new NewMediaItemResult[]{});
+    List<NewMediaItem> newMediaItem = new ArrayList<>();
+    NewMediaItemUpload newMediaItemUpload = new NewMediaItemUpload(ALBUM_ID,newMediaItem);
     TypeReference<HashMap<String, Object>> typeRef = new TypeReference<HashMap<String, Object>>() {
     };
-    Map<String, Object> albumMap = objectMapper.readValue(
-        objectMapper.writeValueAsString(batchMediaItemResponse), typeRef);
-    Map<String, Object> params = ImmutableMap.of("album", albumMap);
+    Map<String, Object> params = objectMapper.readValue(
+        objectMapper.writeValueAsString(newMediaItemUpload), typeRef);
 
     GooglePhotosInterface photosInterfaceSpy = Mockito.spy(this.googlePhotosInterface);
     Mockito.doReturn(batchMediaItemResponse).when(photosInterfaceSpy)
         .makePostRequest(anyString(), any(), any(), any(), any());
 
-    BatchMediaItemResponse apiResponse = googlePhotosInterface.createPhotos(
-        any(NewMediaItemUpload.class));
+    BatchMediaItemResponse apiResponse = photosInterfaceSpy.createPhotos(
+        newMediaItemUpload);
 
     ArgumentCaptor<String> urlStringCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<JsonHttpContent> contentCaptor = ArgumentCaptor.forClass(JsonHttpContent.class);
     Mockito.verify(photosInterfaceSpy)
         .makePostRequest(urlStringCaptor.capture(), any(), any(), contentCaptor.capture(), any());
     assertEquals(batchMediaItemResponse, apiResponse);
-    assertEquals(BASE_URL + "albums", urlStringCaptor.getValue());
+    assertEquals(BASE_URL + "mediaItems:batchCreate", urlStringCaptor.getValue());
     assertEquals(params, contentCaptor.getValue().getData());
   }
 
-  @Test
+//  @Test
   void makePostRequest() {
     // Discussion: I Believe this method should be kept private for the interface to make sense
   }

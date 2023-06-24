@@ -307,7 +307,7 @@ public class GooglePhotosInterface {
     }
   }
 
-  String generateParamsString(Optional<Map<String, String>> params) {
+  private String generateParamsString(Optional<Map<String, String>> params) {
     Map<String, String> updatedParams = new ArrayMap<>();
     if (params.isPresent()) {
       updatedParams.putAll(params.get());
