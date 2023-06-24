@@ -269,20 +269,21 @@ class GooglePhotosInterfaceTest {
   }
 
   @Test
-  void createPhotos()throws Exception {
-    BatchMediaItemResponse batchMediaItemResponse = new BatchMediaItemResponse(new NewMediaItemResult[]{});
+  void createPhotos() throws Exception {
+    BatchMediaItemResponse batchMediaItemResponse = new BatchMediaItemResponse(
+        new NewMediaItemResult[]{});
     TypeReference<HashMap<String, Object>> typeRef = new TypeReference<HashMap<String, Object>>() {
     };
     Map<String, Object> albumMap = objectMapper.readValue(
         objectMapper.writeValueAsString(batchMediaItemResponse), typeRef);
     Map<String, Object> params = ImmutableMap.of("album", albumMap);
 
-
     GooglePhotosInterface photosInterfaceSpy = Mockito.spy(this.googlePhotosInterface);
     Mockito.doReturn(batchMediaItemResponse).when(photosInterfaceSpy)
         .makePostRequest(anyString(), any(), any(), any(), any());
 
-    BatchMediaItemResponse apiResponse = googlePhotosInterface.createPhotos(any(NewMediaItemUpload.class));
+    BatchMediaItemResponse apiResponse = googlePhotosInterface.createPhotos(
+        any(NewMediaItemUpload.class));
 
     ArgumentCaptor<String> urlStringCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<JsonHttpContent> contentCaptor = ArgumentCaptor.forClass(JsonHttpContent.class);
@@ -295,6 +296,6 @@ class GooglePhotosInterfaceTest {
 
   @Test
   void makePostRequest() {
-    // Discussion: I Belive this method should be kept private for the interface to make sense
+    // Discussion: I Believe this method should be kept private for the interface to make sense
   }
 }
