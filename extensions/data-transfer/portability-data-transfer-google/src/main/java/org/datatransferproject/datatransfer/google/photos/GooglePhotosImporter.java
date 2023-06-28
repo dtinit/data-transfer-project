@@ -78,6 +78,29 @@ public class GooglePhotosImporter
   private final Map<UUID, GooglePhotosInterface> photosInterfacesMap;
   private final GooglePhotosInterface photosInterface;
   private final HashMap<UUID, BaseMultilingualDictionary> multilingualStrings = new HashMap<>();
+  private IdempotentImportExecutor retryingIdempotentExecutor;
+  private Boolean enableRetrying;
+
+  public GooglePhotosImporter(
+      GoogleCredentialFactory credentialFactory,
+      JobStore jobStore,
+      JsonFactory jsonFactory,
+      Monitor monitor,
+      double writesPerSecond,
+      IdempotentImportExecutor retryingIdempotentExecutor,
+      boolean enableRetrying) {
+    this(
+        credentialFactory,
+        jobStore,
+        jsonFactory,
+        new HashMap<>(),
+        null,
+        new ConnectionProvider(jobStore),
+        monitor,
+        writesPerSecond,
+        retryingIdempotentExecutor,
+        enableRetrying);
+  }
 
   public GooglePhotosImporter(
       GoogleCredentialFactory credentialFactory,
@@ -106,6 +129,30 @@ public class GooglePhotosImporter
       ConnectionProvider connectionProvider,
       Monitor monitor,
       double writesPerSecond) {
+    this(
+        credentialFactory,
+        jobStore,
+        jsonFactory,
+        photosInterfacesMap,
+        photosInterface,
+        connectionProvider,
+        monitor,
+        writesPerSecond,
+        null,
+        false);
+  }
+
+  GooglePhotosImporter(
+      GoogleCredentialFactory credentialFactory,
+      JobStore jobStore,
+      JsonFactory jsonFactory,
+      Map<UUID, GooglePhotosInterface> photosInterfacesMap,
+      GooglePhotosInterface photosInterface,
+      ConnectionProvider connectionProvider,
+      Monitor monitor,
+      double writesPerSecond,
+      IdempotentImportExecutor retryingIdempotentExecutor,
+      boolean enableRetrying) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
     this.jsonFactory = jsonFactory;
@@ -114,6 +161,8 @@ public class GooglePhotosImporter
     this.connectionProvider = connectionProvider;
     this.monitor = monitor;
     this.writesPerSecond = writesPerSecond;
+    this.retryingIdempotentExecutor = retryingIdempotentExecutor;
+    this.enableRetrying = enableRetrying;
   }
 
   // TODO(aksingh737) WARNING: stop maintaining this code here; this needs to be reconciled against
@@ -131,10 +180,12 @@ public class GooglePhotosImporter
       // Nothing to do
       return ImportResult.OK;
     }
-    GPhotosUpload gPhotosUpload = new GPhotosUpload(jobId, idempotentImportExecutor, authData);
+    IdempotentImportExecutor executor =
+        (retryingIdempotentExecutor != null && enableRetrying) ? retryingIdempotentExecutor : idempotentImportExecutor;
+    GPhotosUpload gPhotosUpload = new GPhotosUpload(jobId, executor, authData);
 
     for (PhotoAlbum album : data.getAlbums()) {
-      idempotentImportExecutor.executeAndSwallowIOExceptions(
+      executor.executeAndSwallowIOExceptions(
           album.getId(), album.getName(), () -> importSingleAlbum(jobId, authData, album));
     }
     long bytes = importPhotos(data.getPhotos(), gPhotosUpload);
