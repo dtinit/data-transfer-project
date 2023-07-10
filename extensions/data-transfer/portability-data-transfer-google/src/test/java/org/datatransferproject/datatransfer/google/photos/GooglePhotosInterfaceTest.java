@@ -301,6 +301,7 @@ class GooglePhotosInterfaceTest {
 
 //  @Test
   void makePostRequest() {
-    // Discussion: I Believe this method should be kept private for the interface to make sense
+    // Discussion: I Believe this method should be kept private for the interface to make sense,
+    // Writing a test would result in breaking it everytime implementation changes
   }
 }
