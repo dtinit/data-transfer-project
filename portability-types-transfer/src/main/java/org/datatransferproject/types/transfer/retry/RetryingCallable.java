@@ -116,7 +116,11 @@ public class RetryingCallable<T> implements Callable<T> {
           monitor.debug(
               () ->
                   String.format("Strategy canTryAgain returned false after %d retries", attempts));
-          throw new RetryException(attempts, mostRecentException);
+          if (strategy.canSkip()) {
+            throw new RetryException(attempts, mostRecentException, true);
+          } else {
+            throw new RetryException(attempts, mostRecentException);
+          }
         }
       }
     }
