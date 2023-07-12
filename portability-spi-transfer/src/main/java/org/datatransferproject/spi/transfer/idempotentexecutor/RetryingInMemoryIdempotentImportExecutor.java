@@ -31,6 +31,7 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
+import org.datatransferproject.types.transfer.retry.RetryException;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 import org.datatransferproject.types.transfer.retry.RetryingCallable;
 
@@ -88,17 +89,24 @@ public class RetryingInMemoryIdempotentImportExecutor implements IdempotentImpor
           () -> jobIdPrefix + format("Storing key %s in cache for %s", idempotentId, itemName));
       errors.remove(idempotentId);
       return result;
-    } catch (Exception e) {
-      ErrorDetail errorDetail =
-          ErrorDetail.builder()
-              .setId(idempotentId)
-              .setTitle(itemName)
-              .setException(Throwables.getStackTraceAsString(e))
-              .build();
-      errors.put(idempotentId, errorDetail);
-      recentErrors.put(idempotentId, errorDetail);
-      monitor.severe(() -> jobIdPrefix + "Problem with importing item: " + errorDetail);
-      throw e;
+    } catch (RetryException e) {
+      ErrorDetail.Builder errorDetailBuilder = ErrorDetail.builder();
+      errorDetailBuilder.setId(idempotentId)
+          .setTitle(itemName)
+          .setException(Throwables.getStackTraceAsString(e));
+      if(e.canSkip()){
+        ErrorDetail errorDetail = errorDetailBuilder.setCanSkip(true).build();
+        errors.put(idempotentId, errorDetail);
+        recentErrors.put(idempotentId, errorDetail);
+        monitor.severe(() -> jobIdPrefix + "Problem with importing item, but skipping: " + errorDetail);
+        return  null;
+      } else {
+        ErrorDetail errorDetail = errorDetailBuilder.build();
+        errors.put(idempotentId, errorDetail);
+        recentErrors.put(idempotentId, errorDetail);
+        monitor.severe(() -> jobIdPrefix + "Problem with importing item, cannot be skipped: " + errorDetail);
+        throw e;
+      }
     }
   }
 
