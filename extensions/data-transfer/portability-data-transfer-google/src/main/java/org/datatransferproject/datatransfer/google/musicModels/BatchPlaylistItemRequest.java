@@ -23,38 +23,29 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Class containing all the information necessary to create new {@link GooglePlaylistItem}s in the
- * Google Music API.
+ * Class containing all the information necessary to create new {@link CreatePlaylistItemRequest}s
+ * in the Google Music API.
  */
 @JsonInclude(Include.NON_NULL)
 public class BatchPlaylistItemRequest {
 
-  @JsonProperty("playlistItems")
-  private List<GooglePlaylistItem> playlistItems;
+  @JsonProperty("requests")
+  private List<CreatePlaylistItemRequest> requests;
 
-  @JsonProperty("originalPlaylistId")
-  private String originalPlaylistId;
+  @JsonProperty("parent")
+  private String parent;
 
-  @JsonProperty("playlistToken")
-  private String playlistToken;
-
-  public BatchPlaylistItemRequest(
-      List<GooglePlaylistItem> playlistItems, String originalPlaylistId, String playlistToken) {
-    this.playlistItems = playlistItems;
-    this.originalPlaylistId = originalPlaylistId;
-    this.playlistToken = playlistToken;
+  public BatchPlaylistItemRequest(List<CreatePlaylistItemRequest> requests, String parent) {
+    this.requests = requests;
+    this.parent = parent;
   }
 
-  public List<GooglePlaylistItem> getPlaylistItems() {
-    return playlistItems;
+  public List<CreatePlaylistItemRequest> getRequests() {
+    return requests;
   }
 
-  public String getOriginalPlaylistId() {
-    return originalPlaylistId;
-  }
-
-  public String getPlaylistToken() {
-    return playlistToken;
+  public String getParent() {
+    return parent;
   }
 
   @Override
@@ -66,13 +57,11 @@ public class BatchPlaylistItemRequest {
       return false;
     }
     BatchPlaylistItemRequest that = (BatchPlaylistItemRequest) o;
-    return Objects.equals(playlistItems, that.playlistItems)
-        && Objects.equals(originalPlaylistId, that.originalPlaylistId)
-        && Objects.equals(playlistToken, that.playlistToken);
+    return Objects.equals(requests, that.requests) && Objects.equals(parent, that.parent);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(getPlaylistItems(), getOriginalPlaylistId(), getPlaylistToken());
+    return Objects.hash(getRequests(), getParent());
   }
 }
