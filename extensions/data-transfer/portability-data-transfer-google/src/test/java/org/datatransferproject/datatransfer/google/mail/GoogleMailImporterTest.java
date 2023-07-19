@@ -43,6 +43,7 @@ import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactor
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
+import org.datatransferproject.types.common.models.mail.MailContainerModel;
 import org.datatransferproject.types.common.models.mail.MailContainerResource;
 import org.datatransferproject.types.common.models.mail.MailMessageModel;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,6 +52,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import javax.mail.Folder;
 
 @ExtendWith(MockitoExtension.class)
 public class GoogleMailImporterTest {
@@ -64,12 +67,25 @@ public class GoogleMailImporterTest {
   private static final MailMessageModel MESSAGE_MODEL =
       new MailMessageModel(MESSAGE_RAW, MESSAGE_LABELS);
 
+  private static final String FOLDER_ID = "folder_id1";
+
+  private static final String FOLDER_NAME = "folder_name1";
+
+  private static final MailContainerModel FOLDER1 = new MailContainerModel(FOLDER_ID, FOLDER_NAME);
+
+  private static final MailContainerModel FOLDER2 = new MailContainerModel("folder_id2", "folder_name2");
+
+  private static final List<MailContainerModel> FOLDERS = ImmutableList.of(FOLDER1, FOLDER2);
+
   @Mock
   private Gmail gmail;
   @Mock
   private Users users;
   @Mock
   private Messages messages;
+
+  @Mock
+  private Folder folders;
   @Mock
   private Insert insert;
   @Mock
@@ -111,9 +127,9 @@ public class GoogleMailImporterTest {
   }
 
   @Test
-  public void importMessage() throws Exception {
+  public void importMessageAndLabels() throws Exception {
     MailContainerResource resource =
-        new MailContainerResource(null, Collections.singletonList(MESSAGE_MODEL));
+        new MailContainerResource(FOLDERS, Collections.singletonList(MESSAGE_MODEL));
 
     ImportResult result = googleMailImporter.importItem(JOB_ID, executor, null, resource);
 
@@ -124,5 +140,12 @@ public class GoogleMailImporterTest {
     verify(messages).insert(eq(GoogleMailImporter.USER), messageArgumentCaptor.capture());
     assertThat(messageArgumentCaptor.getValue().getRaw()).isEqualTo(MESSAGE_RAW);
     // TODO(olsona): test labels
+    assertThat(messageArgumentCaptor.getValue().getLabelIds()).isEqualTo(MESSAGE_LABELS);
+
+    ArgumentCaptor<Label> labelArgumentCaptor = ArgumentCaptor.forClass(Label.class);
+    verify(labels, times(4)).create(eq(GoogleMailImporter.USER), labelArgumentCaptor.capture());
+    assertThat(labelArgumentCaptor.getValue()).isEqualTo(MESSAGE_LABELS);
+
+    ArgumentCaptor<Folder> folderArgumentCaptor = ArgumentCaptor.forClass(Folder.class);
   }
 }
