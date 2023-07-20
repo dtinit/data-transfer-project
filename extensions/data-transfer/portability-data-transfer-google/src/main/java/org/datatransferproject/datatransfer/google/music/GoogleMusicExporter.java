@@ -96,14 +96,14 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
   public ExportResult<MusicContainerResource> export(
       UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation)
       throws IOException, InvalidTokenException, PermissionDeniedException {
+    // TODO: Remove the logic when testing is finished.
     // Local demo-server test usage. Start transfer job without ExportInformation.
     // if (!exportInformation.isPresent()) {
     //   StringPaginationToken paginationToken = new StringPaginationToken(PLAYLIST_TOKEN_PREFIX);
     //   return exportPlaylists(authData, Optional.of(paginationToken), jobId);
     // }
 
-    if (exportInformation.get()
-        .getContainerResource() instanceof IdOnlyContainerResource) {
+    if (exportInformation.get().getContainerResource() instanceof IdOnlyContainerResource) {
       // if ExportInformation is an id only container, this is a request to export playlist items.
       return exportPlaylistItems(
           authData,
