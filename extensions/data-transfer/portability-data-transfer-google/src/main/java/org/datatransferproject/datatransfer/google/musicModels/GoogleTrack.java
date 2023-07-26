@@ -29,11 +29,11 @@ public class GoogleTrack {
   @JsonProperty("release")
   private GoogleRelease release;
 
-  @JsonProperty("trackTitle")
-  private String trackTitle;
+  @JsonProperty("title")
+  private String title;
 
-  @JsonProperty("artistTitles")
-  private String[] artistTitles;
+  @JsonProperty("artists")
+  private GoogleArtist[] artists;
 
   @JsonProperty("durationMillis")
   private long durationMillis;
@@ -46,12 +46,12 @@ public class GoogleTrack {
     return release;
   }
 
-  public String getTrackTitle() {
-    return trackTitle;
+  public String getTitle() {
+    return title;
   }
 
-  public String[] getArtistTitles() {
-    return artistTitles;
+  public GoogleArtist[] getArtists() {
+    return artists;
   }
 
   public long getDurationMillis() {
@@ -66,12 +66,12 @@ public class GoogleTrack {
     this.release = release;
   }
 
-  public void setTrackTitle(String trackTitle) {
-    this.trackTitle = trackTitle;
+  public void setTitle(String trackTitle) {
+    this.title = title;
   }
 
-  public void setArtistTitles(String[] artistTitles) {
-    this.artistTitles = artistTitles;
+  public void setArtists(GoogleArtist[] artists) {
+    this.artists = artists;
   }
 
   public void setDurationMillis(long durationMillis) {
@@ -89,8 +89,8 @@ public class GoogleTrack {
     GoogleTrack that = (GoogleTrack) o;
     return Objects.equals(isrc, that.isrc)
         && Objects.equals(release, that.release)
-        && Objects.equals(trackTitle, that.trackTitle)
-        && Arrays.equals(artistTitles, that.artistTitles)
+        && Objects.equals(title, that.title)
+        && Arrays.equals(artists, that.artists)
         && durationMillis == that.durationMillis;
   }
 
@@ -99,8 +99,8 @@ public class GoogleTrack {
     return Objects.hash(
         getIsrc(),
         getRelease(),
-        getTrackTitle(),
-        Arrays.hashCode(getArtistTitles()),
+        getTitle(),
+        Arrays.hashCode(getArtists()),
         getDurationMillis());
   }
 }
