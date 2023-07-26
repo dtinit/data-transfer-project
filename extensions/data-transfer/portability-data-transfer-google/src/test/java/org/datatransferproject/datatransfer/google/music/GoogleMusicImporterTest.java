@@ -245,7 +245,7 @@ public final class GoogleMusicImporterTest {
   @Test
   public void importPlaylistItemsSkippableFauilre() throws Exception {
     importPlaylistSetUp("p1_id", "p1_title");
-    
+
     MusicPlaylistItem playlistItem1 =
         new MusicPlaylistItem(
             new MusicRecording(
@@ -291,7 +291,8 @@ public final class GoogleMusicImporterTest {
     when(googleMusicHttpApi.createPlaylist(any(GooglePlaylist.class), any(String.class)))
         .thenReturn(responsePlaylist);
 
-    ImportResult importResult = googleMusicImporter.importItem(uuid, executor, null, data);
+    ImportResult importResult = googleMusicImporter.importItem(uuid, executor, null /*authData*/,
+        data);
   }
 
   private GooglePlaylistItem buildGooglePlaylistItem(String trackIsrc, String releaseIcpn) {
