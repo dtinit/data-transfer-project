@@ -51,6 +51,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.mail.Folder;
@@ -143,9 +144,9 @@ public class GoogleMailImporterTest {
     assertThat(messageArgumentCaptor.getValue().getLabelIds()).isEqualTo(MESSAGE_LABELS);
 
     ArgumentCaptor<Label> labelArgumentCaptor = ArgumentCaptor.forClass(Label.class);
-    verify(labels, times(4)).create(eq(GoogleMailImporter.USER), labelArgumentCaptor.capture());
-    assertThat(labelArgumentCaptor.getValue()).isEqualTo(MESSAGE_LABELS);
+    verify(labels, Mockito.times(4)).create(eq(GoogleMailImporter.USER), labelArgumentCaptor.capture());
+    assertThat(labelArgumentCaptor.getAllValues()).hasSize(4);
+    assertThat(labelArgumentCaptor.getAllValues().stream().map(arg->arg.getName()).collect(ImmutableList.toImmutableList())).containsExactlyElementsIn(ImmutableList.of("label2","folder_name2","DTP-migrated","folder_name1"));
 
-    ArgumentCaptor<Folder> folderArgumentCaptor = ArgumentCaptor.forClass(Folder.class);
   }
 }
