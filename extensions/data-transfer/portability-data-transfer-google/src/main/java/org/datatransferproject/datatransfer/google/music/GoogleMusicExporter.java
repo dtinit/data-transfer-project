@@ -30,6 +30,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
+import org.datatransferproject.datatransfer.google.musicModels.GoogleArtist;
 import org.datatransferproject.datatransfer.google.musicModels.GooglePlaylist;
 import org.datatransferproject.datatransfer.google.musicModels.GooglePlaylistItem;
 import org.datatransferproject.datatransfer.google.musicModels.GoogleRelease;
@@ -55,6 +56,7 @@ import org.datatransferproject.types.common.models.music.MusicRelease;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, MusicContainerResource> {
+
   static final String PLAYLIST_TRACK_RELEASE_TOKEN_PREFIX = "playlist:track:release:";
   static final String PLAYLIST_TRACK_TOKEN_PREFIX = "playlist:track:";
   static final String PLAYLIST_RELEASE_TOKEN_PREFIX = "playlist:release:";
@@ -94,6 +96,12 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
   public ExportResult<MusicContainerResource> export(
       UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation)
       throws IOException, InvalidTokenException, PermissionDeniedException {
+    // TODO: Remove the logic when testing is finished.
+    // Local demo-server test usage. Start transfer job without ExportInformation.
+    // if (!exportInformation.isPresent()) {
+    //   StringPaginationToken paginationToken = new StringPaginationToken(PLAYLIST_TOKEN_PREFIX);
+    //   return exportPlaylists(authData, Optional.of(paginationToken), jobId);
+    // }
 
     if (exportInformation.get().getContainerResource() instanceof IdOnlyContainerResource) {
       // if ExportInformation is an id only container, this is a request to export playlist items.
@@ -236,13 +244,13 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
     return 0;
   }
 
-  private List<MusicGroup> createMusicGroups(String[] artistTitles) {
-    if (artistTitles == null) {
+  private List<MusicGroup> createMusicGroups(GoogleArtist[] artists) {
+    if (artists == null) {
       return null;
     }
     List<MusicGroup> musicGroups = new ArrayList<>();
-    for (String artistTitle : artistTitles) {
-      musicGroups.add(new MusicGroup(artistTitle));
+    for (GoogleArtist artist : artists) {
+      musicGroups.add(new MusicGroup(artist.getTitle()));
     }
     return musicGroups;
   }
@@ -254,13 +262,13 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
     return new MusicPlaylistItem(
         new MusicRecording(
             track.getIsrc(),
-            track.getTrackTitle(),
+            track.getTitle(),
             track.getDurationMillis(),
             new MusicRelease(
                 release.getIcpn(),
-                release.getReleaseTitle(),
-                createMusicGroups(release.getArtistTitles())),
-            createMusicGroups(track.getArtistTitles())),
+                release.getTitle(),
+                createMusicGroups(release.getArtists())),
+            createMusicGroups(track.getArtists())),
         playlistId,
         googlePlaylistItem.getOrder());
   }
