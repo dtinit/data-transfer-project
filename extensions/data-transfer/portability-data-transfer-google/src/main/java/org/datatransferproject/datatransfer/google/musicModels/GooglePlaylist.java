@@ -29,11 +29,11 @@ public class GooglePlaylist {
   @JsonProperty("description")
   private String description;
 
-  @JsonProperty("createTime")
-  private long createTime;
+  // @JsonProperty("createTime")
+  // private long createTime;
 
-  @JsonProperty("updateTime")
-  private long updateTime;
+  // @JsonProperty("updateTime")
+  // private long updateTime;
 
   public String getName() {
     return name;
@@ -47,13 +47,13 @@ public class GooglePlaylist {
     return description;
   }
 
-  public long getCreateTime() {
-    return createTime;
-  }
-
-  public long getUpdateTime() {
-    return updateTime;
-  }
+  // public long getCreateTime() {
+  //   return createTime;
+  // }
+  //
+  // public long getUpdateTime() {
+  //   return updateTime;
+  // }
 
   public void setName(String name) {
     this.name = name;
@@ -67,11 +67,11 @@ public class GooglePlaylist {
     this.description = description;
   }
 
-  public void setCreateTime(long createTime) {
-    this.createTime = createTime;
-  }
-
-  public void setUpdateTime(long updateTime) {
-    this.updateTime = updateTime;
-  }
+  // public void setCreateTime(long createTime) {
+  //   this.createTime = createTime;
+  // }
+  //
+  // public void setUpdateTime(long updateTime) {
+  //   this.updateTime = updateTime;
+  // }
 }

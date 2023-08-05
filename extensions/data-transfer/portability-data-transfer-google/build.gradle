@@ -38,6 +38,7 @@ dependencies {
     compile("com.google.apis:google-api-services-plus:${googlePlusVersion}")
     compile("com.google.photos.library:google-photos-library-client:${googlePhotoLibraryVersion}")
     compile("com.google.auth:google-auth-library-oauth2-http:${googleOauth2Version}")
+    compile("com.google.protobuf:protobuf-java-util:3.6.1")
     implementation("io.grpc:grpc-netty:1.45.1")
 
 

@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpContent;
+import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
@@ -34,10 +35,12 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.ArrayMap;
+import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.RateLimiter;
+import com.google.gson.Gson;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -59,13 +62,15 @@ import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 
 /**
  * GoogleMusicHttpApi makes HTTP requests to read and write to the public Google Music's "Music
- * Library" APIs, following its documentation at https://developers.google.com/youtube/mediaconnect.
+ * Library" APIs, following its documentation at
+ * https://developers.google.com/youtube/mediaconnect.
  *
  * <p>Note that this is the lowest level of Google Music interaction - that is, you probably don't
  * want to use this class and are better off using something like a bit higher level like the Google
  * Music DTP Exporter and Importer instead.
  */
 public class GoogleMusicHttpApi {
+
   private static final String BASE_URL =
       "https://youtubemediaconnect.googleapis.com/v1/users/me/musicLibrary/";
   private static final int PLAYLIST_PAGE_SIZE = 20;
@@ -73,7 +78,6 @@ public class GoogleMusicHttpApi {
 
   private static final String PAGE_SIZE_KEY = "pageSize";
   private static final String TOKEN_KEY = "pageToken";
-  private static final String PARENT_KEY = "parent";
   private static final String ORIGINAL_PLAYLIST_ID_KEY = "originalPlaylistId";
   private static final String ACCESS_TOKEN_KEY = "access_token";
 
@@ -113,22 +117,24 @@ public class GoogleMusicHttpApi {
       throws IOException, InvalidTokenException, PermissionDeniedException {
     Map<String, String> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(PLAYLIST_ITEM_PAGE_SIZE));
-    params.put(PARENT_KEY, "playlists/" + playlistId);
     if (pageToken.isPresent()) {
       params.put(TOKEN_KEY, pageToken.get());
     }
     return makeGetRequest(
-        BASE_URL + "playlistItems", Optional.of(params), PlaylistItemListResponse.class);
+        BASE_URL + "playlists/" + playlistId + "/playlistItems", Optional.of(params),
+        PlaylistItemListResponse.class);
   }
 
   GooglePlaylist createPlaylist(GooglePlaylist playlist, String playlistId)
       throws IOException, InvalidTokenException, PermissionDeniedException {
     Map<String, Object> playlistMap = createJsonMap(playlist);
-    ImmutableMap<String, Object> contentMap =
-        ImmutableMap.of("playlist", playlistMap, ORIGINAL_PLAYLIST_ID_KEY, playlistId);
-    HttpContent content = new JsonHttpContent(jsonFactory, contentMap);
+    Map<String, String> params = new LinkedHashMap<>();
+    params.put(ORIGINAL_PLAYLIST_ID_KEY, playlistId);
+    HttpContent content = new JsonHttpContent(jsonFactory, playlistMap);
 
-    return makePutRequest(BASE_URL + "playlists", Optional.empty(), content, GooglePlaylist.class);
+    // TODO: Update the URL when fixing
+    return makePatchRequest(BASE_URL + "playlists/playlists", Optional.of(params), content,
+        GooglePlaylist.class);
   }
 
   BatchPlaylistItemResponse createPlaylistItems(BatchPlaylistItemRequest playlistItemRequest)
@@ -137,7 +143,8 @@ public class GoogleMusicHttpApi {
     HttpContent content = new JsonHttpContent(jsonFactory, playlistItemMap);
 
     return makePostRequest(
-        BASE_URL + "playlistItems", Optional.empty(), content, BatchPlaylistItemResponse.class);
+        BASE_URL + "playlistItems:batchCreate", Optional.empty(), content,
+        BatchPlaylistItemResponse.class);
   }
 
   private <T> T makeGetRequest(
@@ -162,7 +169,10 @@ public class GoogleMusicHttpApi {
 
     Preconditions.checkState(response.getStatusCode() == 200);
     String result = CharStreams.toString(new InputStreamReader(response.getContent(), UTF_8));
-    return objectMapper.readValue(result, clazz);
+    Gson gson = new Gson();
+    return gson.fromJson(result, clazz);
+    // objectMapper.enable(DeserializationFeature.FAIL_ON_READING_DUP_TREE_KEY);
+    // return objectMapper.readValue(result, clazz);
   }
 
   @SuppressWarnings("unchecked")
@@ -204,7 +214,7 @@ public class GoogleMusicHttpApi {
   }
 
   @SuppressWarnings("unchecked")
-  private <T> T makePutRequest(
+  private <T> T makePatchRequest(
       String baseUrl,
       Optional<Map<String, String>> parameters,
       HttpContent httpContent,
@@ -213,22 +223,26 @@ public class GoogleMusicHttpApi {
     // Wait for write permit before making request
     writeRateLimiter.acquire();
 
-    HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
-    HttpRequest putRequest =
-        requestFactory.buildPutRequest(
-            new GenericUrl(baseUrl + "?" + generateParamsString(parameters)), httpContent);
-    putRequest.setReadTimeout(2 * 60000); // 2 minutes read timeout
+    HttpRequestFactory requestFactory = httpTransport.createRequestFactory(credential);
+    HttpRequest patchRequest =
+        requestFactory.buildPatchRequest(
+                new GenericUrl(baseUrl + "?" + generateParamsString(parameters)), httpContent)
+            .setRequestMethod("POST")
+            .setHeaders(new HttpHeaders().set("X-HTTP-Method-Override", "PATCH"));
+    ;
+    patchRequest.setReadTimeout(2 * 60000); // 2 minutes read timeout
     HttpResponse response;
 
     try {
-      response = putRequest.execute();
+      response = patchRequest.execute();
     } catch (HttpResponseException e) {
       response =
           handleHttpResponseException(
               () ->
-                  requestFactory.buildPutRequest(
-                      new GenericUrl(baseUrl + "?" + generateParamsString(parameters)),
-                      httpContent),
+                  requestFactory.buildPatchRequest(
+                          new GenericUrl(baseUrl + "?" + generateParamsString(parameters)),
+                          httpContent).setRequestMethod("POST")
+                      .setHeaders(new HttpHeaders().set("X-HTTP-Method-Override", "PATCH")),
               e);
     }
 
@@ -300,11 +314,13 @@ public class GoogleMusicHttpApi {
     // JacksonFactory expects to receive a Map, not a JSON-annotated POJO, so we have to convert the
     // NewMediaItemUpload to a Map before making the HttpContent.
     TypeReference<HashMap<String, Object>> typeRef =
-        new TypeReference<HashMap<String, Object>>() {};
+        new TypeReference<HashMap<String, Object>>() {
+        };
     return objectMapper.readValue(objectMapper.writeValueAsString(object), typeRef);
   }
 
   private interface SupplierWithIO<T> {
+
     T getWithIO() throws IOException;
   }
 }
