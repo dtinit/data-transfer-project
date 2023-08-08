@@ -186,8 +186,7 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
         monitor.debug(
             () ->
                 String.format(
-                    "%s: Google Music exporting playlist: %s %s", jobId, musicPlaylist.getId(),
-                    musicPlaylist.getTimeCreated().toString()));
+                    "%s: Google Music exporting playlist: %s", jobId, musicPlaylist.getId()));
 
         // Add playlist id to continuation data
         continuationData.addContainerResource(new IdOnlyContainerResource(musicPlaylist.getId()));
@@ -227,8 +226,10 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
         monitor.debug(
             () ->
                 String.format(
-                    "%s: Google Music exporting playlist item in %s : %s", jobId, playlistId,
-                    googlePlaylistItem.getTrack().getArtists().length));
+                    "%s: Google Music exporting playlist item in %s : [track title: %s, track isrc: %s]",
+                    jobId, playlistId,
+                    googlePlaylistItem.getTrack().getTitle(),
+                    googlePlaylistItem.getTrack().getIsrc()));
       }
       containerResource = new MusicContainerResource(null, playlistItems, null, null);
     }
