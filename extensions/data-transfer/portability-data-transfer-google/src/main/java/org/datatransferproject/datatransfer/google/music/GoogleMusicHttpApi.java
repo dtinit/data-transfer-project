@@ -35,9 +35,7 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.ArrayMap;
-import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.RateLimiter;
 import com.google.gson.Gson;
@@ -132,8 +130,7 @@ public class GoogleMusicHttpApi {
     params.put(ORIGINAL_PLAYLIST_ID_KEY, playlistId);
     HttpContent content = new JsonHttpContent(jsonFactory, playlistMap);
 
-    // TODO: Update the URL when fixing
-    return makePatchRequest(BASE_URL + "playlists/playlists", Optional.of(params), content,
+    return makePatchRequest(BASE_URL + "playlists/" + playlistId ,Optional.of(params), content,
         GooglePlaylist.class);
   }
 
@@ -171,8 +168,6 @@ public class GoogleMusicHttpApi {
     String result = CharStreams.toString(new InputStreamReader(response.getContent(), UTF_8));
     Gson gson = new Gson();
     return gson.fromJson(result, clazz);
-    // objectMapper.enable(DeserializationFeature.FAIL_ON_READING_DUP_TREE_KEY);
-    // return objectMapper.readValue(result, clazz);
   }
 
   @SuppressWarnings("unchecked")

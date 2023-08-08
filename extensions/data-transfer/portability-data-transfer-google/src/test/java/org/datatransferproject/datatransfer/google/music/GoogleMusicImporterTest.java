@@ -302,7 +302,7 @@ public final class GoogleMusicImporterTest {
     release.setIcpn(releaseIcpn);
     GoogleTrack track = new GoogleTrack();
     track.setIsrc(trackIsrc);
-    track.setDuration(Durations.fromMillis(180000L).toString());
+    track.setDuration(Durations.toString(Durations.fromMillis(180000L)));
     track.setRelease(release);
 
     playlistItem.setTrack(track);

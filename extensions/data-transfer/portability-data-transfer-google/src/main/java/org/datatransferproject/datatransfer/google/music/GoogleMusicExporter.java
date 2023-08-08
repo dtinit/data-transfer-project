@@ -171,22 +171,23 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
 
     if (googlePlaylists != null && googlePlaylists.length > 0) {
       for (GooglePlaylist googlePlaylist : googlePlaylists) {
+        Instant createTime = googlePlaylist.getCreateTime() == null ? null
+            : Instant.parse(googlePlaylist.getCreateTime());
+        Instant updateTime = googlePlaylist.getUpdateTime() == null ? null
+            : Instant.parse(googlePlaylist.getUpdateTime());
         MusicPlaylist musicPlaylist =
             new MusicPlaylist(
                 googlePlaylist.getName().substring(GOOGLE_PLAYLIST_NAME_PREFIX.length()),
                 googlePlaylist.getTitle(),
                 googlePlaylist.getDescription(),
-                // Instant.ofEpochMilli(googlePlaylist.getCreateTime()),
-                // Instant.ofEpochMilli(googlePlaylist.getUpdateTime())
-                Instant.ofEpochMilli(0),
-                Instant.ofEpochMilli(0)
-            );
+                createTime, updateTime);
         playlists.add(musicPlaylist);
 
         monitor.debug(
             () ->
                 String.format(
-                    "%s: Google Music exporting playlist: %s", jobId, musicPlaylist.getId()));
+                    "%s: Google Music exporting playlist: %s %s", jobId, musicPlaylist.getId(),
+                    musicPlaylist.getTimeCreated().toString()));
 
         // Add playlist id to continuation data
         continuationData.addContainerResource(new IdOnlyContainerResource(musicPlaylist.getId()));
@@ -226,7 +227,8 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
         monitor.debug(
             () ->
                 String.format(
-                    "%s: Google Music exporting playlist item in %s : %s", jobId, playlistId, googlePlaylistItem.getTrack().getArtists().length));
+                    "%s: Google Music exporting playlist item in %s : %s", jobId, playlistId,
+                    googlePlaylistItem.getTrack().getArtists().length));
       }
       containerResource = new MusicContainerResource(null, playlistItems, null, null);
     }

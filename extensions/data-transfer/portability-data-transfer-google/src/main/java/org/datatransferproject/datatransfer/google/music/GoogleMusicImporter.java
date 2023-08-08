@@ -132,30 +132,9 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
     GooglePlaylist googlePlaylist = new GooglePlaylist();
     googlePlaylist.setDescription(inputPlaylist.getDescription());
     googlePlaylist.setTitle(inputPlaylist.getTitle());
-    // if (inputPlaylist.getTimeCreated() != null) {
-    //   googlePlaylist.setCreateTime(inputPlaylist.getTimeCreated().toEpochMilli());
-    // }
-    // if (inputPlaylist.getTimeUpdated() != null) {
-    //   googlePlaylist.setUpdateTime(inputPlaylist.getTimeUpdated().toEpochMilli());
-    // }
 
-    try {
-      getOrCreateMusicInterface(jobId, authData)
+    getOrCreateMusicInterface(jobId, authData)
           .createPlaylist(googlePlaylist, inputPlaylist.getId());
-    } catch (IOException e) {
-      if (StringUtils.contains(e.getMessage(), "permanent failure")) {
-        // Permanent Failure: terminate the transfer job and notify the end user
-        // TODO(critical WIP-feature step): Add permanent failures.
-        throw new CopyException("Permanent Failure:", e);
-      } else if (StringUtils.contains(e.getMessage(), "skippable failure")) {
-        // Skippable Failure: we skip this batch and log some data to understand it better
-        // TODO(critical WIP-feature step): Add skippable failures.
-        monitor.info(() -> "Skippable Failure:", e);
-      } else {
-        // Retryable Failure: retry to create the playlist
-        throw e;
-      }
-    }
     return inputPlaylist.getId();
   }
 
