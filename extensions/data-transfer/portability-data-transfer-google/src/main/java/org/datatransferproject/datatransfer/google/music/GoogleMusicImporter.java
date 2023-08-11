@@ -46,6 +46,7 @@ import org.datatransferproject.datatransfer.google.musicModels.NewPlaylistItemRe
 import org.datatransferproject.datatransfer.google.musicModels.Status;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.ItemImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.CopyException;
@@ -134,7 +135,7 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
     googlePlaylist.setTitle(inputPlaylist.getTitle());
 
     getOrCreateMusicInterface(jobId, authData)
-          .createPlaylist(googlePlaylist, inputPlaylist.getId());
+        .createPlaylist(googlePlaylist, inputPlaylist.getId());
     return inputPlaylist.getId();
   }
 
@@ -202,6 +203,7 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
         NewPlaylistItemResult playlistItemResult = responsePlaylistItem.getResults()[i];
         // playlistItemResult should be success or skippable failure.
         // TODO(critical WIP-feature step): Replace it with skippable failure support.
+        // processNewPlaylistItemResult(playlistItems.get(i), playlistItemResult, executor);
         executor.executeAndSwallowIOExceptions(
             playlistItems.get(i).toString(),
             playlistItems.get(i).toString(),
@@ -212,7 +214,8 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
         // Permanent Failure: terminate the transfer job and notify the end user
         // TODO(critical WIP-feature step): Add permanent failures.
         throw new CopyException("Permanent Failure:", e);
-      } else if (StringUtils.contains(e.getMessage(), "skippable failure")) {
+      } else if (StringUtils.contains(e.getMessage(), "invalid argument") || StringUtils.contains(
+          e.getMessage(), "Fail to find track matching")) {
         // Skippable Failure: we skip this batch and log some data to understand it better
         // TODO(critical WIP-feature step): Add skippable failures.
         monitor.info(() -> "Skippable Failure:", e);
@@ -225,16 +228,35 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
     return;
   }
 
-  private String processNewPlaylistItemResult(NewPlaylistItemResult playlistItemResult)
+  private String processNewPlaylistItemResult(
+      NewPlaylistItemResult playlistItemResult)
       throws Exception {
-    Status status = playlistItemResult.getStatus();
-    if (status.getCode() != Code.OK_VALUE) {
-      throw new IOException(
-          String.format(
-              "PlaylistItem could not be created. Code: %d Message: %s",
-              status.getCode(), status.getMessage()));
+    try {
+      if (playlistItemResult.getStatus() != null) {
+        Status status = playlistItemResult.getStatus();
+        if (status.getCode() != Code.OK_VALUE) {
+          throw new IOException(
+              String.format(
+                  "PlaylistItem could not be created. Code: %d Message: %s",
+                  status.getCode(), status.getMessage()));
+        }
+      }
+    } catch (IOException e) {
+      if (StringUtils.contains(e.getMessage(), "permanent failure")) {
+        // Permanent Failure: terminate the transfer job and notify the end user
+        // TODO(critical WIP-feature step): Add permanent failures.
+        throw new CopyException("Permanent Failure:", e);
+      } else if (StringUtils.contains(e.getMessage(), "Fail to find track matching")) {
+        // Skippable Failure: we skip this batch and log some data to understand it better
+        // TODO(critical WIP-feature step): Add skippable failures.
+        monitor.info(() -> "Skippable Failure:", e);
+      } else {
+        // Retryable Failure: retry the playlist item
+        throw e;
+      }
+    } finally {
+      return "";
     }
-    return playlistItemResult.getPlaylistItem().getTrack().getIsrc();
   }
 
   private GoogleArtist[] getArtists(List<MusicGroup> artists) {
