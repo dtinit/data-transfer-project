@@ -130,7 +130,7 @@ public class GoogleMusicHttpApi {
     params.put(ORIGINAL_PLAYLIST_ID_KEY, playlistId);
     HttpContent content = new JsonHttpContent(jsonFactory, playlistMap);
 
-    return makePatchRequest(BASE_URL + "playlists/" + playlistId ,Optional.of(params), content,
+    return makePatchRequest(BASE_URL + "playlists/" + playlistId, Optional.of(params), content,
         GooglePlaylist.class);
   }
 
@@ -166,6 +166,8 @@ public class GoogleMusicHttpApi {
 
     Preconditions.checkState(response.getStatusCode() == 200);
     String result = CharStreams.toString(new InputStreamReader(response.getContent(), UTF_8));
+    // Replace objectMapper with Gson due to limitation of parsing nested object through jackson package.
+    // Please refer to baeldung.com/jackson-nested-values
     Gson gson = new Gson();
     return gson.fromJson(result, clazz);
   }
@@ -222,9 +224,9 @@ public class GoogleMusicHttpApi {
     HttpRequest patchRequest =
         requestFactory.buildPatchRequest(
                 new GenericUrl(baseUrl + "?" + generateParamsString(parameters)), httpContent)
+            // TODO: github.com/googleapis/google-http-java-client/issues/1316
             .setRequestMethod("POST")
             .setHeaders(new HttpHeaders().set("X-HTTP-Method-Override", "PATCH"));
-    ;
     patchRequest.setReadTimeout(2 * 60000); // 2 minutes read timeout
     HttpResponse response;
 
