@@ -215,7 +215,7 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
         // TODO(critical WIP-feature step): Add permanent failures.
         throw new CopyException("Permanent Failure:", e);
       } else if (StringUtils.contains(e.getMessage(), "invalid argument") || StringUtils.contains(
-          e.getMessage(), "Fail to find track matching")) {
+          e.getMessage(), "skippable failure")) {
         // Skippable Failure: we skip this batch and log some data to understand it better
         // TODO(critical WIP-feature step): Add skippable failures.
         monitor.info(() -> "Skippable Failure:", e);
@@ -254,9 +254,8 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
         // Retryable Failure: retry the playlist item
         throw e;
       }
-    } finally {
-      return "";
     }
+    return "";
   }
 
   private GoogleArtist[] getArtists(List<MusicGroup> artists) {
