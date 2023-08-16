@@ -17,13 +17,11 @@
 package org.datatransferproject.datatransfer.google.mail;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.Gmail.Users;
@@ -46,6 +44,7 @@ import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.types.common.models.mail.MailContainerModel;
 import org.datatransferproject.types.common.models.mail.MailContainerResource;
 import org.datatransferproject.types.common.models.mail.MailMessageModel;
+import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -67,13 +66,17 @@ public class GoogleMailImporterTest {
   private static final MailMessageModel MESSAGE_MODEL =
       new MailMessageModel(MESSAGE_RAW, MESSAGE_LABELS);
 
-  private static final String FOLDER_ID = "folder_id1";
+  private static final String FOLDER_ID1 = "folder_id1";
 
-  private static final String FOLDER_NAME = "folder_name1";
+  private static final String FOLDER_NAME1 = "folder_name1";
 
-  private static final MailContainerModel FOLDER1 = new MailContainerModel(FOLDER_ID, FOLDER_NAME);
+  private static final MailContainerModel FOLDER1 = new MailContainerModel(FOLDER_ID1, FOLDER_NAME1);
 
-  private static final MailContainerModel FOLDER2 = new MailContainerModel("folder_id2", "folder_name2");
+  private static final String FOLDER_ID2 = "folder_id2";
+
+  private static final String FOLDER_NAME2 = "folder_name2";
+
+  private static final MailContainerModel FOLDER2 = new MailContainerModel(FOLDER_ID2, FOLDER_NAME2);
 
   private static final List<MailContainerModel> FOLDERS = ImmutableList.of(FOLDER1, FOLDER2);
 
@@ -96,38 +99,34 @@ public class GoogleMailImporterTest {
   private Labels.Create labelsCreate;
   @Mock
   private GoogleCredentialFactory googleCredentialFactory;
-
+  @Mock
+  private GoogleCredentialFactory googleCredentialFactory1;
   private ListLabelsResponse labelsListResponse;
   private GoogleMailImporter googleMailImporter;
+  private GoogleMailImporter googleMailImporter1;
   private IdempotentImportExecutor executor;
 
   @BeforeEach
   public void setUp() throws IOException {
-    Label label = new Label();
-    label.setId(LABEL1);
-    label.setName(LABEL1);
-    labelsListResponse = new ListLabelsResponse().setLabels(Collections.singletonList(label));
 
     Monitor monitor = new Monitor() {
     };
+    Monitor monitor1 = new Monitor() {
+    };
     googleMailImporter = new GoogleMailImporter(googleCredentialFactory, gmail, monitor);
+    googleMailImporter1 = new GoogleMailImporter(googleCredentialFactory1, monitor1);
     executor = new FakeIdempotentImportExecutor();
 
     when(gmail.users()).thenReturn(users);
-    when(users.messages()).thenReturn(messages);
-    when(messages.insert(anyString(), any(Message.class))).thenReturn(insert);
-    when(insert.execute()).thenReturn(new Message().setId("fooBar"));
     when(users.labels()).thenReturn(labels);
     when(labels.list(anyString())).thenReturn(labelsList);
-    when(labelsList.execute()).thenReturn(labelsListResponse);
-    when(labels.create(anyString(), any(Label.class))).thenReturn(labelsCreate);
-    when(labelsCreate.execute()).thenReturn(label);
 
     verifyNoInteractions(googleCredentialFactory);
   }
 
   @Test
   public void importMessageAndLabels() throws Exception {
+    additionalSetup();
     MailContainerResource resource =
         new MailContainerResource(FOLDERS, Collections.singletonList(MESSAGE_MODEL));
 
@@ -144,8 +143,35 @@ public class GoogleMailImporterTest {
 
     ArgumentCaptor<Label> labelArgumentCaptor = ArgumentCaptor.forClass(Label.class);
     verify(labels, times(4)).create(eq(GoogleMailImporter.USER), labelArgumentCaptor.capture());
-    assertThat(labelArgumentCaptor.getValue()).isEqualTo(MESSAGE_LABELS);
+    assertThat(labelArgumentCaptor.getAllValues()).hasSize(4);
+    ImmutableList<String> labelNames = labelArgumentCaptor.getAllValues().stream().map(arg->
+            arg.getName()).collect(ImmutableList.toImmutableList());
+    assertThat(labelNames).
+            containsExactlyElementsIn(ImmutableList.of(LABEL2, FOLDER2.getName(), GoogleMailImporter.LABEL, FOLDER1.getName()));
+  }
 
-    ArgumentCaptor<Folder> folderArgumentCaptor = ArgumentCaptor.forClass(Folder.class);
+  public void additionalSetup() throws IOException {
+    Label label = new Label();
+    label.setId(LABEL1);
+    label.setName(LABEL1);
+    labelsListResponse = new ListLabelsResponse().setLabels(Collections.singletonList(label));
+
+    when(users.messages()).thenReturn(messages);
+    when(messages.insert(anyString(), any(Message.class))).thenReturn(insert);
+    when(insert.execute()).thenReturn(new Message().setId("fooBar"));
+    when(labelsList.execute()).thenReturn(labelsListResponse);
+    when(labels.create(anyString(), any(Label.class))).thenReturn(labelsCreate);
+    when(labelsCreate.execute()).thenReturn(label);
+  }
+  @Test
+  public void runtimeExceptionErrorTest() throws Exception {
+    MailContainerResource resource =
+            new MailContainerResource(FOLDERS, Collections.singletonList(MESSAGE_MODEL));
+
+    when(labelsList.execute()).thenThrow(new IOException("Error"));
+
+    assertThrows(RuntimeException.class, () -> {
+      ImportResult result = googleMailImporter.importItem(JOB_ID, executor, null, resource);
+    });
   }
 }
