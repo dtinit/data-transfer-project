@@ -110,8 +110,6 @@ public class GoogleMailImporterTest {
 
     Monitor monitor = new Monitor() {
     };
-    Monitor monitor1 = new Monitor() {
-    };
     googleMailImporter = new GoogleMailImporter(googleCredentialFactory, gmail, monitor);
     executor = new FakeIdempotentImportExecutor();
 
