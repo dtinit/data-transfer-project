@@ -50,7 +50,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.mail.Folder;
@@ -65,7 +64,7 @@ public class GoogleMailImporterTest {
   private static final String LABEL2 = "label2";
   private static final List<String> MESSAGE_LABELS = ImmutableList.of(LABEL1, LABEL2);
   private static final MailMessageModel MESSAGE_MODEL =
-      new MailMessageModel(MESSAGE_RAW, MESSAGE_LABELS);
+          new MailMessageModel(MESSAGE_RAW, MESSAGE_LABELS);
 
   private static final String FOLDER_ID1 = "folder_id1";
 
@@ -104,7 +103,6 @@ public class GoogleMailImporterTest {
   private GoogleCredentialFactory googleCredentialFactory1;
   private ListLabelsResponse labelsListResponse;
   private GoogleMailImporter googleMailImporter;
-  private GoogleMailImporter googleMailImporter1;
   private IdempotentImportExecutor executor;
 
   @BeforeEach
@@ -115,7 +113,6 @@ public class GoogleMailImporterTest {
     Monitor monitor1 = new Monitor() {
     };
     googleMailImporter = new GoogleMailImporter(googleCredentialFactory, gmail, monitor);
-    googleMailImporter1 = new GoogleMailImporter(googleCredentialFactory1, monitor1);
     executor = new FakeIdempotentImportExecutor();
 
     when(gmail.users()).thenReturn(users);
@@ -129,7 +126,7 @@ public class GoogleMailImporterTest {
   public void importMessageAndLabels() throws Exception {
     additionalSetup();
     MailContainerResource resource =
-        new MailContainerResource(FOLDERS, Collections.singletonList(MESSAGE_MODEL));
+            new MailContainerResource(FOLDERS, Collections.singletonList(MESSAGE_MODEL));
 
     ImportResult result = googleMailImporter.importItem(JOB_ID, executor, null, resource);
 
@@ -143,7 +140,6 @@ public class GoogleMailImporterTest {
     assertThat(messageArgumentCaptor.getValue().getLabelIds()).isEqualTo(MESSAGE_LABELS);
 
     ArgumentCaptor<Label> labelArgumentCaptor = ArgumentCaptor.forClass(Label.class);
-<<<<<<< HEAD
     verify(labels, times(4)).create(eq(GoogleMailImporter.USER), labelArgumentCaptor.capture());
     assertThat(labelArgumentCaptor.getAllValues()).hasSize(4);
     ImmutableList<String> labelNames = labelArgumentCaptor.getAllValues().stream().map(arg->
@@ -175,11 +171,5 @@ public class GoogleMailImporterTest {
     assertThrows(RuntimeException.class, () -> {
       ImportResult result = googleMailImporter.importItem(JOB_ID, executor, null, resource);
     });
-=======
-    verify(labels, Mockito.times(4)).create(eq(GoogleMailImporter.USER), labelArgumentCaptor.capture());
-    assertThat(labelArgumentCaptor.getAllValues()).hasSize(4);
-    assertThat(labelArgumentCaptor.getAllValues().stream().map(arg->arg.getName()).collect(ImmutableList.toImmutableList())).containsExactlyElementsIn(ImmutableList.of("label2","folder_name2","DTP-migrated","folder_name1"));
-
->>>>>>> 338c420f58ee51aebd64d244a7b7b133b872839e
   }
 }
