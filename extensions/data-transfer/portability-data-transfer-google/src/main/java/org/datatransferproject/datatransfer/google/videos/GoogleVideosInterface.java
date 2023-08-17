@@ -280,6 +280,8 @@ public class GoogleVideosInterface {
             throw new UploadErrorException("Upload was terminated because of error", cause);
           } else if (message.contains("invalid_grant")) {
             throw new InvalidTokenException("Token has been expired or revoked", cause);
+          } else if (message.contains("The upload could not be initialized. Unauthorized")) {
+            throw new InvalidTokenException("uploadVideo could not be initialized. Unauthorized", cause);
           }
         }
 
