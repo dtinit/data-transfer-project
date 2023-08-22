@@ -143,7 +143,7 @@ public final class GoogleMusicImporterTest {
     BatchPlaylistItemResponse batchPlaylistItemResponse =
         new BatchPlaylistItemResponse(
             new NewPlaylistItemResult[]{
-                buildPlaylistItemResult("item1_isrc", "r1_icpn", Code.OK_VALUE)
+                buildPlaylistItemResult("item1_isrc", "r1_icpn", Code.OK_VALUE, null)
             });
     when(googleMusicHttpApi.createPlaylistItems(eq(batchPlaylistItemRequest1)))
         .thenReturn(batchPlaylistItemResponse);
@@ -192,12 +192,12 @@ public final class GoogleMusicImporterTest {
     BatchPlaylistItemResponse batchPlaylistItemResponse1 =
         new BatchPlaylistItemResponse(
             new NewPlaylistItemResult[]{
-                buildPlaylistItemResult("item1_isrc", "r1_icpn", Code.OK_VALUE)
+                buildPlaylistItemResult("item1_isrc", "r1_icpn", Code.OK_VALUE, null)
             });
     BatchPlaylistItemResponse batchPlaylistItemResponse2 =
         new BatchPlaylistItemResponse(
             new NewPlaylistItemResult[]{
-                buildPlaylistItemResult("item1_isrc", "r1_icpn", Code.INVALID_ARGUMENT_VALUE)
+                buildPlaylistItemResult("item1_isrc", "r1_icpn", Code.INVALID_ARGUMENT_VALUE, "")
             });
     when(googleMusicHttpApi.createPlaylistItems(eq(batchPlaylistItemRequest1)))
         .thenReturn(batchPlaylistItemResponse1);
@@ -269,8 +269,16 @@ public final class GoogleMusicImporterTest {
                 new CreatePlaylistItemRequest("p1_id", googlePlaylistItem2)),
             "p1_id");
 
+    BatchPlaylistItemResponse batchPlaylistItemResponse =
+        new BatchPlaylistItemResponse(
+            new NewPlaylistItemResult[]{
+                buildPlaylistItemResult("item1_isrc", "r1_icpn", Code.OK_VALUE, null),
+                buildPlaylistItemResult("item2_isrc", "r1_icpn", Code.INVALID_ARGUMENT_VALUE,
+                    "Fail to find track matching")
+            });
+
     when(googleMusicHttpApi.createPlaylistItems(eq(batchPlaylistItemRequest)))
-        .thenThrow(new IOException("skippable failure"));
+        .thenReturn(batchPlaylistItemResponse);
 
     // Run test
     googleMusicImporter.importPlaylistItems(
@@ -311,12 +319,13 @@ public final class GoogleMusicImporterTest {
   }
 
   private NewPlaylistItemResult buildPlaylistItemResult(
-      String trackIsrc, String releaseIcpn, int code) {
+      String trackIsrc, String releaseIcpn, int code, String message) {
     // We do a lot of mocking as building the actual objects would require changing the constructors
     // which messed up deserialization so best to leave them unchanged.
     GooglePlaylistItem playlistItem = buildGooglePlaylistItem(trackIsrc, releaseIcpn);
     Status status = Mockito.mock(Status.class);
     when(status.getCode()).thenReturn(code);
+    when(status.getMessage()).thenReturn(message);
     NewPlaylistItemResult result = Mockito.mock(NewPlaylistItemResult.class);
     when(result.getStatus()).thenReturn(status);
     when(result.getPlaylistItem()).thenReturn(playlistItem);

@@ -196,36 +196,19 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
 
     BatchPlaylistItemRequest batchRequest =
         new BatchPlaylistItemRequest(createPlaylistItemRequests, playlistId);
-    try {
-      BatchPlaylistItemResponse responsePlaylistItem =
-          getOrCreateMusicInterface(jobId, authData).createPlaylistItems(batchRequest);
-      for (int i = 0; i < responsePlaylistItem.getResults().length; i++) {
-        NewPlaylistItemResult playlistItemResult = responsePlaylistItem.getResults()[i];
-        // playlistItemResult should be success or skippable failure.
-        // TODO(critical WIP-feature step): Replace it with skippable failure support.
-        // processNewPlaylistItemResult(playlistItems.get(i), playlistItemResult, executor);
-        executor.executeAndSwallowIOExceptions(
-            playlistItems.get(i).toString(),
-            playlistItems.get(i).toString(),
-            () -> processNewPlaylistItemResult(playlistItemResult));
-      }
-    } catch (IOException e) {
-      if (StringUtils.contains(e.getMessage(), "permanent failure")) {
-        // Permanent Failure: terminate the transfer job and notify the end user
-        // TODO(critical WIP-feature step): Add permanent failures.
-        throw new CopyException("Permanent Failure:", e);
-      } else if (StringUtils.contains(e.getMessage(), "invalid argument") || StringUtils.contains(
-          e.getMessage(), "skippable failure")) {
-        // Skippable Failure: we skip this batch and log some data to understand it better
-        // TODO(critical WIP-feature step): Add skippable failures.
-        monitor.info(() -> "Skippable Failure:", e);
-      } else {
-        // Retryable Failure: retry the batch
-        throw e;
-      }
-    }
 
-    return;
+    BatchPlaylistItemResponse responsePlaylistItem =
+        getOrCreateMusicInterface(jobId, authData).createPlaylistItems(batchRequest);
+    for (int i = 0; i < responsePlaylistItem.getResults().length; i++) {
+      NewPlaylistItemResult playlistItemResult = responsePlaylistItem.getResults()[i];
+      // playlistItemResult should be success or skippable failure.
+      // TODO(critical WIP-feature step): Replace it with skippable failure support.
+      // processNewPlaylistItemResult(playlistItems.get(i), playlistItemResult, executor);
+      executor.executeAndSwallowIOExceptions(
+          playlistItems.get(i).toString(),
+          playlistItems.get(i).toString(),
+          () -> processNewPlaylistItemResult(playlistItemResult));
+    }
   }
 
   private String processNewPlaylistItemResult(
@@ -246,7 +229,8 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
         // Permanent Failure: terminate the transfer job and notify the end user
         // TODO(critical WIP-feature step): Add permanent failures.
         throw new CopyException("Permanent Failure:", e);
-      } else if (StringUtils.contains(e.getMessage(), "Fail to find track matching")) {
+      } else if (StringUtils.contains(e.getMessage(), "Fail to find track matching")
+          || StringUtils.contains(e.getMessage(), "Missing ISRC in playlist item")) {
         // Skippable Failure: we skip this batch and log some data to understand it better
         // TODO(critical WIP-feature step): Add skippable failures.
         monitor.info(() -> "Skippable Failure:", e);
