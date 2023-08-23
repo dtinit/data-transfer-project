@@ -231,12 +231,8 @@ public class GoogleMusicHttpApi {
     } catch (HttpResponseException e) {
       response =
           handleHttpResponseException(
-              () ->
-                  requestFactory.buildPatchRequest(
-                          new GenericUrl(baseUrl + "?" + generateParamsString(parameters)),
-                          httpContent).setRequestMethod("POST")
-                      .setHeaders(new HttpHeaders().set("X-HTTP-Method-Override", "PATCH")),
-              e);
+              () -> buildPatchRequest(requestFactory, baseUrl,
+                  generateParamsString(parameters), httpContent), e);
     }
 
     Preconditions.checkState(response.getStatusCode() == 200);
