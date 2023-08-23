@@ -223,7 +223,6 @@ public class GoogleMusicHttpApi {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory(credential);
     HttpRequest patchRequest = buildPatchRequest(requestFactory, baseUrl,
         generateParamsString(parameters), httpContent);
-    patchRequest.setReadTimeout(2 * 60000); // 2 minutes read timeout
     HttpResponse response;
 
     try {
