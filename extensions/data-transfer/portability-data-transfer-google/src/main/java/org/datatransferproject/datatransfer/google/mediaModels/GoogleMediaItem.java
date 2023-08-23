@@ -17,10 +17,13 @@
 package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Preconditions;
+import java.util.Date;
+import java.util.Optional;
+import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 
-/**
- Media item returned by queries to the Google Photos API.  Represents what is stored by Google.
- */
+/** Media item returned by queries to the Google Photos API. Represents what is stored by Google. */
 public class GoogleMediaItem {
   @JsonProperty("id")
   private String id;
@@ -43,31 +46,118 @@ public class GoogleMediaItem {
   @JsonProperty("productUrl")
   private String productUrl;
 
-  public String getId() { return id; }
+  @JsonProperty("uploadedTime")
+  private Date uploadedTime;
 
-  public String getDescription() { return description; }
+  public boolean isPhoto() {
+    return this.getMediaMetadata().getPhoto() != null;
+  }
+  public boolean isVideo() {
+    return this.getMediaMetadata().getVideo() != null;
+  }
 
-  public String getBaseUrl() { return baseUrl; }
 
-  public String getMimeType() { return mimeType; }
+  public String getFetchableUrl() {
+    if (this.isPhoto()) {
+      return this.getBaseUrl() + "=d";
+    } else if (this.isVideo()) {
+      // dv = download video otherwise you only get a thumbnail
+      return this.getBaseUrl() + "=dv";
+    } else {
+      throw new IllegalArgumentException("unimplemented media type");
+    }
+  }
 
-  public String getFilename() { return filename; }
+  public static VideoModel convertToVideoModel(
+      Optional<String> albumId, GoogleMediaItem mediaItem) {
+    Preconditions.checkArgument(mediaItem.isVideo());
 
+    return new VideoModel(
+        mediaItem.getFilename(),
+        mediaItem.getFetchableUrl(),
+        mediaItem.getDescription(),
+        mediaItem.getMimeType(),
+        mediaItem.getId(),
+        albumId.orElse(null),
+        false /*inTempStore*/,
+        mediaItem.getUploadedTime());
+  }
+
+  public static PhotoModel convertToPhotoModel(
+      Optional<String> albumId, GoogleMediaItem mediaItem) {
+    Preconditions.checkArgument(mediaItem.isPhoto());
+
+    return new PhotoModel(
+        mediaItem.getFilename(),
+        mediaItem.getFetchableUrl(),
+        mediaItem.getDescription(),
+        mediaItem.getMimeType(),
+        mediaItem.getId(),
+        albumId.orElse(null),
+        false  /*inTempStore*/,
+        null  /*sha1*/,
+        mediaItem.getUploadedTime());
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public void setId(String id) {
+    this.id = id;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
+  public String getBaseUrl() {
+    return baseUrl;
+  }
+
+  public void setBaseUrl(String baseUrl) {
+    this.baseUrl = baseUrl;
+  }
+
+  public String getMimeType() {
+    return mimeType;
+  }
+
+  public void setMimeType(String mimeType) {
+    this.mimeType = mimeType;
+  }
+
+  public String getFilename() {
+    return filename;
+  }
+
+  public void setFilename(String filename) {
+    this.filename = filename;
+  }
+
+  // TODO(zacsh) investigate why/if there's no setter for this; do we need setters or does the java
+  // annotation do the work for us somehow?
   public String getProductUrl() {
     return productUrl;
   }
 
-  public MediaMetadata getMediaMetadata() { return mediaMetadata; }
+  public MediaMetadata getMediaMetadata() {
+    return mediaMetadata;
+  }
 
-  public void setDescription(String description) { this.description = description; }
+  public void setMediaMetadata(MediaMetadata mediaMetadata) {
+    this.mediaMetadata = mediaMetadata;
+  }
 
-  public void setBaseUrl(String baseUrl) { this.baseUrl = baseUrl; }
+  public Date getUploadedTime() {
+    return this.uploadedTime;
+  }
 
-  public void setId(String id) { this.id = id; }
-
-  public void setMimeType(String mimeType) { this.mimeType = mimeType; }
-
-  public void setFilename(String filename) { this.filename = filename; }
-
-  public void setMediaMetadata(MediaMetadata mediaMetadata) { this.mediaMetadata = mediaMetadata; }
+  public void setUploadedTime(Date date) {
+    this.uploadedTime = date;
+  }
 }

@@ -58,6 +58,14 @@ public class RetryingCallable<T> implements Callable<T> {
     this.attempts = 0;
   }
 
+  public RetryingCallable(
+      Callable<T> callable,
+      RetryStrategyLibrary retryStrategyLibrary,
+      Clock clock,
+      Monitor monitor) {
+    this(callable, retryStrategyLibrary, clock, monitor, null, null);
+  }
+
   /**
    * Tries to call the {@link Callable} given the class's {@link RetryStrategyLibrary}.
    *
@@ -108,7 +116,11 @@ public class RetryingCallable<T> implements Callable<T> {
           monitor.debug(
               () ->
                   String.format("Strategy canTryAgain returned false after %d retries", attempts));
-          throw new RetryException(attempts, mostRecentException);
+          if (strategy.canSkip()) {
+            throw new RetryException(attempts, mostRecentException, true);
+          } else {
+            throw new RetryException(attempts, mostRecentException);
+          }
         }
       }
     }

@@ -59,22 +59,21 @@ import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 
 /**
  * GoogleMusicHttpApi makes HTTP requests to read and write to the public Google Music's "Music
- * Library" APIs, following its documentation at https://musiclibrary.googleapis.com/DO NOT
- * SUBMIT/TODO(critical WIP-feature step): update the URL when available.
+ * Library" APIs, following its documentation at https://developers.google.com/youtube/mediaconnect.
  *
  * <p>Note that this is the lowest level of Google Music interaction - that is, you probably don't
  * want to use this class and are better off using something like a bit higher level like the Google
  * Music DTP Exporter and Importer instead.
  */
 public class GoogleMusicHttpApi {
-  // TODO(critical WIP-feature step): Update endpoint when available
-  private static final String BASE_URL = "https://musiclibrary.googleapis.com/v1/";
+  private static final String BASE_URL =
+      "https://youtubemediaconnect.googleapis.com/v1/users/me/musicLibrary/";
   private static final int PLAYLIST_PAGE_SIZE = 20;
   private static final int PLAYLIST_ITEM_PAGE_SIZE = 50;
 
   private static final String PAGE_SIZE_KEY = "pageSize";
   private static final String TOKEN_KEY = "pageToken";
-  private static final String PLAYLIST_ID_KEY = "playlistId";
+  private static final String PARENT_KEY = "parent";
   private static final String ORIGINAL_PLAYLIST_ID_KEY = "originalPlaylistId";
   private static final String ACCESS_TOKEN_KEY = "access_token";
 
@@ -114,7 +113,7 @@ public class GoogleMusicHttpApi {
       throws IOException, InvalidTokenException, PermissionDeniedException {
     Map<String, String> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(PLAYLIST_ITEM_PAGE_SIZE));
-    params.put(PLAYLIST_ID_KEY, playlistId);
+    params.put(PARENT_KEY, "playlists/" + playlistId);
     if (pageToken.isPresent()) {
       params.put(TOKEN_KEY, pageToken.get());
     }

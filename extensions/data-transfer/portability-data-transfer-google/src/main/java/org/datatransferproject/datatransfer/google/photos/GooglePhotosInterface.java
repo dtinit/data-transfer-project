@@ -95,7 +95,7 @@ public class GooglePhotosInterface {
   private final GoogleCredentialFactory credentialFactory;
   private final RateLimiter writeRateLimiter;
 
-  GooglePhotosInterface(
+  public GooglePhotosInterface(
       GoogleCredentialFactory credentialFactory,
       Credential credential,
       JsonFactory jsonFactory,
@@ -108,7 +108,7 @@ public class GooglePhotosInterface {
     writeRateLimiter = RateLimiter.create(writesPerSecond);
   }
 
-  AlbumListResponse listAlbums(Optional<String> pageToken)
+  public AlbumListResponse listAlbums(Optional<String> pageToken)
       throws IOException, InvalidTokenException, PermissionDeniedException {
     Map<String, String> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(ALBUM_PAGE_SIZE));
@@ -118,18 +118,18 @@ public class GooglePhotosInterface {
     return makeGetRequest(BASE_URL + "albums", Optional.of(params), AlbumListResponse.class);
   }
 
-  GoogleAlbum getAlbum(String albumId) throws IOException, InvalidTokenException, PermissionDeniedException{
+  public GoogleAlbum getAlbum(String albumId) throws IOException, InvalidTokenException, PermissionDeniedException{
     Map<String, String> params = new LinkedHashMap<>();
     return makeGetRequest(BASE_URL + "albums/" + albumId, Optional.of(params), GoogleAlbum.class);
   }
 
-  GoogleMediaItem getMediaItem(String mediaId) throws IOException, InvalidTokenException, PermissionDeniedException {
+  public GoogleMediaItem getMediaItem(String mediaId) throws IOException, InvalidTokenException, PermissionDeniedException {
     Map<String, String> params = new LinkedHashMap<>();
     return makeGetRequest(BASE_URL + "mediaItems/" + mediaId, Optional.of(params), GoogleMediaItem
         .class);
   }
 
-  MediaItemSearchResponse listMediaItems(Optional<String> albumId, Optional<String> pageToken)
+  public MediaItemSearchResponse listMediaItems(Optional<String> albumId, Optional<String> pageToken)
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     Map<String, Object> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(MEDIA_PAGE_SIZE));
@@ -146,8 +146,8 @@ public class GooglePhotosInterface {
         content, MediaItemSearchResponse.class);
   }
 
-  GoogleAlbum createAlbum(GoogleAlbum googleAlbum)
-      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+  public GoogleAlbum createAlbum(GoogleAlbum googleAlbum)
+          throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     Map<String, Object> albumMap = createJsonMap(googleAlbum);
     Map<String, Object> contentMap = ImmutableMap.of("album", albumMap);
     HttpContent content = new JsonHttpContent(jsonFactory, contentMap);
@@ -156,7 +156,7 @@ public class GooglePhotosInterface {
         GoogleAlbum.class);
   }
 
-  String uploadPhotoContent(InputStream inputStream, @Nullable String sha1)
+  public String uploadMediaContent(InputStream inputStream, @Nullable String sha1)
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     // TODO: add filename
     InputStreamContent content = new InputStreamContent(null, inputStream);
@@ -183,7 +183,7 @@ public class GooglePhotosInterface {
         Optional.of(headers.build()), httpContent, String.class);
   }
 
-  BatchMediaItemResponse createPhotos(NewMediaItemUpload newMediaItemUpload)
+  public BatchMediaItemResponse createPhotos(NewMediaItemUpload newMediaItemUpload)
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     HashMap<String, Object> map = createJsonMap(newMediaItemUpload);
     HttpContent httpContent = new JsonHttpContent(this.jsonFactory, map);
@@ -217,7 +217,7 @@ public class GooglePhotosInterface {
     return objectMapper.readValue(result, clazz);
   }
 
-  <T> T makePostRequest(String url, Optional<Map<String, String>> parameters,
+  public <T> T makePostRequest(String url, Optional<Map<String, String>> parameters,
       Optional<Map<String, String>> extraHeaders, HttpContent httpContent, Class<T> clazz)
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     // Wait for write permit before making request

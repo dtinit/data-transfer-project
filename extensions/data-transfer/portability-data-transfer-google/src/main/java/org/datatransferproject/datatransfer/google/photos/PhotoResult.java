@@ -2,7 +2,7 @@ package org.datatransferproject.datatransfer.google.photos;
 
 import java.io.Serializable;
 
-class PhotoResult implements Serializable {
+public class PhotoResult implements Serializable {
   private String id;
   private Long bytes;
 
