@@ -108,7 +108,7 @@ public class SmugMugMediaImporter
           idempotentExecutor.executeAndSwallowIOExceptions(
               video.getAlbumId() + "-" + video.getDataId(),
               video.getName(),
-              () -> importSinglePhoto(jobId, idempotentExecutor, video, smugMugInterface));
+              () -> importSingleVideo(jobId, idempotentExecutor, video, smugMugInterface));
         }
       }
 
