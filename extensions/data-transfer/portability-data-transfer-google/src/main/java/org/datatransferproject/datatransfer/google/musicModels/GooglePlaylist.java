@@ -35,10 +35,6 @@ public class GooglePlaylist {
   @JsonProperty("updateTime")
   private long updateTime;
 
-  // TODO(critical WIP-feature step): Rename the playlist token after we have final decision
-  @JsonProperty("token")
-  private String token;
-
   public String getName() {
     return name;
   }
@@ -59,10 +55,6 @@ public class GooglePlaylist {
     return updateTime;
   }
 
-  public String getToken() {
-    return token;
-  }
-
   public void setName(String name) {
     this.name = name;
   }
@@ -81,9 +73,5 @@ public class GooglePlaylist {
 
   public void setUpdateTime(long updateTime) {
     this.updateTime = updateTime;
-  }
-
-  public void setToken(String token) {
-    this.token = token;
   }
 }

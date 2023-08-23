@@ -40,6 +40,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GooglePhotosImportUtils;
+import org.datatransferproject.datatransfer.google.common.gphotos.GPhotosUpload;
 import org.datatransferproject.datatransfer.google.mediaModels.BatchMediaItemResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItem;
@@ -77,6 +78,29 @@ public class GooglePhotosImporter
   private final Map<UUID, GooglePhotosInterface> photosInterfacesMap;
   private final GooglePhotosInterface photosInterface;
   private final HashMap<UUID, BaseMultilingualDictionary> multilingualStrings = new HashMap<>();
+  private IdempotentImportExecutor retryingIdempotentExecutor;
+  private Boolean enableRetrying;
+
+  public GooglePhotosImporter(
+      GoogleCredentialFactory credentialFactory,
+      JobStore jobStore,
+      JsonFactory jsonFactory,
+      Monitor monitor,
+      double writesPerSecond,
+      IdempotentImportExecutor retryingIdempotentExecutor,
+      boolean enableRetrying) {
+    this(
+        credentialFactory,
+        jobStore,
+        jsonFactory,
+        new HashMap<>(),
+        null,
+        new ConnectionProvider(jobStore),
+        monitor,
+        writesPerSecond,
+        retryingIdempotentExecutor,
+        enableRetrying);
+  }
 
   public GooglePhotosImporter(
       GoogleCredentialFactory credentialFactory,
@@ -105,6 +129,30 @@ public class GooglePhotosImporter
       ConnectionProvider connectionProvider,
       Monitor monitor,
       double writesPerSecond) {
+    this(
+        credentialFactory,
+        jobStore,
+        jsonFactory,
+        photosInterfacesMap,
+        photosInterface,
+        connectionProvider,
+        monitor,
+        writesPerSecond,
+        null,
+        false);
+  }
+
+  GooglePhotosImporter(
+      GoogleCredentialFactory credentialFactory,
+      JobStore jobStore,
+      JsonFactory jsonFactory,
+      Map<UUID, GooglePhotosInterface> photosInterfacesMap,
+      GooglePhotosInterface photosInterface,
+      ConnectionProvider connectionProvider,
+      Monitor monitor,
+      double writesPerSecond,
+      IdempotentImportExecutor retryingIdempotentExecutor,
+      boolean enableRetrying) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
     this.jsonFactory = jsonFactory;
@@ -113,8 +161,14 @@ public class GooglePhotosImporter
     this.connectionProvider = connectionProvider;
     this.monitor = monitor;
     this.writesPerSecond = writesPerSecond;
+    this.retryingIdempotentExecutor = retryingIdempotentExecutor;
+    this.enableRetrying = enableRetrying;
   }
 
+  // TODO(aksingh737) WARNING: stop maintaining this code here; this needs to be reconciled against
+  // a generic version so we don't have feature/bug development drift against our forks; see the
+  // slowly-progressing effort to factor this code out with small interfaces, over in
+  // GoogleMediaImporter.
   @Override
   public ImportResult importItem(
       UUID jobId,
@@ -126,13 +180,15 @@ public class GooglePhotosImporter
       // Nothing to do
       return ImportResult.OK;
     }
+    IdempotentImportExecutor executor =
+        (retryingIdempotentExecutor != null && enableRetrying) ? retryingIdempotentExecutor : idempotentImportExecutor;
+    GPhotosUpload gPhotosUpload = new GPhotosUpload(jobId, executor, authData);
 
     for (PhotoAlbum album : data.getAlbums()) {
-      idempotentImportExecutor.executeAndSwallowIOExceptions(
+      executor.executeAndSwallowIOExceptions(
           album.getId(), album.getName(), () -> importSingleAlbum(jobId, authData, album));
     }
-
-    long bytes = importPhotos(data.getPhotos(), idempotentImportExecutor, jobId, authData);
+    long bytes = importPhotos(data.getPhotos(), gPhotosUpload);
 
     final ImportResult result = ImportResult.OK;
     return result.copyWithBytes(bytes);
@@ -150,48 +206,13 @@ public class GooglePhotosImporter
     return responseAlbum.getId();
   }
 
-  long importPhotos(
-      Collection<PhotoModel> photos,
-      IdempotentImportExecutor executor,
-      UUID jobId,
-      TokensAndUrlAuthData authData)
+  @VisibleForTesting // TODO(aksingh737,jzacsh) stop exposing this to unit tests
+  public long importPhotos(Collection<PhotoModel> photos, GPhotosUpload gPhotosUpload)
       throws Exception {
-    long bytes = 0L;
-    // Uploads photos
-    if (photos != null && photos.size() > 0) {
-      Map<String, List<PhotoModel>> photosByAlbum =
-          photos.stream()
-              .filter(photo -> !executor.isKeyCached(photo.getIdempotentId()))
-              .collect(Collectors.groupingBy(PhotoModel::getAlbumId));
-
-      for (Entry<String, List<PhotoModel>> albumEntry : photosByAlbum.entrySet()) {
-        String originalAlbumId = albumEntry.getKey();
-        String googleAlbumId;
-        if (Strings.isNullOrEmpty(originalAlbumId)) {
-          // This is ok, since NewMediaItemUpload will ignore all null values and it's possible to
-          // upload a NewMediaItem without a corresponding album id.
-          googleAlbumId = null;
-        } else {
-          // Note this will throw if creating the album failed, which is what we want
-          // because that will also mark this photo as being failed.
-          googleAlbumId = executor.getCachedValue(originalAlbumId);
-        }
-
-        // We partition into groups of 49 as 50 is the maximum number of items that can be created
-        // in one call. (We use 49 to avoid potential off by one errors)
-        // https://developers.google.com/photos/library/guides/upload-media#creating-media-item
-        UnmodifiableIterator<List<PhotoModel>> batches =
-            Iterators.partition(albumEntry.getValue().iterator(), 49);
-        while (batches.hasNext()) {
-          long batchBytes =
-              importPhotoBatch(jobId, authData, batches.next(), executor, googleAlbumId);
-          bytes += batchBytes;
-        }
-      }
-    }
-    return bytes;
+    return gPhotosUpload.uploadItemsViaBatching(photos, this::importPhotoBatch);
   }
 
+  // TODO(aksingh737) WARNING: stop maintaining this code here; use newer GPhotosUpload instead
   private long importPhotoBatch(
       UUID jobId,
       TokensAndUrlAuthData authData,
@@ -213,7 +234,7 @@ public class GooglePhotosImporter
             .getInputStreamForItem(jobId, photo);
 
         try (InputStream s = streamWrapper.getStream()) {
-          String uploadToken = getOrCreatePhotosInterface(jobId, authData).uploadPhotoContent(s,
+          String uploadToken = getOrCreatePhotosInterface(jobId, authData).uploadMediaContent(s,
               photo.getSha1());
           String description = GooglePhotosImportUtils.cleanDescription(photo.getDescription());
           mediaItems.add(new NewMediaItem(description, uploadToken));
