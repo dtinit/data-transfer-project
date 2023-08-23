@@ -207,11 +207,14 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
       executor.executeAndSwallowIOExceptions(
           playlistItems.get(i).toString(),
           playlistItems.get(i).toString(),
-          () -> processNewPlaylistItemResult(playlistItemResult));
+          () -> summarizeNewPlaylistItemResultErrors(playlistItemResult));
     }
   }
 
-  private String processNewPlaylistItemResult(
+  /**
+   * Summarizes result as a human-readable string. Empty string indicates no issues.
+   */
+  private String summarizeNewPlaylistItemResultErrors(
       NewPlaylistItemResult playlistItemResult)
       throws Exception {
     try {
@@ -239,7 +242,7 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
         throw e;
       }
     }
-    return "";
+    return ""; // No errors, so nothing to summarize.
   }
 
   private GoogleArtist[] getArtists(List<MusicGroup> artists) {

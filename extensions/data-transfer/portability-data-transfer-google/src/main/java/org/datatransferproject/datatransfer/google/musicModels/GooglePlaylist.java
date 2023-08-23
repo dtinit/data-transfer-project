@@ -32,12 +32,17 @@ public class GooglePlaylist {
   @JsonProperty("description")
   private String description;
 
-  // In JSON format, the Timestamp type is encoded as a string in the
-  // [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format. That is, the
-  // format is "{year}-{month}-{day}T{hour}:{min}:{sec}[.{frac_sec}]Z".
+  /**
+   * In JSON format, the Timestamp type is encoded as a string in the [RFC
+   * 3339](https://www.ietf.org/rfc/rfc3339.txt) format. That is, the format is
+   * "{year}-{month}-{day}T{hour}:{min}:{sec}[.{frac_sec}]Z".
+   */
   @JsonProperty("createTime")
   private String createTime;
 
+  /**
+   * Time the playlist was last modified in any way. Format identical to {@link createTime}'s.
+   */
   @JsonProperty("updateTime")
   private String updateTime;
 

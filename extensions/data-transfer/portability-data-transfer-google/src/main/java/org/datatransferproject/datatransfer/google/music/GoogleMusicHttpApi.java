@@ -221,12 +221,8 @@ public class GoogleMusicHttpApi {
     writeRateLimiter.acquire();
 
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory(credential);
-    HttpRequest patchRequest =
-        requestFactory.buildPatchRequest(
-                new GenericUrl(baseUrl + "?" + generateParamsString(parameters)), httpContent)
-            // TODO: github.com/googleapis/google-http-java-client/issues/1316
-            .setRequestMethod("POST")
-            .setHeaders(new HttpHeaders().set("X-HTTP-Method-Override", "PATCH"));
+    HttpRequest patchRequest = buildPatchRequest(requestFactory, baseUrl,
+        generateParamsString(parameters), httpContent);
     patchRequest.setReadTimeout(2 * 60000); // 2 minutes read timeout
     HttpResponse response;
 
@@ -319,5 +315,15 @@ public class GoogleMusicHttpApi {
   private interface SupplierWithIO<T> {
 
     T getWithIO() throws IOException;
+  }
+
+  private static HttpRequest buildPatchRequest(HttpRequestFactory requestFactory, String baseUrl,
+      String parameters_string,
+      HttpContent httpContent) throws IOException {
+    return requestFactory.buildPatchRequest(
+            new GenericUrl(baseUrl + "?" + parameters_string), httpContent)
+        // TODO(github.com/googleapis/google-http-java-client/issues/1316) stop using POST for our PATCH requests.
+        .setRequestMethod("POST")
+        .setHeaders(new HttpHeaders().set("X-HTTP-Method-Override", "PATCH"));
   }
 }
