@@ -26,8 +26,8 @@ import java.util.Objects;
 import org.datatransferproject.types.common.models.ContainerResource;
 
 /**
- * Wrapper class for encoding social activity streams based on Activity Stream 2.0
- * (https://www.w3.org/TR/activitystreams-core/)
+ * Wrapper class for encoding social activity streams based on
+ * <a href="https://www.w3.org/TR/activitystreams-core/">Activity Stream 2.0</a>
  *
  * <p>The wrapper is needed to allow DTP to page through large collections of items. DTP doesn't
  * know how to parse SocialActivityModel, only extensions that process social data will understand
@@ -39,7 +39,7 @@ public class SocialActivityContainerResource extends ContainerResource {
 
   private final String id;
   private final Collection<SocialActivityModel> activities;
-  private SocialActivityActor actor;
+  private final SocialActivityActor actor;
 
   @JsonCreator
   public SocialActivityContainerResource(

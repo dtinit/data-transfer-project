@@ -22,10 +22,16 @@ package org.datatransferproject.types.transfer.retry;
 public class RetryException extends Exception {
 
   private final int triesSoFar;
+  private final boolean canSkip;
 
   RetryException(int triesSoFar, Exception exception) {
+    this(triesSoFar, exception, false);
+  }
+
+  RetryException(int triesSoFar, Exception exception, boolean canSkip) {
     super(exception);
     this.triesSoFar = triesSoFar;
+    this.canSkip = canSkip;
   }
 
   @Override
@@ -35,5 +41,9 @@ public class RetryException extends Exception {
 
   public int getTriesSoFar() {
     return triesSoFar;
+  }
+
+  public boolean canSkip() {
+    return canSkip;
   }
 }

@@ -32,6 +32,7 @@ import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.spi.transfer.types.CopyException;
+import org.datatransferproject.transfer.Annotations;
 import org.datatransferproject.transfer.copier.InMemoryDataCopier;
 import org.datatransferproject.transfer.copier.PortabilityAbstractInMemoryDataCopier;
 import org.datatransferproject.types.common.ExportInformation;
@@ -53,6 +54,7 @@ public class PortabilityStackInMemoryDataCopier extends PortabilityAbstractInMem
       Provider<RetryStrategyLibrary> retryStrategyLibraryProvider,
       Monitor monitor,
       IdempotentImportExecutor idempotentImportExecutor,
+      @Annotations.RetryingExecutor IdempotentImportExecutor retryingIdempotentImportExecutor,
       DtpInternalMetricRecorder dtpInternalMetricRecorder,
       JobStore jobStore) {
     super(
@@ -61,6 +63,7 @@ public class PortabilityStackInMemoryDataCopier extends PortabilityAbstractInMem
         retryStrategyLibraryProvider,
         monitor,
         idempotentImportExecutor,
+        retryingIdempotentImportExecutor,
         dtpInternalMetricRecorder,
         jobStore);
   }

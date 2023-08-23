@@ -18,7 +18,11 @@ package org.datatransferproject.transfer.imgur.photos;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static  org.mockito.Mockito.spy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
@@ -26,6 +30,9 @@ import com.google.common.io.Resources;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Optional;
 import java.util.UUID;
 import okhttp3.OkHttpClient;
@@ -57,6 +64,7 @@ public class ImgurPhotoExporterTest {
   private JobStore jobStore = mock(JobStore.class);
   private ImgurPhotosExporter exporter;
   private Monitor monitor = mock(Monitor.class);
+  private URL url = mock(URL.class);
 
   private static final PhotoModel ALBUM_PHOTO_1 = new PhotoModel("photo_1_name",
       "https://i.imgur.com/scGQp3z.jpg",
@@ -100,7 +108,23 @@ public class ImgurPhotoExporterTest {
     server = new MockWebServer();
     server.start();
     exporter =
-        new ImgurPhotosExporter(monitor, client, mapper, jobStore, server.url("").toString());
+        new ImgurPhotosExporter(monitor, client, mapper, jobStore, server.url("").toString(),
+            (urlString) -> {
+              URL u = null;
+              try {
+                u = spy(new URL(urlString));
+              } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+              }
+              HttpURLConnection connection = mock(HttpURLConnection.class);
+              try {
+                doReturn(connection).when(u).openConnection();
+                doNothing().when(connection).connect();
+              } catch (IOException e) {
+                throw new RuntimeException(e);
+              }
+              return u;
+            });
   }
 
   @Test

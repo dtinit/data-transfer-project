@@ -39,6 +39,7 @@ import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.CopyException;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
+import org.datatransferproject.transfer.Annotations;
 import org.datatransferproject.transfer.CallableExporter;
 import org.datatransferproject.transfer.CallableImporter;
 import org.datatransferproject.transfer.CallableSizeCalculator;
@@ -64,6 +65,7 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
 
   protected final Provider<Importer> importerProvider;
   protected final IdempotentImportExecutor idempotentImportExecutor;
+  protected final IdempotentImportExecutor retryingIdempotentImportExecutor;
   protected final Provider<RetryStrategyLibrary> retryStrategyLibraryProvider;
   protected final Monitor monitor;
   protected final DtpInternalMetricRecorder metricRecorder;
@@ -75,6 +77,7 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
       Provider<RetryStrategyLibrary> retryStrategyLibraryProvider,
       Monitor monitor,
       IdempotentImportExecutor idempotentImportExecutor,
+      @Annotations.RetryingExecutor IdempotentImportExecutor retryingIdempotentImportExecutor,
       DtpInternalMetricRecorder dtpInternalMetricRecorder,
       JobStore jobStore) {
     this.exporterProvider = exporterProvider;
@@ -82,6 +85,7 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
     this.retryStrategyLibraryProvider = retryStrategyLibraryProvider;
     this.monitor = monitor;
     this.idempotentImportExecutor = idempotentImportExecutor;
+    this.retryingIdempotentImportExecutor = retryingIdempotentImportExecutor;
     this.metricRecorder = dtpInternalMetricRecorder;
     this.jobStore = jobStore;
   }
@@ -100,6 +104,7 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
   @Override
   public Collection<ErrorDetail> getErrors(UUID jobId) {
     idempotentImportExecutor.setJobId(jobId);
+    retryingIdempotentImportExecutor.setJobId(jobId);
     return idempotentImportExecutor.getErrors();
   }
 
