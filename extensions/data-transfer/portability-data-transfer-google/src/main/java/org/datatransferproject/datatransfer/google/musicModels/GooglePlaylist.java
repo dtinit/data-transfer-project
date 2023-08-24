@@ -18,8 +18,11 @@ package org.datatransferproject.datatransfer.google.musicModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/** Class representing a playlist as returned by the Google Music API. */
+/**
+ * Class representing a playlist as returned by the Google Music API.
+ */
 public class GooglePlaylist {
+
   @JsonProperty("name")
   private String name;
 
@@ -29,11 +32,19 @@ public class GooglePlaylist {
   @JsonProperty("description")
   private String description;
 
+  /**
+   * In JSON format, the Timestamp type is encoded as a string in the [RFC
+   * 3339](https://www.ietf.org/rfc/rfc3339.txt) format. That is, the format is
+   * "{year}-{month}-{day}T{hour}:{min}:{sec}[.{frac_sec}]Z".
+   */
   @JsonProperty("createTime")
-  private long createTime;
+  private String createTime;
 
+  /**
+   * Time the playlist was last modified in any way. Format identical to {@link createTime}'s.
+   */
   @JsonProperty("updateTime")
-  private long updateTime;
+  private String updateTime;
 
   public String getName() {
     return name;
@@ -47,11 +58,11 @@ public class GooglePlaylist {
     return description;
   }
 
-  public long getCreateTime() {
+  public String getCreateTime() {
     return createTime;
   }
 
-  public long getUpdateTime() {
+  public String getUpdateTime() {
     return updateTime;
   }
 
@@ -67,11 +78,11 @@ public class GooglePlaylist {
     this.description = description;
   }
 
-  public void setCreateTime(long createTime) {
+  public void setCreateTime(String createTime) {
     this.createTime = createTime;
   }
 
-  public void setUpdateTime(long updateTime) {
+  public void setUpdateTime(String updateTime) {
     this.updateTime = updateTime;
   }
 }

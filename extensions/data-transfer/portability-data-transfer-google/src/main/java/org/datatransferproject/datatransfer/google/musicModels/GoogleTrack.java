@@ -17,10 +17,14 @@
 package org.datatransferproject.datatransfer.google.musicModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.protobuf.util.Durations;
+import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Objects;
 
-/** Represents a track (eg: a song) as returned by the Google Music API. */
+/**
+ * Represents a track (eg: a song) as returned by the Google Music API.
+ */
 public class GoogleTrack {
 
   @JsonProperty("isrc")
@@ -35,8 +39,10 @@ public class GoogleTrack {
   @JsonProperty("artists")
   private GoogleArtist[] artists;
 
-  @JsonProperty("durationMillis")
-  private long durationMillis;
+  // Json format of google.protobuf.Duration is encoded as a string ends in the suffix "s".
+  // 3 seconds and 1 microsecond should be expressed in JSON format as "3.000001s".
+  @JsonProperty("duration")
+  private String duration;
 
   public String getIsrc() {
     return isrc;
@@ -54,8 +60,15 @@ public class GoogleTrack {
     return artists;
   }
 
-  public long getDurationMillis() {
-    return durationMillis;
+  public String getDuration() {
+    return duration;
+  }
+
+  public long convertDurationToMillions() throws ParseException {
+    if (this.duration == null || this.duration.isEmpty()) {
+      return 0L;
+    }
+    return Durations.toMillis(Durations.parse(duration));
   }
 
   public void setIsrc(String isrc) {
@@ -74,8 +87,8 @@ public class GoogleTrack {
     this.artists = artists;
   }
 
-  public void setDurationMillis(long durationMillis) {
-    this.durationMillis = durationMillis;
+  public void setDuration(String duration) {
+    this.duration = duration;
   }
 
   @Override
@@ -91,7 +104,7 @@ public class GoogleTrack {
         && Objects.equals(release, that.release)
         && Objects.equals(title, that.title)
         && Arrays.equals(artists, that.artists)
-        && durationMillis == that.durationMillis;
+        && Objects.equals(duration, that.duration);
   }
 
   @Override
@@ -101,6 +114,6 @@ public class GoogleTrack {
         getRelease(),
         getTitle(),
         Arrays.hashCode(getArtists()),
-        getDurationMillis());
+        getDuration());
   }
 }
