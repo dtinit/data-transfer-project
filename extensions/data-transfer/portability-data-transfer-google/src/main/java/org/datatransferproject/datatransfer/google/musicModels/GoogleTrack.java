@@ -79,7 +79,7 @@ public class GoogleTrack {
     this.release = release;
   }
 
-  public void setTitle(String trackTitle) {
+  public void setTitle(String title) {
     this.title = title;
   }
 

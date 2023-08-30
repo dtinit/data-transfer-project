@@ -258,7 +258,7 @@ public class GoogleMusicHttpApi {
 
       // if the second attempt throws an error, then something else is wrong, and we bubble up the
       // response errors
-      return httpRequest.getWithIO().execute();
+      return httpRequest.getWithIo().execute();
     }
 
     if (statusCode == 403) {
@@ -309,14 +309,14 @@ public class GoogleMusicHttpApi {
 
   private interface SupplierWithIO<T> {
 
-    T getWithIO() throws IOException;
+    T getWithIo() throws IOException;
   }
 
   private static HttpRequest buildPatchRequest(HttpRequestFactory requestFactory, String baseUrl,
-      String parameters_string,
+      String parametersString,
       HttpContent httpContent) throws IOException {
     return requestFactory.buildPatchRequest(
-            new GenericUrl(baseUrl + "?" + parameters_string), httpContent)
+            new GenericUrl(baseUrl + "?" + parametersString), httpContent)
         // TODO(github.com/googleapis/google-http-java-client/issues/1316) stop using POST for our PATCH requests.
         .setRequestMethod("POST")
         .setHeaders(new HttpHeaders().set("X-HTTP-Method-Override", "PATCH"));
