@@ -22,7 +22,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.IOException;
 import java.text.ParseException;
 import java.time.Instant;
@@ -56,6 +55,7 @@ import org.datatransferproject.types.common.models.music.MusicPlaylistItem;
 import org.datatransferproject.types.common.models.music.MusicRecording;
 import org.datatransferproject.types.common.models.music.MusicRelease;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+import javax.annotation.Nullable;
 
 public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, MusicContainerResource> {
 
@@ -256,7 +256,7 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
     return 0;
   }
 
-  private List<MusicGroup> createMusicGroups(GoogleArtist[] artists) {
+  private @Nullable List<MusicGroup> createMusicGroups(GoogleArtist[] artists) {
     if (artists == null) {
       return null;
     }
@@ -268,8 +268,7 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
   }
 
   private MusicPlaylistItem convertPlaylistItem(
-      String playlistId, GooglePlaylistItem googlePlaylistItem)
-      throws InvalidProtocolBufferException, ParseException {
+      String playlistId, GooglePlaylistItem googlePlaylistItem) throws ParseException {
     GoogleTrack track = googlePlaylistItem.getTrack();
     GoogleRelease release = track.getRelease();
     return new MusicPlaylistItem(

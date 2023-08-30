@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
@@ -44,14 +45,10 @@ import org.datatransferproject.datatransfer.google.musicModels.GoogleRelease;
 import org.datatransferproject.datatransfer.google.musicModels.GoogleTrack;
 import org.datatransferproject.datatransfer.google.musicModels.NewPlaylistItemResult;
 import org.datatransferproject.datatransfer.google.musicModels.Status;
-import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
-import org.datatransferproject.spi.transfer.idempotentexecutor.ItemImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.CopyException;
-import org.datatransferproject.spi.transfer.types.InvalidTokenException;
-import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.types.common.models.music.MusicContainerResource;
 import org.datatransferproject.types.common.models.music.MusicGroup;
 import org.datatransferproject.types.common.models.music.MusicPlaylist;
@@ -245,7 +242,7 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
     return ""; // No errors, so nothing to summarize.
   }
 
-  private GoogleArtist[] getArtists(List<MusicGroup> artists) {
+  private @Nullable GoogleArtist[] getArtists(List<MusicGroup> artists) {
     if (artists == null || artists.isEmpty()) {
       return null;
     }
