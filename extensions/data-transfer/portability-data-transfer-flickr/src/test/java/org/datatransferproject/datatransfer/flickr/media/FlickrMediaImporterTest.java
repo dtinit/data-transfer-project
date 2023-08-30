@@ -34,6 +34,7 @@ import com.flickr4java.flickr.photosets.PhotosetsInterface;
 import com.flickr4java.flickr.uploader.UploadMetaData;
 import com.flickr4java.flickr.uploader.Uploader;
 
+import com.github.scribejava.core.model.OAuth1Token;
 import java.io.BufferedInputStream;
 import java.util.Collections;
 import java.util.List;
@@ -130,7 +131,7 @@ public class FlickrMediaImporterTest {
 
         // Setup Mock
         when(user.getId()).thenReturn("userId");
-        when(authInterface.checkToken(any(Token.class))).thenReturn(auth);
+        when(authInterface.checkToken(any(OAuth1Token.class))).thenReturn(auth);
 
         when(flickr.getPhotosetsInterface()).thenReturn(photosetsInterface);
         when(flickr.getUploader()).thenReturn(uploader);
