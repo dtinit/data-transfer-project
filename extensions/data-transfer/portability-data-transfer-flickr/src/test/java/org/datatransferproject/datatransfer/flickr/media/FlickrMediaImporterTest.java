@@ -54,7 +54,6 @@ import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.scribe.model.Token;
 
 public class FlickrMediaImporterTest {
     private static final String ALBUM_ID = "Album ID";
