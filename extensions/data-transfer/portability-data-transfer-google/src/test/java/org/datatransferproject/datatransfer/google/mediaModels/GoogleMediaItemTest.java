@@ -1,16 +1,14 @@
 package org.datatransferproject.datatransfer.google.mediaModels;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.util.Date;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.junit.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import java.util.Map;
 public class GoogleMediaItemTest {
 
   @Test
@@ -30,6 +28,7 @@ public class GoogleMediaItemTest {
       photoMediaItem.setFilename(entry.getKey().toString());
 
       PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem);
+
       assertEquals(entry.getValue(), photoModel.getMimeType());
     }
   }
@@ -50,6 +49,7 @@ public class GoogleMediaItemTest {
       videoMediaItem.setFilename(entry.getKey().toString());
 
       VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem);
+
       assertEquals(entry.getValue(), videoModel.getMimeType());
     }
   }
@@ -96,6 +96,7 @@ public class GoogleMediaItemTest {
 
     VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem);
 
+    // Default defined in GoogleMediaItem
     assertEquals("video/mp4", videoModel.getMimeType());
   }
 
