@@ -122,7 +122,7 @@ public class GoogleMediaItem {
     return DEFAULT_VIDEO_MIMETYPE;
   }
 
-  // Guesses the mimetype frm the filename, or returns null on failure.
+  // Guesses the mimetype from the filename, or returns null on failure.
   private static String guessMimeTypeFromFilename(String filename) {
     try {
       return Files.probeContentType(new File(filename).toPath());
