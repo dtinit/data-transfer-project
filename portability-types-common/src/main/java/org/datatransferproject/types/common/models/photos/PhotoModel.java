@@ -28,7 +28,6 @@ import javax.annotation.Nullable;
 import org.datatransferproject.types.common.DownloadableFile;
 
 public class PhotoModel implements DownloadableFile {
-
   private String title;
   private final String fetchableUrl;
   private final String description;
