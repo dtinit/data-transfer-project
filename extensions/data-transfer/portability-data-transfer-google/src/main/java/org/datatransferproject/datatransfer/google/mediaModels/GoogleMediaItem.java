@@ -116,9 +116,10 @@ public class GoogleMediaItem {
       return mediaItem.getMimeType();
     }
 
-    if (mediaItem.isPhoto()) { return DEFAULT_PHOTO_MIMETYPE; }
+    if (mediaItem.isPhoto()) {
+      return DEFAULT_PHOTO_MIMETYPE;
+    }
     return DEFAULT_VIDEO_MIMETYPE;
-
   }
 
   // Guesses the mimetype frm the filename, or returns null on failure.
