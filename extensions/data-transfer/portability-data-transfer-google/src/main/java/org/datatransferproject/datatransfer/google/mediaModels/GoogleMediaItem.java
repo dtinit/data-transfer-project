@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Date;
 import java.util.Optional;
@@ -127,7 +126,7 @@ public class GoogleMediaItem {
   private static String guessMimeTypeFromFilename(String filename) {
     try {
       return Files.probeContentType(new File(filename).toPath());
-    } catch (IOException e) {
+    } catch (Exception e) {
       return null;
     }
   }
