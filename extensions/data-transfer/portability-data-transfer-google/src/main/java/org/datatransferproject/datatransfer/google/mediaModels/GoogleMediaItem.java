@@ -18,6 +18,7 @@ package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -108,11 +109,11 @@ public class GoogleMediaItem {
 
   private static String getMimeType(GoogleMediaItem mediaItem) {
     String guessedMimetype = guessMimeTypeFromFilename(mediaItem.getFilename());
-    if (guessedMimetype != null) {
+    if (!Strings.isNullOrEmpty(guessedMimetype)) {
       return guessedMimetype;
     }
 
-    if (mediaItem.getMimeType() != null) {
+    if (!Strings.isNullOrEmpty(mediaItem.getMimeType())) {
       return mediaItem.getMimeType();
     }
 

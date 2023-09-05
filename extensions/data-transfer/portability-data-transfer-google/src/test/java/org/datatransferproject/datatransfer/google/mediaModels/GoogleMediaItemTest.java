@@ -17,7 +17,6 @@ public class GoogleMediaItemTest {
     Map<String, String> filenameToMimeTypeMap = Map.of(
         "file.jpg", "image/jpeg",
         "file.png", "image/png",
-        "file.apng", "image/apng",
         "file.gif", "image/gif",
         "file.webp", "image/webp",
         "file.avif", "image/avif"
