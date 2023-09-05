@@ -44,7 +44,7 @@ import org.datatransferproject.transfer.photobucket.model.response.rest.UserStat
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.videos.VideoAlbum;
-import org.datatransferproject.types.common.models.videos.VideoObject;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 
 import javax.annotation.Nullable;
 import java.io.BufferedInputStream;
@@ -146,7 +146,7 @@ public class PhotobucketClient {
     }
   }
 
-  public ProcessingResult uploadVideo(VideoObject videoModel)
+  public ProcessingResult uploadVideo(VideoModel videoModel)
       throws CopyExceptionWithFailureReason {
     String albumId = videoModel.getAlbumId() == null ? jobId.toString() : videoModel.getAlbumId();
     MediaModel mediaModel =
