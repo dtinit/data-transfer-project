@@ -34,6 +34,8 @@ public class Photo {
   @JsonProperty("apertureFNumber")
   private double apertureFNumber;
 
+  //first changelist
+
   @JsonProperty("isoEquivalent")
   private double isoEquivalent;
 
