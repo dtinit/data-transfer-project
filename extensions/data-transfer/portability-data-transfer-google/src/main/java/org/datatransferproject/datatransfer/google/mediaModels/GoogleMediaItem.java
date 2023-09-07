@@ -18,6 +18,9 @@ package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import java.io.File;
+import java.nio.file.Files;
 import java.util.Date;
 import java.util.Optional;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
@@ -25,6 +28,10 @@ import org.datatransferproject.types.common.models.videos.VideoModel;
 
 /** Media item returned by queries to the Google Photos API. Represents what is stored by Google. */
 public class GoogleMediaItem {
+
+  private final static String DEFAULT_PHOTO_MIMETYPE = "image/jpg";
+  private final static String DEFAULT_VIDEO_MIMETYPE = "video/mp4";
+
   @JsonProperty("id")
   private String id;
 
@@ -76,7 +83,7 @@ public class GoogleMediaItem {
         mediaItem.getFilename(),
         mediaItem.getFetchableUrl(),
         mediaItem.getDescription(),
-        mediaItem.getMimeType(),
+        getMimeType(mediaItem),
         mediaItem.getId(),
         albumId.orElse(null),
         false /*inTempStore*/,
@@ -91,12 +98,37 @@ public class GoogleMediaItem {
         mediaItem.getFilename(),
         mediaItem.getFetchableUrl(),
         mediaItem.getDescription(),
-        mediaItem.getMimeType(),
+        getMimeType(mediaItem),
         mediaItem.getId(),
         albumId.orElse(null),
         false  /*inTempStore*/,
         null  /*sha1*/,
         mediaItem.getUploadedTime());
+  }
+
+  private static String getMimeType(GoogleMediaItem mediaItem) {
+    String guessedMimetype = guessMimeTypeFromFilename(mediaItem.getFilename());
+    if (!Strings.isNullOrEmpty(guessedMimetype)) {
+      return guessedMimetype;
+    }
+
+    if (!Strings.isNullOrEmpty(mediaItem.getMimeType())) {
+      return mediaItem.getMimeType();
+    }
+
+    if (mediaItem.isPhoto()) {
+      return DEFAULT_PHOTO_MIMETYPE;
+    }
+    return DEFAULT_VIDEO_MIMETYPE;
+  }
+
+  // Guesses the mimetype from the filename, or returns null on failure.
+  private static String guessMimeTypeFromFilename(String filename) {
+    try {
+      return Files.probeContentType(new File(filename).toPath());
+    } catch (Exception e) {
+      return null;
+    }
   }
 
   public String getId() {
