@@ -78,14 +78,14 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 /**
  * Upload content to the Google Photos servers' APIs - be it photos, video, etc.
  *
- * APIs offered aim to be agnostic to file types, and try to be the general wrapper for all upload
- * needs for the Photos SDKs, is in contrast to the predecessors used in the DTP codebase like
- * {@link PhotosLibraryClient} or {@link GooglePhotosInterface} which are each used and/or managed
- * for a specific use-case and we hope to delete in favor of classes in this package.
+ * <p>APIs offered aim to be agnostic to file types, and try to be the general wrapper for all
+ * upload needs for the Photos SDKs, is in contrast to the predecessors used in the DTP codebase
+ * like {@link PhotosLibraryClient} or {@link GooglePhotosInterface} which are each used and/or
+ * managed for a specific use-case and we hope to delete in favor of classes in this package.
  *
- * WARNING: this should be constructed PER request so as to not conflate job IDs or auth data across
- * processes. That is: do NOT cache an instance of this object across your requests, say by storing
- * the instance as a member of your adapter's Importer or Exporter implementations.
+ * <p>WARNING: this should be constructed PER request so as to not conflate job IDs or auth data
+ * across processes. That is: do NOT cache an instance of this object across your requests, say by
+ * storing the instance as a member of your adapter's Importer or Exporter implementations.
  */
 // TODO(aksingh737,jzacsh) finish refactoring Google{Photos,Video,Media}{Importer,Exporter} classes
 // so they're not all drifting-forks of each other, and instead share code with the help of small
@@ -107,9 +107,7 @@ public class GPhotosUpload {
    * storing the instance as a member of your adapter's Importer or Exporter implementations.
    */
   public GPhotosUpload(
-      UUID jobId,
-      IdempotentImportExecutor executor,
-      TokensAndUrlAuthData authData) {
+      UUID jobId, IdempotentImportExecutor executor, TokensAndUrlAuthData authData) {
     this.jobId = jobId;
     this.executor = executor;
     this.authData = authData;
@@ -118,28 +116,29 @@ public class GPhotosUpload {
   /**
    * Imports all `items` by fanning out to `batchImporter` upload calls as specified by the.
    *
-   * Returns the number of uploaded bytes, as summed across all `items` that were uploaded.
+   * <p>Returns the number of uploaded bytes, as summed across all `items` that were uploaded.
    */
   // TODO(aksingh737,jzacsh) WARNING: delete the duplicated GooglePhotosImporter code by pulling
   // this out of Media into a new GphotoMedia class that exposes these methods for _both_
   // GoogleMediaImporter _and_ GooglePhotosImporter to use.
   public <T extends DownloadableFile> long uploadItemsViaBatching(
-      Collection<T> items,
-      ItemBatchUploader<T> importer)
-      throws Exception {
+      Collection<T> items, ItemBatchUploader<T> importer) throws Exception {
     long bytes = 0L;
     if (items == null || items.size() <= 0) {
       return bytes;
     }
     Map<String, List<T>> itemsByAlbumId =
         items.stream()
-            .filter(item -> !executor.isKeyCached(item.getIdempotentId()) && item.getFolderId() != null)
+            .filter(
+                item -> !executor.isKeyCached(item.getIdempotentId()) && item.getFolderId() != null)
             .collect(Collectors.groupingBy(DownloadableFile::getFolderId));
     // Null album-id items get sent here into the empty string key
-    itemsByAlbumId.put("", items.stream()
-        .filter(item -> !executor.isKeyCached(item.getIdempotentId())
-            && item.getFolderId() == null)
-        .collect(Collectors.toList()));
+    itemsByAlbumId.put(
+        "",
+        items.stream()
+            .filter(
+                item -> !executor.isKeyCached(item.getIdempotentId()) && item.getFolderId() == null)
+            .collect(Collectors.toList()));
 
     for (Entry<String, List<T>> albumEntry : itemsByAlbumId.entrySet()) {
       String originalAlbumId = albumEntry.getKey();
@@ -155,8 +154,7 @@ public class GPhotosUpload {
       }
 
       UnmodifiableIterator<List<T>> batches =
-          Iterators.partition(albumEntry.getValue().iterator(),
-              BATCH_UPLOAD_SIZE);
+          Iterators.partition(albumEntry.getValue().iterator(), BATCH_UPLOAD_SIZE);
 
       while (batches.hasNext()) {
         long batchBytes =
@@ -184,6 +182,7 @@ public class GPhotosUpload {
         TokensAndUrlAuthData authData,
         List<T> batch,
         IdempotentImportExecutor executor,
-        String targetAlbumId) throws Exception;
+        String targetAlbumId)
+        throws Exception;
   }
 }
