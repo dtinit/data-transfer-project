@@ -133,8 +133,13 @@ public class GPhotosUpload {
     }
     Map<String, List<T>> itemsByAlbumId =
         items.stream()
-            .filter(item -> !executor.isKeyCached(item.getIdempotentId()))
+            .filter(item -> !executor.isKeyCached(item.getIdempotentId()) && item.getFolderId() != null)
             .collect(Collectors.groupingBy(DownloadableFile::getFolderId));
+    // Null album-id items get sent here into the empty string key
+    itemsByAlbumId.put("", items.stream()
+        .filter(item -> !executor.isKeyCached(item.getIdempotentId())
+            && item.getFolderId() == null)
+        .collect(Collectors.toList()));
 
     for (Entry<String, List<T>> albumEntry : itemsByAlbumId.entrySet()) {
       String originalAlbumId = albumEntry.getKey();
@@ -151,7 +156,7 @@ public class GPhotosUpload {
 
       UnmodifiableIterator<List<T>> batches =
           Iterators.partition(albumEntry.getValue().iterator(),
-          BATCH_UPLOAD_SIZE);
+              BATCH_UPLOAD_SIZE);
 
       while (batches.hasNext()) {
         long batchBytes =
