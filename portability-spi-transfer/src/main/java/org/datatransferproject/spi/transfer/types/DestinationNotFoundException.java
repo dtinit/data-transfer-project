@@ -14,30 +14,19 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.datatransfer.apple.exceptions;
+package org.datatransferproject.spi.transfer.types;
 
 import javax.annotation.Nonnull;
-import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
-import org.jetbrains.annotations.NotNull;
 
-/**
- * A generic Exception for all Apple Transfer HTTP APIs.
- */
-public class AppleHttpException extends CopyExceptionWithFailureReason {
-  private final int responseStatus;
+public class DestinationNotFoundException extends CopyExceptionWithFailureReason{
 
-  public AppleHttpException(@NotNull final String message, @NotNull final Throwable cause, @NotNull final int responseStatus) {
+  public DestinationNotFoundException(String message, Throwable cause) {
     super(message, cause);
-    this.responseStatus = responseStatus;
-  }
-
-  public int getResponseStatus() {
-    return responseStatus;
   }
 
   @Nonnull
   @Override
   public String getFailureReason() {
-    return getMessage();
+    return FailureReasons.DESTINATION_NOT_FOUND.toString();
   }
 }
