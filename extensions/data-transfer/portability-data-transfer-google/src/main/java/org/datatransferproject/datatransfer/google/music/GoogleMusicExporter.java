@@ -281,7 +281,7 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
                 release.getTitle(),
                 createMusicGroups(release.getArtists())),
             createMusicGroups(track.getArtists()), false),
-        // TODO: Add explicit flag to GooglePlaylistItem
+        // TODO(critical WIP-feature step): Add explicit flag to GooglePlaylistItem
         playlistId,
         googlePlaylistItem.getOrder());
   }
