@@ -32,6 +32,7 @@ public class MusicRecording {
   private final long durationMillis;
   private final MusicRelease musicRelease;
   private final List<MusicGroup> byArtists;
+  private final boolean isExplicit;
 
   @JsonCreator
   public MusicRecording(
@@ -39,12 +40,14 @@ public class MusicRecording {
       @JsonProperty("title") String title,
       @JsonProperty("durationMillis") long durationMillis,
       @JsonProperty("musicRelease") MusicRelease musicRelease,
-      @JsonProperty("byArtists") List<MusicGroup> byArtists) {
+      @JsonProperty("byArtists") List<MusicGroup> byArtists,
+      @JsonProperty("isExplicit") boolean isExplicit) {
     this.isrcCode = isrcCode;
     this.title = title;
     this.durationMillis = durationMillis;
     this.musicRelease = musicRelease;
     this.byArtists = byArtists;
+    this.isExplicit = isExplicit;
   }
 
   public String getIsrcCode() {
@@ -67,6 +70,11 @@ public class MusicRecording {
     return byArtists;
   }
 
+  /* Whether the Music entity contains objectionable language, according to the providing adapter's service policies. */
+  public boolean getIsExplicit() {
+    return isExplicit;
+  }
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -75,6 +83,7 @@ public class MusicRecording {
         .add("durationMillis", getDurationMillis())
         .add("musicRelease", getMusicRelease())
         .add("byArtists", getByArtists())
+        .add("isExplicit", getIsExplicit())
         .toString();
   }
 
@@ -91,11 +100,12 @@ public class MusicRecording {
         && Objects.equals(title, that.title)
         && Objects.equals(durationMillis, that.durationMillis)
         && Objects.equals(musicRelease, that.musicRelease)
-        && Objects.equals(byArtists, that.byArtists);
+        && Objects.equals(byArtists, that.byArtists)
+        && Objects.equals(isExplicit, that.isExplicit);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(isrcCode, title, durationMillis, musicRelease, byArtists);
+    return Objects.hash(isrcCode, title, durationMillis, musicRelease, byArtists, isExplicit);
   }
 }
