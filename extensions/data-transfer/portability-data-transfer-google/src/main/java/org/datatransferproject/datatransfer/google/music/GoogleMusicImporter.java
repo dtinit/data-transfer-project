@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
@@ -245,7 +246,7 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
     return ""; // No errors, so nothing to summarize.
   }
 
-  private GoogleArtist[] getArtists(List<MusicGroup> artists) {
+  private @Nullable GoogleArtist[] getArtists(List<MusicGroup> artists) {
     if (artists == null || artists.isEmpty()) {
       return null;
     }
