@@ -32,8 +32,6 @@ public class MusicRecording {
   private final long durationMillis;
   private final MusicRelease musicRelease;
   private final List<MusicGroup> byArtists;
-
-  // Whether the Music entity contains objectionable language.
   private final boolean isExplicit;
 
   @JsonCreator
@@ -72,6 +70,7 @@ public class MusicRecording {
     return byArtists;
   }
 
+  /* Whether the Music entity contains objectionable language, according to the providing adapter's service policies. */
   public boolean getIsExplicit() {
     return isExplicit;
   }
