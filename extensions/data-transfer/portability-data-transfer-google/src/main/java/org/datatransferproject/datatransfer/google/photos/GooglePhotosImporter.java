@@ -183,10 +183,16 @@ public class GooglePhotosImporter
     IdempotentImportExecutor executor =
         (retryingIdempotentExecutor != null && enableRetrying) ? retryingIdempotentExecutor : idempotentImportExecutor;
     GPhotosUpload gPhotosUpload = new GPhotosUpload(jobId, executor, authData);
-
     for (PhotoAlbum album : data.getAlbums()) {
-      executor.executeAndSwallowIOExceptions(
-          album.getId(), album.getName(), () -> importSingleAlbum(jobId, authData, album));
+      try {
+        executor.executeAndSwallowIOExceptions(
+            album.getId(), album.getName(), () -> importSingleAlbum(jobId, authData, album));
+      } catch (Exception e) {
+        monitor.info(
+            () ->
+                format("Error caught and ignored, %s", e)
+        );
+      }
     }
     long bytes = importPhotos(data.getPhotos(), gPhotosUpload);
 
@@ -200,7 +206,9 @@ public class GooglePhotosImporter
     // Set up album
     GoogleAlbum googleAlbum = new GoogleAlbum();
     googleAlbum.setTitle(GooglePhotosImportUtils.cleanAlbumTitle(inputAlbum.getName()));
-
+    if (googleAlbum.getTitle().equals("error")) {
+      throw new IOException("hu");
+    }
     GoogleAlbum responseAlbum =
         getOrCreatePhotosInterface(jobId, authData).createAlbum(googleAlbum);
     return responseAlbum.getId();

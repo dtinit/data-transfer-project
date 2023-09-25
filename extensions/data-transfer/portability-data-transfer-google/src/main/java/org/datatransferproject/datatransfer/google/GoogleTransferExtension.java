@@ -117,7 +117,7 @@ public class GoogleTransferExtension implements TransferExtension {
 
     IdempotentImportExecutor idempotentImportExecutor = context.getService(
         IdempotentImportExecutorExtension.class).getRetryingIdempotentImportExecutor(context);
-    boolean enableRetrying = context.getSetting("enableRetrying", false);
+    boolean enableRetrying = context.getSetting("enableRetrying", true);
 
     ImmutableMap.Builder<DataVertical, Importer> importerBuilder = ImmutableMap.builder();
     importerBuilder.put(BLOBS, new DriveImporter(credentialFactory, jobStore, monitor));
