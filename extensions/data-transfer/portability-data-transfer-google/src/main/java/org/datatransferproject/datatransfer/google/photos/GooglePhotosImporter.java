@@ -206,9 +206,6 @@ public class GooglePhotosImporter
     // Set up album
     GoogleAlbum googleAlbum = new GoogleAlbum();
     googleAlbum.setTitle(GooglePhotosImportUtils.cleanAlbumTitle(inputAlbum.getName()));
-    if (googleAlbum.getTitle().equals("error")) {
-      throw new IOException("hu");
-    }
     GoogleAlbum responseAlbum =
         getOrCreatePhotosInterface(jobId, authData).createAlbum(googleAlbum);
     return responseAlbum.getId();
