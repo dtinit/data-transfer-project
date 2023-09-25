@@ -183,6 +183,7 @@ public class GooglePhotosImporter
     IdempotentImportExecutor executor =
         (retryingIdempotentExecutor != null && enableRetrying) ? retryingIdempotentExecutor : idempotentImportExecutor;
     GPhotosUpload gPhotosUpload = new GPhotosUpload(jobId, executor, authData);
+
     for (PhotoAlbum album : data.getAlbums()) {
       try {
         executor.executeAndSwallowIOExceptions(
@@ -206,6 +207,7 @@ public class GooglePhotosImporter
     // Set up album
     GoogleAlbum googleAlbum = new GoogleAlbum();
     googleAlbum.setTitle(GooglePhotosImportUtils.cleanAlbumTitle(inputAlbum.getName()));
+
     GoogleAlbum responseAlbum =
         getOrCreatePhotosInterface(jobId, authData).createAlbum(googleAlbum);
     return responseAlbum.getId();
