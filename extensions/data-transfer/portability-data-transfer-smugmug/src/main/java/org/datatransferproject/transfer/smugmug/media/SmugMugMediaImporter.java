@@ -131,6 +131,8 @@ public class SmugMugMediaImporter
     return albumResponse.getUri();
   }
 
+  // TODO: Delete some of this duplicated code, factor it out so we don't have two drifting
+  // code paths, similar to change in MicrosoftMediaImporter
   @VisibleForTesting
   String importSinglePhoto(
       UUID jobId,
