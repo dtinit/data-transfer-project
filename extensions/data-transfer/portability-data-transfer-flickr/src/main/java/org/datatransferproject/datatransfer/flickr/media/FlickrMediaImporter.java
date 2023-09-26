@@ -168,6 +168,8 @@ public class FlickrMediaImporter implements Importer<AuthData, MediaContainerRes
         }
     }
 
+  // TODO: Delete some of this duplicated code, factor it out so we don't have two drifting
+  // code paths, similar to change in MicrosoftMediaImporter
     private void importSinglePhoto(
             IdempotentImportExecutor idempotentExecutor, UUID id, PhotoModel photo) throws Exception {
         String photoId =
