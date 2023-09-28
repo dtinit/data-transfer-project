@@ -42,12 +42,12 @@ public final class MusicContainerResourceTest {
         ImmutableList.of(
             new MusicPlaylistItem(
                 new MusicRecording("item1_isrc", null, 180000L,
-                    new MusicRelease("r1_icpn", null, null), null),
+                    new MusicRelease("r1_icpn", null, null), null, false),
                 "p1_id",
                 1),
             new MusicPlaylistItem(
                 new MusicRecording("item2_isrc", null, 180000L,
-                    new MusicRelease("r1_icpn", null, null), null),
+                    new MusicRelease("r1_icpn", null, null), null, false),
                 "p1_id",
                 2));
 
@@ -55,10 +55,10 @@ public final class MusicContainerResourceTest {
         ImmutableList.of(
             new MusicRecording("t1_isrc", null, 180000L,
                 new MusicRelease("r2_icpn", null, null),
-                null),
+                null, false),
             new MusicRecording("t2_isrc", null, 180000L,
                 new MusicRelease("r3_icpn", null, null),
-                null));
+                null, false));
 
     ImmutableList<MusicRelease> releases = ImmutableList.of(
         new MusicRelease("r4_icpn", null, null));
