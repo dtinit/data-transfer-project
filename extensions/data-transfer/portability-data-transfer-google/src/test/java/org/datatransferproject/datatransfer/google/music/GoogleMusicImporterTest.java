@@ -120,13 +120,13 @@ public final class GoogleMusicImporterTest {
     MusicPlaylistItem playlistItem1 =
         new MusicPlaylistItem(
             new MusicRecording(
-                "item1_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null),
+                "item1_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null, false),
             "p1_id",
             1);
     MusicPlaylistItem playlistItem2 =
         new MusicPlaylistItem(
             new MusicRecording(
-                "item1_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null),
+                "item1_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null, false),
             "p2_id",
             1);
     GooglePlaylistItem googlePlaylistItem = buildGooglePlaylistItem("item1_isrc", "r1_icpn");
@@ -169,13 +169,13 @@ public final class GoogleMusicImporterTest {
     MusicPlaylistItem playlistItem1 =
         new MusicPlaylistItem(
             new MusicRecording(
-                "item1_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null),
+                "item1_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null, false),
             "p1_id",
             1);
     MusicPlaylistItem playlistItem2 =
         new MusicPlaylistItem(
             new MusicRecording(
-                "item1_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null),
+                "item1_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null, false),
             "p2_id",
             1);
     GooglePlaylistItem googlePlaylistItem = buildGooglePlaylistItem("item1_isrc", "r1_icpn");
@@ -222,13 +222,13 @@ public final class GoogleMusicImporterTest {
     MusicPlaylistItem playlistItem1 =
         new MusicPlaylistItem(
             new MusicRecording(
-                "item1_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null),
+                "item1_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null, false),
             "p1_id",
             1);
     MusicPlaylistItem playlistItem2 =
         new MusicPlaylistItem(
             new MusicRecording(
-                "item2_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null),
+                "item2_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null, false),
             "p1_id",
             1);
 
@@ -250,13 +250,13 @@ public final class GoogleMusicImporterTest {
     MusicPlaylistItem playlistItem1 =
         new MusicPlaylistItem(
             new MusicRecording(
-                "item1_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null),
+                "item1_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null, false),
             "p1_id",
             1);
     MusicPlaylistItem playlistItem2 =
         new MusicPlaylistItem(
             new MusicRecording(
-                "item2_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null),
+                "item2_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null, false),
             "p1_id",
             1);
     GooglePlaylistItem googlePlaylistItem1 = buildGooglePlaylistItem("item1_isrc", "r1_icpn");

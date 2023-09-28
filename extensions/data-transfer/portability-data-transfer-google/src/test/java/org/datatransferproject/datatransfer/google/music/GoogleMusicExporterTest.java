@@ -198,7 +198,8 @@ public class GoogleMusicExporterTest {
             .map(MusicPlaylistItem::getTrack)
             .collect(Collectors.toList()))
         .containsExactly(
-            new MusicRecording("t1_isrc", null, 0L, new MusicRelease("r1_icpn", null, null), null));
+            new MusicRecording("t1_isrc", null, 0L, new MusicRelease("r1_icpn", null, null), null,
+                false));
   }
 
   @Test
