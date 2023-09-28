@@ -275,6 +275,11 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
     googleTrack.setArtists(getArtists(playlistItem.getTrack().getByArtists()));
     googleTrack.setDuration(
         Durations.toString(Durations.fromMillis(playlistItem.getTrack().getDurationMillis())));
+    if (playlistItem.getTrack().getIsExplicit()) {
+      googleTrack.setExplicitType("EXPLICIT_TYPE_EXPLICIT");
+    } else {
+      googleTrack.setExplicitType("EXPLICIT_TYPE_NOT_EXPLICIT");
+    }
     googleTrack.setRelease(googleRelease);
 
     googlePlaylistItem.setTrack(googleTrack);

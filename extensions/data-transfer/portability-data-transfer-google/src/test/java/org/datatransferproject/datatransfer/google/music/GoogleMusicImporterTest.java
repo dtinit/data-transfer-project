@@ -312,6 +312,8 @@ public final class GoogleMusicImporterTest {
     track.setIsrc(trackIsrc);
     track.setDuration(Durations.toString(Durations.fromMillis(180000L)));
     track.setRelease(release);
+    track.setExplicitType("EXPLICIT_TYPE_NOT_EXPLICIT"
+        + "");
 
     playlistItem.setTrack(track);
     playlistItem.setOrder(1);
