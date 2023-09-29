@@ -18,6 +18,7 @@ package org.datatransferproject.transfer.smugmug.photos;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import org.datatransferproject.transfer.smugmug.SmugMugInterface;
 import org.junit.jupiter.api.Test;
 
 public class SmugMugInterfaceTest {
