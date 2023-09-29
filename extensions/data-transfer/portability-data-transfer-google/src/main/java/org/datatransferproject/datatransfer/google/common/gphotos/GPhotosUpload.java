@@ -92,6 +92,8 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 // interfaces. We can start by using some of the de-duplication that happened in
 // org.datatransferproject.datatransfer.google.common.gphotos package
 public class GPhotosUpload {
+  private final static String ALBUMLESS_IDENTIFIER = "%s_ALBUMLESS_ITEMS";
+
   private UUID jobId;
   private IdempotentImportExecutor executor;
   private TokensAndUrlAuthData authData;
@@ -134,7 +136,7 @@ public class GPhotosUpload {
             .collect(Collectors.groupingBy(DownloadableFile::getFolderId));
     // Null album-id items get sent here into the empty string key
     itemsByAlbumId.put(
-        "",
+        format(ALBUMLESS_IDENTIFIER, jobId),
         items.stream()
             .filter(
                 item -> !executor.isKeyCached(item.getIdempotentId()) && item.getFolderId() == null)
@@ -143,7 +145,7 @@ public class GPhotosUpload {
     for (Entry<String, List<T>> albumEntry : itemsByAlbumId.entrySet()) {
       String originalAlbumId = albumEntry.getKey();
       String googleAlbumId;
-      if (Strings.isNullOrEmpty(originalAlbumId)) {
+      if (Strings.isNullOrEmpty(originalAlbumId) || originalAlbumId.equals(format(ALBUMLESS_IDENTIFIER, jobId))) {
         // This is ok, since NewMediaItemUpload will ignore all null values and it's possible to
         // upload a NewMediaItem without a corresponding album id.
         googleAlbumId = null;
