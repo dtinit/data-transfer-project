@@ -23,29 +23,29 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Class containing all the information necessary to create new {@link CreatePlaylistItemRequest}s
+ * Class containing all the information necessary to create new {@link ImportPlaylistItemRequest}s
  * in the Google Music API.
  */
 @JsonInclude(Include.NON_NULL)
 public class BatchPlaylistItemRequest {
 
   @JsonProperty("requests")
-  private List<CreatePlaylistItemRequest> requests;
+  private List<ImportPlaylistItemRequest> requests;
 
-  @JsonProperty("parent")
-  private String parent;
+  @JsonProperty("playlistId")
+  private String playlistId;
 
-  public BatchPlaylistItemRequest(List<CreatePlaylistItemRequest> requests, String parent) {
+  public BatchPlaylistItemRequest(List<ImportPlaylistItemRequest> requests, String playlistId) {
     this.requests = requests;
-    this.parent = parent;
+    this.playlistId = playlistId;
   }
 
-  public List<CreatePlaylistItemRequest> getRequests() {
+  public List<ImportPlaylistItemRequest> getRequests() {
     return requests;
   }
 
-  public String getParent() {
-    return parent;
+  public String getPlaylistId() {
+    return playlistId;
   }
 
   @Override
@@ -57,11 +57,11 @@ public class BatchPlaylistItemRequest {
       return false;
     }
     BatchPlaylistItemRequest that = (BatchPlaylistItemRequest) o;
-    return Objects.equals(requests, that.requests) && Objects.equals(parent, that.parent);
+    return Objects.equals(requests, that.requests) && Objects.equals(playlistId, that.playlistId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(getRequests(), getParent());
+    return Objects.hash(getRequests(), getPlaylistId());
   }
 }
