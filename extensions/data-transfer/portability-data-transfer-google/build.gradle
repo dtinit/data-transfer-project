@@ -26,7 +26,7 @@ dependencies {
         exclude(module: 'jetty-util')
         exclude(module: 'servlet-api')
     }
-
+    runtime('org.apache.tika:tika-core:1.11')
     compile("com.google.api-client:google-api-client:${googleApiClient}")
     compile("com.google.apis:google-api-services-blogger:${googleBloggerVersion}")
     compile("com.google.apis:google-api-services-calendar:${googleCalendarVersion}")
@@ -40,8 +40,6 @@ dependencies {
     compile("com.google.auth:google-auth-library-oauth2-http:${googleOauth2Version}")
     compile("com.google.protobuf:protobuf-java-util:${protobufJavaUtilVersion}")
     implementation("io.grpc:grpc-netty:${grpcNettyVersion}")
-
-
     testCompile("com.google.http-client:google-http-client-gson:${googleHttpClientVersion}")
     testCompile project(':extensions:cloud:portability-cloud-local')
 }
