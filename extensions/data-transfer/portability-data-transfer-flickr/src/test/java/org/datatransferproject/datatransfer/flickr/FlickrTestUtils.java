@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.datatransfer.flickr.photos;
+package org.datatransferproject.datatransfer.flickr;
 
 import com.flickr4java.flickr.photos.Photo;
 import com.flickr4java.flickr.photos.Size;
@@ -22,7 +22,7 @@ import com.flickr4java.flickr.photosets.Photoset;
 import java.util.Collections;
 import java.util.UUID;
 
-class FlickrTestUtils {
+public class FlickrTestUtils {
 
   public static Photoset initializePhotoset(String id, String title, String description) {
     Photoset photoset = new Photoset();

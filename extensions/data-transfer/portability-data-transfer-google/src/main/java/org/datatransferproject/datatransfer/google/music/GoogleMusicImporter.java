@@ -37,7 +37,7 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.musicModels.BatchPlaylistItemRequest;
 import org.datatransferproject.datatransfer.google.musicModels.BatchPlaylistItemResponse;
-import org.datatransferproject.datatransfer.google.musicModels.CreatePlaylistItemRequest;
+import org.datatransferproject.datatransfer.google.musicModels.ImportPlaylistItemRequest;
 import org.datatransferproject.datatransfer.google.musicModels.GoogleArtist;
 import org.datatransferproject.datatransfer.google.musicModels.GooglePlaylist;
 import org.datatransferproject.datatransfer.google.musicModels.GooglePlaylistItem;
@@ -45,14 +45,10 @@ import org.datatransferproject.datatransfer.google.musicModels.GoogleRelease;
 import org.datatransferproject.datatransfer.google.musicModels.GoogleTrack;
 import org.datatransferproject.datatransfer.google.musicModels.NewPlaylistItemResult;
 import org.datatransferproject.datatransfer.google.musicModels.Status;
-import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
-import org.datatransferproject.spi.transfer.idempotentexecutor.ItemImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.CopyException;
-import org.datatransferproject.spi.transfer.types.InvalidTokenException;
-import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.types.common.models.music.MusicContainerResource;
 import org.datatransferproject.types.common.models.music.MusicGroup;
 import org.datatransferproject.types.common.models.music.MusicPlaylist;
@@ -136,7 +132,7 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
     googlePlaylist.setTitle(inputPlaylist.getTitle());
 
     getOrCreateMusicInterface(jobId, authData)
-        .createPlaylist(googlePlaylist, inputPlaylist.getId());
+        .importPlaylist(googlePlaylist, inputPlaylist.getId());
     return inputPlaylist.getId();
   }
 
@@ -189,17 +185,17 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
       }
       return;
     }
-    List<CreatePlaylistItemRequest> createPlaylistItemRequests = new ArrayList<>();
+    List<ImportPlaylistItemRequest> createPlaylistItemRequests = new ArrayList<>();
     for (MusicPlaylistItem playlistItem : playlistItems) {
       createPlaylistItemRequests.add(
-          buildCreatePlaylistItemRequest(playlistItem, playlistId));
+          buildImportPlaylistItemRequest(playlistItem, playlistId));
     }
 
     BatchPlaylistItemRequest batchRequest =
         new BatchPlaylistItemRequest(createPlaylistItemRequests, playlistId);
 
     BatchPlaylistItemResponse responsePlaylistItem =
-        getOrCreateMusicInterface(jobId, authData).createPlaylistItems(batchRequest);
+        getOrCreateMusicInterface(jobId, authData).importPlaylistItems(batchRequest);
     for (int i = 0; i < responsePlaylistItem.getResults().length; i++) {
       NewPlaylistItemResult playlistItemResult = responsePlaylistItem.getResults()[i];
       // playlistItemResult should be success or skippable failure.
@@ -259,8 +255,8 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
     return googleArtists;
   }
 
-  private CreatePlaylistItemRequest buildCreatePlaylistItemRequest(
-      MusicPlaylistItem playlistItem, String parent) {
+  private ImportPlaylistItemRequest buildImportPlaylistItemRequest(
+      MusicPlaylistItem playlistItem, String playlistId) {
     GooglePlaylistItem googlePlaylistItem = new GooglePlaylistItem();
     GoogleTrack googleTrack = new GoogleTrack();
     GoogleRelease googleRelease = new GoogleRelease();
@@ -275,12 +271,17 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
     googleTrack.setArtists(getArtists(playlistItem.getTrack().getByArtists()));
     googleTrack.setDuration(
         Durations.toString(Durations.fromMillis(playlistItem.getTrack().getDurationMillis())));
+    if (playlistItem.getTrack().getIsExplicit()) {
+      googleTrack.setExplicitType("EXPLICIT_TYPE_EXPLICIT");
+    } else {
+      googleTrack.setExplicitType("EXPLICIT_TYPE_NOT_EXPLICIT");
+    }
     googleTrack.setRelease(googleRelease);
 
     googlePlaylistItem.setTrack(googleTrack);
     googlePlaylistItem.setOrder(playlistItem.getOrder());
 
-    return new CreatePlaylistItemRequest(parent, googlePlaylistItem);
+    return new ImportPlaylistItemRequest(playlistId, googlePlaylistItem);
   }
 
   private synchronized GoogleMusicHttpApi getOrCreateMusicInterface(

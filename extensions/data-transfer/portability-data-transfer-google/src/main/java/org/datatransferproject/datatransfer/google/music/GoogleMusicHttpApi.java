@@ -53,8 +53,9 @@ import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactor
 import org.datatransferproject.datatransfer.google.musicModels.BatchPlaylistItemRequest;
 import org.datatransferproject.datatransfer.google.musicModels.BatchPlaylistItemResponse;
 import org.datatransferproject.datatransfer.google.musicModels.GooglePlaylist;
-import org.datatransferproject.datatransfer.google.musicModels.PlaylistItemListResponse;
-import org.datatransferproject.datatransfer.google.musicModels.PlaylistListResponse;
+import org.datatransferproject.datatransfer.google.musicModels.ImportPlaylistRequest;
+import org.datatransferproject.datatransfer.google.musicModels.PlaylistItemExportResponse;
+import org.datatransferproject.datatransfer.google.musicModels.PlaylistExportResponse;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 
@@ -73,7 +74,7 @@ public class GoogleMusicHttpApi {
       "https://youtubemediaconnect.googleapis.com/v1/users/me/musicLibrary/";
   private static final int PLAYLIST_PAGE_SIZE = 20;
   private static final int PLAYLIST_ITEM_PAGE_SIZE = 50;
-
+  private static final String PLAYLIST_ID_KEY = "playlistId";
   private static final String PAGE_SIZE_KEY = "pageSize";
   private static final String TOKEN_KEY = "pageToken";
   private static final String ORIGINAL_PLAYLIST_ID_KEY = "originalPlaylistId";
@@ -101,46 +102,51 @@ public class GoogleMusicHttpApi {
     this.writeRateLimiter = RateLimiter.create(writesPerSecond);
   }
 
-  PlaylistListResponse listPlaylists(Optional<String> pageToken)
+  PlaylistExportResponse exportPlaylists(Optional<String> pageToken)
       throws IOException, InvalidTokenException, PermissionDeniedException {
+    Map<String, String> exportPlyalistsRequestMap = new LinkedHashMap<>();
     Map<String, String> params = new LinkedHashMap<>();
-    params.put(PAGE_SIZE_KEY, String.valueOf(PLAYLIST_PAGE_SIZE));
+    exportPlyalistsRequestMap.put(PAGE_SIZE_KEY, String.valueOf(PLAYLIST_PAGE_SIZE));
     if (pageToken.isPresent()) {
-      params.put(TOKEN_KEY, pageToken.get());
+      exportPlyalistsRequestMap.put(TOKEN_KEY, pageToken.get());
     }
-    return makeGetRequest(BASE_URL + "playlists", Optional.of(params), PlaylistListResponse.class);
+    HttpContent content = new JsonHttpContent(jsonFactory, createJsonMap(exportPlyalistsRequestMap));
+    return makePostRequest(BASE_URL + "playlists:export", Optional.of(params), content,
+        PlaylistExportResponse.class);
   }
 
-  PlaylistItemListResponse listPlaylistItems(String playlistId, Optional<String> pageToken)
+  PlaylistItemExportResponse exportPlaylistItems(String playlistId, Optional<String> pageToken)
       throws IOException, InvalidTokenException, PermissionDeniedException {
     Map<String, String> params = new LinkedHashMap<>();
+    params.put(PLAYLIST_ID_KEY, playlistId);
     params.put(PAGE_SIZE_KEY, String.valueOf(PLAYLIST_ITEM_PAGE_SIZE));
     if (pageToken.isPresent()) {
       params.put(TOKEN_KEY, pageToken.get());
     }
     return makeGetRequest(
-        BASE_URL + "playlists/" + playlistId + "/playlistItems", Optional.of(params),
-        PlaylistItemListResponse.class);
+        BASE_URL + "playlists:exportPlaylistItems", Optional.of(params),
+        PlaylistItemExportResponse.class);
   }
 
-  GooglePlaylist createPlaylist(GooglePlaylist playlist, String playlistId)
+  GooglePlaylist importPlaylist(GooglePlaylist playlist, String playlistId)
       throws IOException, InvalidTokenException, PermissionDeniedException {
-    Map<String, Object> playlistMap = createJsonMap(playlist);
+    ImportPlaylistRequest importPlaylistRequest = new ImportPlaylistRequest(playlist, playlistId);
+    Map<String, Object> importPlaylistMap = createJsonMap(importPlaylistRequest);
     Map<String, String> params = new LinkedHashMap<>();
-    params.put(ORIGINAL_PLAYLIST_ID_KEY, playlistId);
-    HttpContent content = new JsonHttpContent(jsonFactory, playlistMap);
+    HttpContent content = new JsonHttpContent(jsonFactory, importPlaylistMap);
 
-    return makePatchRequest(BASE_URL + "playlists/" + playlistId, Optional.of(params), content,
+    return makePostRequest(BASE_URL + "playlists/" + playlistId + ":import", Optional.of(params),
+        content,
         GooglePlaylist.class);
   }
 
-  BatchPlaylistItemResponse createPlaylistItems(BatchPlaylistItemRequest playlistItemRequest)
+  BatchPlaylistItemResponse importPlaylistItems(BatchPlaylistItemRequest playlistItemRequest)
       throws IOException, InvalidTokenException, PermissionDeniedException {
     Map<String, Object> playlistItemMap = createJsonMap(playlistItemRequest);
     HttpContent content = new JsonHttpContent(jsonFactory, playlistItemMap);
 
     return makePostRequest(
-        BASE_URL + "playlistItems:batchCreate", Optional.empty(), content,
+        BASE_URL + "playlists:importPlaylistItems", Optional.empty(), content,
         BatchPlaylistItemResponse.class);
   }
 
