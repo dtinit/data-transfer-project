@@ -40,8 +40,8 @@ import org.datatransferproject.datatransfer.google.musicModels.GooglePlaylist;
 import org.datatransferproject.datatransfer.google.musicModels.GooglePlaylistItem;
 import org.datatransferproject.datatransfer.google.musicModels.GoogleRelease;
 import org.datatransferproject.datatransfer.google.musicModels.GoogleTrack;
-import org.datatransferproject.datatransfer.google.musicModels.PlaylistItemListResponse;
-import org.datatransferproject.datatransfer.google.musicModels.PlaylistListResponse;
+import org.datatransferproject.datatransfer.google.musicModels.PlaylistItemExportResponse;
+import org.datatransferproject.datatransfer.google.musicModels.PlaylistExportResponse;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
@@ -68,8 +68,8 @@ public class GoogleMusicExporterTest {
   private GoogleMusicExporter googleMusicExporter;
   private GoogleMusicHttpApi musicHttpApi;
 
-  private PlaylistListResponse playlistListResponse;
-  private PlaylistItemListResponse playlistItemListResponse;
+  private PlaylistExportResponse playlistExportResponse;
+  private PlaylistItemExportResponse playlistItemExportResponse;
 
   @BeforeEach
   public void setUp() throws IOException, InvalidTokenException, PermissionDeniedException {
@@ -82,12 +82,12 @@ public class GoogleMusicExporterTest {
         new GoogleMusicExporter(
             credentialFactory, GsonFactory.getDefaultInstance(), musicHttpApi, monitor);
 
-    playlistListResponse = mock(PlaylistListResponse.class);
-    playlistItemListResponse = mock(PlaylistItemListResponse.class);
+    playlistExportResponse = mock(PlaylistExportResponse.class);
+    playlistItemExportResponse = mock(PlaylistItemExportResponse.class);
 
-    when(musicHttpApi.listPlaylists(any(Optional.class))).thenReturn(playlistListResponse);
-    when(musicHttpApi.listPlaylistItems(any(String.class), any(Optional.class)))
-        .thenReturn(playlistItemListResponse);
+    when(musicHttpApi.exportPlaylists(any(Optional.class))).thenReturn(playlistExportResponse);
+    when(musicHttpApi.exportPlaylistItems(any(String.class), any(Optional.class)))
+        .thenReturn(playlistItemExportResponse);
 
     verifyNoInteractions(credentialFactory);
   }
@@ -96,7 +96,7 @@ public class GoogleMusicExporterTest {
   public void exportPlaylistFirstSet()
       throws IOException, InvalidTokenException, PermissionDeniedException {
     setUpSinglePlaylist(GOOGLE_PLAYLIST_NAME_PREFIX + "p1_id");
-    when(playlistListResponse.getNextPageToken()).thenReturn(PLAYLIST_PAGE_TOKEN);
+    when(playlistExportResponse.getNextPageToken()).thenReturn(PLAYLIST_PAGE_TOKEN);
 
     StringPaginationToken inputPaginationToken = new StringPaginationToken(PLAYLIST_TOKEN_PREFIX);
 
@@ -106,8 +106,8 @@ public class GoogleMusicExporterTest {
 
     // Check results
     // Verify correct methods were called
-    verify(musicHttpApi).listPlaylists(Optional.empty());
-    verify(playlistListResponse).getPlaylists();
+    verify(musicHttpApi).exportPlaylists(Optional.empty());
+    verify(playlistExportResponse).getPlaylists();
 
     // Check pagination token
     ContinuationData continuationData = result.getContinuationData();
@@ -136,7 +136,7 @@ public class GoogleMusicExporterTest {
   public void exportPlaylistSubsequentSet()
       throws IOException, InvalidTokenException, PermissionDeniedException {
     setUpSinglePlaylist(GOOGLE_PLAYLIST_NAME_PREFIX + "p1_id");
-    when(playlistListResponse.getNextPageToken()).thenReturn(null);
+    when(playlistExportResponse.getNextPageToken()).thenReturn(null);
 
     StringPaginationToken inputPaginationToken =
         new StringPaginationToken(PLAYLIST_TOKEN_PREFIX + PLAYLIST_PAGE_TOKEN);
@@ -147,8 +147,8 @@ public class GoogleMusicExporterTest {
 
     // Check results
     // Verify correct methods were called
-    verify(musicHttpApi).listPlaylists(Optional.of(PLAYLIST_PAGE_TOKEN));
-    verify(playlistListResponse).getPlaylists();
+    verify(musicHttpApi).exportPlaylists(Optional.of(PLAYLIST_PAGE_TOKEN));
+    verify(playlistExportResponse).getPlaylists();
 
     // Check pagination token - should be absent
     ContinuationData continuationData = result.getContinuationData();
@@ -161,9 +161,9 @@ public class GoogleMusicExporterTest {
   public void exportPlaylistItemFirstSet()
       throws IOException, InvalidTokenException, PermissionDeniedException, ParseException {
     GooglePlaylistItem playlistItem = setUpSinglePlaylistItem("t1_isrc", "r1_icpn");
-    when(playlistItemListResponse.getPlaylistItems())
+    when(playlistItemExportResponse.getPlaylistItems())
         .thenReturn(new GooglePlaylistItem[]{playlistItem});
-    when(playlistItemListResponse.getNextPageToken()).thenReturn(PLAYLIST_ITEM_TOKEN);
+    when(playlistItemExportResponse.getNextPageToken()).thenReturn(PLAYLIST_ITEM_TOKEN);
 
     IdOnlyContainerResource idOnlyContainerResource = new IdOnlyContainerResource("p1_id");
 
@@ -173,8 +173,8 @@ public class GoogleMusicExporterTest {
 
     // Check results
     // Verify correct methods were called
-    verify(musicHttpApi).listPlaylistItems("p1_id", Optional.empty());
-    verify(playlistItemListResponse).getPlaylistItems();
+    verify(musicHttpApi).exportPlaylistItems("p1_id", Optional.empty());
+    verify(playlistItemExportResponse).getPlaylistItems();
 
     // Check pagination
     ContinuationData continuationData = result.getContinuationData();
@@ -206,9 +206,9 @@ public class GoogleMusicExporterTest {
   public void exportPlaylistItemSubsequentSet()
       throws IOException, InvalidTokenException, PermissionDeniedException, ParseException {
     GooglePlaylistItem playlistItem = setUpSinglePlaylistItem("t1_isrc", "r1_icpn");
-    when(playlistItemListResponse.getPlaylistItems())
+    when(playlistItemExportResponse.getPlaylistItems())
         .thenReturn(new GooglePlaylistItem[]{playlistItem});
-    when(playlistItemListResponse.getNextPageToken()).thenReturn(null);
+    when(playlistItemExportResponse.getNextPageToken()).thenReturn(null);
 
     StringPaginationToken inputPaginationToken = new StringPaginationToken(PLAYLIST_ITEM_TOKEN);
     IdOnlyContainerResource idOnlyContainerResource = new IdOnlyContainerResource("p1_id");
@@ -220,8 +220,8 @@ public class GoogleMusicExporterTest {
 
     // Check results
     // Verify correct methods were called
-    verify(musicHttpApi).listPlaylistItems("p1_id", Optional.of(PLAYLIST_ITEM_TOKEN));
-    verify(playlistItemListResponse).getPlaylistItems();
+    verify(musicHttpApi).exportPlaylistItems("p1_id", Optional.of(PLAYLIST_ITEM_TOKEN));
+    verify(playlistItemExportResponse).getPlaylistItems();
 
     // Check pagination token
     ContinuationData continuationData = result.getContinuationData();
@@ -238,7 +238,7 @@ public class GoogleMusicExporterTest {
     playlistEntry.setTitle("p1_title");
     playlistEntry.setDescription("p1_description");
 
-    when(playlistListResponse.getPlaylists()).thenReturn(new GooglePlaylist[]{playlistEntry});
+    when(playlistExportResponse.getPlaylists()).thenReturn(new GooglePlaylist[]{playlistEntry});
   }
 
   /**
