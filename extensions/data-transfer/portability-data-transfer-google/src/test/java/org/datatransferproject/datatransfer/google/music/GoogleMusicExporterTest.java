@@ -199,7 +199,7 @@ public class GoogleMusicExporterTest {
             .collect(Collectors.toList()))
         .containsExactly(
             new MusicRecording("t1_isrc", null, 0L, new MusicRelease("r1_icpn", null, null), null,
-                false));
+                true));
   }
 
   @Test
@@ -251,6 +251,7 @@ public class GoogleMusicExporterTest {
     release.setIcpn(icpn);
     track.setIsrc(isrc);
     track.setRelease(release);
+    track.setExplicitType("EXPLICIT_TYPE_EXPLICIT");
     playlistItemEntry.setTrack(track);
     return playlistItemEntry;
   }
