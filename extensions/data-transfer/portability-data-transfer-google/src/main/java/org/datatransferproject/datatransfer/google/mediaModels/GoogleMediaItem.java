@@ -127,7 +127,7 @@ public class GoogleMediaItem {
   private static String guessMimeTypeFromFilename(String filename) {
     try {
       Tika tika = new Tika();
-      return Files.probeContentType(new File(filename).toPath());
+      return tika.detect(filename);
     } catch (Exception e) {
       return null;
     }

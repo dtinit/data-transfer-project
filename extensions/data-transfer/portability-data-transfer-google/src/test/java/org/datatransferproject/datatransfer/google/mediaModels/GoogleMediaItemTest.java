@@ -35,13 +35,16 @@ public class GoogleMediaItemTest {
   @Test
   public void getMimeType_videoModel_mimeTypeFromFilename() {
     GoogleMediaItem videoMediaItem = getVideoMediaItem();
-    Map<String, String> filenameToMimeTypeMap = Map.of(
-        "file.flv", "video/x-flv",
-        "file.mp4", "video/mp4",
-        "file.webm", "video/webm",
-        "file.qt", "video/quicktime",
-        "file.mov", "video/quicktime"
-    );
+    Map<String, String> filenameToMimeTypeMap =
+        Map.of(
+            "file.flv", "video/x-flv",
+            "file.mp4", "video/mp4",
+            "file.webm", "video/webm",
+            "file.qt", "video/quicktime",
+            "file.mov", "video/quicktime",
+            "file.mkv", "video/x-matroska",
+            "file.wmv", "video/x-ms-wmv",
+            "file.3gp", "video/3gpp");
 
     for (Entry entry: filenameToMimeTypeMap.entrySet()) {
       videoMediaItem.setMimeType("INVALID_MIME");
