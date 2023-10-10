@@ -18,6 +18,7 @@ package org.datatransferproject.datatransfer.apple.photos;
 
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CONFLICT;
+import static org.apache.http.HttpStatus.SC_INSUFFICIENT_STORAGE;
 import static org.apache.http.HttpStatus.SC_INTERNAL_SERVER_ERROR;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
@@ -49,7 +50,6 @@ import org.datatransferproject.datatransfer.apple.constants.ApplePhotosConstants
 import org.datatransferproject.datatransfer.apple.constants.AuditKeys;
 import org.datatransferproject.datatransfer.apple.constants.Headers;
 import org.datatransferproject.datatransfer.apple.exceptions.AppleContentException;
-import org.datatransferproject.datatransfer.apple.exceptions.AppleHttpException;
 import org.datatransferproject.datatransfer.apple.photos.photosproto.PhotosProtocol;
 import org.datatransferproject.datatransfer.apple.photos.photosproto.PhotosProtocol.AuthorizeUploadRequest;
 import org.datatransferproject.datatransfer.apple.photos.photosproto.PhotosProtocol.AuthorizeUploadResponse;
@@ -64,8 +64,11 @@ import org.datatransferproject.datatransfer.apple.photos.photosproto.PhotosProto
 import org.datatransferproject.datatransfer.apple.photos.streaming.StreamingContentClient;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
+import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
+import org.datatransferproject.spi.transfer.types.DestinationNotFoundException;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
+import org.datatransferproject.spi.transfer.types.UnconfirmedUserException;
 import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.common.DownloadableFile;
 import org.datatransferproject.types.common.DownloadableItem;
@@ -231,7 +234,7 @@ public class AppleMediaInterface implements AppleBaseInterface {
   }
 
   private String sendPostRequest(@NotNull String url, @NotNull final byte[] requestData)
-      throws IOException, AppleHttpException {
+      throws IOException, CopyExceptionWithFailureReason {
 
     final String appleRequestUUID = UUID.randomUUID().toString();
     final UUID jobId = JobMetadata.getJobId();
@@ -267,29 +270,31 @@ public class AppleMediaInterface implements AppleBaseInterface {
         AuditKeys.errorCode, con.getResponseCode(),
       e);
 
-      throw new AppleHttpException(e.getMessage(), e, con.getResponseCode());
+      convertAndThrowException(e, con);
     } finally {
       con.disconnect();
     }
     return responseString;
   }
 
-  private void convertAndThrowException(@NotNull final AppleHttpException e)
-      throws CopyExceptionWithFailureReason {
+  private void convertAndThrowException(@NotNull final IOException e, @NotNull final HttpURLConnection con)
+      throws IOException, CopyExceptionWithFailureReason {
 
-    switch (e.getResponseStatus()) {
+    switch (con.getResponseCode()) {
       case SC_UNAUTHORIZED:
-        throw new AppleHttpException("UnAuthorized User", e, SC_UNAUTHORIZED);
+        throw new UnconfirmedUserException("Unauthorized iCloud User", e);
       case SC_PRECONDITION_FAILED:
-        throw new PermissionDeniedException("UnAuthorized User", e);
-      case SC_SERVICE_UNAVAILABLE:
-        throw new AppleHttpException("iCloud Photos Unavailable", e, SC_SERVICE_UNAVAILABLE);
-      case SC_BAD_REQUEST:
-        throw new AppleHttpException("Bad iCloud Photos request", e, SC_BAD_REQUEST);
+        throw new PermissionDeniedException("Permission Denied", e);
       case SC_NOT_FOUND:
-        throw new AppleHttpException("iCloud Photos Resource not found", e, SC_NOT_FOUND);
+        throw new DestinationNotFoundException("iCloud Photos Library not found", e);
+      case SC_INSUFFICIENT_STORAGE:
+        throw new DestinationMemoryFullException("iCloud Storage is full", e);
+      case SC_SERVICE_UNAVAILABLE:
+        throw new IOException("DTP import service unavailable", e);
+      case SC_BAD_REQUEST:
+        throw new IOException("Bad request sent to iCloud Photos import api", e);
       case SC_INTERNAL_SERVER_ERROR:
-        throw new AppleHttpException("Internal Server Error", e, SC_INTERNAL_SERVER_ERROR);
+        throw new IOException("Internal server error in iCloud Photos service", e);
       case SC_OK:
         break;
       default:
@@ -304,19 +309,14 @@ public class AppleMediaInterface implements AppleBaseInterface {
     try {
       final String responseString = sendPostRequest(url, requestData);
       responseData = responseString.getBytes(StandardCharsets.ISO_8859_1);
-
-    } catch (AppleHttpException e) {
-      if (SC_UNAUTHORIZED == e.getResponseStatus()
-          || SC_PRECONDITION_FAILED == e.getResponseStatus()) {
-        try {
-          refreshTokens();
-          final String responseString = sendPostRequest(url, requestData);
-          responseData = responseString.getBytes(StandardCharsets.ISO_8859_1);
-        } catch (AppleHttpException exceptionAfterRefreshing) {
-          convertAndThrowException(exceptionAfterRefreshing);
-        }
+    } catch (CopyExceptionWithFailureReason e) {
+      if (e instanceof UnconfirmedUserException
+          || e instanceof PermissionDeniedException) {
+        refreshTokens();
+        final String responseString = sendPostRequest(url, requestData);
+        responseData = responseString.getBytes(StandardCharsets.ISO_8859_1);
       } else {
-        convertAndThrowException(e);
+        throw e;
       }
     }
     return responseData;
@@ -348,7 +348,7 @@ public class AppleMediaInterface implements AppleBaseInterface {
 
       monitor.debug(() -> "Successfully refreshed token");
 
-    } catch (ParseException | AppleHttpException e) {
+    } catch (ParseException | IOException | CopyExceptionWithFailureReason e) {
 
       monitor.debug(() -> "Failed to refresh token", e);
 

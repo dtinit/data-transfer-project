@@ -37,8 +37,8 @@ import org.datatransferproject.datatransfer.google.musicModels.GooglePlaylist;
 import org.datatransferproject.datatransfer.google.musicModels.GooglePlaylistItem;
 import org.datatransferproject.datatransfer.google.musicModels.GoogleRelease;
 import org.datatransferproject.datatransfer.google.musicModels.GoogleTrack;
-import org.datatransferproject.datatransfer.google.musicModels.PlaylistItemListResponse;
-import org.datatransferproject.datatransfer.google.musicModels.PlaylistListResponse;
+import org.datatransferproject.datatransfer.google.musicModels.PlaylistExportResponse;
+import org.datatransferproject.datatransfer.google.musicModels.PlaylistItemExportResponse;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -151,13 +151,13 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
       }
     }
 
-    PlaylistListResponse playlistListResponse =
-        getOrCreateMusicHttpApi(authData).listPlaylists(paginationToken);
+    PlaylistExportResponse playlistExportResponse =
+        getOrCreateMusicHttpApi(authData).exportPlaylists(paginationToken);
 
     PaginationData nextPageData;
-    String token = playlistListResponse.getNextPageToken();
+    String token = playlistExportResponse.getNextPageToken();
     List<MusicPlaylist> playlists = new ArrayList<>();
-    GooglePlaylist[] googlePlaylists = playlistListResponse.getPlaylists();
+    GooglePlaylist[] googlePlaylists = playlistExportResponse.getPlaylists();
     ResultType resultType = ResultType.END;
 
     if (Strings.isNullOrEmpty(token)) {
@@ -208,17 +208,17 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
     Optional<String> paginationToken =
         paginationData.map((PaginationData value) -> ((StringPaginationToken) value).getToken());
 
-    PlaylistItemListResponse playlistItemListResponse =
-        getOrCreateMusicHttpApi(authData).listPlaylistItems(playlistId, paginationToken);
+    PlaylistItemExportResponse playlistItemExportResponse =
+        getOrCreateMusicHttpApi(authData).exportPlaylistItems(playlistId, paginationToken);
 
     PaginationData nextPageData = null;
-    if (!Strings.isNullOrEmpty(playlistItemListResponse.getNextPageToken())) {
-      nextPageData = new StringPaginationToken(playlistItemListResponse.getNextPageToken());
+    if (!Strings.isNullOrEmpty(playlistItemExportResponse.getNextPageToken())) {
+      nextPageData = new StringPaginationToken(playlistItemExportResponse.getNextPageToken());
     }
     ContinuationData continuationData = new ContinuationData(nextPageData);
 
     MusicContainerResource containerResource = null;
-    GooglePlaylistItem[] googlePlaylistItems = playlistItemListResponse.getPlaylistItems();
+    GooglePlaylistItem[] googlePlaylistItems = playlistItemExportResponse.getPlaylistItems();
     List<MusicPlaylistItem> playlistItems = new ArrayList<>();
     if (googlePlaylistItems != null && googlePlaylistItems.length > 0) {
       for (GooglePlaylistItem googlePlaylistItem : googlePlaylistItems) {
@@ -280,8 +280,8 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
                 release.getIcpn(),
                 release.getTitle(),
                 createMusicGroups(release.getArtists())),
-            createMusicGroups(track.getArtists()), false),
-        // TODO(critical WIP-feature step): Add explicit flag to GooglePlaylistItem
+            createMusicGroups(track.getArtists()),
+            "EXPLICIT_TYPE_EXPLICIT".equals(track.getExplicitType())),
         playlistId,
         googlePlaylistItem.getOrder());
   }
