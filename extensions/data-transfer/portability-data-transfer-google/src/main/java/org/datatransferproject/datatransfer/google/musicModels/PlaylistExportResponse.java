@@ -18,8 +18,8 @@ package org.datatransferproject.datatransfer.google.musicModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/** The response provided by the Google Music API when listing playlists */
-public class PlaylistListResponse {
+/** The response provided by the Google Music API when exporting playlists */
+public class PlaylistExportResponse {
   @JsonProperty("playlists")
   private GooglePlaylist[] playlists;
 

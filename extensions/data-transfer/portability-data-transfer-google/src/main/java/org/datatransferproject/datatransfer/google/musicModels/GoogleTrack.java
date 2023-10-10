@@ -44,6 +44,9 @@ public class GoogleTrack {
   @JsonProperty("duration")
   private String duration;
 
+  @JsonProperty("explicitType")
+  private String explicitType;
+
   public String getIsrc() {
     return isrc;
   }
@@ -62,6 +65,10 @@ public class GoogleTrack {
 
   public String getDuration() {
     return duration;
+  }
+
+  public String getExplicitType() {
+    return explicitType;
   }
 
   public long convertDurationToMillions() throws ParseException {
@@ -91,6 +98,10 @@ public class GoogleTrack {
     this.duration = duration;
   }
 
+  public void setExplicitType(String explicitType) {
+    this.explicitType = explicitType;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -104,7 +115,8 @@ public class GoogleTrack {
         && Objects.equals(release, that.release)
         && Objects.equals(title, that.title)
         && Arrays.equals(artists, that.artists)
-        && Objects.equals(duration, that.duration);
+        && Objects.equals(duration, that.duration)
+        && Objects.equals(explicitType, that.explicitType);
   }
 
   @Override
@@ -114,6 +126,7 @@ public class GoogleTrack {
         getRelease(),
         getTitle(),
         Arrays.hashCode(getArtists()),
-        getDuration());
+        getDuration(),
+        getExplicitType());
   }
 }
