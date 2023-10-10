@@ -32,6 +32,7 @@ public class GoogleMediaItem {
 
   private final static String DEFAULT_PHOTO_MIMETYPE = "image/jpg";
   private final static String DEFAULT_VIDEO_MIMETYPE = "video/mp4";
+  private final static String DEFAULT_NULL_MIMETYPE = "application/octet-stream";
 
   @JsonProperty("id")
   private String id;
@@ -109,7 +110,7 @@ public class GoogleMediaItem {
 
   private static String getMimeType(GoogleMediaItem mediaItem) {
     String guessedMimetype = guessMimeTypeFromFilename(mediaItem.getFilename());
-    if (!Strings.isNullOrEmpty(guessedMimetype)) {
+    if (!(Strings.isNullOrEmpty(guessedMimetype) || guessedMimetype.equals(DEFAULT_NULL_MIMETYPE))) {
       return guessedMimetype;
     }
 
