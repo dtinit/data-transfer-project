@@ -29,7 +29,7 @@ import org.apache.tika.Tika;
 
 /** Media item returned by queries to the Google Photos API. Represents what is stored by Google. */
 public class GoogleMediaItem {
-
+  private final static Tika TIKA = new Tika();
   private final static String DEFAULT_PHOTO_MIMETYPE = "image/jpg";
   private final static String DEFAULT_VIDEO_MIMETYPE = "video/mp4";
   private final static String DEFAULT_NULL_MIMETYPE = "application/octet-stream";
@@ -127,8 +127,7 @@ public class GoogleMediaItem {
   // Guesses the mimetype from the filename, or returns null on failure.
   private static String guessMimeTypeFromFilename(String filename) {
     try {
-      Tika tika = new Tika();
-      return tika.detect(filename);
+      return TIKA.detect(filename);
     } catch (Exception e) {
       return null;
     }
