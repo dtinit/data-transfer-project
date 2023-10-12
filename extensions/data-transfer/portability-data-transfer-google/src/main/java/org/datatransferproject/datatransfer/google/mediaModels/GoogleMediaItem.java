@@ -33,7 +33,7 @@ public class GoogleMediaItem {
   private final static String DEFAULT_PHOTO_MIMETYPE = "image/jpg";
   private final static String DEFAULT_VIDEO_MIMETYPE = "video/mp4";
   // If Tika cannot detect the mimetype, it returns the binary mimetype. This can be considered null
-  private final static String DEFAULT_NULL_MIMETYPE = "application/octet-stream";
+  private final static String DEFAULT_BINARY_MIMETYPE = "application/octet-stream";
 
   @JsonProperty("id")
   private String id;
@@ -111,7 +111,7 @@ public class GoogleMediaItem {
 
   private static String getMimeType(GoogleMediaItem mediaItem) {
     String guessedMimetype = guessMimeTypeFromFilename(mediaItem.getFilename());
-    if (!(Strings.isNullOrEmpty(guessedMimetype) || guessedMimetype.equals(DEFAULT_NULL_MIMETYPE))) {
+    if (!Strings.isNullOrEmpty(guessedMimetype)) {
       return guessedMimetype;
     }
 
@@ -128,7 +128,11 @@ public class GoogleMediaItem {
   // Guesses the mimetype from the filename, or returns null on failure.
   private static String guessMimeTypeFromFilename(String filename) {
     try {
-      return TIKA.detect(filename);
+      String mimeType = TIKA.detect(filename);
+      if (mimeType.equals(DEFAULT_BINARY_MIMETYPE)) {
+        return null;
+      }
+      return mimeType;
     } catch (Exception e) {
       return null;
     }
