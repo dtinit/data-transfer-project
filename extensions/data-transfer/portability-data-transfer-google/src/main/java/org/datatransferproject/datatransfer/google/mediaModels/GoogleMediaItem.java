@@ -25,12 +25,15 @@ import java.util.Date;
 import java.util.Optional;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.videos.VideoModel;
+import org.apache.tika.Tika;
 
 /** Media item returned by queries to the Google Photos API. Represents what is stored by Google. */
 public class GoogleMediaItem {
-
+  public final static Tika TIKA = new Tika();
   private final static String DEFAULT_PHOTO_MIMETYPE = "image/jpg";
   private final static String DEFAULT_VIDEO_MIMETYPE = "video/mp4";
+  // If Tika cannot detect the mimetype, it returns the binary mimetype. This can be considered null
+  private final static String DEFAULT_BINARY_MIMETYPE = "application/octet-stream";
 
   @JsonProperty("id")
   private String id;
@@ -125,7 +128,11 @@ public class GoogleMediaItem {
   // Guesses the mimetype from the filename, or returns null on failure.
   private static String guessMimeTypeFromFilename(String filename) {
     try {
-      return Files.probeContentType(new File(filename).toPath());
+      String mimeType = TIKA.detect(filename);
+      if (mimeType.equals(DEFAULT_BINARY_MIMETYPE)) {
+        return null;
+      }
+      return mimeType;
     } catch (Exception e) {
       return null;
     }
