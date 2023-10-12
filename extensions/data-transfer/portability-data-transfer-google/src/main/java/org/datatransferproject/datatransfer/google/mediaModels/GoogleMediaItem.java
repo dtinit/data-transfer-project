@@ -32,6 +32,7 @@ public class GoogleMediaItem {
   public final static Tika TIKA = new Tika();
   private final static String DEFAULT_PHOTO_MIMETYPE = "image/jpg";
   private final static String DEFAULT_VIDEO_MIMETYPE = "video/mp4";
+  // If Tika cannot detect the mimetype, it returns the binary mimetype. This can be considered null
   private final static String DEFAULT_NULL_MIMETYPE = "application/octet-stream";
 
   @JsonProperty("id")
