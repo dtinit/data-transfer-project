@@ -18,8 +18,7 @@ public class GoogleMediaItemTest {
         "file.jpg", "image/jpeg",
         "file.png", "image/png",
         "file.gif", "image/gif",
-        "file.webp", "image/webp",
-        "file.avif", "image/avif"
+        "file.webp", "image/webp"
     );
 
     for (Entry entry: filenameToMimeTypeMap.entrySet()) {
@@ -35,13 +34,16 @@ public class GoogleMediaItemTest {
   @Test
   public void getMimeType_videoModel_mimeTypeFromFilename() {
     GoogleMediaItem videoMediaItem = getVideoMediaItem();
-    Map<String, String> filenameToMimeTypeMap = Map.of(
-        "file.flv", "video/x-flv",
-        "file.mp4", "video/mp4",
-        "file.webm", "video/webm",
-        "file.qt", "video/quicktime",
-        "file.mov", "video/quicktime"
-    );
+    Map<String, String> filenameToMimeTypeMap =
+        Map.of(
+            "file.flv", "video/x-flv",
+            "file.mp4", "video/mp4",
+            "file.webm", "video/webm",
+            "file.qt", "video/quicktime",
+            "file.mov", "video/quicktime",
+            "file.mkv", "video/x-matroska",
+            "file.wmv", "video/x-ms-wmv",
+            "file.3gp", "video/3gpp");
 
     for (Entry entry: filenameToMimeTypeMap.entrySet()) {
       videoMediaItem.setMimeType("INVALID_MIME");
@@ -97,6 +99,18 @@ public class GoogleMediaItemTest {
 
     // Default defined in GoogleMediaItem
     assertEquals("video/mp4", videoModel.getMimeType());
+  }
+
+  @Test
+  public void getMimeType_photoModel_unsupportedFileExtension() {
+    GoogleMediaItem photoMediaItem = getPhotoMediaItem();
+    photoMediaItem.setFilename("file.avif");
+    photoMediaItem.setMimeType("image/png");
+
+    PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem);
+
+    // defaults to the mimetype that is already set, as avif is not handled.
+    assertEquals("image/png", photoModel.getMimeType());
   }
 
   public static GoogleMediaItem getPhotoMediaItem() {
