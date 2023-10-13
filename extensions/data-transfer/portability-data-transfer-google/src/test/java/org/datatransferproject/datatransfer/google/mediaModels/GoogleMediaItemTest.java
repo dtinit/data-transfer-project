@@ -18,7 +18,7 @@ import org.junit.Test;
 
 public class GoogleMediaItemTest {
   private static final ObjectMapper mapper = new ObjectMapper()
-      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
 
   @Test
   public void googleMediaItem_isSerializable() {
