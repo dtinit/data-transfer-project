@@ -17,7 +17,7 @@ import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.junit.Test;
 public class GoogleAlbumTest {
   private static final ObjectMapper mapper = new ObjectMapper()
-      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
 
   @Test
   public void googleAlbum_isSerializable() {

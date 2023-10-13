@@ -12,15 +12,15 @@ import org.junit.Test;
 public class AlbumListResponseTest {
 
   private static final ObjectMapper mapper = new ObjectMapper()
-      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
 
   @Test
   public void albumListResponse_isSerializable() {
-    String googleAlbumStringJSON1 = "{\"id\":\"test_id_1\", \"title1\":\"test_title_1\","
+    String googleAlbumStringJSON1 = "{\"id\":\"test_id_1\", \"title\":\"test_title_1\","
         + " \"isWriteable\":true, \"mediaItemsCount\":1}";
-    String googleAlbumStringJSON2 = "{\"id\":\"test_id_2\", \"title2\":\"test_title_2\","
+    String googleAlbumStringJSON2 = "{\"id\":\"test_id_2\", \"title\":\"test_title_2\","
         + " \"isWriteable\":false, \"mediaItemsCount\":2}";
-    String googleAlbumStringJSON3 = "{\"id\":\"test_id_3\", \"title3\":\"test_title_3\","
+    String googleAlbumStringJSON3 = "{\"id\":\"test_id_3\", \"title\":\"test_title_3\","
         + " \"isWriteable\":true, \"mediaItemsCount\":3}";
 
     String pagingToken = "TEST_PAGING_TOKEN";
@@ -41,6 +41,7 @@ public class AlbumListResponseTest {
       byte [] data = bos.toByteArray();
     } catch (Exception e ) {
       serializable = false;
+      System.out.println(e);
     }
     assertTrue(serializable);
   }
