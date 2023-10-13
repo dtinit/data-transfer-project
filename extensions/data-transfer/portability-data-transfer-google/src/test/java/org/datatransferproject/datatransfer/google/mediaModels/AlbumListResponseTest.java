@@ -41,7 +41,6 @@ public class AlbumListResponseTest {
       byte [] data = bos.toByteArray();
     } catch (Exception e ) {
       serializable = false;
-      System.out.println(e);
     }
     assertTrue(serializable);
   }
