@@ -10,7 +10,7 @@ import org.junit.Test;
 
 public class PhotoTest {
   private static final ObjectMapper mapper = new ObjectMapper()
-      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
 
   @Test
   public void photo_isSerializable() {
