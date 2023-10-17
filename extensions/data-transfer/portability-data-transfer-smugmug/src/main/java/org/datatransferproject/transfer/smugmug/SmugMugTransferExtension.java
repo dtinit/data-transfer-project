@@ -19,11 +19,14 @@ package org.datatransferproject.transfer.smugmug;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import javax.xml.crypto.Data;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.transfer.smugmug.photos.SmugMugMediaImporter;
 import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -36,14 +39,17 @@ import java.io.IOException;
 
 import static java.lang.String.format;
 import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
+import static org.datatransferproject.types.common.models.DataVertical.MEDIA;
 
 public class SmugMugTransferExtension implements TransferExtension {
 
-  private static final ImmutableList<DataVertical> SUPPORTED_TYPES = ImmutableList.of(PHOTOS);
+  private static final ImmutableList<DataVertical> SUPPORTED_TYPES = ImmutableList.of(PHOTOS, MEDIA);
   private static final String SMUGMUG_KEY = "SMUGMUG_KEY";
   private static final String SMUGMUG_SECRET = "SMUGMUG_SECRET";
 
   private SmugMugPhotosImporter importer;
+  private ImmutableMap<DataVertical, Importer> importerMap;
+
   private SmugMugPhotosExporter exporter;
   private boolean initialized = false;
 
@@ -69,7 +75,7 @@ public class SmugMugTransferExtension implements TransferExtension {
     Preconditions.checkArgument(
         SUPPORTED_TYPES.contains(transferDataType),
         "Import of " + transferDataType + " not supported by SmugMug");
-    return importer;
+    return importerMap.get(transferDataType);
   }
 
   @Override
@@ -101,7 +107,13 @@ public class SmugMugTransferExtension implements TransferExtension {
     ObjectMapper mapper = context.getService(TypeManager.class).getMapper();
 
     exporter = new SmugMugPhotosExporter(appCredentials, mapper, jobStore, monitor);
-    importer = new SmugMugPhotosImporter(jobStore, appCredentials, mapper, monitor);
+
+    ImmutableMap.Builder<DataVertical, Importer> importerBuilder = ImmutableMap.builder();
+
+    importerBuilder.put(PHOTOS, new SmugMugPhotosImporter(jobStore, appCredentials, mapper, monitor));
+    importerBuilder.put(MEDIA, new SmugMugMediaImporter(jobStore, appCredentials, mapper, monitor));
+    importerMap = importerBuilder.build();
+
     initialized = true;
   }
 }
