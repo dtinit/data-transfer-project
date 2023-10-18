@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.File;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.util.Date;
 import java.util.Optional;
@@ -28,7 +29,7 @@ import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.apache.tika.Tika;
 
 /** Media item returned by queries to the Google Photos API. Represents what is stored by Google. */
-public class GoogleMediaItem {
+public class GoogleMediaItem implements Serializable {
   public final static Tika TIKA = new Tika();
   private final static String DEFAULT_PHOTO_MIMETYPE = "image/jpg";
   private final static String DEFAULT_VIDEO_MIMETYPE = "video/mp4";
