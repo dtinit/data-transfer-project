@@ -40,8 +40,7 @@ dependencies {
     compile("com.google.auth:google-auth-library-oauth2-http:${googleOauth2Version}")
     compile("com.google.protobuf:protobuf-java-util:${protobufJavaUtilVersion}")
     implementation("io.grpc:grpc-netty:${grpcNettyVersion}")
-
-
+    implementation('org.apache.tika:tika-core:1.16')
     testCompile("com.google.http-client:google-http-client-gson:${googleHttpClientVersion}")
     testCompile project(':extensions:cloud:portability-cloud-local')
 }
