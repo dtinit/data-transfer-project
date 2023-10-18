@@ -21,6 +21,7 @@ import static org.apache.http.HttpStatus.SC_OK;
 import static org.datatransferproject.types.common.models.photos.PhotosContainerResource.ALBUMS_COUNT_DATA_NAME;
 import static org.datatransferproject.types.common.models.photos.PhotosContainerResource.PHOTOS_COUNT_DATA_NAME;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyByte;
 import static org.mockito.Mockito.anyCollection;
 import static org.mockito.Mockito.anyList;
 import static org.mockito.Mockito.anyMap;
@@ -29,6 +30,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -37,11 +39,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.datatransferproject.datatransfer.apple.constants.ApplePhotosConstants;
+import org.datatransferproject.datatransfer.apple.photos.photosproto.PhotosProtocol;
 import org.datatransferproject.datatransfer.apple.photos.photosproto.PhotosProtocol.CreateAlbumsResponse;
 import org.datatransferproject.datatransfer.apple.photos.photosproto.PhotosProtocol.NewPhotoAlbumResponse;
 import org.datatransferproject.datatransfer.apple.photos.photosproto.PhotosProtocol.Status;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
+import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
@@ -97,6 +101,64 @@ public class ApplePhotosImporterTest extends AppleImporterTestBase {
             .collect(
                 Collectors.toMap(
                     PhotoAlbum::getId, photoAlbum -> ALBUM_RECORDID_BASE + photoAlbum.getId()));
+    checkKnownValues(expectedKnownValue);
+  }
+
+  @Test
+  public void importAlbumWithoutName() throws Exception {
+    // set up
+    when(mediaInterface.createAlbums(any(), any(), any())).thenCallRealMethod();
+    when(mediaInterface.makePhotosServicePostRequest(any(), any()))
+            .thenAnswer(
+                    (Answer<byte[]>)
+                            invocation -> {
+                              Object[] args = invocation.getArguments();
+                              final byte[] payload = (byte[]) args[1];
+                              final PhotosProtocol.CreateAlbumsRequest createAlbumsRequest = PhotosProtocol.CreateAlbumsRequest.parseFrom(payload);
+                              final List<NewPhotoAlbumResponse> newPhotoAlbumResponseList =
+                                      createAlbumsRequest.getNewPhotoAlbumRequestsList().stream()
+                                              .map(
+                                                      newPhotoAlbumRequest ->
+                                                              NewPhotoAlbumResponse.newBuilder()
+                                                                      .setRecordId(
+                                                                              ALBUM_RECORDID_BASE + newPhotoAlbumRequest.getDataId())
+                                                                      .setDataId(newPhotoAlbumRequest.getDataId())
+                                                                      .setName(newPhotoAlbumRequest.getName())
+                                                                      .setStatus(
+                                                                              Status.newBuilder()
+                                                                                      .setCode(SC_OK)
+                                                                                      .build())
+                                                                      .build())
+                                              .collect(Collectors.toList());
+                              return CreateAlbumsResponse.newBuilder()
+                                      .addAllNewPhotoAlbumResponses(newPhotoAlbumResponseList)
+                                      .build().toByteArray();
+                            });
+    final int albumCount = 1;
+    final List<PhotoAlbum> photoAlbums = List.of(new PhotoAlbum(ALBUM_DATAID_BASE, null, ALBUM_DESCRIPTION_BASE));
+
+    // run test
+    PhotosContainerResource data = new PhotosContainerResource(photoAlbums, null);
+    final ImportResult importResult =
+            applePhotosImporter.importItem(uuid, executor, authData, data);
+
+    // verify correct methods were called
+    verify(mediaInterface)
+            .createAlbums(
+                    uuid.toString(),
+                    DataVertical.PHOTOS.getDataType(),
+                    data.getAlbums().stream()
+                            .map(MediaAlbum::photoToMediaAlbum)
+                            .collect(Collectors.toList()));
+
+    // check the result
+    assertThat(importResult.getCounts().isPresent());
+    assertThat(importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == albumCount);
+    final Map<String, Serializable> expectedKnownValue =
+            photoAlbums.stream()
+                    .collect(
+                            Collectors.toMap(
+                                    PhotoAlbum::getId, photoAlbum -> ALBUM_RECORDID_BASE + photoAlbum.getId()));
     checkKnownValues(expectedKnownValue);
   }
 
