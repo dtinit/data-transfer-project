@@ -39,6 +39,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -117,7 +118,7 @@ public class AppleMediaInterface implements AppleBaseInterface {
     createAlbumsRequestBuilder.setImportSessionId(jobId);
 
     // validate export service
-    if (JobMetadata.getExportService() != null) {
+    if (JobMetadata.isInitialized() && JobMetadata.getExportService() != null) {
       createAlbumsRequestBuilder.setExportService(JobMetadata.getExportService());
     }
 
@@ -128,7 +129,7 @@ public class AppleMediaInterface implements AppleBaseInterface {
         .map(
           mediaAlbum -> NewPhotoAlbumRequest.newBuilder()
             .setDataId(mediaAlbum.getId())
-            .setName(mediaAlbum.getName())
+            .setName(Optional.ofNullable(mediaAlbum.getName()).orElse(""))
             .build())
         .collect(Collectors.toList()));
     CreateAlbumsRequest createAlbumsRequest = createAlbumsRequestBuilder.build();
