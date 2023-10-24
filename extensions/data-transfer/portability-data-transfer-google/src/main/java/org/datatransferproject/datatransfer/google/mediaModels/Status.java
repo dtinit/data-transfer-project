@@ -16,11 +16,12 @@
 package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.io.Serializable;
 
 /**
  * Information about whether a request was successful, used by {@link NewMediaItemResult}.
  */
-public class Status {
+public class Status implements Serializable {
 
   @JsonProperty("code")
   private int code;
