@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Data Transfer Project Authors.
+ * Copyright 2023 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.transfer.smugmug.photos;
+package org.datatransferproject.transfer.smugmug.media;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -29,18 +29,20 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.transfer.smugmug.SmugMugInterface;
 import org.datatransferproject.transfer.smugmug.SmugMugTransmogrificationConfig;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugImageUploadResponse;
-import org.datatransferproject.types.common.models.photos.PhotoAlbum;
+import org.datatransferproject.transfer.smugmug.photos.SmugMugPhotoTempData;
+import org.datatransferproject.transfer.smugmug.SmugMugInterface;
+import org.datatransferproject.types.common.models.media.MediaAlbum;
+import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 
-public class SmugMugPhotosImporter
-    implements Importer<TokenSecretAuthData, PhotosContainerResource> {
+public class SmugMugMediaImporter
+    implements Importer<TokenSecretAuthData, MediaContainerResource> {
 
   private static final String DEFAULT_ALBUM_NAME = "Untitled Album";
   private final TemporaryPerJobDataStore jobStore;
@@ -50,7 +52,7 @@ public class SmugMugPhotosImporter
   private final SmugMugTransmogrificationConfig transmogrificationConfig;
   private final SmugMugInterface smugMugInterface;
 
-  public SmugMugPhotosImporter(
+  public SmugMugMediaImporter(
       TemporaryPerJobDataStore jobStore,
       AppCredentials appCredentials,
       ObjectMapper mapper,
@@ -59,7 +61,7 @@ public class SmugMugPhotosImporter
   }
 
   @VisibleForTesting
-  SmugMugPhotosImporter(
+  SmugMugMediaImporter(
       SmugMugInterface smugMugInterface,
       SmugMugTransmogrificationConfig transmogrificationConfig,
       TemporaryPerJobDataStore jobStore,
@@ -79,7 +81,7 @@ public class SmugMugPhotosImporter
       UUID jobId,
       IdempotentImportExecutor idempotentExecutor,
       TokenSecretAuthData authData,
-      PhotosContainerResource data)
+      MediaContainerResource data)
       throws Exception {
 
     // Make the data smugmug compatible
@@ -87,7 +89,7 @@ public class SmugMugPhotosImporter
 
     try {
       SmugMugInterface smugMugInterface = getOrCreateSmugMugInterface(authData);
-      for (PhotoAlbum album : data.getAlbums()) {
+      for (MediaAlbum album : data.getAlbums()) {
         idempotentExecutor.executeAndSwallowIOExceptions(
             album.getId(),
             album.getName(),
@@ -99,6 +101,13 @@ public class SmugMugPhotosImporter
             photo.getTitle(),
             () -> importSinglePhoto(jobId, idempotentExecutor, photo, smugMugInterface));
       }
+      for (VideoModel video : data.getVideos()) {
+        idempotentExecutor.executeAndSwallowIOExceptions(
+            video.getIdempotentId(),
+            video.getName(),
+            () -> importSingleVideo(jobId, idempotentExecutor, video, smugMugInterface));
+      }
+
     } catch (IOException e) {
       monitor.severe(() -> "Error importing", e);
       return new ImportResult(e);
@@ -107,7 +116,7 @@ public class SmugMugPhotosImporter
   }
 
   @VisibleForTesting
-  String importSingleAlbum(UUID jobId, PhotoAlbum inputAlbum, SmugMugInterface smugMugInterface)
+  String importSingleAlbum(UUID jobId, MediaAlbum inputAlbum, SmugMugInterface smugMugInterface)
       throws IOException {
     String albumName =
         Strings.isNullOrEmpty(inputAlbum.getName())
@@ -122,6 +131,8 @@ public class SmugMugPhotosImporter
     return albumResponse.getUri();
   }
 
+  // TODO: Delete some of this duplicated code, factor it out so we don't have two drifting
+  // code paths, similar to change in MicrosoftMediaImporter
   @VisibleForTesting
   String importSinglePhoto(
       UUID jobId,
@@ -142,6 +153,33 @@ public class SmugMugPhotosImporter
 
     SmugMugImageUploadResponse response =
         smugMugInterface.uploadImage(inputPhoto, albumTempData.getAlbumUri(), inputStream);
+    albumTempData.incrementPhotoCount();
+    jobStore.update(jobId, getTempDataId(albumTempData.getAlbumExportId()), albumTempData);
+
+    return response.toString();
+  }
+
+  @VisibleForTesting
+  String importSingleVideo(
+      UUID jobId,
+      IdempotentImportExecutor idempotentExecutor,
+      VideoModel inputVideo,
+      SmugMugInterface smugMugInterface)
+      throws Exception {
+    InputStream inputStream;
+    if (inputVideo.isInTempStore()) {
+      inputStream = jobStore.getStream(jobId, inputVideo.getFetchableUrl()).getStream();
+    } else {
+      inputStream = smugMugInterface.getImageAsStream(inputVideo.getFetchableUrl());
+    }
+
+    String originalAlbumId = inputVideo.getAlbumId();
+    SmugMugPhotoTempData albumTempData =
+        getDestinationAlbumTempData(jobId, idempotentExecutor, originalAlbumId, smugMugInterface);
+
+    SmugMugImageUploadResponse response =
+        smugMugInterface.uploadVideo(inputVideo, albumTempData.getAlbumUri(), inputStream);
+
     albumTempData.incrementPhotoCount();
     jobStore.update(jobId, getTempDataId(albumTempData.getAlbumExportId()), albumTempData);
 
@@ -173,7 +211,7 @@ public class SmugMugPhotosImporter
     int depth = 0;
     while (albumTempData.getPhotoCount() >= transmogrificationConfig.getAlbumMaxSize()) {
       if (albumTempData.getOverflowAlbumExportId() == null) {
-        PhotoAlbum newAlbum =
+        MediaAlbum newAlbum =
             createOverflowAlbum(
                 baseAlbumTempData.getAlbumExportId(),
                 baseAlbumTempData.getAlbumName(),
@@ -214,11 +252,11 @@ public class SmugMugPhotosImporter
    * createOverflowAlbum("baseAlbumId", "baseAlbumName", "baseAlbumDescription", 1) and result in an
    * album PhotoAlbum("baseAlbumId-overflow-1", "baseAlbumName (1)", "baseAlbumDescription")
    */
-  private static PhotoAlbum createOverflowAlbum(
+  private static MediaAlbum createOverflowAlbum(
       String baseAlbumId, String baseAlbumName, String baseAlbumDescription, int copyNumber)
       throws Exception {
     checkState(copyNumber > 0, "copyNumber should be > 0");
-    return new PhotoAlbum(
+    return new MediaAlbum(
         String.format("%s-overflow-%d", baseAlbumId, copyNumber),
         String.format("%s (%d)", baseAlbumName, copyNumber),
         baseAlbumDescription);

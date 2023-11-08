@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.transfer.smugmug.photos;
+package org.datatransferproject.transfer.smugmug;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -39,12 +39,14 @@ import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.datatransferproject.transfer.smugmug.photos.SmugMugOauthApi;
 import org.datatransferproject.transfer.smugmug.photos.model.*;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumImageResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumsResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugImageUploadResponse;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 
@@ -60,7 +62,8 @@ public class SmugMugInterface {
   private final ObjectMapper mapper;
   private final SmugMugUser user;
 
-  SmugMugInterface(AppCredentials appCredentials, TokenSecretAuthData authData, ObjectMapper mapper)
+  public SmugMugInterface(AppCredentials appCredentials, TokenSecretAuthData authData,
+      ObjectMapper mapper)
       throws IOException {
     this.oAuthService =
         new ServiceBuilder(appCredentials.getKey())
@@ -71,7 +74,7 @@ public class SmugMugInterface {
     this.user = getUserInformation().getUser();
   }
 
-  SmugMugAlbumImageResponse getListOfAlbumImages(String url) throws IOException {
+  public SmugMugAlbumImageResponse getListOfAlbumImages(String url) throws IOException {
     Preconditions.checkArgument(
         !Strings.isNullOrEmpty(url), "Album URI is required to retrieve album information");
     SmugMugAlbumImageResponse response =
@@ -82,7 +85,7 @@ public class SmugMugInterface {
 
   /* Returns the album corresponding to the url provided. If the url is null or empty, this
    * returns the top level user albums. */
-  SmugMugAlbumsResponse getAlbums(String url) throws IOException {
+  public SmugMugAlbumsResponse getAlbums(String url) throws IOException {
     if (Strings.isNullOrEmpty(url)) {
       url = user.getUris().get(ALBUMS_KEY).getUri();
     }
@@ -91,7 +94,7 @@ public class SmugMugInterface {
   }
 
   /* Creates an album with albumName provided. */
-  SmugMugAlbumResponse createAlbum(String albumName) throws IOException {
+  public SmugMugAlbumResponse createAlbum(String albumName) throws IOException {
     // Set up album
     Map<String, String> json = new HashMap<>();
     json.put("NiceName", cleanName(albumName));
@@ -120,7 +123,7 @@ public class SmugMugInterface {
 
   /* Uploads the resource at photoUrl to the albumId provided
    * The albumId must exist before calling upload, else the request will fail */
-  SmugMugImageUploadResponse uploadImage(
+  public SmugMugImageUploadResponse uploadImage(
       PhotoModel photoModel, String albumUri, InputStream inputStream) throws IOException {
     // Set up photo
     InputStreamContent content = new InputStreamContent(null, inputStream);
@@ -147,6 +150,43 @@ public class SmugMugInterface {
         postRequest(
             "https://upload.smugmug.com/",
             ImmutableMap.of(), // No content params for photo upload
+            contentBytes,
+            headersMap,
+            new TypeReference<SmugMugImageUploadResponse>() {});
+
+    Preconditions.checkState(response.getStat().equals("ok"), "Failed to upload image");
+    return Preconditions.checkNotNull(response, "Image upload Response is null");
+  }
+
+  /* Uploads the resource at videoUrl to the albumId provided
+   * The albumId must exist before calling upload, else the request will fail */
+  public SmugMugImageUploadResponse uploadVideo(
+      VideoModel videoModel, String albumUri, InputStream inputStream) throws IOException {
+    // Set up photo
+    InputStreamContent content = new InputStreamContent(null, inputStream);
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    content.writeTo(outputStream);
+    byte[] contentBytes = outputStream.toByteArray();
+
+    // Headers from: https://api.smugmug.com/api/v2/doc/reference/upload.html
+    Map<String, String> headersMap = new HashMap<>();
+    headersMap.put("X-Smug-AlbumUri", albumUri);
+    headersMap.put("X-Smug-ResponseType", "JSON");
+    headersMap.put("X-Smug-Version", "v2");
+    headersMap.put("Content-Type", videoModel.getMimeType());
+
+    if (!Strings.isNullOrEmpty(videoModel.getName())) {
+      headersMap.put("X-Smug-Title", cleanHeader(videoModel.getName()));
+    }
+    if (!Strings.isNullOrEmpty(videoModel.getDescription())) {
+      headersMap.put("X-Smug-Caption", cleanHeader(videoModel.getDescription()));
+    }
+
+    // Upload video
+    SmugMugImageUploadResponse response =
+        postRequest(
+            "https://upload.smugmug.com/",
+            ImmutableMap.of(), // No content params for video upload
             contentBytes,
             headersMap,
             new TypeReference<SmugMugImageUploadResponse>() {});
@@ -261,7 +301,7 @@ public class SmugMugInterface {
     }
   }
 
-  static String cleanName(String name) {
+  public static String cleanName(String name) {
     // TODO:  Handle cases where the entire album name is non-alphanumeric, e.g. all emojis
     return name.chars()
         .mapToObj(c -> (char) c)

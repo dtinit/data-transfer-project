@@ -17,11 +17,12 @@
 package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.io.Serializable;
 
 /**
  * The response provided by the Google Photos API for an album query
  */
-public class AlbumListResponse {
+public class AlbumListResponse implements Serializable {
   @JsonProperty("albums")
   private GoogleAlbum[] albums;
 
