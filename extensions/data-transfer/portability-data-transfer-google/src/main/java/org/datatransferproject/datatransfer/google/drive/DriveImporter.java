@@ -104,8 +104,8 @@ public final class DriveImporter
       throw e;
     } catch (GoogleJsonResponseException e) {
       if (e.getStatusCode() == 403
-        && e.getMessage().contains("storage quota has been exceeded")) {
-      throw new DestinationMemoryFullException("Destination Google Drive storage was full", e);
+          && e.getMessage().contains("storage quota has been exceeded")) {
+        throw new DestinationMemoryFullException("Destination Google Drive storage was full", e);
       }
       throw e;
     }
@@ -135,13 +135,12 @@ public final class DriveImporter
       TokenErrorResponse details = e.getDetails();
       if (details != null && details.getError().equals("invalid_grant")) {
         throw new InvalidTokenException("Unable to refresh token.", e);
-      } else {
-        throw e;
       }
+      throw e;
     } catch (GoogleJsonResponseException e) {
       if (e.getStatusCode() == 403
-        && e.getMessage().contains("storage quota has been exceeded")) {
-      throw new DestinationMemoryFullException("Destination Google Drive storage was full", e);
+          && e.getMessage().contains("storage quota has been exceeded")) {
+        throw new DestinationMemoryFullException("Destination Google Drive storage was full", e);
       }
       throw e;
     }
