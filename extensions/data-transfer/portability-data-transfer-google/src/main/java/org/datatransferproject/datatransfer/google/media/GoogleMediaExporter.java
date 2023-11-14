@@ -39,6 +39,7 @@ import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
 import org.datatransferproject.datatransfer.google.photos.GooglePhotosInterface;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -69,16 +70,39 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
   private final JsonFactory jsonFactory;
   private final Monitor monitor;
   private volatile GooglePhotosInterface photosInterface;
+  private IdempotentImportExecutor retryingExecutor;
+  private Boolean enableRetrying;
 
   public GoogleMediaExporter(
       GoogleCredentialFactory credentialFactory,
       TemporaryPerJobDataStore jobStore,
       JsonFactory jsonFactory,
       Monitor monitor) {
-    this.credentialFactory = credentialFactory;
-    this.jobStore = jobStore;
-    this.jsonFactory = jsonFactory;
-    this.monitor = monitor;
+    this(
+        credentialFactory,
+        jobStore,
+        jsonFactory,
+        null,
+        monitor
+    );
+  }
+
+  public GoogleMediaExporter(
+      GoogleCredentialFactory credentialFactory,
+      TemporaryPerJobDataStore jobStore,
+      JsonFactory jsonFactory,
+      Monitor monitor,
+      IdempotentImportExecutor retryingExecutor,
+      boolean enableRetrying) {
+    this(
+        credentialFactory,
+        jobStore,
+        jsonFactory,
+        null,
+        monitor,
+        retryingExecutor,
+        enableRetrying
+    );
   }
 
   @VisibleForTesting
@@ -88,11 +112,30 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       JsonFactory jsonFactory,
       GooglePhotosInterface photosInterface,
       Monitor monitor) {
+    this(
+        credentialFactory,
+        jobStore,
+        jsonFactory,
+        photosInterface,
+        monitor,
+        null,
+        false);
+  }
+
+  GoogleMediaExporter(GoogleCredentialFactory credentialFactory,
+      TemporaryPerJobDataStore jobStore,
+      JsonFactory jsonFactory,
+      GooglePhotosInterface photosInterface,
+      Monitor monitor,
+      IdempotentImportExecutor retryingExecutor,
+      boolean enableRetrying) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
     this.jsonFactory = jsonFactory;
     this.photosInterface = photosInterface;
     this.monitor = monitor;
+    this.retryingExecutor = retryingExecutor;
+    this.enableRetrying = enableRetrying;
   }
 
   @VisibleForTesting
