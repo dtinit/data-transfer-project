@@ -25,6 +25,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -32,11 +33,8 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Range;
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.Clock;
-import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -65,19 +63,13 @@ import org.datatransferproject.types.common.PaginationData;
 import org.datatransferproject.types.common.StringPaginationToken;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.common.models.IdOnlyContainerResource;
-import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
-import org.datatransferproject.types.common.models.videos.VideoAlbum;
 import org.datatransferproject.types.common.models.videos.VideoModel;
-import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
-import org.datatransferproject.types.transfer.retry.RetryStrategy;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
-import org.datatransferproject.types.transfer.retry.SkipRetryStrategy;
 import org.datatransferproject.types.transfer.retry.UniformRetryStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -91,7 +83,7 @@ public class GoogleMediaExporterTest {
   private static String MEDIA_TOKEN = "some-upstream-generated-media-token";
 
   private static long RETRY_INTERVAL_MILLIS = 100L;
-  private static int RETRY_MAX_ATTEMPTS = 5;
+  private static int RETRY_MAX_ATTEMPTS = 1;
 
   private static UUID uuid = UUID.randomUUID();
   private TokensAndUrlAuthData authData;
@@ -127,10 +119,9 @@ public class GoogleMediaExporterTest {
             credentialFactory, jobStore, GsonFactory.getDefaultInstance(), photosInterface, monitor);
 
     retryingGoogleMediaExporter = new GoogleMediaExporter(
-        credentialFactory, jobStore, GsonFactory.getDefaultInstance(), monitor,
+        credentialFactory, jobStore, GsonFactory.getDefaultInstance(), monitor, photosInterface,
         retryingExecutor,
         true);
-
 
     when(photosInterface.listAlbums(any(Optional.class))).thenReturn(albumListResponse);
     when(photosInterface.listMediaItems(any(Optional.class), any(Optional.class)))
@@ -383,7 +374,19 @@ public class GoogleMediaExporterTest {
   }
 
   @Test
-  public void testGetGoogleMediaItem() throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+  public void testGetGoogleMediaItemSucceeds() throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+    String mediaItemID = "media_id";
+    when(photosInterface.getMediaItem(any())).thenReturn(setUpSingleMediaItem(mediaItemID, mediaItemID, null));
+
+    long start = System.currentTimeMillis();
+    assertThat(retryingGoogleMediaExporter.getGoogleMediaItem(mediaItemID, mediaItemID, mediaItemID, authData)).isInstanceOf(GoogleMediaItem.class);
+    long end = System.currentTimeMillis();
+
+    assertThat(end - start).isLessThan(RETRY_INTERVAL_MILLIS * RETRY_MAX_ATTEMPTS);
+  }
+
+  @Test
+  public void testGetGoogleMediaItemFailed() throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     String mediaItemID = "media_id";
     when(photosInterface.getMediaItem(mediaItemID)).thenThrow(IOException.class);
 
@@ -391,14 +394,18 @@ public class GoogleMediaExporterTest {
     assertThat(retryingGoogleMediaExporter.getGoogleMediaItem(mediaItemID, mediaItemID, mediaItemID, authData)).isNull();
     long end = System.currentTimeMillis();
 
-    // We wait 100 ms between each retry.
+    // If retrying occurred, then the retry_interval must have been waited at least max_attempts
+    // amount of times.
     assertThat(end - start).isAtLeast(RETRY_INTERVAL_MILLIS * RETRY_MAX_ATTEMPTS);
+    assertThat(retryingExecutor.getErrors().size()).isEqualTo(1);
+    assertThat(retryingExecutor.getErrors().stream().findFirst().toString()).contains("IOException");
+
 
     start = System.currentTimeMillis();
     assertThrows(IOException.class, () -> googleMediaExporter.getGoogleMediaItem(mediaItemID, mediaItemID, mediaItemID, authData));
     end = System.currentTimeMillis();
 
-    assertThat(end - start).isAtMost(RETRY_INTERVAL_MILLIS * RETRY_MAX_ATTEMPTS);
+    assertThat(end - start).isLessThan(RETRY_INTERVAL_MILLIS * RETRY_MAX_ATTEMPTS);
   }
 
   /** Sets up a response with a single album, containing a single photo */

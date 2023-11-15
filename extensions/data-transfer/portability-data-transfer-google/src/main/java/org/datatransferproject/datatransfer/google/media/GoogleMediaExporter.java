@@ -96,13 +96,14 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       TemporaryPerJobDataStore jobStore,
       JsonFactory jsonFactory,
       Monitor monitor,
+      GooglePhotosInterface photosInterface,
       IdempotentImportExecutor retryingExecutor,
       boolean enableRetrying) {
     this(
         credentialFactory,
         jobStore,
         jsonFactory,
-        null,
+        photosInterface,
         monitor,
         retryingExecutor,
         enableRetrying
