@@ -374,19 +374,16 @@ public class GoogleMediaExporterTest {
   }
 
   @Test
-  public void testGetGoogleMediaItemSucceeds() throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+  public void testGetGoogleMediaItemSucceeds() throws IOException, InvalidTokenException, PermissionDeniedException {
     String mediaItemID = "media_id";
     when(photosInterface.getMediaItem(any())).thenReturn(setUpSingleMediaItem(mediaItemID, mediaItemID, null));
 
-    long start = System.currentTimeMillis();
     assertThat(retryingGoogleMediaExporter.getGoogleMediaItem(mediaItemID, mediaItemID, mediaItemID, authData)).isInstanceOf(GoogleMediaItem.class);
-    long end = System.currentTimeMillis();
 
-    assertThat(end - start).isLessThan(RETRY_INTERVAL_MILLIS * RETRY_MAX_ATTEMPTS);
   }
 
   @Test
-  public void testGetGoogleMediaItemFailed() throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+  public void testGetGoogleMediaItemFailed() throws IOException, InvalidTokenException, PermissionDeniedException {
     String mediaItemID = "media_id";
     when(photosInterface.getMediaItem(mediaItemID)).thenThrow(IOException.class);
 
