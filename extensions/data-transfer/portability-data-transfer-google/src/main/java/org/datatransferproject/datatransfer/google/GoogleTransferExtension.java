@@ -127,7 +127,8 @@ public class GoogleTransferExtension implements TransferExtension {
     importerBuilder.put(CONTACTS, new GoogleContactsImporter(credentialFactory));
     importerBuilder.put(CALENDAR, new GoogleCalendarImporter(credentialFactory));
     importerBuilder.put(MAIL, new GoogleMailImporter(credentialFactory, monitor));
-    importerBuilder.put(MEDIA, new GoogleMediaImporter(credentialFactory, jobStore, dataStore, jsonFactory, monitor, context.getSetting("googleWritesPerSecond", 1.0)));
+    importerBuilder.put(MEDIA, new GoogleMediaImporter(credentialFactory, jobStore, dataStore, jsonFactory, monitor,
+        appCredentials, context.getSetting("googleWritesPerSecond", 1.0)));
     importerBuilder.put(TASKS, new GoogleTasksImporter(credentialFactory));
     importerBuilder.put(
         PHOTOS,

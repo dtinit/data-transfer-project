@@ -268,6 +268,7 @@ public class GoogleVideosInterface {
               .setFileName(video.getName())
               .setDataFile(new RandomAccessFile(tmp, "r"))
               .build();
+
       UploadMediaItemResponse uploadResponse = photosLibraryClient.uploadMediaItem(uploadRequest);
       String uploadToken;
       if (uploadResponse.getError().isPresent() || !uploadResponse.getUploadToken().isPresent()) {
