@@ -110,11 +110,12 @@ public class GoogleMediaImporter
         dataStore,
         jsonFactory,
         new HashMap<>(),  /*photosInterfacesMap*/
-        new HashMap<>(),
+        new HashMap<>(), /*photosLibraryClientMap*/
         appCredentials,
         null,  /*photosInterface*/
-        new ConnectionProvider(jobStore), monitor, writesPerSecond   /*photosLibraryClient*/
-    );
+        new ConnectionProvider(jobStore),
+        monitor,
+        writesPerSecond);
   }
 
   @VisibleForTesting
