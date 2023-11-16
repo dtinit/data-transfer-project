@@ -30,6 +30,7 @@ import org.datatransferproject.datatransfer.google.gplus.GooglePlusExporter;
 import org.datatransferproject.datatransfer.google.mail.GoogleMailExporter;
 import org.datatransferproject.datatransfer.google.mail.GoogleMailImporter;
 import org.datatransferproject.datatransfer.google.media.GoogleMediaExporter;
+import org.datatransferproject.datatransfer.google.media.GoogleMediaImporter;
 import org.datatransferproject.datatransfer.google.music.GoogleMusicExporter;
 import org.datatransferproject.datatransfer.google.music.GoogleMusicImporter;
 import org.datatransferproject.datatransfer.google.photos.GooglePhotosExporter;
@@ -40,6 +41,7 @@ import org.datatransferproject.datatransfer.google.videos.GoogleVideosExporter;
 import org.datatransferproject.datatransfer.google.videos.GoogleVideosImporter;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorExtension;
 import org.datatransferproject.types.common.models.DataVertical;
@@ -110,6 +112,7 @@ public class GoogleTransferExtension implements TransferExtension {
     }
 
     Monitor monitor = context.getMonitor();
+    TemporaryPerJobDataStore dataStore = context.getService(TemporaryPerJobDataStore.class);
 
     // Create the GoogleCredentialFactory with the given {@link AppCredentials}.
     GoogleCredentialFactory credentialFactory =
@@ -124,6 +127,7 @@ public class GoogleTransferExtension implements TransferExtension {
     importerBuilder.put(CONTACTS, new GoogleContactsImporter(credentialFactory));
     importerBuilder.put(CALENDAR, new GoogleCalendarImporter(credentialFactory));
     importerBuilder.put(MAIL, new GoogleMailImporter(credentialFactory, monitor));
+    importerBuilder.put(MEDIA, new GoogleMediaImporter(credentialFactory, jobStore, dataStore, jsonFactory, monitor, context.getSetting("googleWritesPerSecond", 1.0)));
     importerBuilder.put(TASKS, new GoogleTasksImporter(credentialFactory));
     importerBuilder.put(
         PHOTOS,
