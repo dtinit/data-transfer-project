@@ -19,14 +19,10 @@ import static java.lang.String.format;
 import static org.datatransferproject.datatransfer.google.photos.GooglePhotosInterface.ERROR_HASH_MISMATCH;
 import static org.datatransferproject.datatransfer.google.videos.GoogleVideosInterface.uploadBatchOfVideos;
 
-import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.UnmodifiableIterator;
 import com.google.photos.library.v1.PhotosLibraryClient;
 import com.google.rpc.Code;
 import java.io.IOException;
@@ -38,8 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
@@ -53,6 +47,7 @@ import org.datatransferproject.datatransfer.google.mediaModels.NewMediaItemUploa
 import org.datatransferproject.datatransfer.google.mediaModels.Status;
 import org.datatransferproject.datatransfer.google.photos.GooglePhotosInterface;
 import org.datatransferproject.datatransfer.google.photos.PhotoResult;
+import org.datatransferproject.datatransfer.google.videos.GoogleVideosInterface;
 import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
@@ -67,13 +62,12 @@ import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.spi.transfer.types.UploadErrorException;
-import org.datatransferproject.types.common.DownloadableItem;
 import org.datatransferproject.types.common.ImportableItem;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
-import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.videos.VideoModel;
+import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 public class GoogleMediaImporter
@@ -94,7 +88,8 @@ public class GoogleMediaImporter
   // singleton appears to have been left behind during PR #882
   private final GooglePhotosInterface photosInterface;
   private final HashMap<UUID, BaseMultilingualDictionary> multilingualStrings = new HashMap<>();
-  private final PhotosLibraryClient photosLibraryClient;
+  private final Map<UUID, PhotosLibraryClient> photosLibraryClientMap;
+  private final AppCredentials appCredentials;
 
   // We partition into groups of 49 as 50 is the maximum number of items that can be created
   // in one call. (We use 49 to avoid potential off by one errors)
@@ -106,6 +101,7 @@ public class GoogleMediaImporter
       JobStore jobStore,
       TemporaryPerJobDataStore dataStore,
       JsonFactory jsonFactory,
+      AppCredentials appCredentials,
       Monitor monitor,
       double writesPerSecond) {
     this(
@@ -114,11 +110,11 @@ public class GoogleMediaImporter
         dataStore,
         jsonFactory,
         new HashMap<>(),  /*photosInterfacesMap*/
+        new HashMap<>(),
+        appCredentials,
         null,  /*photosInterface*/
-        null,  /*photosLibraryClient*/
-        new ConnectionProvider(jobStore),
-        monitor,
-        writesPerSecond);
+        new ConnectionProvider(jobStore), monitor, writesPerSecond   /*photosLibraryClient*/
+    );
   }
 
   @VisibleForTesting
@@ -128,8 +124,9 @@ public class GoogleMediaImporter
       TemporaryPerJobDataStore dataStore,
       JsonFactory jsonFactory,
       Map<UUID, GooglePhotosInterface> photosInterfacesMap,
+      Map<UUID, PhotosLibraryClient> photosLibraryClientMap,
+      AppCredentials appCredentials,
       GooglePhotosInterface photosInterface,
-      PhotosLibraryClient photosLibraryClient,
       ConnectionProvider connectionProvider,
       Monitor monitor,
       double writesPerSecond) {
@@ -138,8 +135,9 @@ public class GoogleMediaImporter
     this.dataStore = dataStore;
     this.jsonFactory = jsonFactory;
     this.photosInterfacesMap = photosInterfacesMap;
+    this.photosLibraryClientMap = photosLibraryClientMap;
+    this.appCredentials = appCredentials;
     this.photosInterface = photosInterface;
-    this.photosLibraryClient = photosLibraryClient;
     this.connectionProvider = connectionProvider;
     this.monitor = monitor;
     this.writesPerSecond = writesPerSecond;
@@ -156,6 +154,11 @@ public class GoogleMediaImporter
       // Nothing to do
       return ImportResult.OK;
     }
+
+    if (!photosLibraryClientMap.containsKey(jobId)) {
+      photosLibraryClientMap.put(jobId, GoogleVideosInterface.buildPhotosLibraryClient(appCredentials, authData));
+    }
+
     // WARNING: this should be constructed PER request so as to not conflate job IDs or auth data
     // across processes. That is: do NOT cache an instance of this object across your requests, say
     // by storing the instance as a member of your adapter's Importer or Exporter implementations.
@@ -331,7 +334,7 @@ public class GoogleMediaImporter
           jobId,
           batch,
           dataStore,
-          photosLibraryClient,
+          photosLibraryClientMap.get(jobId),
           executor,
           connectionProvider,
           monitor);
