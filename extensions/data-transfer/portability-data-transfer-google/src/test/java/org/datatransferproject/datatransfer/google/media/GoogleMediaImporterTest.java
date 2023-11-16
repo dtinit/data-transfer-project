@@ -117,8 +117,9 @@ public class GoogleMediaImporterTest {
             new HashMap<>(), /*photosLibraryClientMap*/
             appCredentials,
             googlePhotosInterface,
-            connectionProvider, monitor, 1.0
-            /*writesPerSecond*/);
+            connectionProvider,
+            monitor,
+            1.0  /*writesPerSecond*/);
   }
 
   @Test
@@ -306,12 +307,12 @@ public class GoogleMediaImporterTest {
             mock(TemporaryPerJobDataStore.class),
             null,  /*jsonFactory*/
             new HashMap<>(),  /*photosInterfacesMap*/
-            new HashMap<>(), /*photosLibraryClientMap*/
+            new HashMap<>(),  /*photosLibraryClientMap*/
             appCredentials,
             googlePhotosInterface,
             connectionProvider,
             monitor,
-            1.0 /*writesPerSecond*/);
+            1.0  /*writesPerSecond*/);
 
     sut.importSingleAlbum(uuid, null, albumModel);
     ArgumentCaptor<GoogleAlbum> albumArgumentCaptor = ArgumentCaptor.forClass(GoogleAlbum.class);
@@ -345,12 +346,12 @@ public class GoogleMediaImporterTest {
             mock(TemporaryPerJobDataStore.class),
             null,  /*jsonFactory*/
             new HashMap<>(),  /*photosInterfacesMap*/
-            new HashMap<>(), /*photosLibraryClientMap*/
+            new HashMap<>(),  /*photosLibraryClientMap*/
             appCredentials,
             googlePhotosInterface,
             connectionProvider,
             monitor,
-            1.0 /*writesPerSecond*/);
+            1.0  /*writesPerSecond*/);
 
     sut.importSingleAlbum(uuid, null, albumModel);
     sut.importSingleAlbum(uuid, null, albumModel);
@@ -386,12 +387,12 @@ public class GoogleMediaImporterTest {
             mock(TemporaryPerJobDataStore.class),
             null,  /*jsonFactory*/
             new HashMap<>(),  /*photosInterfacesMap*/
-            new HashMap<>(), /*photosLibraryClientMap*/
+            new HashMap<>(),  /*photosLibraryClientMap*/
             appCredentials,
             googlePhotosInterface,
             connectionProvider,
             monitor,
-            1.0 /*writesPerSecond*/);
+            1.0  /*writesPerSecond*/);
 
     BatchMediaItemResponse batchMediaItemResponse =
         new BatchMediaItemResponse(
@@ -439,12 +440,12 @@ public class GoogleMediaImporterTest {
             mock(TemporaryPerJobDataStore.class),
             null,  /*jsonFactory*/
             new HashMap<>(),  /*photosInterfacesMap*/
-            new HashMap<>(), /*photosLibraryClientMap*/
+            new HashMap<>(),  /*photosLibraryClientMap*/
             appCredentials,
             googlePhotosInterface,
             connectionProvider,
             monitor,
-            1.0 /*writesPerSecond*/);
+            1.0  /*writesPerSecond*/);
 
     BatchMediaItemResponse batchMediaItemResponse =
         new BatchMediaItemResponse(
@@ -488,12 +489,12 @@ public class GoogleMediaImporterTest {
             mock(TemporaryPerJobDataStore.class),
             null,  /*jsonFactory*/
             new HashMap<>(),  /*photosInterfacesMap*/
-            new HashMap<>(), /*photosLibraryClientMap*/
+            new HashMap<>(),  /*photosLibraryClientMap*/
             appCredentials,
             googlePhotosInterface,
             connectionProvider,
             monitor,
-            1.0 /*writesPerSecond*/);
+            1.0  /*writesPerSecond*/);
     Mockito.when(googlePhotosInterface.createPhotos(any(NewMediaItemUpload.class)))
         .thenThrow(new IOException("The provided ID does not match any albums"));
 
@@ -534,12 +535,12 @@ public class GoogleMediaImporterTest {
             mock(TemporaryPerJobDataStore.class),
             null,  /*jsonFactory*/
             new HashMap<>(),  /*photosInterfacesMap*/
-            new HashMap<>(), /*photosLibraryClientMap*/
+            new HashMap<>(),  /*photosLibraryClientMap*/
             appCredentials,
             googlePhotosInterface,
             connectionProvider,
             monitor,
-            1.0 /*writesPerSecond*/);
+            1.0  /*writesPerSecond*/);
 
     Mockito.when(googlePhotosInterface.createPhotos(any(NewMediaItemUpload.class)))
         .thenThrow(new IOException("Some other exception"));
