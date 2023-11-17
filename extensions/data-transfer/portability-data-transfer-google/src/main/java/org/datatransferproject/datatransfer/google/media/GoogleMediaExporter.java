@@ -90,18 +90,20 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
     );
   }
 
+  @VisibleForTesting
   public GoogleMediaExporter(
       GoogleCredentialFactory credentialFactory,
       TemporaryPerJobDataStore jobStore,
       JsonFactory jsonFactory,
       Monitor monitor,
+      GooglePhotosInterface photosInterface,
       IdempotentImportExecutor retryingExecutor,
       boolean enableRetrying) {
     this(
         credentialFactory,
         jobStore,
         jsonFactory,
-        null,
+        photosInterface,
         monitor,
         retryingExecutor,
         enableRetrying
@@ -457,7 +459,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
 
   @VisibleForTesting
   @Nullable
-  private GoogleAlbum getGoogleAlbum(String albumIdempotentId, String albumId, String albumName,
+  GoogleAlbum getGoogleAlbum(String albumIdempotentId, String albumId, String albumName,
       TokensAndUrlAuthData authData) throws IOException, InvalidTokenException,
       PermissionDeniedException {
     if (retryingExecutor == null || !enableRetrying) {

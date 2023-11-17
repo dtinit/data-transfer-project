@@ -20,6 +20,7 @@ import static org.datatransferproject.datatransfer.google.media.GoogleMediaExpor
 import static org.datatransferproject.datatransfer.google.media.GoogleMediaExporter.MEDIA_TOKEN_PREFIX;
 
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -30,12 +31,14 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.json.gson.GsonFactory;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
@@ -89,6 +92,7 @@ public class GoogleMediaExporterTest {
   private TokensAndUrlAuthData authData;
   private RetryingInMemoryIdempotentImportExecutor retryingExecutor;
   private GoogleMediaExporter googleMediaExporter;
+  private GoogleMediaExporter retryingGoogleMediaExporter;
   private TemporaryPerJobDataStore jobStore;
   private GooglePhotosInterface photosInterface;
 
@@ -109,9 +113,23 @@ public class GoogleMediaExporterTest {
     Monitor monitor = mock(Monitor.class);
     authData = mock(TokensAndUrlAuthData.class);
 
+    retryingExecutor = new RetryingInMemoryIdempotentImportExecutor(monitor,
+        new RetryStrategyLibrary(
+            ImmutableList.of(), new UniformRetryStrategy(RETRY_MAX_ATTEMPTS, RETRY_INTERVAL_MILLIS, "identifier"))
+    );
+
     googleMediaExporter =
         new GoogleMediaExporter(
             credentialFactory, jobStore, GsonFactory.getDefaultInstance(), photosInterface, monitor);
+
+    retryingGoogleMediaExporter = new GoogleMediaExporter(
+        credentialFactory,
+        jobStore,
+        GsonFactory.getDefaultInstance(),
+        monitor,
+        photosInterface,
+        retryingExecutor,
+        true);
 
     when(photosInterface.listAlbums(any(Optional.class))).thenReturn(albumListResponse);
     when(photosInterface.listMediaItems(any(Optional.class), any(Optional.class)))
@@ -363,6 +381,54 @@ public class GoogleMediaExporterTest {
         .containsExactly(albumlessPhotoUri + "=d"); // download
   }
 
+  @Test
+  public void testGetGoogleAlbumSuccess() throws Exception {
+    when(photosInterface.getAlbum(anyString())).thenReturn(setUpGoogleAlbum(Optional.empty(), Optional.empty()));
+
+
+    assertThat(googleMediaExporter.getGoogleAlbum(
+        "a",
+        "b",
+        "c",
+        authData)).isInstanceOf(GoogleAlbum.class);
+
+    assertThat(retryingGoogleMediaExporter.getGoogleAlbum(
+        "a",
+        "b",
+        "c",
+        authData)).isInstanceOf(GoogleAlbum.class);
+  }
+
+  @Test
+  public void testGetGoogleAlbumRetry() throws Exception {
+    when(photosInterface.getAlbum(anyString())).thenThrow(IOException.class);
+
+    long start1 = System.currentTimeMillis();
+    assertThrows(
+        IOException.class,
+        () -> googleMediaExporter.getGoogleAlbum(
+            "a",
+            "b",
+            "c",
+            authData)
+    );
+    long end1 = System.currentTimeMillis();
+
+
+    long start2 = System.currentTimeMillis();
+    assertThat(retryingGoogleMediaExporter.getGoogleAlbum(
+        "a",
+        "b",
+        "c",
+        authData)).isNull();
+    long end2 = System.currentTimeMillis();
+
+    assertThat(end1 - start1).isLessThan(RETRY_INTERVAL_MILLIS * 1);
+    assertThat(end2-start2).isAtLeast(RETRY_INTERVAL_MILLIS * RETRY_MAX_ATTEMPTS);
+  }
+
+
+
   /** Sets up a response with a single album, containing a single photo */
   private void setUpSingleAlbum() {
     GoogleAlbum albumEntry = new GoogleAlbum();
@@ -370,6 +436,18 @@ public class GoogleMediaExporterTest {
     albumEntry.setTitle("Title");
 
     when(albumListResponse.getAlbums()).thenReturn(new GoogleAlbum[] {albumEntry});
+  }
+
+  private GoogleAlbum setUpGoogleAlbum(Optional<String> albumId, Optional<String> albumTitle) {
+    GoogleAlbum album = new GoogleAlbum();
+    if (albumId.isPresent()) {
+      album.setId(albumId.get());
+    }
+    if (albumTitle.isPresent()) {
+      album.setTitle(albumTitle.get());
+    }
+
+    return album;
   }
 
   /** Sets up a response for a single photo */
