@@ -32,7 +32,7 @@ import com.google.rpc.Code;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
+import java.util.HashMap;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.cloud.local.LocalJobStore;
@@ -57,6 +57,7 @@ import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.spi.transfer.types.UploadErrorException;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 import org.hamcrest.CoreMatchers;
@@ -81,11 +82,13 @@ public class GoogleMediaImporterTest {
   private IdempotentImportExecutor executor;
   private ConnectionProvider connectionProvider;
   private Monitor monitor;
+  private AppCredentials appCredentials;
 
   @Before
   public void setUp() throws Exception {
     googlePhotosInterface = mock(GooglePhotosInterface.class);
     monitor = mock(Monitor.class);
+    appCredentials = mock(AppCredentials.class);
 
     // Initialize the executor with an old album ID -> new album ID mapping.
     executor = new InMemoryIdempotentImportExecutor(monitor);
@@ -110,9 +113,10 @@ public class GoogleMediaImporterTest {
             jobStore,
             dataStore,
             null,  /*jsonFactory*/
-            null,  /*photosInterfacesMap*/
+            new HashMap<>(),  /*photosInterfacesMap*/
+            new HashMap<>(), /*photosLibraryClientMap*/
+            appCredentials,
             googlePhotosInterface,
-            photosLibraryClient,
             connectionProvider,
             monitor,
             1.0  /*writesPerSecond*/);
@@ -302,9 +306,10 @@ public class GoogleMediaImporterTest {
             jobStore,
             mock(TemporaryPerJobDataStore.class),
             null,  /*jsonFactory*/
-            null,  /*photosInterfacesMap*/
+            new HashMap<>(),  /*photosInterfacesMap*/
+            new HashMap<>(),  /*photosLibraryClientMap*/
+            appCredentials,
             googlePhotosInterface,
-            photosLibraryClient,
             connectionProvider,
             monitor,
             1.0  /*writesPerSecond*/);
@@ -340,9 +345,10 @@ public class GoogleMediaImporterTest {
             jobStore,
             mock(TemporaryPerJobDataStore.class),
             null,  /*jsonFactory*/
-            null,  /*photosInterfacesMap*/
+            new HashMap<>(),  /*photosInterfacesMap*/
+            new HashMap<>(),  /*photosLibraryClientMap*/
+            appCredentials,
             googlePhotosInterface,
-            photosLibraryClient,
             connectionProvider,
             monitor,
             1.0  /*writesPerSecond*/);
@@ -380,9 +386,10 @@ public class GoogleMediaImporterTest {
             jobStore,
             mock(TemporaryPerJobDataStore.class),
             null,  /*jsonFactory*/
-            null,  /*photosInterfacesMap*/
+            new HashMap<>(),  /*photosInterfacesMap*/
+            new HashMap<>(),  /*photosLibraryClientMap*/
+            appCredentials,
             googlePhotosInterface,
-            photosLibraryClient,
             connectionProvider,
             monitor,
             1.0  /*writesPerSecond*/);
@@ -432,9 +439,10 @@ public class GoogleMediaImporterTest {
             jobStore,
             mock(TemporaryPerJobDataStore.class),
             null,  /*jsonFactory*/
-            null,  /*photosInterfacesMap*/
+            new HashMap<>(),  /*photosInterfacesMap*/
+            new HashMap<>(),  /*photosLibraryClientMap*/
+            appCredentials,
             googlePhotosInterface,
-            photosLibraryClient,
             connectionProvider,
             monitor,
             1.0  /*writesPerSecond*/);
@@ -480,9 +488,10 @@ public class GoogleMediaImporterTest {
             jobStore,
             mock(TemporaryPerJobDataStore.class),
             null,  /*jsonFactory*/
-            null,  /*photosInterfacesMap*/
+            new HashMap<>(),  /*photosInterfacesMap*/
+            new HashMap<>(),  /*photosLibraryClientMap*/
+            appCredentials,
             googlePhotosInterface,
-            photosLibraryClient,
             connectionProvider,
             monitor,
             1.0  /*writesPerSecond*/);
@@ -525,9 +534,10 @@ public class GoogleMediaImporterTest {
             jobStore,
             mock(TemporaryPerJobDataStore.class),
             null,  /*jsonFactory*/
-            null,  /*photosInterfacesMap*/
+            new HashMap<>(),  /*photosInterfacesMap*/
+            new HashMap<>(),  /*photosLibraryClientMap*/
+            appCredentials,
             googlePhotosInterface,
-            photosLibraryClient,
             connectionProvider,
             monitor,
             1.0  /*writesPerSecond*/);
