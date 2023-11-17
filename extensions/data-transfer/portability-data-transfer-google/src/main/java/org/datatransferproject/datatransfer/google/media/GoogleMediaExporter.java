@@ -15,6 +15,8 @@
  */
 package org.datatransferproject.datatransfer.google.media;
 
+import static java.lang.String.format;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
@@ -31,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
@@ -216,7 +219,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
     List<IdOnlyContainerResource> subResources = new ArrayList<>();
 
     for (PhotoAlbum album : container.getAlbums()) {
-      GoogleAlbum googleAlbum = getOrCreatePhotosInterface(authData).getAlbum(album.getId());
+      GoogleAlbum googleAlbum = getGoogleAlbum(album.getIdempotentId(), album.getId(), album.getName(), authData);
       albumBuilder.add(new MediaAlbum(googleAlbum.getId(), googleAlbum.getTitle(), null));
       // Adding subresources tells the framework to recall export to get all the photos
       subResources.add(new IdOnlyContainerResource(googleAlbum.getId()));
@@ -246,7 +249,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
     List<IdOnlyContainerResource> subResources = new ArrayList<>();
 
     for (MediaAlbum album : container.getAlbums()) {
-      GoogleAlbum googleAlbum = getOrCreatePhotosInterface(authData).getAlbum(album.getId());
+      GoogleAlbum googleAlbum = getGoogleAlbum(album.getIdempotentId(), album.getId(), album.getName(), authData);
       albumBuilder.add(new MediaAlbum(googleAlbum.getId(), googleAlbum.getTitle(), null));
       // Adding subresources tells the framework to recall export to get all the photos
       subResources.add(new IdOnlyContainerResource(googleAlbum.getId()));
@@ -310,7 +313,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
         albums.add(album);
 
         monitor.debug(
-            () -> String.format("%s: Google Photos exporting album: %s", jobId, album.getId()));
+            () -> format("%s: Google Photos exporting album: %s", jobId, album.getId()));
 
         // Add album id to continuation data
         continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getId()));
@@ -438,18 +441,39 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
           photos.add(photoModel);
 
           monitor.debug(
-              () -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
+              () -> format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
         }
       } else if (mediaItem.isVideo()) {
         if (shouldUpload) {
           VideoModel videoModel = GoogleMediaItem.convertToVideoModel(albumId, mediaItem);
           videos.add(videoModel);
           monitor.debug(
-              () -> String.format("%s: Google exporting video: %s", jobId, videoModel.getDataId()));
+              () -> format("%s: Google exporting video: %s", jobId, videoModel.getDataId()));
         }
       }
     }
     return new MediaContainerResource(null  /*albums*/, photos, videos);
+  }
+
+  @VisibleForTesting
+  @Nullable
+  private GoogleAlbum getGoogleAlbum(String albumIdempotentId, String albumId, String albumName,
+      TokensAndUrlAuthData authData) throws IOException, InvalidTokenException,
+      PermissionDeniedException {
+    if (retryingExecutor == null || !enableRetrying) {
+      return getOrCreatePhotosInterface(authData).getAlbum(albumId);
+    }
+
+    try {
+      GoogleAlbum googleAlbum = retryingExecutor.executeAndSwallowIOExceptions(
+          albumIdempotentId, albumName,
+          () -> getOrCreatePhotosInterface(authData).getAlbum(albumId)
+      );
+      return googleAlbum;
+    } catch (Exception e) {
+      monitor.info(() -> format("Retry exception encountered while fetching an album: %s", e));
+    }
+    return null;
   }
 
   private synchronized GooglePhotosInterface getOrCreatePhotosInterface(
