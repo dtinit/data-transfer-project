@@ -76,7 +76,7 @@ public class AppleMediaImporter implements Importer<TokensAndUrlAuthData, MediaC
             idempotentExecutor,
             data.getAlbums(),
           DataVertical.MEDIA.getDataType());
-    final Map<String, Long> importResultMap =
+    final Map<String, Long> importPhotosMap =
         mediaInterface.importAllMedia(
             jobId,
             idempotentExecutor,
@@ -94,15 +94,15 @@ public class AppleMediaImporter implements Importer<TokensAndUrlAuthData, MediaC
             .put(MediaContainerResource.ALBUMS_COUNT_DATA_NAME, albumCount)
             .put(
                 MediaContainerResource.PHOTOS_COUNT_DATA_NAME,
-                importResultMap.getOrDefault(ApplePhotosConstants.COUNT_KEY, 0L).intValue())
+                importPhotosMap.getOrDefault(ApplePhotosConstants.COUNT_KEY, 0L).intValue())
             .put(
                 MediaContainerResource.VIDEOS_COUNT_DATA_NAME,
-                importResultMap.getOrDefault(ApplePhotosConstants.COUNT_KEY, 0L).intValue())
+                importVideosResult.getOrDefault(ApplePhotosConstants.COUNT_KEY, 0L).intValue())
             .build();
 
     return ImportResult.OK
         .copyWithBytes(
-            importResultMap.getOrDefault(ApplePhotosConstants.BYTES_KEY, 0L)
+            importPhotosMap.getOrDefault(ApplePhotosConstants.BYTES_KEY, 0L)
                 + importVideosResult.getOrDefault(ApplePhotosConstants.BYTES_KEY, 0L))
         .copyWithCounts(counts);
   }

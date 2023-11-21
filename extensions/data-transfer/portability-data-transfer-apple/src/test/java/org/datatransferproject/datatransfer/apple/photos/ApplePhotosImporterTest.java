@@ -94,8 +94,8 @@ public class ApplePhotosImporterTest extends AppleImporterTestBase {
                 .collect(Collectors.toList()));
 
     // check the result
-    assertThat(importResult.getCounts().isPresent());
-    assertThat(importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == albumCount);
+    assertThat(importResult.getCounts().isPresent()).isTrue();
+    assertThat(importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == albumCount).isTrue();
     final Map<String, Serializable> expectedKnownValue =
         photoAlbums.stream()
             .collect(
@@ -152,8 +152,8 @@ public class ApplePhotosImporterTest extends AppleImporterTestBase {
                             .collect(Collectors.toList()));
 
     // check the result
-    assertThat(importResult.getCounts().isPresent());
-    assertThat(importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == albumCount);
+    assertThat(importResult.getCounts().isPresent()).isTrue();
+    assertThat(importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == albumCount).isTrue();
     final Map<String, Serializable> expectedKnownValue =
             photoAlbums.stream()
                     .collect(
@@ -196,8 +196,8 @@ public class ApplePhotosImporterTest extends AppleImporterTestBase {
                 .collect(Collectors.toList()));
 
     // check the result
-    assertThat(importResult.getCounts().isPresent());
-    assertThat(importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == albumCount);
+    assertThat(importResult.getCounts().isPresent()).isTrue();
+    assertThat(importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == albumCount).isTrue();
     final Map<String, Serializable> expectedKnownValue =
         photoAlbums.stream()
             .collect(
@@ -242,9 +242,9 @@ public class ApplePhotosImporterTest extends AppleImporterTestBase {
                 .collect(Collectors.toList()));
 
     // check the result
-    assertThat(importResult.getCounts().isPresent());
+    assertThat(importResult.getCounts().isPresent()).isTrue();
     assertThat(
-        importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == albumCount - errorCount);
+        importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == albumCount - errorCount).isTrue();
     final Map<String, Serializable> expectedKnownValue =
         photoAlbums.stream()
             .filter(
@@ -303,10 +303,10 @@ public class ApplePhotosImporterTest extends AppleImporterTestBase {
     verify(mediaInterface).createMedia(anyString(), anyString(), anyList());
 
     // check the result
-    assertThat(importResult.getCounts().isPresent());
-    assertThat(importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == 0);
-    assertThat(importResult.getCounts().get().get(PHOTOS_COUNT_DATA_NAME) == photoCount);
-    assertThat(importResult.getBytes().get() == photoCount * PHOTOS_FILE_SIZE);
+    assertThat(importResult.getCounts().isPresent()).isTrue();
+    assertThat(importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == 0).isTrue();
+    assertThat(importResult.getCounts().get().get(PHOTOS_COUNT_DATA_NAME) == photoCount).isTrue();
+    assertThat(importResult.getBytes().get() == photoCount * PHOTOS_FILE_SIZE).isTrue();
 
     final Map<String, Serializable> expectedKnownValue =
         photos.stream()
@@ -358,10 +358,10 @@ public class ApplePhotosImporterTest extends AppleImporterTestBase {
     verify(mediaInterface, times(2)).createMedia(anyString(), anyString(), anyList());
 
     // check the result
-    assertThat(importResult.getCounts().isPresent());
-    assertThat(importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == 0);
-    assertThat(importResult.getCounts().get().get(PHOTOS_COUNT_DATA_NAME) == photoCount);
-    assertThat(importResult.getBytes().get() == photoCount * PHOTOS_FILE_SIZE);
+    assertThat(importResult.getCounts().isPresent()).isTrue();
+    assertThat(importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == 0).isTrue();
+    assertThat(importResult.getCounts().get().get(PHOTOS_COUNT_DATA_NAME) == photoCount).isTrue();
+    assertThat(importResult.getBytes().get() == photoCount * PHOTOS_FILE_SIZE).isTrue();
 
     final Map<String, Serializable> expectedKnownValue =
         photos.stream()
@@ -422,10 +422,10 @@ public class ApplePhotosImporterTest extends AppleImporterTestBase {
     verify(mediaInterface, times(2)).createMedia(anyString(), anyString(), anyList());
 
     // check the result
-    assertThat(importResult.getCounts().isPresent());
-    assertThat(importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == 0);
-    assertThat(importResult.getCounts().get().get(PHOTOS_COUNT_DATA_NAME) == successCount);
-    assertThat(importResult.getBytes().get() == successCount * PHOTOS_FILE_SIZE);
+    assertThat(importResult.getCounts().isPresent()).isTrue();
+    assertThat(importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == 0).isTrue();
+    assertThat(importResult.getCounts().get().get(PHOTOS_COUNT_DATA_NAME) == successCount).isTrue();
+    assertThat(importResult.getBytes().get() == successCount * PHOTOS_FILE_SIZE).isTrue();
 
     final Map<String, Serializable> expectedKnownValue =
         photos.stream()
