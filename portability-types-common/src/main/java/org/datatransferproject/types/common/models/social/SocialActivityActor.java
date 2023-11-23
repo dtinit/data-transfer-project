@@ -25,9 +25,9 @@ import javax.annotation.Nonnull;
 import java.util.Objects;
 
 public class SocialActivityActor implements ImportableItem {
-  private String url;
-  private String name;
-  private String id;
+  private final String url;
+  private final String name;
+  private final String id;
 
   @JsonCreator
   public SocialActivityActor(

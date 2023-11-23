@@ -16,6 +16,7 @@ public enum DataVertical {
   CONTACTS("CONTACTS"),
   MAIL("MAIL"),
   MEDIA("MEDIA"),
+  MUSIC("MUSIC"),
   NOTES("NOTES"),
   OFFLINE_DATA("OFFLINE-DATA"),
   PHOTOS("PHOTOS"),

@@ -31,6 +31,9 @@ include ':extensions:security:portability-security-cleartext', ':extensions:secu
 include ':extensions:copier:portability-stack-copier'
 
 // Service Integrations - Auth and Transfer Extensions
+// Apple
+include ':extensions:auth:portability-auth-apple'
+include ':extensions:data-transfer:portability-data-transfer-apple'
 // Daybook
 include ':extensions:auth:portability-auth-daybook'
 include ':extensions:data-transfer:portability-data-transfer-daybook'

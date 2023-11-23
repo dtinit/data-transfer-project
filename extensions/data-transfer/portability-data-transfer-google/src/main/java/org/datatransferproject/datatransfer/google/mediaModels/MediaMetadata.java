@@ -17,9 +17,10 @@
 package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.io.Serializable;
 
 /** Metadata about a {@code MediaItem}. */
-public class MediaMetadata {
+public class MediaMetadata implements Serializable {
 
   @JsonProperty("photo")
   private Photo photo;

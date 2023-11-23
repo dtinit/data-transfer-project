@@ -27,14 +27,14 @@ import java.util.Collection;
 import java.util.Objects;
 
 public class SocialActivityModel implements ImportableItem {
-  private String id;
-  private Instant published;
-  private SocialActivityType type;
-  private Collection<SocialActivityAttachment> attachments;
-  private SocialActivityLocation location;
-  private String title;
-  private String content;
-  private String url;
+  private final String id;
+  private final Instant published;
+  private final SocialActivityType type;
+  private final Collection<SocialActivityAttachment> attachments;
+  private final SocialActivityLocation location;
+  private final String title;
+  private final String content;
+  private final String url;
 
   @Override
   public boolean equals(Object o) {
@@ -104,7 +104,6 @@ public class SocialActivityModel implements ImportableItem {
     return location;
   }
 
-
   public String getTitle() {
     return title;
   }
@@ -120,7 +119,7 @@ public class SocialActivityModel implements ImportableItem {
   @Nonnull
   @Override
   public String getIdempotentId() {
-    return Integer.toString(hashCode());
+    return getId();
   }
 
   @Override

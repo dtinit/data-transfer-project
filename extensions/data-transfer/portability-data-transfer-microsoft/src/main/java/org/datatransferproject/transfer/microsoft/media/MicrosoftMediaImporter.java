@@ -75,12 +75,17 @@ public class MicrosoftMediaImporter
       TemporaryPerJobDataStore jobStore, Monitor monitor,
       MicrosoftCredentialFactory credentialFactory) {
 
-    createFolderUrl = baseUrl + "/v1.0/me/drive/special/photo-video/children";
+    // NOTE: "special/photos" is a specific folder in One Drive that corresponds to items that
+    // should appear in https://photos.onedrive.com/, for more information see:  
+    // https://learn.microsoft.com/en-us/onedrive/developer/rest-api/api/drive_get_specialfolder?#special-folder-names
+    createFolderUrl = baseUrl + "/v1.0/me/drive/special/photos/children";
+    albumlessMediaUrlTemplate =
+        baseUrl + "/v1.0/me/drive/special/photos:/%s:/createUploadSession%s";
+      
     // first param is the folder id, second param is the file name
     // /me/drive/items/{parent-id}:/{filename}:/content;
     uploadMediaUrlTemplate = baseUrl + "/v1.0/me/drive/items/%s:/%s:/createUploadSession%s";
-    albumlessMediaUrlTemplate =
-        baseUrl + "/v1.0/me/drive/special/photo-video:/%s:/createUploadSession%s";
+    
 
     this.client = client;
     this.objectMapper = objectMapper;

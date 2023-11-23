@@ -37,6 +37,7 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
+import org.datatransferproject.transfer.smugmug.SmugMugInterface;
 import org.datatransferproject.transfer.smugmug.SmugMugTransmogrificationConfig;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbum;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumResponse;

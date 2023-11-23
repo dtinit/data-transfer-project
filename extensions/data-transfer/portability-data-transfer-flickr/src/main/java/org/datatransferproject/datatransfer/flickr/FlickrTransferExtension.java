@@ -17,36 +17,42 @@
 package org.datatransferproject.datatransfer.flickr;
 
 import static java.lang.String.format;
+import static org.datatransferproject.types.common.models.DataVertical.MEDIA;
 import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Set;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.datatransfer.flickr.media.FlickrMediaImporter;
 import org.datatransferproject.datatransfer.flickr.photos.FlickrPhotosExporter;
 import org.datatransferproject.datatransfer.flickr.photos.FlickrPhotosImporter;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
-import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
 
 public class FlickrTransferExtension implements TransferExtension {
+
   private static final String SERVICE_ID = "flickr";
   private static final String FLICKR_KEY = "FLICKR_KEY";
   private static final String FLICKR_SECRET = "FLICKR_SECRET";
 
-  private final Set<DataVertical> supportedServices = ImmutableSet.of(PHOTOS);
+  private final Set<DataVertical> supportedServices = ImmutableSet.of(PHOTOS, MEDIA);
 
-  private Importer importer;
   private Exporter exporter;
   private TemporaryPerJobDataStore jobStore;
   private boolean initialized = false;
   private AppCredentials appCredentials;
+  private ImmutableMap<DataVertical, Importer> importerMap;
 
   @Override
   public String getServiceId() {
@@ -64,12 +70,14 @@ public class FlickrTransferExtension implements TransferExtension {
   public Importer<?, ?> getImporter(DataVertical transferDataType) {
     Preconditions.checkArgument(initialized);
     Preconditions.checkArgument(supportedServices.contains(transferDataType));
-    return importer;
+    return importerMap.get(transferDataType);
   }
 
   @Override
   public void initialize(ExtensionContext context) {
-    if (initialized) return;
+    if (initialized) {
+      return;
+    }
     jobStore = context.getService(TemporaryPerJobDataStore.class);
     Monitor monitor = context.getMonitor();
 
@@ -89,7 +97,24 @@ public class FlickrTransferExtension implements TransferExtension {
 
     TransferServiceConfig serviceConfig = context.getService(TransferServiceConfig.class);
 
-    importer = new FlickrPhotosImporter(appCredentials, jobStore, monitor, serviceConfig);
+    IdempotentImportExecutor idempotentImportExecutor = context.getService(
+        IdempotentImportExecutorExtension.class).getRetryingIdempotentImportExecutor(context);
+    boolean enableRetrying = context.getSetting("enableRetrying", false);
+
+    ImmutableMap.Builder<DataVertical, Importer> importerBuilder = ImmutableMap.builder();
+    importerBuilder.put(
+        PHOTOS,
+        new FlickrPhotosImporter(
+            appCredentials,
+            jobStore,
+            monitor,
+            serviceConfig,
+            idempotentImportExecutor,
+            enableRetrying));
+    importerBuilder.put(
+        MEDIA, new FlickrMediaImporter(appCredentials, jobStore, monitor, serviceConfig));
+    importerMap = importerBuilder.build();
+
     exporter = new FlickrPhotosExporter(appCredentials, serviceConfig);
     initialized = true;
   }

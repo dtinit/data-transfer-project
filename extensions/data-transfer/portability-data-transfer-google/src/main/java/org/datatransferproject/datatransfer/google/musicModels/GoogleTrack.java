@@ -17,65 +17,89 @@
 package org.datatransferproject.datatransfer.google.musicModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.protobuf.util.Durations;
+import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Objects;
 
-/** Represents a track (eg: a song) as returned by the Google Music API. */
+/**
+ * Represents a track (eg: a song) as returned by the Google Music API.
+ */
 public class GoogleTrack {
 
   @JsonProperty("isrc")
   private String isrc;
 
-  @JsonProperty("release")
-  private GoogleRelease release;
+  @JsonProperty("releaseReference")
+  private GoogleRelease releaseReference;
 
-  @JsonProperty("trackTitle")
-  private String trackTitle;
+  @JsonProperty("title")
+  private String title;
 
-  @JsonProperty("artistTitles")
-  private String[] artistTitles;
+  @JsonProperty("artistReferences")
+  private GoogleArtist[] artistReferences;
 
-  @JsonProperty("durationMillis")
-  private long durationMillis;
+  // Json format of google.protobuf.Duration is encoded as a string ends in the suffix "s".
+  // 3 seconds and 1 microsecond should be expressed in JSON format as "3.000001s".
+  @JsonProperty("duration")
+  private String duration;
+
+  @JsonProperty("explicitType")
+  private String explicitType;
 
   public String getIsrc() {
     return isrc;
   }
 
-  public GoogleRelease getRelease() {
-    return release;
+  public GoogleRelease getReleaseReference() {
+    return releaseReference;
   }
 
-  public String getTrackTitle() {
-    return trackTitle;
+  public String getTitle() {
+    return title;
   }
 
-  public String[] getArtistTitles() {
-    return artistTitles;
+  public GoogleArtist[] getArtistReferences() {
+    return artistReferences;
   }
 
-  public long getDurationMillis() {
-    return durationMillis;
+  public String getDuration() {
+    return duration;
+  }
+
+  public String getExplicitType() {
+    return explicitType;
+  }
+
+  public long convertDurationToMillions() throws ParseException {
+    if (this.duration == null || this.duration.isEmpty()) {
+      return 0L;
+    }
+    return Durations.toMillis(Durations.parse(duration));
   }
 
   public void setIsrc(String isrc) {
     this.isrc = isrc;
   }
 
-  public void setRelease(GoogleRelease release) {
-    this.release = release;
+  public void setReleaseReference(GoogleRelease releaseReference) {
+    this.releaseReference = releaseReference;
   }
 
-  public void setTrackTitle(String trackTitle) {
-    this.trackTitle = trackTitle;
+  public void setTitle(String title) {
+    this.title = title;
   }
 
-  public void setArtistTitles(String[] artistTitles) {
-    this.artistTitles = artistTitles;
+  public void setArtistReferences(GoogleArtist[] artistReferences) {
+    this.artistReferences = artistReferences;
   }
 
-  public void setDurationMillis(long durationMillis) {
-    this.durationMillis = durationMillis;
+  public void setDuration(String duration) {
+    this.duration = duration;
+  }
+
+  public void setExplicitType(String explicitType) {
+    this.explicitType = explicitType;
   }
 
   @Override
@@ -88,19 +112,21 @@ public class GoogleTrack {
     }
     GoogleTrack that = (GoogleTrack) o;
     return Objects.equals(isrc, that.isrc)
-        && Objects.equals(release, that.release)
-        && Objects.equals(trackTitle, that.trackTitle)
-        && Arrays.equals(artistTitles, that.artistTitles)
-        && durationMillis == that.durationMillis;
+        && Objects.equals(releaseReference, that.releaseReference)
+        && Objects.equals(title, that.title)
+        && Arrays.equals(artistReferences, that.artistReferences)
+        && Objects.equals(duration, that.duration)
+        && Objects.equals(explicitType, that.explicitType);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(
         getIsrc(),
-        getRelease(),
-        getTrackTitle(),
-        Arrays.hashCode(getArtistTitles()),
-        getDurationMillis());
+        getReleaseReference(),
+        getTitle(),
+        Arrays.hashCode(getArtistReferences()),
+        getDuration(),
+        getExplicitType());
   }
 }

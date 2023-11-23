@@ -51,7 +51,7 @@ import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
-import org.datatransferproject.spi.transfer.types.TempPhotosData;
+import org.datatransferproject.spi.transfer.types.TempMediaData;
 import org.datatransferproject.spi.transfer.types.UploadErrorException;
 import org.datatransferproject.types.common.PaginationData;
 import org.datatransferproject.types.common.StringPaginationToken;
@@ -262,10 +262,10 @@ public class GooglePhotosExporterTest {
     // Check contents of job store
     ArgumentCaptor<InputStream> inputStreamArgumentCaptor =
         ArgumentCaptor.forClass(InputStream.class);
-    verify(jobStore).create(eq(uuid), eq("tempPhotosData"), inputStreamArgumentCaptor.capture());
-    TempPhotosData tempPhotosData =
-        new ObjectMapper().readValue(inputStreamArgumentCaptor.getValue(), TempPhotosData.class);
-    assertThat(tempPhotosData.lookupContainedPhotoIds()).containsExactly(PHOTO_ID, secondId);
+    verify(jobStore).create(eq(uuid), eq("tempMediaData"), inputStreamArgumentCaptor.capture());
+    TempMediaData tempMediaData =
+        new ObjectMapper().readValue(inputStreamArgumentCaptor.getValue(), TempMediaData.class);
+    assertThat(tempMediaData.lookupContainedPhotoIds()).containsExactly(PHOTO_ID, secondId);
   }
 
   @Test
@@ -290,10 +290,10 @@ public class GooglePhotosExporterTest {
         .thenReturn(new GoogleMediaItem[] {containedPhoto, albumlessPhoto});
     when(mediaItemSearchResponse.getNextPageToken()).thenReturn(null);
 
-    TempPhotosData tempPhotosData = new TempPhotosData(uuid);
-    tempPhotosData.addContainedPhotoId(containedPhotoId);
-    InputStream stream = GooglePhotosExporter.convertJsonToInputStream(tempPhotosData);
-    when(jobStore.getStream(uuid, "tempPhotosData")).thenReturn(new InputStreamWrapper(stream));
+    TempMediaData tempMediaData = new TempMediaData(uuid);
+    tempMediaData.addContainedPhotoId(containedPhotoId);
+    InputStream stream = GooglePhotosExporter.convertJsonToInputStream(tempMediaData);
+    when(jobStore.getStream(uuid, "tempMediaData")).thenReturn(new InputStreamWrapper(stream));
 
     // Run test
     ExportResult<PhotosContainerResource> result =

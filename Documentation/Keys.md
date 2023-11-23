@@ -24,6 +24,7 @@ API keys usually are just the OAuth App Key and Secret for your app.  But DTP su
 arbitrary authorization mechanism, and so the exact form the key is dependent on the
 authorization technology each providers uses.
 
+ - [Apple](../extensions/data-transfer/portability-data-transfer-apple#keys--auth)
  - [Facebook](../extensions/data-transfer/portability-data-transfer-facebook#keys--auth)
  - [Flickr](../extensions/data-transfer/portability-data-transfer-flickr#keys--auth)
  - [Google](../extensions/data-transfer/portability-data-transfer-google#keys--auth)

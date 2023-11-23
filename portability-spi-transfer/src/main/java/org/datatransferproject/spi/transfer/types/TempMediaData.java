@@ -28,10 +28,12 @@ import org.datatransferproject.types.common.models.DataModel;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 
 /*
- * TempPhotosData used to store album and photos information before they are ready to be uploaded.
+ * TempMediaData used to store personal camera media (album, photos, videos, etc) information before
+ * they are ready to be uploaded.
  */
-@JsonTypeName("org.dataportability:TempPhotosData")
-public class TempPhotosData extends DataModel {
+// TODO(zacsh) update this to support Media* objects and/or Video data
+@JsonTypeName("org.dataportability:TempMediaData")
+public class TempMediaData extends DataModel {
 
   @JsonProperty("jobId")
   private final UUID jobId;
@@ -49,7 +51,7 @@ public class TempPhotosData extends DataModel {
   private final Collection<String> containedPhotoIds;
 
   @JsonCreator
-  public TempPhotosData(
+  public TempMediaData(
       @JsonProperty("jobId") UUID jobId,
       @JsonProperty("tempPhotoAlbums") Map<String, PhotoAlbum> tempPhotoAlbums,
       @JsonProperty("newAlbumIds") Map<String, String> newAlbumIds,
@@ -60,7 +62,7 @@ public class TempPhotosData extends DataModel {
     this.containedPhotoIds = containedPhotoIds;
   }
 
-  public TempPhotosData(@JsonProperty("jobId") UUID jobId) {
+  public TempMediaData(@JsonProperty("jobId") UUID jobId) {
     this.jobId = jobId;
     this.tempPhotoAlbums = new HashMap<>();
     this.newAlbumIds = new HashMap<>();

@@ -119,7 +119,7 @@ public class MicrosoftMediaImporterTest {
       }
 
       return r.url().toString().equals(
-          "https://www.baseurl.com/v1.0/me/drive/special/photo-video/children")
+          "https://www.baseurl.com/v1.0/me/drive/special/photos/children")
           && body.contains("album1_");
     }));
     Response response = mock(Response.class);
@@ -151,7 +151,7 @@ public class MicrosoftMediaImporterTest {
     doReturn(call).when(client).newCall(
         argThat((Request r)
             -> r.url().toString().equals(
-            "https://www.baseurl.com/v1.0/me/drive/special/photo-video/children")));
+            "https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
     Response response = mock(Response.class);
     ResponseBody body = mock(ResponseBody.class);
     when(body.bytes())
@@ -189,7 +189,7 @@ public class MicrosoftMediaImporterTest {
     doReturn(call).when(client).newCall(
         argThat((Request r)
             -> r.url().toString().equals(
-            "https://www.baseurl.com/v1.0/me/drive/special/photo-video/children")));
+            "https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
     Response response = mock(Response.class);
     ResponseBody body = mock(ResponseBody.class);
     when(body.bytes())
