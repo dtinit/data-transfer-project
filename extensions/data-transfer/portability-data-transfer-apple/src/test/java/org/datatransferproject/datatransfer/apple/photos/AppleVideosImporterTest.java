@@ -64,9 +64,9 @@ public class AppleVideosImporterTest extends AppleImporterTestBase {
     verify(mediaInterface).createMedia(anyString(), anyString(), anyList());
 
     // check the result
-    assertThat(importResult.getCounts().isPresent());
-    assertThat(importResult.getCounts().get().get(VIDEOS_COUNT_DATA_NAME) == videoCount);
-    assertThat(importResult.getBytes().get() == videoCount * VIDEOS_FILE_SIZE);
+    assertThat(importResult.getCounts().isPresent()).isTrue();
+    assertThat(importResult.getCounts().get().get(VIDEOS_COUNT_DATA_NAME) == videoCount).isTrue();
+    assertThat(importResult.getBytes().get() == videoCount * VIDEOS_FILE_SIZE).isTrue();
 
     final Map<String, Serializable> expectedKnownValue =
         videos.stream()
@@ -117,9 +117,9 @@ public class AppleVideosImporterTest extends AppleImporterTestBase {
     verify(mediaInterface, times(2)).createMedia(anyString(), anyString(), anyList());
 
     // check the result
-    assertThat(importResult.getCounts().isPresent());
-    assertThat(importResult.getCounts().get().get(VIDEOS_COUNT_DATA_NAME) == videoCount);
-    assertThat(importResult.getBytes().get() == videoCount * VIDEOS_FILE_SIZE);
+    assertThat(importResult.getCounts().isPresent()).isTrue();
+    assertThat(importResult.getCounts().get().get(VIDEOS_COUNT_DATA_NAME) == videoCount).isTrue();
+    assertThat(importResult.getBytes().get() == videoCount * VIDEOS_FILE_SIZE).isTrue();
   }
 
   @Test
@@ -172,9 +172,9 @@ public class AppleVideosImporterTest extends AppleImporterTestBase {
     verify(mediaInterface, times(2)).createMedia(anyString(), anyString(), anyList());
 
     // check the result
-    assertThat(importResult.getCounts().isPresent());
-    assertThat(importResult.getCounts().get().get(VIDEOS_COUNT_DATA_NAME) == videoCount);
-    assertThat(importResult.getBytes().get() == successCount * VIDEOS_FILE_SIZE);
+    assertThat(importResult.getCounts().isPresent()).isTrue();
+    assertThat(importResult.getCounts().get().get(VIDEOS_COUNT_DATA_NAME) == successCount).isTrue();
+    assertThat(importResult.getBytes().get() == successCount * VIDEOS_FILE_SIZE).isTrue();
 
     final Map<String, Serializable> expectedKnownValue =
         videos.stream()
