@@ -35,8 +35,6 @@ public class Photo implements Serializable {
   @JsonProperty("apertureFNumber")
   private double apertureFNumber;
 
-  //first changelist
-
   @JsonProperty("isoEquivalent")
   private double isoEquivalent;
 
