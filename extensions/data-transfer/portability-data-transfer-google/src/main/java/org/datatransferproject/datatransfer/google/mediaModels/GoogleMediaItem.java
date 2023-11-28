@@ -22,6 +22,7 @@ import com.google.common.base.Strings;
 import java.io.File;
 import java.io.Serializable;
 import java.nio.file.Files;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Optional;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
@@ -35,6 +36,7 @@ public class GoogleMediaItem implements Serializable {
   private final static String DEFAULT_VIDEO_MIMETYPE = "video/mp4";
   // If Tika cannot detect the mimetype, it returns the binary mimetype. This can be considered null
   private final static String DEFAULT_BINARY_MIMETYPE = "application/octet-stream";
+  private final static SimpleDateFormat FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
   @JsonProperty("id")
   private String id;
@@ -91,7 +93,7 @@ public class GoogleMediaItem implements Serializable {
         mediaItem.getId(),
         albumId.orElse(null),
         false /*inTempStore*/,
-        mediaItem.getUploadedTime());
+        getUploadTime(mediaItem));
   }
 
   public static PhotoModel convertToPhotoModel(
@@ -107,7 +109,17 @@ public class GoogleMediaItem implements Serializable {
         albumId.orElse(null),
         false  /*inTempStore*/,
         null  /*sha1*/,
-        mediaItem.getUploadedTime());
+        getUploadTime(mediaItem));
+  }
+
+  private static Date getUploadTime(GoogleMediaItem mediaItem)
+  {
+    Date uploadTime = null;
+    try {
+      uploadTime = FORMAT.parse(mediaItem.getMediaMetadata().getCreationTime());
+    }catch (Exception e) {
+    }
+    return uploadTime;
   }
 
   private static String getMimeType(GoogleMediaItem mediaItem) {

@@ -8,7 +8,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import static java.lang.String.format;
 import static org.junit.Assert.assertTrue;
-import java.util.Date;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -47,6 +46,7 @@ public class GoogleMediaItemTest {
     }
     assertTrue(serializable);
   }
+
   @Test
   public void getMimeType_photoModel_mimeTypeFromFilename() throws Exception {
     GoogleMediaItem photoMediaItem = getPhotoMediaItem();
@@ -135,6 +135,8 @@ public class GoogleMediaItemTest {
 
     // Default defined in GoogleMediaItem
     assertEquals("video/mp4", videoModel.getMimeType());
+    assertEquals("Mon Oct 02 22:33:38 UTC 2023", videoModel.getUploadedTime().toString());
+
   }
 
   @Test
@@ -147,18 +149,19 @@ public class GoogleMediaItemTest {
 
     // defaults to the mimetype that is already set, as avif is not handled.
     assertEquals("image/png", photoModel.getMimeType());
+    assertEquals("Mon Oct 02 22:33:38 UTC 2023", photoModel.getUploadedTime().toString());
   }
 
   public static GoogleMediaItem getPhotoMediaItem() {
     MediaMetadata photoMetadata = new MediaMetadata();
     photoMetadata.setPhoto(new Photo());
+    photoMetadata.setCreationTime("2023-10-02T22:33:38Z");
 
     GoogleMediaItem photoMediaItem = new GoogleMediaItem();
     photoMediaItem.setMimeType("image/png");
     photoMediaItem.setDescription("Description");
     photoMediaItem.setFilename("filename.png");
     photoMediaItem.setBaseUrl("https://www.google.com");
-    photoMediaItem.setUploadedTime(new Date());
     photoMediaItem.setId("photo_id");
     photoMediaItem.setMediaMetadata(photoMetadata);
     return photoMediaItem;
@@ -167,13 +170,13 @@ public class GoogleMediaItemTest {
   public static GoogleMediaItem getVideoMediaItem() {
     MediaMetadata videoMetadata = new MediaMetadata();
     videoMetadata.setVideo(new Video());
+    videoMetadata.setCreationTime("2023-10-02T22:33:38Z");
 
     GoogleMediaItem videoMediaItem = new GoogleMediaItem();
     videoMediaItem.setMimeType("video/mp4");
     videoMediaItem.setDescription("Description");
     videoMediaItem.setFilename("filename.mp4");
     videoMediaItem.setBaseUrl("https://www.google.com");
-    videoMediaItem.setUploadedTime(new Date());
     videoMediaItem.setId("video_id");
     videoMediaItem.setMediaMetadata(videoMetadata);
     return videoMediaItem;
