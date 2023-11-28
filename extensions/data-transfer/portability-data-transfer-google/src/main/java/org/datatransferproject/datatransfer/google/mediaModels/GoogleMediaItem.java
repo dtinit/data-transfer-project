@@ -28,7 +28,6 @@ import java.util.Optional;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.apache.tika.Tika;
-import java.time.format.DateTimeFormatter;
 
 /** Media item returned by queries to the Google Photos API. Represents what is stored by Google. */
 public class GoogleMediaItem implements Serializable {
@@ -39,8 +38,6 @@ public class GoogleMediaItem implements Serializable {
   private final static String DEFAULT_BINARY_MIMETYPE = "application/octet-stream";
   private final static SimpleDateFormat FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
-  private  static final DateTimeFormatter FORMATTER =
-      DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ");
   @JsonProperty("id")
   private String id;
 
