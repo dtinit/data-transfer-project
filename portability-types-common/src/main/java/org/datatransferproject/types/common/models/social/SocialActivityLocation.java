@@ -23,9 +23,9 @@ import java.util.Objects;
 
 public class SocialActivityLocation {
 
-  private String name;
-  private double longitude;
-  private double latitude;
+  private final String name;
+  private final double longitude;
+  private final double latitude;
 
   @JsonCreator
   public SocialActivityLocation(

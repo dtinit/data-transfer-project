@@ -28,20 +28,20 @@ import static org.mockito.Mockito.when;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.protobuf.util.Durations;
 import com.google.rpc.Code;
-import java.io.IOException;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.musicModels.BatchPlaylistItemRequest;
 import org.datatransferproject.datatransfer.google.musicModels.BatchPlaylistItemResponse;
+import org.datatransferproject.datatransfer.google.musicModels.ImportPlaylistItemRequest;
 import org.datatransferproject.datatransfer.google.musicModels.GooglePlaylist;
 import org.datatransferproject.datatransfer.google.musicModels.GooglePlaylistItem;
 import org.datatransferproject.datatransfer.google.musicModels.GoogleRelease;
 import org.datatransferproject.datatransfer.google.musicModels.GoogleTrack;
 import org.datatransferproject.datatransfer.google.musicModels.NewPlaylistItemResult;
 import org.datatransferproject.datatransfer.google.musicModels.Status;
-import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.InMemoryIdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
@@ -57,12 +57,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 public final class GoogleMusicImporterTest {
+
   private final UUID uuid = UUID.randomUUID();
   private GoogleMusicImporter googleMusicImporter;
   private GoogleMusicHttpApi googleMusicHttpApi;
   private IdempotentImportExecutor executor;
   private Monitor monitor;
-  private TemporaryPerJobDataStore dataStore;
 
   @BeforeEach
   public void setUp() {
@@ -70,7 +70,6 @@ public final class GoogleMusicImporterTest {
     googleMusicHttpApi = Mockito.mock(GoogleMusicHttpApi.class);
     monitor = Mockito.mock(Monitor.class);
     executor = new InMemoryIdempotentImportExecutor(monitor);
-    dataStore = mock(TemporaryPerJobDataStore.class);
 
     googleMusicImporter =
         new GoogleMusicImporter(
@@ -78,7 +77,6 @@ public final class GoogleMusicImporterTest {
             GsonFactory.getDefaultInstance(),
             googleMusicHttpApi,
             null,
-            dataStore,
             monitor,
             1.0);
   }
@@ -92,8 +90,7 @@ public final class GoogleMusicImporterTest {
 
     GooglePlaylist responsePlaylist = new GooglePlaylist();
     responsePlaylist.setTitle("p1_title");
-    responsePlaylist.setToken("p1_token");
-    when(googleMusicHttpApi.createPlaylist(any(GooglePlaylist.class), any(String.class)))
+    when(googleMusicHttpApi.importPlaylist(any(GooglePlaylist.class), any(String.class)))
         .thenReturn(responsePlaylist);
 
     // Run test
@@ -104,54 +101,49 @@ public final class GoogleMusicImporterTest {
         ArgumentCaptor.forClass(GooglePlaylist.class);
     ArgumentCaptor<String> playlistIdArgumentCaptor = ArgumentCaptor.forClass(String.class);
     verify(googleMusicHttpApi)
-        .createPlaylist(playlistArgumentCaptor.capture(), playlistIdArgumentCaptor.capture());
+        .importPlaylist(playlistArgumentCaptor.capture(), playlistIdArgumentCaptor.capture());
     assertEquals("p1_title", playlistArgumentCaptor.getValue().getTitle());
     assertEquals("p1_id", playlistIdArgumentCaptor.getValue());
     assertTrue(executor.isKeyCached("p1_id"));
     assertEquals(importResult, ImportResult.OK);
-
-    // Check contents of job store
-    ArgumentCaptor<GooglePlaylistInsertionToken> playlistTokenArgumentCaptor =
-        ArgumentCaptor.forClass(GooglePlaylistInsertionToken.class);
-    verify(dataStore).create(eq(uuid), eq("p1_id"), playlistTokenArgumentCaptor.capture());
-    assertEquals("p1_token", playlistTokenArgumentCaptor.getValue().getToken());
   }
 
   @Test
   public void importTwoPlaylistItemsInDifferentPlaylist() throws Exception {
-    GooglePlaylistInsertionToken playlistToken1 = new GooglePlaylistInsertionToken("p1_token");
-    GooglePlaylistInsertionToken playlistToken2 = new GooglePlaylistInsertionToken("p2_token");
-
-    when(dataStore.findData(uuid, "p1_id", GooglePlaylistInsertionToken.class))
-        .thenReturn(playlistToken1);
-    when(dataStore.findData(uuid, "p2_id", GooglePlaylistInsertionToken.class))
-        .thenReturn(playlistToken2);
+    importPlaylistSetUp("p1_id", "p1_title");
+    importPlaylistSetUp("p2_id", "p2_title");
 
     MusicPlaylistItem playlistItem1 =
         new MusicPlaylistItem(
             new MusicRecording(
-                "item1_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null),
+                "item1_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null, false),
             "p1_id",
             1);
     MusicPlaylistItem playlistItem2 =
         new MusicPlaylistItem(
             new MusicRecording(
-                "item1_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null),
+                "item1_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null, false),
             "p2_id",
             1);
     GooglePlaylistItem googlePlaylistItem = buildGooglePlaylistItem("item1_isrc", "r1_icpn");
     BatchPlaylistItemRequest batchPlaylistItemRequest1 =
-        new BatchPlaylistItemRequest(Lists.newArrayList(googlePlaylistItem), "p1_id", "p1_token");
+        new BatchPlaylistItemRequest(
+            Lists.newArrayList(
+                new ImportPlaylistItemRequest("p1_id", googlePlaylistItem)),
+            "p1_id");
     BatchPlaylistItemRequest batchPlaylistItemRequest2 =
-        new BatchPlaylistItemRequest(Lists.newArrayList(googlePlaylistItem), "p2_id", "p2_token");
+        new BatchPlaylistItemRequest(
+            Lists.newArrayList(
+                new ImportPlaylistItemRequest("p2_id", googlePlaylistItem)),
+            "p2_id");
     BatchPlaylistItemResponse batchPlaylistItemResponse =
         new BatchPlaylistItemResponse(
-            new NewPlaylistItemResult[] {
-              buildPlaylistItemResult("item1_isrc", "r1_icpn", Code.OK_VALUE)
+            new NewPlaylistItemResult[]{
+                buildPlaylistItemResult("item1_isrc", "r1_icpn", Code.OK_VALUE, null)
             });
-    when(googleMusicHttpApi.createPlaylistItems(eq(batchPlaylistItemRequest1)))
+    when(googleMusicHttpApi.importPlaylistItems(eq(batchPlaylistItemRequest1)))
         .thenReturn(batchPlaylistItemResponse);
-    when(googleMusicHttpApi.createPlaylistItems(eq(batchPlaylistItemRequest2)))
+    when(googleMusicHttpApi.importPlaylistItems(eq(batchPlaylistItemRequest2)))
         .thenReturn(batchPlaylistItemResponse);
 
     // Run test
@@ -167,44 +159,45 @@ public final class GoogleMusicImporterTest {
 
   @Test
   public void failOnePlaylistItem() throws Exception {
-    GooglePlaylistInsertionToken playlistToken1 = new GooglePlaylistInsertionToken("p1_token");
-    GooglePlaylistInsertionToken playlistToken2 = new GooglePlaylistInsertionToken("p2_token");
-
-    when(dataStore.findData(uuid, "p1_id", GooglePlaylistInsertionToken.class))
-        .thenReturn(playlistToken1);
-    when(dataStore.findData(uuid, "p2_id", GooglePlaylistInsertionToken.class))
-        .thenReturn(playlistToken2);
+    importPlaylistSetUp("p1_id", "p1_title");
+    importPlaylistSetUp("p2_id", "p2_title");
 
     MusicPlaylistItem playlistItem1 =
         new MusicPlaylistItem(
             new MusicRecording(
-                "item1_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null),
+                "item1_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null, false),
             "p1_id",
             1);
     MusicPlaylistItem playlistItem2 =
         new MusicPlaylistItem(
             new MusicRecording(
-                "item1_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null),
+                "item1_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null, false),
             "p2_id",
             1);
     GooglePlaylistItem googlePlaylistItem = buildGooglePlaylistItem("item1_isrc", "r1_icpn");
     BatchPlaylistItemRequest batchPlaylistItemRequest1 =
-        new BatchPlaylistItemRequest(Lists.newArrayList(googlePlaylistItem), "p1_id", "p1_token");
+        new BatchPlaylistItemRequest(
+            Lists.newArrayList(
+                new ImportPlaylistItemRequest("p1_id", googlePlaylistItem)),
+            "p1_id");
     BatchPlaylistItemRequest batchPlaylistItemRequest2 =
-        new BatchPlaylistItemRequest(Lists.newArrayList(googlePlaylistItem), "p2_id", "p2_token");
+        new BatchPlaylistItemRequest(
+            Lists.newArrayList(
+                new ImportPlaylistItemRequest("p2_id", googlePlaylistItem)),
+            "p2_id");
     BatchPlaylistItemResponse batchPlaylistItemResponse1 =
         new BatchPlaylistItemResponse(
-            new NewPlaylistItemResult[] {
-              buildPlaylistItemResult("item1_isrc", "r1_icpn", Code.OK_VALUE)
+            new NewPlaylistItemResult[]{
+                buildPlaylistItemResult("item1_isrc", "r1_icpn", Code.OK_VALUE, null)
             });
     BatchPlaylistItemResponse batchPlaylistItemResponse2 =
         new BatchPlaylistItemResponse(
-            new NewPlaylistItemResult[] {
-              buildPlaylistItemResult("item1_isrc", "r1_icpn", Code.INVALID_ARGUMENT_VALUE)
+            new NewPlaylistItemResult[]{
+                buildPlaylistItemResult("item1_isrc", "r1_icpn", Code.INVALID_ARGUMENT_VALUE, "")
             });
-    when(googleMusicHttpApi.createPlaylistItems(eq(batchPlaylistItemRequest1)))
+    when(googleMusicHttpApi.importPlaylistItems(eq(batchPlaylistItemRequest1)))
         .thenReturn(batchPlaylistItemResponse1);
-    when(googleMusicHttpApi.createPlaylistItems(eq(batchPlaylistItemRequest2)))
+    when(googleMusicHttpApi.importPlaylistItems(eq(batchPlaylistItemRequest2)))
         .thenReturn(batchPlaylistItemResponse2);
 
     // Run test
@@ -225,13 +218,13 @@ public final class GoogleMusicImporterTest {
     MusicPlaylistItem playlistItem1 =
         new MusicPlaylistItem(
             new MusicRecording(
-                "item1_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null),
+                "item1_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null, false),
             "p1_id",
             1);
     MusicPlaylistItem playlistItem2 =
         new MusicPlaylistItem(
             new MusicRecording(
-                "item2_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null),
+                "item2_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null, false),
             "p1_id",
             1);
 
@@ -248,21 +241,18 @@ public final class GoogleMusicImporterTest {
 
   @Test
   public void importPlaylistItemsSkippableFauilre() throws Exception {
-    GooglePlaylistInsertionToken playlistToken1 = new GooglePlaylistInsertionToken("p1_token");
-
-    when(dataStore.findData(uuid, "p1_id", GooglePlaylistInsertionToken.class))
-        .thenReturn(playlistToken1);
+    importPlaylistSetUp("p1_id", "p1_title");
 
     MusicPlaylistItem playlistItem1 =
         new MusicPlaylistItem(
             new MusicRecording(
-                "item1_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null),
+                "item1_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null, false),
             "p1_id",
             1);
     MusicPlaylistItem playlistItem2 =
         new MusicPlaylistItem(
             new MusicRecording(
-                "item2_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null),
+                "item2_isrc", null, 180000L, new MusicRelease("r1_icpn", null, null), null, false),
             "p1_id",
             1);
     GooglePlaylistItem googlePlaylistItem1 = buildGooglePlaylistItem("item1_isrc", "r1_icpn");
@@ -270,10 +260,21 @@ public final class GoogleMusicImporterTest {
 
     BatchPlaylistItemRequest batchPlaylistItemRequest =
         new BatchPlaylistItemRequest(
-            Lists.newArrayList(googlePlaylistItem1, googlePlaylistItem2), "p1_id", "p1_token");
+            Lists.newArrayList(
+                new ImportPlaylistItemRequest("p1_id", googlePlaylistItem1),
+                new ImportPlaylistItemRequest("p1_id", googlePlaylistItem2)),
+            "p1_id");
 
-    when(googleMusicHttpApi.createPlaylistItems(eq(batchPlaylistItemRequest)))
-        .thenThrow(new IOException("skippable failure"));
+    BatchPlaylistItemResponse batchPlaylistItemResponse =
+        new BatchPlaylistItemResponse(
+            new NewPlaylistItemResult[]{
+                buildPlaylistItemResult("item1_isrc", "r1_icpn", Code.OK_VALUE, null),
+                buildPlaylistItemResult("item2_isrc", "r1_icpn", Code.INVALID_ARGUMENT_VALUE,
+                    "Fail to find track matching")
+            });
+
+    when(googleMusicHttpApi.importPlaylistItems(eq(batchPlaylistItemRequest)))
+        .thenReturn(batchPlaylistItemResponse);
 
     // Run test
     googleMusicImporter.importPlaylistItems(
@@ -283,14 +284,32 @@ public final class GoogleMusicImporterTest {
     assertThat(executor.getErrors()).isEmpty();
   }
 
+  private void importPlaylistSetUp(String playlistId, String playlistTitle)
+      throws Exception {
+    MusicPlaylist playlist = new MusicPlaylist(playlistId, playlistTitle, null, null, null);
+    ImmutableList<MusicPlaylist> playlists = ImmutableList.of(playlist);
+    MusicContainerResource data = new MusicContainerResource(playlists, null, null, null);
+
+    GooglePlaylist responsePlaylist = new GooglePlaylist();
+    responsePlaylist.setName(playlistId);
+    responsePlaylist.setTitle(playlistTitle);
+    when(googleMusicHttpApi.importPlaylist(any(GooglePlaylist.class), any(String.class)))
+        .thenReturn(responsePlaylist);
+
+    ImportResult importResult = googleMusicImporter.importItem(uuid, executor, null /*authData*/,
+        data);
+  }
+
   private GooglePlaylistItem buildGooglePlaylistItem(String trackIsrc, String releaseIcpn) {
     GooglePlaylistItem playlistItem = new GooglePlaylistItem();
     GoogleRelease release = new GoogleRelease();
     release.setIcpn(releaseIcpn);
     GoogleTrack track = new GoogleTrack();
     track.setIsrc(trackIsrc);
-    track.setDurationMillis(180000L);
-    track.setRelease(release);
+    track.setDuration(Durations.toString(Durations.fromMillis(180000L)));
+    track.setReleaseReference(release);
+    track.setExplicitType("EXPLICIT_TYPE_NOT_EXPLICIT"
+        + "");
 
     playlistItem.setTrack(track);
     playlistItem.setOrder(1);
@@ -298,12 +317,13 @@ public final class GoogleMusicImporterTest {
   }
 
   private NewPlaylistItemResult buildPlaylistItemResult(
-      String trackIsrc, String releaseIcpn, int code) {
+      String trackIsrc, String releaseIcpn, int code, String message) {
     // We do a lot of mocking as building the actual objects would require changing the constructors
     // which messed up deserialization so best to leave them unchanged.
     GooglePlaylistItem playlistItem = buildGooglePlaylistItem(trackIsrc, releaseIcpn);
     Status status = Mockito.mock(Status.class);
     when(status.getCode()).thenReturn(code);
+    when(status.getMessage()).thenReturn(message);
     NewPlaylistItemResult result = Mockito.mock(NewPlaylistItemResult.class);
     when(result.getStatus()).thenReturn(status);
     when(result.getPlaylistItem()).thenReturn(playlistItem);

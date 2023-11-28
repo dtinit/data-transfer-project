@@ -70,7 +70,7 @@ public class CallableImporter implements Callable<ImportResult> {
       Collection<ErrorDetail> errors = idempotentImportExecutor.getRecentErrors();
       success = result.getType() == ImportResult.ResultType.OK && errors.isEmpty();
 
-      if (!success) {
+      if (!success && errors.iterator().hasNext() && !errors.iterator().next().canSkip()) {
         throw new IOException(
             "Problem with importer, forcing a retry, "
                 + "first error: "

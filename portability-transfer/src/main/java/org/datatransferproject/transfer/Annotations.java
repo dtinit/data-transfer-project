@@ -15,16 +15,20 @@
  */
 package org.datatransferproject.transfer;
 
-import javax.inject.Qualifier;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import javax.inject.Qualifier;
 
-/** Package private Guice annotations. **/
-final class Annotations {
+/** Package private Guice annotations. * */
+public final class Annotations {
   /** A scheduler for for checking if a job has been canceled. */
   @Qualifier
   @Retention(RetentionPolicy.RUNTIME)
   @interface CancelScheduler {}
 
-  private Annotations() {}
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  public @interface RetryingExecutor {}
+
+  public Annotations() {}
 }

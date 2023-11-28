@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The Data Transfer Project Authors.
+ * Copyright 2023 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,20 @@
  * limitations under the License.
  */
 
-package org.datatransferproject.datatransfer.google.musicModels;
+package org.datatransferproject.datatransfer.apple.exceptions;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.jetbrains.annotations.NotNull;
 
-/** The response provided by the Google Music API when listing playlists */
-public class PlaylistListResponse {
-  @JsonProperty("playlists")
-  private GooglePlaylist[] playlists;
+/**
+ * An exception to be used when the content uploading / downloading fails.
+ */
+public class AppleContentException extends Exception {
 
-  @JsonProperty("nextPageToken")
-  private String nextPageToken;
-
-  public GooglePlaylist[] getPlaylists() {
-    return playlists;
+  public AppleContentException(@NotNull final String message) {
+    super(message);
   }
 
-  public String getNextPageToken() {
-    return nextPageToken;
+  public AppleContentException(@NotNull final String message, @NotNull Throwable throwable) {
+    super(message, throwable);
   }
 }

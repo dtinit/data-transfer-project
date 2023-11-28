@@ -45,6 +45,7 @@ import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.hooks.JobHooks;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.provider.TransferCompatibilityProvider;
@@ -63,7 +64,7 @@ final class WorkerModule extends FlagBindingModule {
   private final ExtensionContext context;
   private final List<TransferExtension> transferExtensions;
   private final SecurityExtension securityExtension;
-  private final IdempotentImportExecutor idempotentImportExecutor;
+  private final IdempotentImportExecutorExtension idempotentImportExecutorExtension;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
   private final JobHooks jobHooks;
   private final TransferCompatibilityProvider compatibilityProvider;
@@ -73,7 +74,7 @@ final class WorkerModule extends FlagBindingModule {
       CloudExtension cloudExtension,
       List<TransferExtension> transferExtensions,
       SecurityExtension securityExtension,
-      IdempotentImportExecutor idempotentImportExecutor,
+      IdempotentImportExecutorExtension idempotentImportExecutorExtension,
       SymmetricKeyGenerator symmetricKeyGenerator,
       JobHooks jobHooks,
       TransferCompatibilityProvider transferCompatibilityProvider) {
@@ -81,7 +82,7 @@ final class WorkerModule extends FlagBindingModule {
     this.context = context;
     this.transferExtensions = transferExtensions;
     this.securityExtension = securityExtension;
-    this.idempotentImportExecutor = idempotentImportExecutor;
+    this.idempotentImportExecutorExtension = idempotentImportExecutorExtension;
     this.symmetricKeyGenerator = symmetricKeyGenerator;
     this.jobHooks = jobHooks;
     this.compatibilityProvider = transferCompatibilityProvider;
@@ -261,6 +262,13 @@ final class WorkerModule extends FlagBindingModule {
   @Provides
   @Singleton
   public IdempotentImportExecutor getIdempotentImportExecutor() {
-    return idempotentImportExecutor;
+    return idempotentImportExecutorExtension.getIdempotentImportExecutor(context);
+  }
+
+  @Provides
+  @Singleton
+  @Annotations.RetryingExecutor
+  public IdempotentImportExecutor getRetryingIdempotentImportExecutor() {
+    return idempotentImportExecutorExtension.getRetryingIdempotentImportExecutor(context);
   }
 }

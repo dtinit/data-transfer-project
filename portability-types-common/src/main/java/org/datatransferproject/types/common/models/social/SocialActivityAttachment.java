@@ -25,10 +25,10 @@ import javax.annotation.Nonnull;
 import java.util.Objects;
 
 public class SocialActivityAttachment implements ImportableItem {
-  private SocialActivityAttachmentType type;
-  private String url;
-  private String name;
-  private String content;
+  private final SocialActivityAttachmentType type;
+  private final String url;
+  private final String name;
+  private final String content;
 
   @JsonCreator
   public SocialActivityAttachment(
