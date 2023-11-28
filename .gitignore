@@ -2,7 +2,6 @@
 *.log
 
 secrets.csv
-env.secrets
 #!distributions/demo-server/src/main/resources/
 #!distributions/demo-server/src/main/resources/demo-selfsigned-keystore.jks
 
