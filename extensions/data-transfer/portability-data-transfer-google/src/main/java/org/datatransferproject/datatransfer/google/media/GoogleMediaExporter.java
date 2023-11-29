@@ -471,6 +471,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
     return new MediaContainerResource(null  /*albums*/, photos, videos);
   }
 
+  //TODO(#1308): Make the retrying methods API & adaptor agnostic
   @VisibleForTesting
   @Nullable
   GoogleMediaItem getGoogleMediaItem(String photoIdempotentId, String photoDataId,
