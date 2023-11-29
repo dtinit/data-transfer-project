@@ -212,7 +212,6 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
     }
   }
 
-  @VisibleForTesting
   /* Maintain this for backwards compatability, so that we can pull out the album information */
   private ExportResult<MediaContainerResource> exportPhotosContainer(
       PhotosContainerResource container, TokensAndUrlAuthData authData)
