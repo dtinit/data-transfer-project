@@ -153,7 +153,6 @@ public class GoogleMediaItemTest {
   @Test
   public void getUploadTime_videoModel() {
     GoogleMediaItem videoMediaItem = getVideoMediaItem();
-    GoogleMediaItem photoMediaItem = getPhotoMediaItem();
     MediaMetadata metadata = new MediaMetadata();
     metadata.setVideo(new Video());
     metadata.setCreationTime("2023-10-02T22:33:38Z");
@@ -168,7 +167,7 @@ public class GoogleMediaItemTest {
   public void getUploadTime_photoModel() {
     GoogleMediaItem photoMediaItem = getPhotoMediaItem();
     MediaMetadata metadata = new MediaMetadata();
-    metadata.setVideo(new Video());
+    metadata.setPhoto(new Photo());
     metadata.setCreationTime("2023-10-02T22:33:38Z");
     photoMediaItem.setMediaMetadata(metadata);
 
