@@ -115,11 +115,14 @@ public class GoogleMediaItem implements Serializable {
   private static Date getUploadTime(GoogleMediaItem mediaItem)
   {
     Date uploadTime = null;
+
     try {
-      uploadTime = FORMAT.parse(mediaItem.getMediaMetadata().getCreationTime());
-    }catch (Exception e) {
+      return FORMAT.parse(mediaItem.getMediaMetadata().getCreationTime());
+    } catch (Exception e) {
+      // this should never be hit since creationTime field should never be null. If we reach here,
+      // let's look into the string format change
+      return null;
     }
-    return uploadTime;
   }
 
   private static String getMimeType(GoogleMediaItem mediaItem) {

@@ -23,6 +23,7 @@ import java.util.Date;
 /** Metadata about a {@code MediaItem}. */
 public class MediaMetadata implements Serializable {
 
+  //Time when the media item was first created (not when it was uploaded to Google Photos).
   @JsonProperty("creationTime")
   private String creationTime;
   @JsonProperty("photo")
