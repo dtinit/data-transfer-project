@@ -388,15 +388,16 @@ public class GoogleMediaExporterTest {
 
   @Test
   public void testExportPhotosContainerRetrying() throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
-    String PHOTO_ID_TO_FAIL = "photo5";
+    String PHOTO_ID_TO_FAIL_1 = "photo3";
+    String PHOTO_ID_TO_FAIL_2 = "photo5";
 
     ImmutableList<PhotoAlbum> albums = ImmutableList.of();
     ImmutableList<PhotoModel> photos = ImmutableList.of(
         setUpSinglePhotoModel("", "photo1"),
         setUpSinglePhotoModel("", "photo2"),
-        setUpSinglePhotoModel("", "photo3"),
+        setUpSinglePhotoModel("", PHOTO_ID_TO_FAIL_1),
         setUpSinglePhotoModel("", "photo4"),
-        setUpSinglePhotoModel("", PHOTO_ID_TO_FAIL),
+        setUpSinglePhotoModel("", PHOTO_ID_TO_FAIL_2),
         setUpSinglePhotoModel("", "photo6")
     );
 
@@ -407,11 +408,12 @@ public class GoogleMediaExporterTest {
     photoMediaMetadata.setPhoto(new Photo());
 
 
-    // For the photo_id_to_fail photo, throw an exception.
-    when(photosInterface.getMediaItem(PHOTO_ID_TO_FAIL)).thenThrow(IOException.class);
+    // For the photo_id_to_fail photos, throw an exception.
+    when(photosInterface.getMediaItem(PHOTO_ID_TO_FAIL_1)).thenThrow(IOException.class);
+    when(photosInterface.getMediaItem(PHOTO_ID_TO_FAIL_2)).thenThrow(IOException.class);
     // For all other photos, return a media item.
     for (PhotoModel photoModel: photos) {
-      if (photoModel.getDataId().equals(PHOTO_ID_TO_FAIL)) {
+      if (photoModel.getDataId().equals(PHOTO_ID_TO_FAIL_1) || photoModel.getDataId().equals(PHOTO_ID_TO_FAIL_2)) {
         continue;
       }
       when(photosInterface.getMediaItem(photoModel.getDataId())).thenReturn(
@@ -428,13 +430,13 @@ public class GoogleMediaExporterTest {
         photos.stream().map(
             x -> x.getDataId()
         ).filter(
-            dataId -> dataId != PHOTO_ID_TO_FAIL
+            dataId -> !(dataId.equals(PHOTO_ID_TO_FAIL_1) || dataId.equals(PHOTO_ID_TO_FAIL_2))
         ).collect(
             Collectors.toList()
         )
     );
-    assertThat(result.getExportedData().getPhotos().size()).isEqualTo(photos.size() - 1);
-    assertThat(retryingExecutor.getErrors().size()).isEqualTo(1);
+    assertThat(result.getExportedData().getPhotos().size()).isEqualTo(photos.size() - 2);
+    assertThat(retryingExecutor.getErrors().size()).isEqualTo(2);
     assertThat(retryingExecutor.getErrors().stream().findFirst().toString().contains("IOException")).isTrue();
   }
 
