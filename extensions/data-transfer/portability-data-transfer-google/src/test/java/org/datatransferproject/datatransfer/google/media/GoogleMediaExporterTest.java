@@ -32,6 +32,7 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.drive.Drive.Files.Export;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.InputStream;
@@ -59,11 +60,14 @@ import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.spi.transfer.types.TempMediaData;
 import org.datatransferproject.spi.transfer.types.UploadErrorException;
+import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.PaginationData;
 import org.datatransferproject.types.common.StringPaginationToken;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.common.models.IdOnlyContainerResource;
+import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
@@ -383,6 +387,58 @@ public class GoogleMediaExporterTest {
   }
 
   @Test
+  public void testExportPhotosContainerRetrying() throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+    String PHOTO_ID_TO_FAIL = "photo5";
+
+    ImmutableList<PhotoAlbum> albums = ImmutableList.of();
+    ImmutableList<PhotoModel> photos = ImmutableList.of(
+        setUpSinglePhotoModel("", "photo1"),
+        setUpSinglePhotoModel("", "photo2"),
+        setUpSinglePhotoModel("", "photo3"),
+        setUpSinglePhotoModel("", "photo4"),
+        setUpSinglePhotoModel("", PHOTO_ID_TO_FAIL),
+        setUpSinglePhotoModel("", "photo6")
+    );
+
+    PhotosContainerResource container = new PhotosContainerResource(albums, photos);
+    ExportInformation exportInfo = new ExportInformation(null, container);
+
+    MediaMetadata photoMediaMetadata = new MediaMetadata();
+    photoMediaMetadata.setPhoto(new Photo());
+
+
+    // For the photo_id_to_fail photo, throw an exception.
+    when(photosInterface.getMediaItem(PHOTO_ID_TO_FAIL)).thenThrow(IOException.class);
+    // For all other photos, return a media item.
+    for (PhotoModel photoModel: photos) {
+      if (photoModel.getDataId().equals(PHOTO_ID_TO_FAIL)) {
+        continue;
+      }
+      when(photosInterface.getMediaItem(photoModel.getDataId())).thenReturn(
+          setUpSingleMediaItem(photoModel.getDataId(), photoModel.getDataId(), photoMediaMetadata)
+      );
+    }
+
+    ExportResult<MediaContainerResource> result = retryingGoogleMediaExporter.export(
+        uuid, authData, Optional.of(exportInfo)
+    );
+    assertThat(
+        result.getExportedData().getPhotos().stream().map(x -> x.getDataId()).collect(Collectors.toList())
+    ).isEqualTo(
+        photos.stream().map(
+            x -> x.getDataId()
+        ).filter(
+            dataId -> dataId != PHOTO_ID_TO_FAIL
+        ).collect(
+            Collectors.toList()
+        )
+    );
+    assertThat(result.getExportedData().getPhotos().size()).isEqualTo(photos.size() - 1);
+    assertThat(retryingExecutor.getErrors().size()).isEqualTo(1);
+    assertThat(retryingExecutor.getErrors().stream().findFirst().toString().contains("IOException")).isTrue();
+  }
+
+  @Test
   public void testGetGoogleMediaItemFailed() throws IOException, InvalidTokenException, PermissionDeniedException {
     String mediaItemID = "media_id";
     when(photosInterface.getMediaItem(mediaItemID)).thenThrow(IOException.class);
@@ -412,6 +468,10 @@ public class GoogleMediaExporterTest {
     albumEntry.setTitle("Title");
 
     when(albumListResponse.getAlbums()).thenReturn(new GoogleAlbum[] {albumEntry});
+  }
+
+  private static PhotoModel setUpSinglePhotoModel(String albumId, String dataId) {
+    return new PhotoModel("Title", "fetchableUrl", "description", "photo", dataId, albumId, false);
   }
 
   /** Sets up a response for a single photo */
