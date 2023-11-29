@@ -1,5 +1,6 @@
 package org.datatransferproject.datatransfer.google.mediaModels;
 
+import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -135,8 +136,6 @@ public class GoogleMediaItemTest {
 
     // Default defined in GoogleMediaItem
     assertEquals("video/mp4", videoModel.getMimeType());
-    assertEquals("Mon Oct 02 22:33:38 UTC 2023", videoModel.getUploadedTime().toString());
-
   }
 
   @Test
@@ -149,13 +148,38 @@ public class GoogleMediaItemTest {
 
     // defaults to the mimetype that is already set, as avif is not handled.
     assertEquals("image/png", photoModel.getMimeType());
+  }
+
+  @Test
+  public void getUploadTime_videoModel() {
+    GoogleMediaItem videoMediaItem = getVideoMediaItem();
+    GoogleMediaItem photoMediaItem = getPhotoMediaItem();
+    MediaMetadata metadata = new MediaMetadata();
+    metadata.setVideo(new Video());
+    metadata.setCreationTime("2023-10-02T22:33:38Z");
+    videoMediaItem.setMediaMetadata(metadata);
+
+    VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem);
+
+    assertEquals("Mon Oct 02 22:33:38 UTC 2023", videoModel.getUploadedTime().toString());
+  }
+
+  @Test
+  public void getUploadTime_photoModel() {
+    GoogleMediaItem photoMediaItem = getPhotoMediaItem();
+    MediaMetadata metadata = new MediaMetadata();
+    metadata.setVideo(new Video());
+    metadata.setCreationTime("2023-10-02T22:33:38Z");
+    photoMediaItem.setMediaMetadata(metadata);
+
+    PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem);
+
     assertEquals("Mon Oct 02 22:33:38 UTC 2023", photoModel.getUploadedTime().toString());
   }
 
   public static GoogleMediaItem getPhotoMediaItem() {
     MediaMetadata photoMetadata = new MediaMetadata();
     photoMetadata.setPhoto(new Photo());
-    photoMetadata.setCreationTime("2023-10-02T22:33:38Z");
 
     GoogleMediaItem photoMediaItem = new GoogleMediaItem();
     photoMediaItem.setMimeType("image/png");
@@ -170,7 +194,6 @@ public class GoogleMediaItemTest {
   public static GoogleMediaItem getVideoMediaItem() {
     MediaMetadata videoMetadata = new MediaMetadata();
     videoMetadata.setVideo(new Video());
-    videoMetadata.setCreationTime("2023-10-02T22:33:38Z");
 
     GoogleMediaItem videoMediaItem = new GoogleMediaItem();
     videoMediaItem.setMimeType("video/mp4");
