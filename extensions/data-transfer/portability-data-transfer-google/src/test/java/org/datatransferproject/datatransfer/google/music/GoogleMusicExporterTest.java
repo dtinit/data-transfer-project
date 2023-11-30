@@ -250,7 +250,7 @@ public class GoogleMusicExporterTest {
     GoogleRelease release = new GoogleRelease();
     release.setIcpn(icpn);
     track.setIsrc(isrc);
-    track.setRelease(release);
+    track.setReleaseReference(release);
     track.setExplicitType("EXPLICIT_TYPE_EXPLICIT");
     playlistItemEntry.setTrack(track);
     return playlistItemEntry;
