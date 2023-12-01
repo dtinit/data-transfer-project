@@ -96,8 +96,8 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       TemporaryPerJobDataStore jobStore,
       JsonFactory jsonFactory,
       Monitor monitor,
-      GooglePhotosInterface photosInterface,
-      IdempotentImportExecutor retryingExecutor,
+      @Nullable GooglePhotosInterface photosInterface,
+      @Nullable IdempotentImportExecutor retryingExecutor,
       boolean enableRetrying) {
     this(
         credentialFactory,
@@ -115,7 +115,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       GoogleCredentialFactory credentialFactory,
       TemporaryPerJobDataStore jobStore,
       JsonFactory jsonFactory,
-      GooglePhotosInterface photosInterface,
+      @Nullable GooglePhotosInterface photosInterface,
       Monitor monitor) {
     this(
         credentialFactory,
@@ -130,9 +130,9 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
   GoogleMediaExporter(GoogleCredentialFactory credentialFactory,
       TemporaryPerJobDataStore jobStore,
       JsonFactory jsonFactory,
-      GooglePhotosInterface photosInterface,
+      @Nullable GooglePhotosInterface photosInterface,
       Monitor monitor,
-      IdempotentImportExecutor retryingExecutor,
+      @Nullable IdempotentImportExecutor retryingExecutor,
       boolean enableRetrying) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
