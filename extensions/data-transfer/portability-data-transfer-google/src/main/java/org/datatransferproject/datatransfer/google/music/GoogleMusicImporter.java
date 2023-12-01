@@ -268,7 +268,7 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
 
     googleTrack.setIsrc(playlistItem.getTrack().getIsrcCode());
     googleTrack.setTitle(playlistItem.getTrack().getTitle());
-    googleTrack.setArtists(getArtists(playlistItem.getTrack().getByArtists()));
+    googleTrack.setArtistReferences(getArtists(playlistItem.getTrack().getByArtists()));
     googleTrack.setDuration(
         Durations.toString(Durations.fromMillis(playlistItem.getTrack().getDurationMillis())));
     if (playlistItem.getTrack().getIsExplicit()) {
@@ -276,7 +276,7 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
     } else {
       googleTrack.setExplicitType("EXPLICIT_TYPE_NOT_EXPLICIT");
     }
-    googleTrack.setRelease(googleRelease);
+    googleTrack.setReleaseReference(googleRelease);
 
     googlePlaylistItem.setTrack(googleTrack);
     googlePlaylistItem.setOrder(playlistItem.getOrder());

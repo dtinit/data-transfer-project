@@ -113,19 +113,19 @@ public class AppleMediaImporterTest extends AppleImporterTestBase {
     verify(mediaInterface, times(2)).createMedia(anyString(), anyString(), anyList());
 
     // check the result
-    assertThat(importResult.getCounts().isPresent());
+    assertThat(importResult.getCounts().isPresent()).isTrue();
     assertThat(
-        importResult.getCounts().get().get(PhotosContainerResource.ALBUMS_COUNT_DATA_NAME) == 1);
+        importResult.getCounts().get().get(PhotosContainerResource.ALBUMS_COUNT_DATA_NAME) == 1).isTrue();
     assertThat(
         importResult.getCounts().get().get(PhotosContainerResource.PHOTOS_COUNT_DATA_NAME)
-            == photoCount);
+            == photoCount).isTrue();
     assertThat(
         importResult.getCounts().get().get(VideosContainerResource.VIDEOS_COUNT_DATA_NAME)
-            == videoCount);
+            == videoCount).isTrue();
 
     assertThat(
         importResult.getBytes().get()
-            == photoCount * PHOTOS_FILE_SIZE + videoCount * VIDEOS_FILE_SIZE);
+            == photoCount * PHOTOS_FILE_SIZE + videoCount * VIDEOS_FILE_SIZE).isTrue();
 
     final Map<String, Serializable> expectedKnownValue =
         mediaAlbums.stream()
