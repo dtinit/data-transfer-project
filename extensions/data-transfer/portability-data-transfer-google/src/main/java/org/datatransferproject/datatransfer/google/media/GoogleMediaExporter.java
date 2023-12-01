@@ -85,7 +85,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
         credentialFactory,
         jobStore,
         jsonFactory,
-        null,
+        /* photosInterface= */ null,
         monitor
     );
   }
@@ -123,7 +123,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
         jsonFactory,
         photosInterface,
         monitor,
-        null,
+        /* retryingExecutor= */ null,
         false);
   }
 
