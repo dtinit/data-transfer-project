@@ -101,7 +101,8 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
         credentialFactory,
         jobStore,
         jsonFactory,
-        monitor, photosInterface,
+        monitor,
+        photosInterface,
         /* retryingExecutor= */ null,
         false);
   }
