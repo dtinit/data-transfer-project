@@ -160,6 +160,6 @@ public final class DriveImporter
   private String getRootFolderName() {
     return String.format(
             ROOT_FOLDER_FORMAT_STRING,
-            new SimpleDateFormat("yyyy:MM:dd-HH:mm:ss").format(new Date()));
+            new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date()));
   }
 }
