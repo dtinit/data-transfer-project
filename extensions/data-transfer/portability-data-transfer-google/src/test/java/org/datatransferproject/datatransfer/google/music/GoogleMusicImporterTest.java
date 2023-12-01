@@ -307,7 +307,7 @@ public final class GoogleMusicImporterTest {
     GoogleTrack track = new GoogleTrack();
     track.setIsrc(trackIsrc);
     track.setDuration(Durations.toString(Durations.fromMillis(180000L)));
-    track.setRelease(release);
+    track.setReleaseReference(release);
     track.setExplicitType("EXPLICIT_TYPE_NOT_EXPLICIT"
         + "");
 
