@@ -12,6 +12,8 @@ import com.google.api.services.drive.model.File;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
@@ -30,6 +32,7 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 public final class DriveImporter
     implements Importer<TokensAndUrlAuthData, BlobbyStorageContainerResource> {
   private static final String ROOT_FOLDER_ID = "root-id";
+  private static final String ROOT_FOLDER_FORMAT_STRING = "transfer-%s";
 
   private final GoogleCredentialFactory credentialFactory;
   private final TemporaryPerJobDataStore jobStore;
@@ -63,7 +66,7 @@ public final class DriveImporter
           idempotentExecutor.executeOrThrowException(
               ROOT_FOLDER_ID,
               data.getName(),
-              () -> importSingleFolder(driveInterface, "MigratedContent", null));
+              () -> importSingleFolder(driveInterface, getRootFolderName(), null));
     } else {
       parentId = idempotentExecutor.getCachedValue(data.getId());
     }
@@ -152,5 +155,11 @@ public final class DriveImporter
     }
 
     return driveInterface;
+  }
+
+  private String getRootFolderName() {
+    return String.format(
+            ROOT_FOLDER_FORMAT_STRING,
+            new SimpleDateFormat("yyyy:MM:dd-HH:mm:ss").format(new Date()));
   }
 }
