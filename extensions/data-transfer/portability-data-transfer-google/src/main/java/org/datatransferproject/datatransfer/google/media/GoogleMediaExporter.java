@@ -85,8 +85,8 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
         credentialFactory,
         jobStore,
         jsonFactory,
-        /* photosInterface= */ null,
-        monitor
+        monitor,
+        /* photosInterface= */ null
     );
   }
 
@@ -95,8 +95,9 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       GoogleCredentialFactory credentialFactory,
       TemporaryPerJobDataStore jobStore,
       JsonFactory jsonFactory,
-      @Nullable GooglePhotosInterface photosInterface,
-      Monitor monitor) {
+      Monitor monitor, @Nullable
+      GooglePhotosInterface photosInterface
+  ) {
     this(
         credentialFactory,
         jobStore,

@@ -25,14 +25,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.services.drive.Drive.Files.Export;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.InputStream;
@@ -72,7 +70,6 @@ import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.transfer.errors.ErrorDetail;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 import org.datatransferproject.types.transfer.retry.UniformRetryStrategy;
 import org.junit.jupiter.api.BeforeEach;
@@ -120,7 +117,7 @@ public class GoogleMediaExporterTest {
 
     googleMediaExporter =
         new GoogleMediaExporter(
-            credentialFactory, jobStore, GsonFactory.getDefaultInstance(), photosInterface, monitor);
+            credentialFactory, jobStore, GsonFactory.getDefaultInstance(), monitor, photosInterface);
 
     retryingGoogleMediaExporter = new GoogleMediaExporter(
         credentialFactory, jobStore, GsonFactory.getDefaultInstance(), monitor, photosInterface,
