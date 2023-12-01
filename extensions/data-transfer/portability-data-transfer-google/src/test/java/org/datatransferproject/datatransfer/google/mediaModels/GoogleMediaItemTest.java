@@ -1,6 +1,7 @@
 package org.datatransferproject.datatransfer.google.mediaModels;
 
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -62,9 +63,14 @@ public class GoogleMediaItemTest {
       photoMediaItem.setMimeType("INVALID_MIME");
       photoMediaItem.setFilename(entry.getKey().toString());
 
+      try{
       PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem);
 
       assertEquals(entry.getValue(), photoModel.getMimeType());
+      }catch(Exception e)
+      {
+        fail(e.getMessage());
+      }
     }
   }
 
@@ -86,9 +92,16 @@ public class GoogleMediaItemTest {
       videoMediaItem.setMimeType("INVALID_MIME");
       videoMediaItem.setFilename(entry.getKey().toString());
 
-      VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem);
+      try {
+        VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(),
+            videoMediaItem);
 
-      assertEquals(entry.getValue(), videoModel.getMimeType());
+        assertEquals(entry.getValue(), videoModel.getMimeType());
+      }
+      catch(Exception e)
+      {
+        fail(e.getMessage());
+      }
     }
   }
 
@@ -98,9 +111,15 @@ public class GoogleMediaItemTest {
     photoMediaItem.setFilename("file");
     photoMediaItem.setMimeType("image/webp");
 
-    PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem);
+    try {
+      PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem);
 
-    assertEquals("image/webp", photoModel.getMimeType());
+      assertEquals("image/webp", photoModel.getMimeType());
+    }
+    catch(Exception e)
+    {
+      fail(e.getMessage());
+    }
   }
 
   @Test
@@ -109,9 +128,14 @@ public class GoogleMediaItemTest {
     videoMediaItem.setFilename("file");
     videoMediaItem.setMimeType("video/webm");
 
-    VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem);
+    try {
+      VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem);
 
-    assertEquals("video/webm", videoModel.getMimeType());
+      assertEquals("video/webm", videoModel.getMimeType());
+    }catch(Exception e)
+    {
+      fail(e.getMessage());
+    }
   }
 
   @Test
@@ -120,10 +144,15 @@ public class GoogleMediaItemTest {
     photoMediaItem.setFilename("file");
     photoMediaItem.setMimeType(null);
 
+    try{
     PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem);
 
     // Default defined in GoogleMediaItem
     assertEquals("image/jpg", photoModel.getMimeType());
+    }catch(Exception e)
+    {
+      fail(e.getMessage());
+    }
   }
 
   @Test
@@ -132,10 +161,15 @@ public class GoogleMediaItemTest {
     videoMediaItem.setFilename("file");
     videoMediaItem.setMimeType(null);
 
+    try{
     VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem);
 
     // Default defined in GoogleMediaItem
     assertEquals("video/mp4", videoModel.getMimeType());
+    }catch(Exception e)
+    {
+      fail(e.getMessage());
+    }
   }
 
   @Test
@@ -144,10 +178,15 @@ public class GoogleMediaItemTest {
     photoMediaItem.setFilename("file.avif");
     photoMediaItem.setMimeType("image/png");
 
+    try{
     PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem);
 
     // defaults to the mimetype that is already set, as avif is not handled.
     assertEquals("image/png", photoModel.getMimeType());
+    }catch(Exception e)
+    {
+      fail(e.getMessage());
+    }
   }
 
   @Test
@@ -158,9 +197,14 @@ public class GoogleMediaItemTest {
     metadata.setCreationTime("2023-10-02T22:33:38Z");
     videoMediaItem.setMediaMetadata(metadata);
 
+    try{
     VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem);
 
     assertEquals("Mon Oct 02 22:33:38 UTC 2023", videoModel.getUploadedTime().toString());
+    }catch(Exception e)
+    {
+      fail(e.getMessage());
+    }
   }
 
   @Test
@@ -171,14 +215,20 @@ public class GoogleMediaItemTest {
     metadata.setCreationTime("2023-10-02T22:33:38Z");
     photoMediaItem.setMediaMetadata(metadata);
 
+    try{
     PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem);
 
     assertEquals("Mon Oct 02 22:33:38 UTC 2023", photoModel.getUploadedTime().toString());
+    }catch(Exception e)
+    {
+      fail(e.getMessage());
+    }
   }
 
   public static GoogleMediaItem getPhotoMediaItem() {
     MediaMetadata photoMetadata = new MediaMetadata();
     photoMetadata.setPhoto(new Photo());
+    photoMetadata.setCreationTime("2022-09-01T20:25:38Z");
 
     GoogleMediaItem photoMediaItem = new GoogleMediaItem();
     photoMediaItem.setMimeType("image/png");
@@ -193,6 +243,7 @@ public class GoogleMediaItemTest {
   public static GoogleMediaItem getVideoMediaItem() {
     MediaMetadata videoMetadata = new MediaMetadata();
     videoMetadata.setVideo(new Video());
+    videoMetadata.setCreationTime("2022-09-01T20:25:38Z");
 
     GoogleMediaItem videoMediaItem = new GoogleMediaItem();
     videoMediaItem.setMimeType("video/mp4");

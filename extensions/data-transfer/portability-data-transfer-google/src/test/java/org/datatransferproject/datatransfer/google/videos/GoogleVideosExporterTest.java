@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
@@ -63,13 +64,14 @@ public class GoogleVideosExporterTest {
   @BeforeEach
   public void setup() throws IOException {
     GoogleCredentialFactory credentialFactory = mock(GoogleCredentialFactory.class);
+    Monitor monitor = mock(Monitor.class);
     jobStore = mock(TemporaryPerJobDataStore.class);
     videosInterface = mock(GoogleVideosInterface.class);
 
     albumListResponse = mock(AlbumListResponse.class);
     mediaItemSearchResponse = mock(MediaItemSearchResponse.class);
 
-    googleVideosExporter = new GoogleVideosExporter(credentialFactory, videosInterface);
+    googleVideosExporter = new GoogleVideosExporter(credentialFactory, videosInterface, monitor);
 
     when(videosInterface.listVideoItems(any(Optional.class)))
             .thenReturn(mediaItemSearchResponse);
@@ -127,6 +129,7 @@ public class GoogleVideosExporterTest {
     videoEntry.setId(videoId);
     MediaMetadata mediaMetadata = new MediaMetadata();
     mediaMetadata.setVideo(new Video());
+    mediaMetadata.setCreationTime("2022-09-01T20:25:38Z");
     videoEntry.setMediaMetadata(mediaMetadata);
 
     return videoEntry;

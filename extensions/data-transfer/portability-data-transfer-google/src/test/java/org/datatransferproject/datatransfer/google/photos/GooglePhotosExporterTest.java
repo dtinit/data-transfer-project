@@ -326,6 +326,7 @@ public class GooglePhotosExporterTest {
     photoEntry.setFilename(FILENAME);
     MediaMetadata mediaMetadata = new MediaMetadata();
     mediaMetadata.setPhoto(new Photo());
+    mediaMetadata.setCreationTime("2022-09-01T20:25:38Z");
     photoEntry.setMediaMetadata(mediaMetadata);
 
     return photoEntry;

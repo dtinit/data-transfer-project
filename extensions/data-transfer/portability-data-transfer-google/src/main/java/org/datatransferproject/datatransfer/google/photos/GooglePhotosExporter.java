@@ -167,7 +167,14 @@ public class GooglePhotosExporter
     for (PhotoModel photo : container.getPhotos()) {
       GoogleMediaItem googleMediaItem =
           getOrCreatePhotosInterface(authData).getMediaItem(photo.getDataId());
-      photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), googleMediaItem));
+      try {
+        photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), googleMediaItem));
+      }catch(Exception e)
+      {
+        monitor.debug(
+            () -> String.format("Error converting Google media item to video model with the"
+                + " failure message: %s", e.getMessage()));
+      }
     }
 
     PhotosContainerResource photosContainerResource =
@@ -351,11 +358,19 @@ public class GooglePhotosExporter
         }
 
         if (shouldUpload) {
-          PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(albumId, mediaItem);
-          photos.add(photoModel);
+          PhotoModel photoModel;
+          try {
+            photoModel = GoogleMediaItem.convertToPhotoModel(albumId, mediaItem);
+            photos.add(photoModel);
 
-          monitor.debug(
-              () -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
+            monitor.debug(
+                () -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
+          }catch(Exception e)
+          {
+            monitor.debug(
+                () -> String.format("%s: Error converting Google media item to photo model with the"
+                    + " failure message: %s", jobId, e.getMessage()));
+          }
         }
       }
     }

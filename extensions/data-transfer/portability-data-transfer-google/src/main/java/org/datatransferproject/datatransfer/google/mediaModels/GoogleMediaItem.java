@@ -22,12 +22,15 @@ import com.google.common.base.Strings;
 import java.io.File;
 import java.io.Serializable;
 import java.nio.file.Files;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Optional;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.apache.tika.Tika;
+import com.google.common.base.Strings;
+
 
 /** Media item returned by queries to the Google Photos API. Represents what is stored by Google. */
 public class GoogleMediaItem implements Serializable {
@@ -36,7 +39,7 @@ public class GoogleMediaItem implements Serializable {
   private final static String DEFAULT_VIDEO_MIMETYPE = "video/mp4";
   // If Tika cannot detect the mimetype, it returns the binary mimetype. This can be considered null
   private final static String DEFAULT_BINARY_MIMETYPE = "application/octet-stream";
-  private final static SimpleDateFormat FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+  private final static SimpleDateFormat CREATION_TIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
   @JsonProperty("id")
   private String id;
@@ -60,6 +63,8 @@ public class GoogleMediaItem implements Serializable {
   private String productUrl;
 
   @JsonProperty("uploadedTime")
+  // TODO akshaysinghh - rename the field to creationTime since creation time is what all the
+  //  services use to display the photos timeline, instead of uploadTime.
   private Date uploadedTime;
 
   public boolean isPhoto() {
@@ -82,7 +87,7 @@ public class GoogleMediaItem implements Serializable {
   }
 
   public static VideoModel convertToVideoModel(
-      Optional<String> albumId, GoogleMediaItem mediaItem) {
+      Optional<String> albumId, GoogleMediaItem mediaItem) throws Exception{
     Preconditions.checkArgument(mediaItem.isVideo());
 
     return new VideoModel(
@@ -93,11 +98,11 @@ public class GoogleMediaItem implements Serializable {
         mediaItem.getId(),
         albumId.orElse(null),
         false /*inTempStore*/,
-        getUploadTime(mediaItem));
+        getCreationTime(mediaItem));
   }
 
-  public static PhotoModel convertToPhotoModel(
-      Optional<String> albumId, GoogleMediaItem mediaItem) {
+  public static PhotoModel convertToPhotoModel (
+      Optional<String> albumId, GoogleMediaItem mediaItem) throws Exception{
     Preconditions.checkArgument(mediaItem.isPhoto());
 
     return new PhotoModel(
@@ -109,19 +114,22 @@ public class GoogleMediaItem implements Serializable {
         albumId.orElse(null),
         false  /*inTempStore*/,
         null  /*sha1*/,
-        getUploadTime(mediaItem));
+        getCreationTime(mediaItem));
   }
 
-  private static Date getUploadTime(GoogleMediaItem mediaItem)
-  {
-    Date uploadTime = null;
-
+  private static Date getCreationTime(GoogleMediaItem mediaItem) throws Exception  {
+    if(Strings.isNullOrEmpty(mediaItem.getMediaMetadata().getCreationTime()))
+    {
+      throw new NullPointerException("Skipping item transfer : creationTime field in media item was found to be null. This"
+          + " should never happen.");
+    }
     try {
-      return FORMAT.parse(mediaItem.getMediaMetadata().getCreationTime());
-    } catch (Exception e) {
-      // this should never be hit since creationTime field should never be null. If we reach here,
-      // let's look into the string format change
-      return null;
+      return CREATION_TIME_FORMAT.parse(mediaItem.getMediaMetadata().getCreationTime());
+    }
+    catch (ParseException parseException)
+    {
+      throw new IllegalArgumentException("Skipping item transfer since code failed to parse the string to get creationTime. "
+          + "Let's look into the dataFormatter");
     }
   }
 
@@ -215,4 +223,5 @@ public class GoogleMediaItem implements Serializable {
   public void setUploadedTime(Date date) {
     this.uploadedTime = date;
   }
+
 }

@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
@@ -47,17 +48,20 @@ public class GoogleVideosExporter
   private final GoogleCredentialFactory credentialFactory;
   private volatile GoogleVideosInterface videosInterface;
   private JsonFactory jsonFactory;
+  private final Monitor monitor;
 
-  public GoogleVideosExporter(GoogleCredentialFactory credentialFactory, JsonFactory jsonFactory) {
+  public GoogleVideosExporter(GoogleCredentialFactory credentialFactory, JsonFactory jsonFactory, Monitor monitor) {
     this.credentialFactory = credentialFactory;
     this.jsonFactory = jsonFactory;
+    this.monitor = monitor;
   }
 
   @VisibleForTesting
   GoogleVideosExporter(
-      GoogleCredentialFactory credentialFactory, GoogleVideosInterface videosInterface) {
+      GoogleCredentialFactory credentialFactory, GoogleVideosInterface videosInterface, Monitor monitor) {
     this.credentialFactory = credentialFactory;
     this.videosInterface = videosInterface;
+    this.monitor = monitor;
   }
 
   @Override
@@ -105,8 +109,14 @@ public class GoogleVideosExporter
 
     for (GoogleMediaItem mediaItem : mediaItems) {
       if (mediaItem.getMediaMetadata().getVideo() != null) {
-
-        videos.add(GoogleMediaItem.convertToVideoModel(Optional.empty(), mediaItem));
+        try {
+          videos.add(GoogleMediaItem.convertToVideoModel(Optional.empty(), mediaItem));
+        }catch(Exception e)
+        {
+          monitor.debug(
+              () -> String.format("Error converting Google media item to video model with the"
+                  + " failure message: %s", e.getMessage()));
+        }
       }
     }
     return videos;

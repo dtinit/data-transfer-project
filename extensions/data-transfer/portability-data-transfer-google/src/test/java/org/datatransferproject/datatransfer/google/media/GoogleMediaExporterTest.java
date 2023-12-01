@@ -369,6 +369,7 @@ public class GoogleMediaExporterTest {
   private static GoogleMediaItem setUpSinglePhoto(String imageUri, String photoId) {
     MediaMetadata mediaMetadata = new MediaMetadata();
     mediaMetadata.setPhoto(new Photo());
+    mediaMetadata.setCreationTime("2022-09-01T20:25:38Z");
     GoogleMediaItem googleMediaItem =
         setUpSingleMediaItem(imageUri, photoId, mediaMetadata);
     googleMediaItem.setMimeType("image/jpeg");
@@ -379,6 +380,7 @@ public class GoogleMediaExporterTest {
   private static GoogleMediaItem setUpSingleVideo(String videoUri, String videoId) {
     MediaMetadata mediaMetadata = new MediaMetadata();
     mediaMetadata.setVideo(new Video());
+    mediaMetadata.setCreationTime("2022-09-01T20:25:38Z");
     GoogleMediaItem googleMediaItem =
         setUpSingleMediaItem(videoUri, videoId, mediaMetadata);
     googleMediaItem.setMimeType("video/mp4");
