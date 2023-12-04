@@ -27,6 +27,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -169,9 +170,9 @@ public class GooglePhotosExporter
           getOrCreatePhotosInterface(authData).getMediaItem(photo.getDataId());
       try {
         photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), googleMediaItem));
-      } catch(Exception e) {
+      } catch(ParseException e) {
         monitor.debug(
-            () -> String.format("Error converting Google media item to video model with the"
+            () -> String.format("Error converting Google media item to photo model with the"
                 + " failure message: %s", e.getMessage()));
       }
     }
@@ -364,7 +365,7 @@ public class GooglePhotosExporter
 
             monitor.debug(
                 () -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
-          } catch(Exception e) {
+          } catch(ParseException e) {
             monitor.debug(
                 () -> String.format("%s: Error converting Google media item to photo model with the"
                     + " failure message: %s", jobId, e.getMessage()));

@@ -21,6 +21,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -111,7 +112,7 @@ public class GoogleVideosExporter
       if (mediaItem.getMediaMetadata().getVideo() != null) {
         try {
           videos.add(GoogleMediaItem.convertToVideoModel(Optional.empty(), mediaItem));
-        } catch(Exception e) {
+        } catch(ParseException e) {
           monitor.debug(
               () -> String.format("Error converting Google media item to video model with the"
                   + " failure message: %s", e.getMessage()));

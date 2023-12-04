@@ -87,7 +87,7 @@ public class GoogleMediaItem implements Serializable {
   }
 
   public static VideoModel convertToVideoModel(
-      Optional<String> albumId, GoogleMediaItem mediaItem) throws Exception{
+      Optional<String> albumId, GoogleMediaItem mediaItem) throws ParseException{
     Preconditions.checkArgument(mediaItem.isVideo());
 
     return new VideoModel(
@@ -102,7 +102,7 @@ public class GoogleMediaItem implements Serializable {
   }
 
   public static PhotoModel convertToPhotoModel (
-      Optional<String> albumId, GoogleMediaItem mediaItem) throws Exception{
+      Optional<String> albumId, GoogleMediaItem mediaItem) throws ParseException{
     Preconditions.checkArgument(mediaItem.isPhoto());
 
     return new PhotoModel(
@@ -117,7 +117,7 @@ public class GoogleMediaItem implements Serializable {
         getCreationTime(mediaItem));
   }
 
-  private static Date getCreationTime(GoogleMediaItem mediaItem) throws Exception  {
+  private static Date getCreationTime(GoogleMediaItem mediaItem) throws ParseException  {
     // cannot be empty or null based. Verified the backend code.
     try {
       return CREATION_TIME_FORMAT.parse(mediaItem.getMediaMetadata().getCreationTime());

@@ -34,7 +34,9 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.ParseException;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -377,7 +379,8 @@ public class GoogleMediaExporterTest {
   @Test
   public void testGetGoogleMediaItemSucceeds() throws IOException, InvalidTokenException, PermissionDeniedException {
     String mediaItemID = "media_id";
-    when(photosInterface.getMediaItem(any())).thenReturn(setUpSingleMediaItem(mediaItemID, mediaItemID, null));
+    MediaMetadata mediaMetadata = new MediaMetadata();
+    when(photosInterface.getMediaItem(any())).thenReturn(setUpSingleMediaItem(mediaItemID, mediaItemID, mediaMetadata));
 
     assertThat(retryingGoogleMediaExporter.getGoogleMediaItem(mediaItemID, mediaItemID, mediaItemID, authData)).isInstanceOf(GoogleMediaItem.class);
 
@@ -470,7 +473,8 @@ public class GoogleMediaExporterTest {
   }
 
   private static PhotoModel setUpSinglePhotoModel(String albumId, String dataId) {
-    return new PhotoModel("Title", "fetchableUrl", "description", "photo", dataId, albumId, false);
+    return new PhotoModel("Title", "fetchableUrl", "description",
+        "photo", dataId, albumId, false, new Date(1370420961000L));
   }
 
   /** Sets up a response for a single photo */
@@ -504,6 +508,7 @@ public class GoogleMediaExporterTest {
     googleMediaItem.setBaseUrl(mediaUri);
     googleMediaItem.setId(mediaId);
     googleMediaItem.setFilename(FILENAME);
+    mediaMetadata.setCreationTime("2022-09-01T20:25:38Z");
     googleMediaItem.setMediaMetadata(mediaMetadata);
     return googleMediaItem;
   }
