@@ -171,9 +171,7 @@ public class GooglePhotosExporter
       try {
         photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), googleMediaItem));
       } catch(ParseException e) {
-        monitor.debug(
-            () -> String.format("Error converting Google media item to photo model with the"
-                + " failure message: %s", e.getMessage()));
+        // Note all errors are logged in GoogleMediaItem so no need to re-log them here.
       }
     }
 
@@ -366,9 +364,7 @@ public class GooglePhotosExporter
             monitor.debug(
                 () -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
           } catch(ParseException e) {
-            monitor.debug(
-                () -> String.format("%s: Error converting Google media item to photo model with the"
-                    + " failure message: %s", jobId, e.getMessage()));
+            // Note all errors are logged in GoogleMediaItem so no need to re-log them here.
           }
         }
       }

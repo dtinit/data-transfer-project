@@ -221,9 +221,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       try {
         photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), googleMediaItem));
       } catch(ParseException e) {
-        monitor.debug(
-            () -> String.format("Error converting Google media item to photo model with the"
-                + " failure message: %s", e.getMessage()));
+        // Note all errors are logged in GoogleMediaItem so no need to re-log them here.
       }
     }
 
@@ -262,9 +260,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       try {
         photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem));
       } catch(ParseException e) {
-        monitor.debug(
-            () -> String.format("Error converting Google media item to photo model with the"
-                + " failure message: %s", e.getMessage()));
+        // Note all errors are logged in GoogleMediaItem so no need to re-log them here.
       }
     }
 
@@ -279,9 +275,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       try {
         videosBuilder.add(GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem));
       } catch(ParseException e) {
-        monitor.debug(
-            () -> String.format("Error converting Google media item to video model with the"
-                + " failure message: %s", e.getMessage()));
+        // Note all errors are logged in GoogleMediaItem so no need to re-log them here.
       }
     }
 
@@ -463,9 +457,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
             monitor.debug(
                 () -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
           } catch(ParseException e) {
-            monitor.debug(
-                () -> String.format("%s: Error converting Google media item to photo model with the"
-                    + " failure message: %s", jobId, e.getMessage()));
+            // Note all errors are logged in GoogleMediaItem so no need to re-log them here.
           }
         }
       } else if (mediaItem.isVideo()) {
@@ -477,9 +469,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
             monitor.debug(
                 () -> String.format("%s: Google exporting video: %s", jobId, videoModel.getDataId()));
           } catch(ParseException e) {
-            monitor.debug(
-                () -> String.format("%s: Error converting Google media item to video model with the"
-                    + " failure message: %s", jobId, e.getMessage()));
+            // Note all errors are logged in GoogleMediaItem so no need to re-log them here.
           }
         }
       }

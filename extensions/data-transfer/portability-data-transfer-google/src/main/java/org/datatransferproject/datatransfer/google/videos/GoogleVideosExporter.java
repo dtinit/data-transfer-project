@@ -113,9 +113,7 @@ public class GoogleVideosExporter
         try {
           videos.add(GoogleMediaItem.convertToVideoModel(Optional.empty(), mediaItem));
         } catch(ParseException e) {
-          monitor.debug(
-              () -> String.format("Error converting Google media item to video model with the"
-                  + " failure message: %s", e.getMessage()));
+          // Note all errors are logged in GoogleMediaItem so no need to re-log them here.
         }
       }
     }
