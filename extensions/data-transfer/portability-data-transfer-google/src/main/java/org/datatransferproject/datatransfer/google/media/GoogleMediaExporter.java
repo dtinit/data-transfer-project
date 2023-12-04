@@ -222,6 +222,10 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
 
     for (PhotoAlbum album : container.getAlbums()) {
       GoogleAlbum googleAlbum = getGoogleAlbum(album.getIdempotentId(), album.getId(), album.getName(), authData);
+      if (googleAlbum == null) {
+        continue;
+      }
+
       albumBuilder.add(new MediaAlbum(googleAlbum.getId(), googleAlbum.getTitle(), null));
       // Adding subresources tells the framework to recall export to get all the photos
       subResources.add(new IdOnlyContainerResource(googleAlbum.getId()));
@@ -252,6 +256,10 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
 
     for (MediaAlbum album : container.getAlbums()) {
       GoogleAlbum googleAlbum = getGoogleAlbum(album.getIdempotentId(), album.getId(), album.getName(), authData);
+      if (googleAlbum == null) {
+        continue;
+      }
+
       albumBuilder.add(new MediaAlbum(googleAlbum.getId(), googleAlbum.getTitle(), null));
       // Adding subresources tells the framework to recall export to get all the photos
       subResources.add(new IdOnlyContainerResource(googleAlbum.getId()));
