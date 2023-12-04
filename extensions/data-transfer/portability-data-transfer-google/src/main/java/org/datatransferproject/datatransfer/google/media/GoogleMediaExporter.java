@@ -453,9 +453,8 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
 
       if (mediaItem.isPhoto()) {
         if (shouldUpload) {
-          PhotoModel photoModel;
           try {
-            photoModel = GoogleMediaItem.convertToPhotoModel(albumId, mediaItem);
+            PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(albumId, mediaItem);
             photos.add(photoModel);
 
             monitor.debug(
@@ -468,9 +467,8 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
         }
       } else if (mediaItem.isVideo()) {
         if (shouldUpload) {
-          VideoModel videoModel;
           try {
-            videoModel = GoogleMediaItem.convertToVideoModel(albumId, mediaItem);
+            VideoModel videoModel = GoogleMediaItem.convertToVideoModel(albumId, mediaItem);
             videos.add(videoModel);
 
             monitor.debug(
