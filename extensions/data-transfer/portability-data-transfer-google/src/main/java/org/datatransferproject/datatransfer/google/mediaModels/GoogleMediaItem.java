@@ -218,5 +218,4 @@ public class GoogleMediaItem implements Serializable {
   public void setUploadedTime(Date date) {
     this.uploadedTime = date;
   }
-
 }
