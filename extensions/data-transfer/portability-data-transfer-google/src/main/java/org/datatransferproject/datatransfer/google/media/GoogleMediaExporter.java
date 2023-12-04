@@ -228,8 +228,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
 
       try {
         photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), googleMediaItem));
-      }catch(Exception e)
-      {
+      } catch(Exception e) {
         monitor.debug(
             () -> String.format("Error converting Google media item to photo model with the"
                 + " failure message: %s", e.getMessage()));
@@ -265,8 +264,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
           getOrCreatePhotosInterface(authData).getMediaItem(photo.getDataId());
       try {
         photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), googleMediaItem));
-      }catch(Exception e)
-      {
+      } catch(Exception e) {
         monitor.debug(
             () -> String.format("Error converting Google media item to photo model with the"
                 + " failure message: %s", e.getMessage()));
@@ -277,8 +275,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       GoogleMediaItem googleMediaItem = getOrCreatePhotosInterface(authData).getMediaItem(video.getDataId());
       try {
         videosBuilder.add(GoogleMediaItem.convertToVideoModel(Optional.empty(), googleMediaItem));
-      }catch(Exception e)
-      {
+      } catch(Exception e) {
         monitor.debug(
             () -> String.format("Error converting Google media item to video model with the"
                 + " failure message: %s", e.getMessage()));
@@ -463,8 +460,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
 
             monitor.debug(
                 () -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
-          }catch(Exception e)
-          {
+          } catch(Exception e) {
             monitor.debug(
                 () -> String.format("%s: Error converting Google media item to photo model with the"
                     + " failure message: %s", jobId, e.getMessage()));
@@ -479,8 +475,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
 
             monitor.debug(
                 () -> String.format("%s: Google exporting video: %s", jobId, videoModel.getDataId()));
-          }catch(Exception e)
-          {
+          } catch(Exception e) {
             monitor.debug(
                 () -> String.format("%s: Error converting Google media item to video model with the"
                     + " failure message: %s", jobId, e.getMessage()));

@@ -111,8 +111,7 @@ public class GoogleVideosExporter
       if (mediaItem.getMediaMetadata().getVideo() != null) {
         try {
           videos.add(GoogleMediaItem.convertToVideoModel(Optional.empty(), mediaItem));
-        }catch(Exception e)
-        {
+        } catch(Exception e) {
           monitor.debug(
               () -> String.format("Error converting Google media item to video model with the"
                   + " failure message: %s", e.getMessage()));

@@ -118,18 +118,13 @@ public class GoogleMediaItem implements Serializable {
   }
 
   private static Date getCreationTime(GoogleMediaItem mediaItem) throws Exception  {
-    if(Strings.isNullOrEmpty(mediaItem.getMediaMetadata().getCreationTime()))
-    {
-      throw new NullPointerException("Skipping item transfer : creationTime field in media item was found to be null. This"
-          + " should never happen.");
-    }
+    // cannot be empty or null based. Verified the backend code.
     try {
       return CREATION_TIME_FORMAT.parse(mediaItem.getMediaMetadata().getCreationTime());
-    }
-    catch (ParseException parseException)
-    {
-      throw new IllegalArgumentException("Skipping item transfer since code failed to parse the string to get creationTime. "
-          + "Let's look into the dataFormatter");
+    } catch (ParseException parseException) {
+      throw new ParseException(String.format("Skipping item transfer since code failed to parse the "
+          + "string %s to get creationTime. Let's look into the dataFormatter",
+          mediaItem.getMediaMetadata().getCreationTime()), 0);
     }
   }
 

@@ -169,8 +169,7 @@ public class GooglePhotosExporter
           getOrCreatePhotosInterface(authData).getMediaItem(photo.getDataId());
       try {
         photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), googleMediaItem));
-      }catch(Exception e)
-      {
+      } catch(Exception e) {
         monitor.debug(
             () -> String.format("Error converting Google media item to video model with the"
                 + " failure message: %s", e.getMessage()));
@@ -365,8 +364,7 @@ public class GooglePhotosExporter
 
             monitor.debug(
                 () -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
-          }catch(Exception e)
-          {
+          } catch(Exception e) {
             monitor.debug(
                 () -> String.format("%s: Error converting Google media item to photo model with the"
                     + " failure message: %s", jobId, e.getMessage()));
