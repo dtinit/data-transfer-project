@@ -270,7 +270,7 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
   private MusicPlaylistItem convertPlaylistItem(
       String playlistId, GooglePlaylistItem googlePlaylistItem) throws ParseException {
     GoogleTrack track = googlePlaylistItem.getTrack();
-    GoogleRelease release = track.getRelease();
+    GoogleRelease release = track.getReleaseReference();
     return new MusicPlaylistItem(
         new MusicRecording(
             track.getIsrc(),
@@ -280,7 +280,7 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
                 release.getIcpn(),
                 release.getTitle(),
                 createMusicGroups(release.getArtists())),
-            createMusicGroups(track.getArtists()),
+            createMusicGroups(track.getArtistReferences()),
             "EXPLICIT_TYPE_EXPLICIT".equals(track.getExplicitType())),
         playlistId,
         googlePlaylistItem.getOrder());
