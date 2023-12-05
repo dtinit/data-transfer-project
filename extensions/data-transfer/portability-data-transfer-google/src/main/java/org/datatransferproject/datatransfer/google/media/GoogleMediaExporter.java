@@ -214,7 +214,6 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
     for (PhotoModel photo : container.getPhotos()) {
       GoogleMediaItem googleMediaItem =
           getGoogleMediaItem(photo.getIdempotentId(), photo.getDataId(), photo.getName(), authData);
-
       if (googleMediaItem == null) {
         continue;
       }
@@ -254,7 +253,6 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
     for (PhotoModel photo : container.getPhotos()) {
       GoogleMediaItem photoMediaItem =
           getGoogleMediaItem(photo.getIdempotentId(), photo.getDataId(), photo.getName(), authData);
-
       if (photoMediaItem == null) {
         continue;
       }
@@ -270,7 +268,6 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
     for (VideoModel video : container.getVideos()) {
       GoogleMediaItem videoMediaItem =
           getGoogleMediaItem(video.getIdempotentId(), video.getDataId(), video.getName(), authData);
-
       if (videoMediaItem == null) {
         continue;
       }
