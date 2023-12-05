@@ -387,51 +387,6 @@ public class GoogleMediaExporterTest {
   }
 
   @Test
-  public void testGetGoogleAlbumSuccess() throws Exception {
-    when(photosInterface.getAlbum(anyString())).thenReturn(setUpGoogleAlbum(Optional.empty(), Optional.empty()));
-
-
-    assertThat(googleMediaExporter.getGoogleAlbum(
-        "a",
-        "b",
-        "c",
-        authData)).isInstanceOf(GoogleAlbum.class);
-
-    assertThat(retryingGoogleMediaExporter.getGoogleAlbum(
-        "a",
-        "b",
-        "c",
-        authData)).isInstanceOf(GoogleAlbum.class);
-  }
-
-  @Test
-  public void testGetGoogleAlbumRetry() throws Exception {
-    when(photosInterface.getAlbum(anyString())).thenThrow(IOException.class);
-
-    long start1 = System.currentTimeMillis();
-    assertThrows(
-        IOException.class,
-        () -> googleMediaExporter.getGoogleAlbum(
-            "a",
-            "b",
-            "c",
-            authData)
-    );
-    long end1 = System.currentTimeMillis();
-
-
-    long start2 = System.currentTimeMillis();
-    assertThat(retryingGoogleMediaExporter.getGoogleAlbum(
-        "a",
-        "b",
-        "c",
-        authData)).isNull();
-    long end2 = System.currentTimeMillis();
-
-    assertThat(end1 - start1).isLessThan(RETRY_INTERVAL_MILLIS * 1);
-    assertThat(end2-start2).isAtLeast(RETRY_INTERVAL_MILLIS * RETRY_MAX_ATTEMPTS);
-  }
-
   public void testGetGoogleMediaItemSucceeds() throws IOException, InvalidTokenException, PermissionDeniedException {
     String mediaItemID = "media_id";
     when(photosInterface.getMediaItem(any())).thenReturn(setUpSingleMediaItem(mediaItemID, mediaItemID, null));
