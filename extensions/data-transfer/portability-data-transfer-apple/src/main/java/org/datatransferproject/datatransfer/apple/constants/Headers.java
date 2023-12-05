@@ -25,7 +25,8 @@ import org.jetbrains.annotations.Nullable;
 public enum Headers {
   AUTHORIZATION("Authorization"),
   CORRELATION_ID("X-Apple-Request-UUID"),
-  CONTENT_TYPE("Content-Type");
+  CONTENT_TYPE("Content-Type"),
+  OPERATION_GROUP("x-apple-operation-group-name");
 
 
   private final String value;
