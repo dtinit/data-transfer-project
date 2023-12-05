@@ -441,7 +441,7 @@ public class GoogleMediaExporterTest {
   }
 
   @Test
-  public void testExportPhotosContainerRetrying() throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+  public void testExportPhotosContainer_photosRetrying() throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     String PHOTO_ID_TO_FAIL_1 = "photo3";
     String PHOTO_ID_TO_FAIL_2 = "photo5";
 
@@ -517,6 +517,101 @@ public class GoogleMediaExporterTest {
     assertThat(end - start).isLessThan(RETRY_INTERVAL_MILLIS * RETRY_MAX_ATTEMPTS);
   }
 
+  @Test
+  public void testExportAlbums_failureInterruptsTransfer() throws Exception {
+    String ALBUM_ID_TO_FAIL_1 = "albumid3";
+    String ALBUM_ID_TO_FAIL_2 = "albumid5";
+
+    ImmutableList<PhotoModel> photos = ImmutableList.of();
+    ImmutableList<PhotoAlbum> albums = ImmutableList.of(
+        setUpSinglePhotoAlbum("albumid1", "album 1`", ""),
+        setUpSinglePhotoAlbum("albumid2", "album 2", ""),
+        setUpSinglePhotoAlbum(ALBUM_ID_TO_FAIL_1, "album 3", ""),
+        setUpSinglePhotoAlbum("albumid4", "album 4", ""),
+        setUpSinglePhotoAlbum(ALBUM_ID_TO_FAIL_2, "album 5", ""),
+        setUpSinglePhotoAlbum("albumid6", "album 6", "")
+    );
+
+    PhotosContainerResource container = new PhotosContainerResource(albums, photos);
+    ExportInformation exportInfo = new ExportInformation(null, container);
+
+    MediaMetadata photoMediaMetadata = new MediaMetadata();
+    photoMediaMetadata.setPhoto(new Photo());
+
+
+    // For the album_id_to_fail albums, throw an exception.
+    when(photosInterface.getAlbum(ALBUM_ID_TO_FAIL_1)).thenThrow(IOException.class);
+    when(photosInterface.getAlbum(ALBUM_ID_TO_FAIL_2)).thenThrow(IOException.class);
+    // For all other albums, return a GoogleMediaAlbum.
+    for (PhotoAlbum photoAlbum: albums) {
+      if (photoAlbum.getId().equals(ALBUM_ID_TO_FAIL_1) || photoAlbum.getId().equals(ALBUM_ID_TO_FAIL_2)) {
+        continue;
+      }
+      when(photosInterface.getAlbum(photoAlbum.getId())).thenReturn(
+          setUpGoogleAlbum(Optional.of(photoAlbum.getId()), Optional.of(photoAlbum.getName()))
+      );
+    }
+
+    assertThrows(IOException.class, () -> googleMediaExporter.export(
+        uuid, authData, Optional.of(exportInfo)
+    ));
+  }
+
+  @Test
+  public void testExportAlbums_retryingSkipsFailures() throws Exception {
+    String ALBUM_ID_TO_FAIL_1 = "albumid3";
+    String ALBUM_ID_TO_FAIL_2 = "albumid5";
+
+    ImmutableList<PhotoModel> photos = ImmutableList.of();
+    ImmutableList<PhotoAlbum> albums = ImmutableList.of(
+        setUpSinglePhotoAlbum("albumid1", "album 1`", ""),
+        setUpSinglePhotoAlbum("albumid2", "album 2", ""),
+        setUpSinglePhotoAlbum(ALBUM_ID_TO_FAIL_1, "album 3", ""),
+        setUpSinglePhotoAlbum("albumid4", "album 4", ""),
+        setUpSinglePhotoAlbum(ALBUM_ID_TO_FAIL_2, "album 5", ""),
+        setUpSinglePhotoAlbum("albumid6", "album 6", "")
+    );
+
+    PhotosContainerResource container = new PhotosContainerResource(albums, photos);
+    ExportInformation exportInfo = new ExportInformation(null, container);
+
+    MediaMetadata photoMediaMetadata = new MediaMetadata();
+    photoMediaMetadata.setPhoto(new Photo());
+
+
+    // For the album_id_to_fail albums, throw an exception.
+    when(photosInterface.getAlbum(ALBUM_ID_TO_FAIL_1)).thenThrow(IOException.class);
+    when(photosInterface.getAlbum(ALBUM_ID_TO_FAIL_2)).thenThrow(IOException.class);
+    // For all other albums, return a GoogleMediaAlbum.
+    for (PhotoAlbum photoAlbum: albums) {
+      if (photoAlbum.getId().equals(ALBUM_ID_TO_FAIL_1) || photoAlbum.getId().equals(ALBUM_ID_TO_FAIL_2)) {
+        continue;
+      }
+      when(photosInterface.getAlbum(photoAlbum.getId())).thenReturn(
+          setUpGoogleAlbum(Optional.of(photoAlbum.getId()), Optional.of(photoAlbum.getName()))
+      );
+    }
+
+    ExportResult<MediaContainerResource> result = retryingGoogleMediaExporter.export(
+        uuid, authData, Optional.of(exportInfo)
+    );
+
+    assertThat(
+        result.getExportedData().getAlbums().stream().map(x -> x.getId()).collect(Collectors.toList())
+    ).isEqualTo(
+        albums.stream().map(
+            x -> x.getId()
+        ).filter(
+            id -> !(id.equals(ALBUM_ID_TO_FAIL_1) || id.equals(ALBUM_ID_TO_FAIL_2))
+        ).collect(
+            Collectors.toList()
+        )
+    );
+    assertThat(result.getExportedData().getAlbums().size()).isEqualTo(albums.size() - 2);
+    assertThat(retryingExecutor.getErrors().size()).isEqualTo(2);
+    assertThat(retryingExecutor.getErrors().stream().findFirst().toString().contains("IOException")).isTrue();
+  }
+
   /** Sets up a response with a single album, containing a single photo */
   private void setUpSingleAlbum() {
     GoogleAlbum albumEntry = new GoogleAlbum();
@@ -536,6 +631,10 @@ public class GoogleMediaExporterTest {
     }
 
     return album;
+  }
+
+  private static PhotoAlbum setUpSinglePhotoAlbum(String albumId, String albumName, String description) {
+    return new PhotoAlbum(albumId, albumName, description);
   }
 
   private static PhotoModel setUpSinglePhotoModel(String albumId, String dataId) {
