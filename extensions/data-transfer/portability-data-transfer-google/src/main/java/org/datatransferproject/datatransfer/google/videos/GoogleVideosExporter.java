@@ -113,7 +113,7 @@ public class GoogleVideosExporter
         try {
           videos.add(GoogleMediaItem.convertToVideoModel(Optional.empty(), mediaItem));
         } catch(ParseException e) {
-          // Note all errors are logged in GoogleMediaItem so no need to re-log them here.
+          monitor.debug(() -> "parse exception occurred while converting photo, skipping this item");
         }
       }
     }

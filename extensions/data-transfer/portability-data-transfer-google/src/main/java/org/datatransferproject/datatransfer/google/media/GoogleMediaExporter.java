@@ -218,10 +218,11 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       if (googleMediaItem == null) {
         continue;
       }
+
       try {
         photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), googleMediaItem));
       } catch(ParseException e) {
-        // Note all errors are logged in GoogleMediaItem so no need to re-log them here.
+        monitor.debug(() -> "parse exception occurred while converting photo, skipping this item");
       }
     }
 
@@ -260,7 +261,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       try {
         photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem));
       } catch(ParseException e) {
-        // Note all errors are logged in GoogleMediaItem so no need to re-log them here.
+        monitor.debug(() -> "parse exception occurred while converting photo, skipping this item");
       }
     }
 
@@ -275,7 +276,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       try {
         videosBuilder.add(GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem));
       } catch(ParseException e) {
-        // Note all errors are logged in GoogleMediaItem so no need to re-log them here.
+        monitor.debug(() -> "parse exception occurred while converting photo, skipping this item");
       }
     }
 
@@ -457,7 +458,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
             monitor.debug(
                 () -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
           } catch(ParseException e) {
-            // Note all errors are logged in GoogleMediaItem so no need to re-log them here.
+            monitor.debug(() -> "parse exception occurred while converting photo, skipping this item");
           }
         }
       } else if (mediaItem.isVideo()) {
@@ -469,7 +470,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
             monitor.debug(
                 () -> String.format("%s: Google exporting video: %s", jobId, videoModel.getDataId()));
           } catch(ParseException e) {
-            // Note all errors are logged in GoogleMediaItem so no need to re-log them here.
+            monitor.debug(() -> "parse exception occurred while converting photo, skipping this item");
           }
         }
       }

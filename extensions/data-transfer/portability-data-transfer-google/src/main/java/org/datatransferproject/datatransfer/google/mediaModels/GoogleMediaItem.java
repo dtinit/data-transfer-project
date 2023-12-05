@@ -122,9 +122,9 @@ public class GoogleMediaItem implements Serializable {
     try {
       return CREATION_TIME_FORMAT.parse(mediaItem.getMediaMetadata().getCreationTime());
     } catch (ParseException parseException) {
-      throw new ParseException(String.format("Skipping item transfer since code failed to parse the "
-          + "string %s to get creationTime. Let's look into the dataFormatter",
-          mediaItem.getMediaMetadata().getCreationTime()), 0);
+      throw new ParseException(String.format("Failed to parse the string %s to get creationTime. "
+              + "Let's look into the dataFormatter",
+          mediaItem.getMediaMetadata().getCreationTime()), parseException.getErrorOffset());
     }
   }
 

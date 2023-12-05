@@ -86,10 +86,10 @@ public class GoogleMediaItemTest {
     for (Entry entry: filenameToMimeTypeMap.entrySet()) {
       videoMediaItem.setMimeType("INVALID_MIME");
       videoMediaItem.setFilename(entry.getKey().toString());
-       VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(),
-            videoMediaItem);
+      VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(),
+          videoMediaItem);
 
-        assertEquals(entry.getValue(), videoModel.getMimeType());
+      assertEquals(entry.getValue(), videoModel.getMimeType());
     }
   }
 
@@ -98,9 +98,9 @@ public class GoogleMediaItemTest {
     GoogleMediaItem photoMediaItem = getPhotoMediaItem();
     photoMediaItem.setFilename("file");
     photoMediaItem.setMimeType("image/webp");
-      PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem);
+    PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem);
 
-      assertEquals("image/webp", photoModel.getMimeType());
+    assertEquals("image/webp", photoModel.getMimeType());
   }
 
   @Test
@@ -108,9 +108,9 @@ public class GoogleMediaItemTest {
     GoogleMediaItem videoMediaItem = getVideoMediaItem();
     videoMediaItem.setFilename("file");
     videoMediaItem.setMimeType("video/webm");
-      VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem);
+    VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem);
 
-      assertEquals("video/webm", videoModel.getMimeType());
+    assertEquals("video/webm", videoModel.getMimeType());
   }
 
   @Test
