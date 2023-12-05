@@ -63,6 +63,7 @@ public class GoogleMediaItemTest {
     for (Entry entry: filenameToMimeTypeMap.entrySet()) {
       photoMediaItem.setMimeType("INVALID_MIME");
       photoMediaItem.setFilename(entry.getKey().toString());
+
       PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem);
 
       assertEquals(entry.getValue(), photoModel.getMimeType());
@@ -86,6 +87,7 @@ public class GoogleMediaItemTest {
     for (Entry entry: filenameToMimeTypeMap.entrySet()) {
       videoMediaItem.setMimeType("INVALID_MIME");
       videoMediaItem.setFilename(entry.getKey().toString());
+
       VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(),
           videoMediaItem);
 
@@ -98,6 +100,7 @@ public class GoogleMediaItemTest {
     GoogleMediaItem photoMediaItem = getPhotoMediaItem();
     photoMediaItem.setFilename("file");
     photoMediaItem.setMimeType("image/webp");
+
     PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem);
 
     assertEquals("image/webp", photoModel.getMimeType());
@@ -108,6 +111,7 @@ public class GoogleMediaItemTest {
     GoogleMediaItem videoMediaItem = getVideoMediaItem();
     videoMediaItem.setFilename("file");
     videoMediaItem.setMimeType("video/webm");
+
     VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem);
 
     assertEquals("video/webm", videoModel.getMimeType());
@@ -118,6 +122,7 @@ public class GoogleMediaItemTest {
     GoogleMediaItem photoMediaItem = getPhotoMediaItem();
     photoMediaItem.setFilename("file");
     photoMediaItem.setMimeType(null);
+
     PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem);
 
     // Default defined in GoogleMediaItem
@@ -129,6 +134,7 @@ public class GoogleMediaItemTest {
     GoogleMediaItem videoMediaItem = getVideoMediaItem();
     videoMediaItem.setFilename("file");
     videoMediaItem.setMimeType(null);
+
     VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem);
 
     // Default defined in GoogleMediaItem
@@ -140,6 +146,7 @@ public class GoogleMediaItemTest {
     GoogleMediaItem photoMediaItem = getPhotoMediaItem();
     photoMediaItem.setFilename("file.avif");
     photoMediaItem.setMimeType("image/png");
+
     PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem);
 
     // defaults to the mimetype that is already set, as avif is not handled.
@@ -151,8 +158,10 @@ public class GoogleMediaItemTest {
     GoogleMediaItem videoMediaItem = getVideoMediaItem();
     MediaMetadata metadata = new MediaMetadata();
     metadata.setVideo(new Video());
+    // CreationTime in GoogleMediaItem is populated as uploadTime in our common models.
     metadata.setCreationTime("2023-10-02T22:33:38Z");
     videoMediaItem.setMediaMetadata(metadata);
+
     VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem);
 
     assertEquals("Mon Oct 02 22:33:38 UTC 2023", videoModel.getUploadedTime().toString());
@@ -164,8 +173,10 @@ public class GoogleMediaItemTest {
     GoogleMediaItem photoMediaItem = getPhotoMediaItem();
     MediaMetadata metadata = new MediaMetadata();
     metadata.setPhoto(new Photo());
+    // CreationTime in GoogleMediaItem is populated as uploadTime in our common models.
     metadata.setCreationTime("2023-10-02T22:33:38Z");
     photoMediaItem.setMediaMetadata(metadata);
+
     PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem);
 
     assertEquals("Mon Oct 02 22:33:38 UTC 2023", photoModel.getUploadedTime().toString());

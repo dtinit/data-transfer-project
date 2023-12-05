@@ -171,7 +171,8 @@ public class GooglePhotosExporter
       try {
         photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), googleMediaItem));
       } catch(ParseException e) {
-        monitor.debug(() -> "parse exception occurred while converting photo, skipping this item");
+        monitor.debug(() -> "Parse exception occurred while converting photo, skipping this item. "
+            + "Failure message : %s ", e.getMessage());
       }
     }
 
@@ -364,8 +365,8 @@ public class GooglePhotosExporter
             monitor.debug(
                 () -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
           } catch(ParseException e) {
-            // Note all errors are logged in GoogleMediaItem so no need to re-log them here.
-          }
+            monitor.debug(() -> "Parse exception occurred while converting photo, skipping this item. "
+                + "Failure message : %s ", e.getMessage());          }
         }
       }
     }
