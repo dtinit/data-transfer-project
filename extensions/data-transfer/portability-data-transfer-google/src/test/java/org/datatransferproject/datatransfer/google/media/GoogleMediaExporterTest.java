@@ -397,16 +397,16 @@ public class GoogleMediaExporterTest {
 
   @Test
   public void testExportPhotosContainer_photosRetrying() throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
-    String PHOTO_ID_TO_FAIL_1 = "photo3";
-    String PHOTO_ID_TO_FAIL_2 = "photo5";
+    String photoIdToFail1 = "photo3";
+    String photoIdToFail2 = "photo5";
 
     ImmutableList<PhotoAlbum> albums = ImmutableList.of();
     ImmutableList<PhotoModel> photos = ImmutableList.of(
         setUpSinglePhotoModel("", "photo1"),
         setUpSinglePhotoModel("", "photo2"),
-        setUpSinglePhotoModel("", PHOTO_ID_TO_FAIL_1),
+        setUpSinglePhotoModel("", photoIdToFail1),
         setUpSinglePhotoModel("", "photo4"),
-        setUpSinglePhotoModel("", PHOTO_ID_TO_FAIL_2),
+        setUpSinglePhotoModel("", photoIdToFail2),
         setUpSinglePhotoModel("", "photo6")
     );
 
@@ -418,11 +418,11 @@ public class GoogleMediaExporterTest {
 
 
     // For the photo_id_to_fail photos, throw an exception.
-    when(photosInterface.getMediaItem(PHOTO_ID_TO_FAIL_1)).thenThrow(IOException.class);
-    when(photosInterface.getMediaItem(PHOTO_ID_TO_FAIL_2)).thenThrow(IOException.class);
+    when(photosInterface.getMediaItem(photoIdToFail1)).thenThrow(IOException.class);
+    when(photosInterface.getMediaItem(photoIdToFail2)).thenThrow(IOException.class);
     // For all other photos, return a media item.
     for (PhotoModel photoModel: photos) {
-      if (photoModel.getDataId().equals(PHOTO_ID_TO_FAIL_1) || photoModel.getDataId().equals(PHOTO_ID_TO_FAIL_2)) {
+      if (photoModel.getDataId().equals(photoIdToFail1) || photoModel.getDataId().equals(photoIdToFail2)) {
         continue;
       }
       when(photosInterface.getMediaItem(photoModel.getDataId())).thenReturn(
@@ -439,7 +439,7 @@ public class GoogleMediaExporterTest {
         photos.stream().map(
             x -> x.getDataId()
         ).filter(
-            dataId -> !(dataId.equals(PHOTO_ID_TO_FAIL_1) || dataId.equals(PHOTO_ID_TO_FAIL_2))
+            dataId -> !(dataId.equals(photoIdToFail1) || dataId.equals(photoIdToFail2))
         ).collect(
             Collectors.toList()
         )
@@ -474,16 +474,16 @@ public class GoogleMediaExporterTest {
 
   @Test
   public void testExportAlbums_failureInterruptsTransfer() throws Exception {
-    String ALBUM_ID_TO_FAIL_1 = "albumid3";
-    String ALBUM_ID_TO_FAIL_2 = "albumid5";
+    String albumIdToFail1 = "albumid3";
+    String albumIdToFail2 = "albumid5";
 
     ImmutableList<PhotoModel> photos = ImmutableList.of();
     ImmutableList<PhotoAlbum> albums = ImmutableList.of(
         setUpSinglePhotoAlbum("albumid1", "album 1`", ""),
         setUpSinglePhotoAlbum("albumid2", "album 2", ""),
-        setUpSinglePhotoAlbum(ALBUM_ID_TO_FAIL_1, "album 3", ""),
+        setUpSinglePhotoAlbum(albumIdToFail1, "album 3", ""),
         setUpSinglePhotoAlbum("albumid4", "album 4", ""),
-        setUpSinglePhotoAlbum(ALBUM_ID_TO_FAIL_2, "album 5", ""),
+        setUpSinglePhotoAlbum(albumIdToFail2, "album 5", ""),
         setUpSinglePhotoAlbum("albumid6", "album 6", "")
     );
 
@@ -493,13 +493,12 @@ public class GoogleMediaExporterTest {
     MediaMetadata photoMediaMetadata = new MediaMetadata();
     photoMediaMetadata.setPhoto(new Photo());
 
-
     // For the album_id_to_fail albums, throw an exception.
-    when(photosInterface.getAlbum(ALBUM_ID_TO_FAIL_1)).thenThrow(IOException.class);
-    when(photosInterface.getAlbum(ALBUM_ID_TO_FAIL_2)).thenThrow(IOException.class);
+    when(photosInterface.getAlbum(albumIdToFail1)).thenThrow(IOException.class);
+    when(photosInterface.getAlbum(albumIdToFail2)).thenThrow(IOException.class);
     // For all other albums, return a GoogleMediaAlbum.
     for (PhotoAlbum photoAlbum: albums) {
-      if (photoAlbum.getId().equals(ALBUM_ID_TO_FAIL_1) || photoAlbum.getId().equals(ALBUM_ID_TO_FAIL_2)) {
+      if (photoAlbum.getId().equals(albumIdToFail1) || photoAlbum.getId().equals(albumIdToFail2)) {
         continue;
       }
       when(photosInterface.getAlbum(photoAlbum.getId())).thenReturn(
@@ -514,16 +513,16 @@ public class GoogleMediaExporterTest {
 
   @Test
   public void testExportAlbums_retryingSkipsFailures() throws Exception {
-    String ALBUM_ID_TO_FAIL_1 = "albumid3";
-    String ALBUM_ID_TO_FAIL_2 = "albumid5";
+    String albumIdToFail1 = "albumid3";
+    String albumIdToFail2 = "albumid5";
 
     ImmutableList<PhotoModel> photos = ImmutableList.of();
     ImmutableList<PhotoAlbum> albums = ImmutableList.of(
         setUpSinglePhotoAlbum("albumid1", "album 1`", ""),
         setUpSinglePhotoAlbum("albumid2", "album 2", ""),
-        setUpSinglePhotoAlbum(ALBUM_ID_TO_FAIL_1, "album 3", ""),
+        setUpSinglePhotoAlbum(albumIdToFail1, "album 3", ""),
         setUpSinglePhotoAlbum("albumid4", "album 4", ""),
-        setUpSinglePhotoAlbum(ALBUM_ID_TO_FAIL_2, "album 5", ""),
+        setUpSinglePhotoAlbum(albumIdToFail2, "album 5", ""),
         setUpSinglePhotoAlbum("albumid6", "album 6", "")
     );
 
@@ -533,13 +532,12 @@ public class GoogleMediaExporterTest {
     MediaMetadata photoMediaMetadata = new MediaMetadata();
     photoMediaMetadata.setPhoto(new Photo());
 
-
     // For the album_id_to_fail albums, throw an exception.
-    when(photosInterface.getAlbum(ALBUM_ID_TO_FAIL_1)).thenThrow(IOException.class);
-    when(photosInterface.getAlbum(ALBUM_ID_TO_FAIL_2)).thenThrow(IOException.class);
+    when(photosInterface.getAlbum(albumIdToFail1)).thenThrow(IOException.class);
+    when(photosInterface.getAlbum(albumIdToFail2)).thenThrow(IOException.class);
     // For all other albums, return a GoogleMediaAlbum.
     for (PhotoAlbum photoAlbum: albums) {
-      if (photoAlbum.getId().equals(ALBUM_ID_TO_FAIL_1) || photoAlbum.getId().equals(ALBUM_ID_TO_FAIL_2)) {
+      if (photoAlbum.getId().equals(albumIdToFail1) || photoAlbum.getId().equals(albumIdToFail2)) {
         continue;
       }
       when(photosInterface.getAlbum(photoAlbum.getId())).thenReturn(
@@ -557,7 +555,7 @@ public class GoogleMediaExporterTest {
         albums.stream().map(
             x -> x.getId()
         ).filter(
-            id -> !(id.equals(ALBUM_ID_TO_FAIL_1) || id.equals(ALBUM_ID_TO_FAIL_2))
+            id -> !(id.equals(albumIdToFail1) || id.equals(albumIdToFail2))
         ).collect(
             Collectors.toList()
         )
