@@ -5,6 +5,10 @@ import java.util.Map;
 import java.util.UUID;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
+/**
+ * This class pulls out the error logging logic from the ImportExecutors and allows us to
+ * use a public API on the Executors to log errors.
+ */
 abstract class InMemoryExceptionLogger {
   private Map<String, ErrorDetail> errors;
   private Map<String, ErrorDetail> recentErrors;
