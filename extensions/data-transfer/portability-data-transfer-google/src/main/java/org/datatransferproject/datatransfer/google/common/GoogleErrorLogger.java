@@ -12,14 +12,21 @@ import org.datatransferproject.types.transfer.errors.ErrorDetail;
  * This class logs errors that should appear as failures in the completion email.
  */
 public class GoogleErrorLogger {
-  public static void logFailedItemErrors(UUID jobId, ImmutableList<ErrorDetail> errorDetails, JobStore jobStore) throws IOException {
+  public static void logFailedItemErrors(JobStore jobStore, UUID jobId, ImmutableList<ErrorDetail> errorDetails) throws IOException {
     jobStore.addErrorsToJob(jobId, errorDetails);
   }
 
-  public static ErrorDetail createErrorDetail(String idempotentId, String itemName, Exception e, boolean canSkip) {
+  /**
+   * @param idempotentId Must be an idempotent identifier for the failed item.
+   * @param title Title of the failed item
+   * @param e Exception thrown that caused the failure.
+   * @param canSkip Based on if we're failing the transfer based on this exception or not.
+   * @return
+   */
+  public static ErrorDetail createErrorDetail(String idempotentId, String title, Exception e, boolean canSkip) {
     return ErrorDetail.builder()
         .setId(idempotentId)
-        .setTitle(itemName)
+        .setTitle(title)
         .setException(Throwables.getStackTraceAsString(e))
         .setCanSkip(canSkip).build();
   }
