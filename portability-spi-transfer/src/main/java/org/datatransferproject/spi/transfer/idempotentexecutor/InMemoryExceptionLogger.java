@@ -12,7 +12,10 @@ import org.datatransferproject.types.transfer.errors.ErrorDetail;
  * use a public API on the Executors to log errors.
  */
 abstract class InMemoryExceptionLogger {
+  // Holds the collection of errors that were run into during the entire transfer
   private Map<String, ErrorDetail> errors;
+  // Holds only the errors in the current export / import, and is reset every new import cycle.
+  // portability-transfer/src/main/java/org/datatransferproject/transfer/CallableImporter.java#L66
   private Map<String, ErrorDetail> recentErrors;
 
   private void logError(String idempotentId, ErrorDetail errorDetail) {
