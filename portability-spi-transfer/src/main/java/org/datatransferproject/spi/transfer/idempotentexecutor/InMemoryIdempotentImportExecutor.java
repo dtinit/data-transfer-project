@@ -101,18 +101,8 @@ public class InMemoryIdempotentImportExecutor extends InMemoryExceptionLogger im
   }
 
   @Override
-  public Collection<ErrorDetail> getErrors() {
-    return ImmutableList.copyOf(errors.values());
-  }
-
-  @Override
   public void setJobId(UUID jobId) {
     this.jobId = jobId;
-  }
-
-  @Override
-  public Collection<ErrorDetail> getRecentErrors() {
-    return ImmutableList.copyOf(recentErrors.values());
   }
 
   @Override

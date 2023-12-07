@@ -1,6 +1,8 @@
 package org.datatransferproject.spi.transfer.idempotentexecutor;
 
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
@@ -18,6 +20,14 @@ abstract class InMemoryExceptionLogger {
     this.recentErrors.put(idempotentId, errorDetail);
   }
 
+  public Collection<ErrorDetail> getErrors() {
+    return ImmutableList.copyOf(errors.values());
+  }
+
+  public Collection<ErrorDetail> getRecentErrors() {
+    return ImmutableList.copyOf(recentErrors.values());
+  }
+
   public ErrorDetail addError(
       String idempotentId,
       String itemName,
@@ -30,7 +40,6 @@ abstract class InMemoryExceptionLogger {
     if (canSkip) {
       errorDetailBuilder.setCanSkip(true);
     }
-
     ErrorDetail errorDetail = errorDetailBuilder.build();
 
     logError(
