@@ -36,7 +36,7 @@ import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 import org.datatransferproject.types.transfer.retry.RetryingCallable;
 
 /** A {@link IdempotentImportExecutor} that stores known values in memory. */
-public class RetryingInMemoryIdempotentImportExecutor implements IdempotentImportExecutor {
+public class RetryingInMemoryIdempotentImportExecutor implements IdempotentImportExecutor, InMemoryExceptionHandler {
 
   private final Map<String, Serializable> knownValues = new HashMap<>();
   private final Map<String, ErrorDetail> errors = new HashMap<>();
@@ -131,6 +131,12 @@ public class RetryingInMemoryIdempotentImportExecutor implements IdempotentImpor
     return ImmutableList.copyOf(recentErrors.values());
   }
 
+  @Override
+  public void resetRecentErrors() {
+    recentErrors.clear();
+  }
+
+  @Override
   public void addError(
       UUID jobId,
       String idempotentId,
@@ -162,10 +168,5 @@ public class RetryingInMemoryIdempotentImportExecutor implements IdempotentImpor
         (canSkip ? "can" : "cannot"),
         errorDetail
     ));
-  }
-
-  @Override
-  public void resetRecentErrors() {
-    recentErrors.clear();
   }
 }
