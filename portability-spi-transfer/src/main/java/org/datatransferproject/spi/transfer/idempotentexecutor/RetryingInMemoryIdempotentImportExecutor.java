@@ -90,23 +90,12 @@ public class RetryingInMemoryIdempotentImportExecutor implements IdempotentImpor
       errors.remove(idempotentId);
       return result;
     } catch (RetryException e) {
-      ErrorDetail.Builder errorDetailBuilder = ErrorDetail.builder();
-      errorDetailBuilder.setId(idempotentId)
-          .setTitle(itemName)
-          .setException(Throwables.getStackTraceAsString(e));
-      if(e.canSkip()){
-        ErrorDetail errorDetail = errorDetailBuilder.setCanSkip(true).build();
-        errors.put(idempotentId, errorDetail);
-        recentErrors.put(idempotentId, errorDetail);
-        monitor.severe(() -> jobIdPrefix + "Problem with importing item, but skipping: " + errorDetail);
-        return  null;
-      } else {
-        ErrorDetail errorDetail = errorDetailBuilder.build();
-        errors.put(idempotentId, errorDetail);
-        recentErrors.put(idempotentId, errorDetail);
-        monitor.severe(() -> jobIdPrefix + "Problem with importing item, cannot be skipped: " + errorDetail);
-        throw e;
+      // We pass e.canSkip because it is only a property on RetryExceptions.
+      addError(jobId, idempotentId, itemName, e, e.canSkip());
+      if (e.canSkip()) {
+        return null;
       }
+      throw e;
     }
   }
 
@@ -140,6 +129,39 @@ public class RetryingInMemoryIdempotentImportExecutor implements IdempotentImpor
   @Override
   public Collection<ErrorDetail> getRecentErrors() {
     return ImmutableList.copyOf(recentErrors.values());
+  }
+
+  public void addError(
+      UUID jobId,
+      String idempotentId,
+      String itemName,
+      Exception encounteredException,
+      boolean canSkip) {
+    ErrorDetail.Builder errorDetailBuilder = ErrorDetail.builder()
+        .setId(idempotentId)
+        .setTitle(itemName)
+        .setException(Throwables.getStackTraceAsString(encounteredException));
+    if (canSkip) {
+      errorDetailBuilder.setCanSkip(true);
+    }
+
+    ErrorDetail errorDetail = errorDetailBuilder.build();
+
+    this.errors.put(
+        idempotentId,
+        errorDetail
+    );
+    this.recentErrors.put(
+        idempotentId,
+        errorDetail
+    );
+
+    monitor.severe(() -> String.format(
+        "Job %s: Problem with importing item, %s be skipped: %s",
+        jobId,
+        (canSkip ? "can" : "cannot"),
+        errorDetail
+    ));
   }
 
   @Override
