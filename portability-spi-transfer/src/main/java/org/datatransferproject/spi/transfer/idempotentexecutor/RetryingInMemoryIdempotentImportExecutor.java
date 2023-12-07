@@ -36,7 +36,7 @@ import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 import org.datatransferproject.types.transfer.retry.RetryingCallable;
 
 /** A {@link IdempotentImportExecutor} that stores known values in memory. */
-public class RetryingInMemoryIdempotentImportExecutor implements IdempotentImportExecutor, InMemoryExceptionHandler {
+public class RetryingInMemoryIdempotentImportExecutor extends InMemoryExceptionLogger implements IdempotentImportExecutor {
 
   private final Map<String, Serializable> knownValues = new HashMap<>();
   private final Map<String, ErrorDetail> errors = new HashMap<>();
@@ -90,8 +90,9 @@ public class RetryingInMemoryIdempotentImportExecutor implements IdempotentImpor
       errors.remove(idempotentId);
       return result;
     } catch (RetryException e) {
-      // We pass e.canSkip because it is only a property on RetryExceptions.
-      addError(jobId, idempotentId, itemName, e, e.canSkip());
+      ErrorDetail errorDetail = addError(idempotentId, itemName, e, e.canSkip());
+      monitor.severe(() -> jobIdPrefix + "Problem with importing item, cannot be skipped: " + errorDetail);
+
       if (e.canSkip()) {
         return null;
       }
@@ -134,39 +135,5 @@ public class RetryingInMemoryIdempotentImportExecutor implements IdempotentImpor
   @Override
   public void resetRecentErrors() {
     recentErrors.clear();
-  }
-
-  @Override
-  public void addError(
-      UUID jobId,
-      String idempotentId,
-      String itemName,
-      Exception encounteredException,
-      boolean canSkip) {
-    ErrorDetail.Builder errorDetailBuilder = ErrorDetail.builder()
-        .setId(idempotentId)
-        .setTitle(itemName)
-        .setException(Throwables.getStackTraceAsString(encounteredException));
-    if (canSkip) {
-      errorDetailBuilder.setCanSkip(true);
-    }
-
-    ErrorDetail errorDetail = errorDetailBuilder.build();
-
-    this.errors.put(
-        idempotentId,
-        errorDetail
-    );
-    this.recentErrors.put(
-        idempotentId,
-        errorDetail
-    );
-
-    monitor.severe(() -> String.format(
-        "Job %s: Problem with importing item, %s be skipped: %s",
-        jobId,
-        (canSkip ? "can" : "cannot"),
-        errorDetail
-    ));
   }
 }
