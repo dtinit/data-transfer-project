@@ -21,7 +21,7 @@ public class GoogleErrorLogger {
    * @param title Title of the failed item
    * @param e Exception thrown that caused the failure.
    * @param canSkip Based on if we're failing the transfer based on this exception or not.
-   * @return
+   * @return an ErrorDetail object with the passed in values.
    */
   public static ErrorDetail createErrorDetail(String idempotentId, String title, Exception e, boolean canSkip) {
     return ErrorDetail.builder()
