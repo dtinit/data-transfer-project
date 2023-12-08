@@ -158,6 +158,7 @@ public final class DriveImporter
   }
 
   private String getRootFolderName() {
+    // TODO(alexeyqu): use PortabilityJob.createdTimestamp here for consistency
     return String.format(
             ROOT_FOLDER_FORMAT_STRING,
             new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date()));
