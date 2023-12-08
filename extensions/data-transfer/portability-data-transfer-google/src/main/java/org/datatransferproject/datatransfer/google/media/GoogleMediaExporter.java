@@ -205,7 +205,11 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
     List<IdOnlyContainerResource> subResources = new ArrayList<>();
 
     for (PhotoAlbum album : container.getAlbums()) {
-      GoogleAlbum googleAlbum = getOrCreatePhotosInterface(authData).getAlbum(album.getId());
+      GoogleAlbum googleAlbum = getGoogleAlbum(album.getIdempotentId(), album.getId(), album.getName(), authData);
+      if (googleAlbum == null) {
+        continue;
+      }
+
       albumBuilder.add(new MediaAlbum(googleAlbum.getId(), googleAlbum.getTitle(), null));
       // Adding subresources tells the framework to recall export to get all the photos
       subResources.add(new IdOnlyContainerResource(googleAlbum.getId()));
@@ -244,7 +248,11 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
     List<IdOnlyContainerResource> subResources = new ArrayList<>();
 
     for (MediaAlbum album : container.getAlbums()) {
-      GoogleAlbum googleAlbum = getOrCreatePhotosInterface(authData).getAlbum(album.getId());
+      GoogleAlbum googleAlbum = getGoogleAlbum(album.getIdempotentId(), album.getId(), album.getName(), authData);
+      if (googleAlbum == null) {
+        continue;
+      }
+
       albumBuilder.add(new MediaAlbum(googleAlbum.getId(), googleAlbum.getTitle(), null));
       // Adding subresources tells the framework to recall export to get all the photos
       subResources.add(new IdOnlyContainerResource(googleAlbum.getId()));
@@ -478,6 +486,27 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       }
     }
     return new MediaContainerResource(null  /*albums*/, photos, videos);
+  }
+
+  @VisibleForTesting
+  @Nullable
+  GoogleAlbum getGoogleAlbum(String albumIdempotentId, String albumId, String albumName,
+      TokensAndUrlAuthData authData) throws IOException, InvalidTokenException,
+      PermissionDeniedException {
+    if (retryingExecutor == null || !enableRetrying) {
+      return getOrCreatePhotosInterface(authData).getAlbum(albumId);
+    }
+
+    try {
+      GoogleAlbum googleAlbum = retryingExecutor.executeAndSwallowIOExceptions(
+          albumIdempotentId, albumName,
+          () -> getOrCreatePhotosInterface(authData).getAlbum(albumId)
+      );
+      return googleAlbum;
+    } catch (Exception e) {
+      monitor.info(() -> format("Retry exception encountered while fetching an album: %s", e));
+    }
+    return null;
   }
 
   //TODO(#1308): Make the retrying methods API & adaptor agnostic
