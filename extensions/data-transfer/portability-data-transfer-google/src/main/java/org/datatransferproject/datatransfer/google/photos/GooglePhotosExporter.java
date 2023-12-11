@@ -33,10 +33,12 @@ import java.util.Optional;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
+import org.datatransferproject.datatransfer.google.common.GoogleErrorLogger;
 import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
@@ -54,6 +56,7 @@ import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 // Not ready for prime-time!
 // TODO: fix duplication problems introduced by exporting all photos in 'root' directory first
@@ -67,7 +70,7 @@ public class GooglePhotosExporter
   static final String PHOTO_TOKEN_PREFIX = "media:";
 
   private final GoogleCredentialFactory credentialFactory;
-  private final TemporaryPerJobDataStore jobStore;
+  private final JobStore jobStore;
   private final JsonFactory jsonFactory;
   private volatile GooglePhotosInterface photosInterface;
 
@@ -75,7 +78,7 @@ public class GooglePhotosExporter
 
   public GooglePhotosExporter(
       GoogleCredentialFactory credentialFactory,
-      TemporaryPerJobDataStore jobStore,
+      JobStore jobStore,
       JsonFactory jsonFactory,
       Monitor monitor) {
     this.credentialFactory = credentialFactory;
@@ -87,7 +90,7 @@ public class GooglePhotosExporter
   @VisibleForTesting
   GooglePhotosExporter(
       GoogleCredentialFactory credentialFactory,
-      TemporaryPerJobDataStore jobStore,
+      JobStore jobStore,
       JsonFactory jsonFactory,
       GooglePhotosInterface photosInterface,
       Monitor monitor) {
@@ -285,24 +288,27 @@ public class GooglePhotosExporter
     do {
       albumListResponse =
           getOrCreatePhotosInterface(authData).listAlbums(Optional.ofNullable(albumToken));
-      if (albumListResponse.getAlbums() != null) {
-        for (GoogleAlbum album : albumListResponse.getAlbums()) {
-          String albumId = album.getId();
-          String photoToken = null;
-          do {
-            containedMediaSearchResponse =
-                getOrCreatePhotosInterface(authData)
-                    .listMediaItems(Optional.of(albumId), Optional.ofNullable(photoToken));
-            if (containedMediaSearchResponse.getMediaItems() != null) {
-              for (GoogleMediaItem mediaItem : containedMediaSearchResponse.getMediaItems()) {
-                tempMediaData.addContainedPhotoId(mediaItem.getId());
-              }
-            }
-            photoToken = containedMediaSearchResponse.getNextPageToken();
-          } while (photoToken != null);
-        }
-      }
       albumToken = albumListResponse.getNextPageToken();
+
+      if (albumListResponse.getAlbums() == null) {
+        continue;
+      }
+
+      for (GoogleAlbum album : albumListResponse.getAlbums()) {
+        String albumId = album.getId();
+        String photoToken = null;
+        do {
+          containedMediaSearchResponse =
+              getOrCreatePhotosInterface(authData)
+                  .listMediaItems(Optional.of(albumId), Optional.ofNullable(photoToken));
+          if (containedMediaSearchResponse.getMediaItems() != null) {
+            for (GoogleMediaItem mediaItem : containedMediaSearchResponse.getMediaItems()) {
+              tempMediaData.addContainedPhotoId(mediaItem.getId());
+            }
+          }
+          photoToken = containedMediaSearchResponse.getNextPageToken();
+        } while (photoToken != null);
+      }
     } while (albumToken != null);
 
     // TODO: if we see complaints about objects being too large for JobStore in other places, we
@@ -342,21 +348,33 @@ public class GooglePhotosExporter
     }
 
     for (GoogleMediaItem mediaItem : mediaItems) {
-      if (mediaItem.getMediaMetadata().getPhoto() != null) {
-        // TODO: address videos
-        boolean shouldUpload = albumId.isPresent();
+      if (mediaItem.getMediaMetadata().getPhoto() == null) {
+        continue;
+      }
 
-        if (tempMediaData != null) {
-          shouldUpload = shouldUpload || !tempMediaData.isContainedPhotoId(mediaItem.getId());
-        }
+      // TODO: address videos
+      boolean shouldUpload = albumId.isPresent();
+      if (tempMediaData != null) {
+        shouldUpload = shouldUpload || !tempMediaData.isContainedPhotoId(mediaItem.getId());
+      }
 
-        if (shouldUpload) {
-          PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(albumId, mediaItem);
-          photos.add(photoModel);
+      if (!shouldUpload) {
+        continue;
+      }
+      try {
+        PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(albumId, mediaItem);
+        photos.add(photoModel);
 
-          monitor.debug(
-              () -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
-        }
+        monitor.debug(
+            () -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
+      } catch (IllegalArgumentException e) {
+        ErrorDetail errorDetail = GoogleErrorLogger.createErrorDetail(
+            mediaItem.getId(), mediaItem.getFilename(), e, /* canSkip= */ true
+        );
+        monitor.info(
+            () -> String.format("%s: MediaItem failed to be converted to PhotoModel, and is being "
+                + "skipped: %s", jobId, e));
+        GoogleErrorLogger.logFailedItemErrors(jobStore, jobId, ImmutableList.of(errorDetail));
       }
     }
     return photos;
