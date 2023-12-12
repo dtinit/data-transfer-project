@@ -34,6 +34,7 @@ import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleErrorLogger;
+import org.datatransferproject.datatransfer.google.common.InvalidExportedItemException;
 import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
@@ -347,44 +348,47 @@ public class GooglePhotosExporter
     }
 
     for (GoogleMediaItem mediaItem : mediaItems) {
-      // TODO: address videos
-      boolean shouldUpload = albumId.isPresent();
-      if (tempMediaData != null) {
-        shouldUpload = shouldUpload || !tempMediaData.isContainedPhotoId(mediaItem.getId());
-      }
-
-      if (!shouldUpload) {
-        ErrorDetail errorDetail =
-            GoogleErrorLogger.createErrorDetail(
-                mediaItem.getId(),
-                mediaItem.getFilename(),
-                new IllegalStateException("Cannot upload item, as it has no album id nor is it in TempMediaData."),
-                /* canSkip= */ true);
-        monitor.info(
-            () ->
-                String.format(
-                    "%s: MediaItem has no album id, upload is being skipped: %s",
-                    jobId, errorDetail.exception()));
-        GoogleErrorLogger.logFailedItemErrors(jobStore, jobId, ImmutableList.of(errorDetail));
-        continue;
-      }
       try {
-        PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(albumId, mediaItem);
+        PhotoModel photoModel = convertToPhotoModel(mediaItem, albumId, tempMediaData);
         photos.add(photoModel);
 
         monitor.debug(
             () -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
-      } catch (IllegalArgumentException e) {
-        ErrorDetail errorDetail = GoogleErrorLogger.createErrorDetail(
-            mediaItem.getId(), mediaItem.getFilename(), e, /* canSkip= */ true
-        );
+      } catch (InvalidExportedItemException e) {
         monitor.info(
-            () -> String.format("%s: MediaItem failed to be converted to PhotoModel, and is being "
-                + "skipped: %s", jobId, e));
+            () ->
+                String.format(
+                    "%s: MediaItem failed to be converted to PhotoModel, and is being "
+                        + "skipped: %s",
+                    jobId, e));
+
+        ErrorDetail errorDetail =
+            GoogleErrorLogger.createErrorDetail(
+                mediaItem.getId(), mediaItem.getFilename(), e, /* canSkip= */ true);
         GoogleErrorLogger.logFailedItemErrors(jobStore, jobId, ImmutableList.of(errorDetail));
       }
     }
+
     return photos;
+  }
+
+  private static PhotoModel convertToPhotoModel(
+      GoogleMediaItem mediaItem,
+      Optional<String> albumId,
+      TempMediaData tempMediaData) throws InvalidExportedItemException {
+    boolean shouldUpload = albumId.isPresent();
+    if (tempMediaData != null) {
+      shouldUpload = shouldUpload || !tempMediaData.isContainedPhotoId(mediaItem.getId());
+    }
+
+    if (!shouldUpload)
+      throw new InvalidExportedItemException("Failed to convert media item into a PhotoModel");
+
+    try {
+      return GoogleMediaItem.convertToPhotoModel(albumId, mediaItem);
+    } catch (IllegalArgumentException e) {
+      throw new InvalidExportedItemException("Failed to convert media item into a PhotoModel", e);
+    }
   }
 
   private synchronized GooglePhotosInterface getOrCreatePhotosInterface(
