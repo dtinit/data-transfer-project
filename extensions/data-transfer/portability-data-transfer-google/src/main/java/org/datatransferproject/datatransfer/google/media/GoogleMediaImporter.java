@@ -50,7 +50,6 @@ import org.datatransferproject.datatransfer.google.photos.PhotoResult;
 import org.datatransferproject.datatransfer.google.videos.GoogleVideosInterface;
 import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.cloud.storage.JobStore;
-import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.spi.transfer.i18n.BaseMultilingualDictionary;
@@ -75,10 +74,6 @@ public class GoogleMediaImporter
 
   private final GoogleCredentialFactory credentialFactory;
   private final JobStore jobStore;
-  // TODO(aksingh737) why does one half of the Google photos interactions rely on DTP's
-  // TemporaryPerJobDataStore and the other half on. JobStore - how do these relate? can they be
-  // consilidated everywhere? at least in this class?
-  private final TemporaryPerJobDataStore dataStore;
   private final JsonFactory jsonFactory;
   private final ConnectionProvider connectionProvider;
   private final Monitor monitor;
@@ -99,7 +94,6 @@ public class GoogleMediaImporter
   public GoogleMediaImporter(
       GoogleCredentialFactory credentialFactory,
       JobStore jobStore,
-      TemporaryPerJobDataStore dataStore,
       JsonFactory jsonFactory,
       AppCredentials appCredentials,
       Monitor monitor,
@@ -107,7 +101,6 @@ public class GoogleMediaImporter
     this(
         credentialFactory,
         jobStore,
-        dataStore,
         jsonFactory,
         new HashMap<>(),  /*photosInterfacesMap*/
         new HashMap<>(), /*photosLibraryClientMap*/
@@ -122,7 +115,6 @@ public class GoogleMediaImporter
   GoogleMediaImporter(
       GoogleCredentialFactory credentialFactory,
       JobStore jobStore,
-      TemporaryPerJobDataStore dataStore,
       JsonFactory jsonFactory,
       Map<UUID, GooglePhotosInterface> photosInterfacesMap,
       Map<UUID, PhotosLibraryClient> photosLibraryClientMap,
@@ -133,7 +125,6 @@ public class GoogleMediaImporter
       double writesPerSecond) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
-    this.dataStore = dataStore;
     this.jsonFactory = jsonFactory;
     this.photosInterfacesMap = photosInterfacesMap;
     this.photosLibraryClientMap = photosLibraryClientMap;
@@ -334,7 +325,7 @@ public class GoogleMediaImporter
     return uploadBatchOfVideos(
           jobId,
           batch,
-          dataStore,
+          jobStore,
           photosLibraryClientMap.get(jobId),
           executor,
           connectionProvider,
