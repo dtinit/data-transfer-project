@@ -347,10 +347,6 @@ public class GooglePhotosExporter
     }
 
     for (GoogleMediaItem mediaItem : mediaItems) {
-      if (mediaItem.getMediaMetadata().getPhoto() == null) {
-        continue;
-      }
-
       // TODO: address videos
       boolean shouldUpload = albumId.isPresent();
       if (tempMediaData != null) {
@@ -358,6 +354,18 @@ public class GooglePhotosExporter
       }
 
       if (!shouldUpload) {
+        ErrorDetail errorDetail =
+            GoogleErrorLogger.createErrorDetail(
+                mediaItem.getId(),
+                mediaItem.getFilename(),
+                new IllegalStateException("Cannot upload item, as it has no album id nor is it in TempMediaData."),
+                /* canSkip= */ true);
+        monitor.info(
+            () ->
+                String.format(
+                    "%s: MediaItem has no album id, upload is being skipped: %s",
+                    jobId, errorDetail.exception()));
+        GoogleErrorLogger.logFailedItemErrors(jobStore, jobId, ImmutableList.of(errorDetail));
         continue;
       }
       try {

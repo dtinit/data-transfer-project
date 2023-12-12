@@ -30,6 +30,8 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.json.gson.GsonFactory;
+import com.google.common.collect.ImmutableList;
+import com.google.gdata.data.photos.AlbumData;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -61,6 +63,7 @@ import org.datatransferproject.types.common.models.IdOnlyContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -83,6 +86,8 @@ public class GooglePhotosExporterTest {
   private MediaItemSearchResponse mediaItemSearchResponse;
   private AlbumListResponse albumListResponse;
 
+  private TokensAndUrlAuthData authData;
+
   @BeforeEach
   public void setup()
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
@@ -90,6 +95,7 @@ public class GooglePhotosExporterTest {
     jobStore = mock(JobStore.class);
     when(jobStore.getStream(any(), anyString())).thenReturn(mock(InputStreamWrapper.class));
     photosInterface = mock(GooglePhotosInterface.class);
+    authData = mock(TokensAndUrlAuthData.class);
 
     albumListResponse = mock(AlbumListResponse.class);
     mediaItemSearchResponse = mock(MediaItemSearchResponse.class);
@@ -306,6 +312,36 @@ public class GooglePhotosExporterTest {
                 .map(PhotoModel::getFetchableUrl)
                 .collect(Collectors.toList()))
         .containsExactly(albumlessPhotoUri + "=d"); // download
+  }
+
+  @Test
+  public void photoModelConversionErrorsSkipped() throws Exception {
+    // These media items fail when converting because MediaItem.isPhoto() returns false.
+    GoogleMediaItem failedGoogleMediaItem1 = setUpSinglePhoto("uri1", "failed-photo-1");
+    failedGoogleMediaItem1.setMediaMetadata(new MediaMetadata());
+
+    GoogleMediaItem failedGoogleMediaItem2 = setUpSinglePhoto("uri2", "failed-photo-2");
+    failedGoogleMediaItem2.setMediaMetadata(new MediaMetadata());
+
+    GoogleMediaItem[] mediaItems = {
+        setUpSinglePhoto("uri3", "photoId1"),
+        failedGoogleMediaItem1,
+        setUpSinglePhoto("uri4", "photoId2"),
+        setUpSinglePhoto("uri5", "photoId3"),
+        failedGoogleMediaItem2,
+        setUpSinglePhoto("uri6", "photoId4")
+    };
+
+    MediaItemSearchResponse mediaItemSearchResponse = new MediaItemSearchResponse();
+    mediaItemSearchResponse.setMediaItems(mediaItems);
+    mediaItemSearchResponse.setNextPageToken(null);
+
+    when(photosInterface.listMediaItems(any(), any())).thenReturn(mediaItemSearchResponse);
+
+    ExportResult<PhotosContainerResource> result =
+        googlePhotosExporter.exportPhotos(authData, Optional.of(new IdOnlyContainerResource("albumId")), Optional.empty(), uuid);
+
+    assertThat(result.getExportedData().getPhotos()).hasSize(4);
   }
 
   /** Sets up a response with a single album, containing a single photo */
