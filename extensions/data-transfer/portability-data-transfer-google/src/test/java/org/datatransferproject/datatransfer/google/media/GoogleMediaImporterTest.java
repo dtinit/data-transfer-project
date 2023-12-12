@@ -99,7 +99,6 @@ public class GoogleMediaImporterTest {
         .thenReturn(mock(NewMediaItemResult.class));
 
     JobStore jobStore = new LocalJobStore();
-    TemporaryPerJobDataStore dataStore = mock(TemporaryPerJobDataStore.class);
 
     InputStream inputStream = mock(InputStream.class);
     connectionProvider = mock(ConnectionProvider.class);
@@ -111,7 +110,6 @@ public class GoogleMediaImporterTest {
         new GoogleMediaImporter(
             null,  /*credentialFactory*/
             jobStore,
-            dataStore,
             null,  /*jsonFactory*/
             new HashMap<>(),  /*photosInterfacesMap*/
             new HashMap<>(), /*photosLibraryClientMap*/
@@ -304,7 +302,6 @@ public class GoogleMediaImporterTest {
         new GoogleMediaImporter(
             null,  /*credentialFactory*/
             jobStore,
-            mock(TemporaryPerJobDataStore.class),
             null,  /*jsonFactory*/
             new HashMap<>(),  /*photosInterfacesMap*/
             new HashMap<>(),  /*photosLibraryClientMap*/
@@ -343,7 +340,6 @@ public class GoogleMediaImporterTest {
         new GoogleMediaImporter(
             null,  /*credentialFactory*/
             jobStore,
-            mock(TemporaryPerJobDataStore.class),
             null,  /*jsonFactory*/
             new HashMap<>(),  /*photosInterfacesMap*/
             new HashMap<>(),  /*photosLibraryClientMap*/
@@ -384,7 +380,6 @@ public class GoogleMediaImporterTest {
         new GoogleMediaImporter(
             null,  /*credentialFactory*/
             jobStore,
-            mock(TemporaryPerJobDataStore.class),
             null,  /*jsonFactory*/
             new HashMap<>(),  /*photosInterfacesMap*/
             new HashMap<>(),  /*photosLibraryClientMap*/
@@ -437,7 +432,6 @@ public class GoogleMediaImporterTest {
         new GoogleMediaImporter(
             null,  /*credentialFactory*/
             jobStore,
-            mock(TemporaryPerJobDataStore.class),
             null,  /*jsonFactory*/
             new HashMap<>(),  /*photosInterfacesMap*/
             new HashMap<>(),  /*photosLibraryClientMap*/
@@ -486,7 +480,6 @@ public class GoogleMediaImporterTest {
         new GoogleMediaImporter(
             null,  /*credentialFactory*/
             jobStore,
-            mock(TemporaryPerJobDataStore.class),
             null,  /*jsonFactory*/
             new HashMap<>(),  /*photosInterfacesMap*/
             new HashMap<>(),  /*photosLibraryClientMap*/
@@ -532,7 +525,6 @@ public class GoogleMediaImporterTest {
         new GoogleMediaImporter(
             null,  /*credentialFactory*/
             jobStore,
-            mock(TemporaryPerJobDataStore.class),
             null,  /*jsonFactory*/
             new HashMap<>(),  /*photosInterfacesMap*/
             new HashMap<>(),  /*photosLibraryClientMap*/
