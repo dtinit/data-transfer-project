@@ -58,7 +58,6 @@ import org.datatransferproject.types.common.models.photos.PhotosContainerResourc
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
-// Not ready for prime-time!
 // TODO: fix duplication problems introduced by exporting all photos in 'root' directory first
 
 // TODO WARNING DO NOT MODIFY THIS CLASS! (unless you're willing to mirror your changes to
