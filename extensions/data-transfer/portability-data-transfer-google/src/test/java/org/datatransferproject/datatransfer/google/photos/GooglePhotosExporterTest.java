@@ -34,6 +34,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.gdata.data.photos.AlbumData;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -342,6 +343,17 @@ public class GooglePhotosExporterTest {
         googlePhotosExporter.exportPhotos(authData, Optional.of(new IdOnlyContainerResource("albumId")), Optional.empty(), uuid);
 
     assertThat(result.getExportedData().getPhotos()).hasSize(4);
+    assertThat(
+        result.getExportedData()
+            .getPhotos()
+            .stream()
+            .map(photo -> photo.getDataId())
+            .collect(Collectors.toList()))
+        .isEqualTo(
+            Arrays.stream(mediaItems)
+                .map(mediaItem -> mediaItem.getId())
+                .filter(id -> !(id.equals(failedGoogleMediaItem1.getId()) || id.equals(failedGoogleMediaItem2.getId())))
+                .collect(Collectors.toList()));
   }
 
   /** Sets up a response with a single album, containing a single photo */
