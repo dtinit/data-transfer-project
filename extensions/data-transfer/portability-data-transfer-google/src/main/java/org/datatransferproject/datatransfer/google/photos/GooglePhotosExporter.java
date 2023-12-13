@@ -337,7 +337,6 @@ public class GooglePhotosExporter
 
   private List<PhotoModel> convertPhotosList(
       Optional<String> albumId, GoogleMediaItem[] mediaItems, UUID jobId) throws IOException {
-    List<PhotoModel> photos = new ArrayList<>(mediaItems.length);
 
     TempMediaData tempMediaData = null;
     InputStream stream = jobStore.getStream(jobId, createCacheKey()).getStream();
@@ -345,6 +344,18 @@ public class GooglePhotosExporter
       tempMediaData = new ObjectMapper().readValue(stream, TempMediaData.class);
       stream.close();
     }
+
+    return convertMediaItemsToPhotoModels(jobId, albumId, mediaItems, tempMediaData);
+  }
+
+  // Converts GoogleMediaItems into PhotoModel items and commits any failures to DataStore.
+  private List<PhotoModel> convertMediaItemsToPhotoModels(
+      UUID jobId,
+      Optional<String> albumId,
+      GoogleMediaItem[] mediaItems,
+      TempMediaData tempMediaData) throws IOException {
+    List<PhotoModel> photos = new ArrayList<>(mediaItems.length);
+    ImmutableList.Builder<ErrorDetail> errors = ImmutableList.builder();
 
     for (GoogleMediaItem mediaItem : mediaItems) {
       try {
@@ -364,10 +375,12 @@ public class GooglePhotosExporter
         ErrorDetail errorDetail =
             GoogleErrorLogger.createErrorDetail(
                 mediaItem.getId(), mediaItem.getFilename(), e, /* canSkip= */ true);
-        GoogleErrorLogger.logFailedItemErrors(jobStore, jobId, ImmutableList.of(errorDetail));
+        errors.add(errorDetail);
       }
     }
 
+    // Log all the errors in 1 commit to DataStore
+    GoogleErrorLogger.logFailedItemErrors(jobStore, jobId, errors.build());
     return photos;
   }
 
