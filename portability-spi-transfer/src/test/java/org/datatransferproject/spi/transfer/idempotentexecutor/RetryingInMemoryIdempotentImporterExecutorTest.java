@@ -20,17 +20,12 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
         RetryStrategy skipRetryStrategy = new SkipRetryStrategy();
         RetryingInMemoryIdempotentImportExecutor retryingExecutor = new RetryingInMemoryIdempotentImportExecutor(
                 mock(Monitor.class),
-                new RetryStrategyLibrary(
-                        ImmutableList.of(),
-                        skipRetryStrategy
-                )
+                new RetryStrategyLibrary( ImmutableList.of(), skipRetryStrategy )
         );
 
         assertThat(
                Optional.ofNullable(
-                       retryingExecutor.executeAndSwallowIOExceptions(
-                               "id",
-                               "name",
+                       retryingExecutor.executeAndSwallowIOExceptions("id", "name",
                                () -> { throw new IOException("Test IO exception");}
                                )
                )
@@ -38,9 +33,7 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
 
         assertThat(
                 Optional.ofNullable(
-                        retryingExecutor.executeAndSwallowIOExceptions(
-                                "id",
-                                "name",
+                        retryingExecutor.executeAndSwallowIOExceptions("id", "name",
                                 () -> { throw new Exception("Test generic exception");}
                         )
                 )
@@ -48,9 +41,7 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
 
         assertThat(
                 Optional.ofNullable(
-                        retryingExecutor.executeAndSwallowIOExceptions(
-                                "id",
-                                "name",
+                        retryingExecutor.executeAndSwallowIOExceptions("id", "name",
                                 () -> { throw new NullPointerException("Test null pointer exception");}
                         )
                 )
@@ -63,18 +54,13 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
         RetryStrategy skipRetryStrategy = new SkipRetryStrategy();
         RetryingInMemoryIdempotentImportExecutor retryingExecutor = new RetryingInMemoryIdempotentImportExecutor(
                 mock(Monitor.class),
-                new RetryStrategyLibrary(
-                        ImmutableList.of(),
-                        skipRetryStrategy
-                )
+                new RetryStrategyLibrary( ImmutableList.of(), skipRetryStrategy )
         );
 
         // Execute or throw does NOT throw, as the RetryStrategy has default of skip=true.
         assertThat(
                 Optional.ofNullable(
-                        retryingExecutor.executeOrThrowException(
-                                "id",
-                                "name",
+                        retryingExecutor.executeOrThrowException("id", "name",
                                 () -> { throw new IOException("Test IO exception");}
                         )
                 )
@@ -82,9 +68,7 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
 
         assertThat(
                 Optional.ofNullable(
-                        retryingExecutor.executeOrThrowException(
-                                "id",
-                                "name",
+                        retryingExecutor.executeOrThrowException("id", "name",
                                 () -> { throw new Exception("Test generic exception");}
                         )
                 )
@@ -92,9 +76,7 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
 
         assertThat(
                 Optional.ofNullable(
-                        retryingExecutor.executeOrThrowException(
-                                "id",
-                                "name",
+                        retryingExecutor.executeOrThrowException("id", "name",
                                 () -> { throw new NullPointerException("Test null pointer exception");}
                         )
                 )
@@ -111,18 +93,13 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
         );
         RetryingInMemoryIdempotentImportExecutor retryingExecutor = new RetryingInMemoryIdempotentImportExecutor(
                 mock(Monitor.class),
-                new RetryStrategyLibrary(
-                        ImmutableList.of(),
-                        uniformRetryStrategy
-                )
+                new RetryStrategyLibrary( ImmutableList.of(), uniformRetryStrategy )
         );
 
         // IO exceptions swallowed
         assertThat(
                 Optional.ofNullable(
-                        retryingExecutor.executeAndSwallowIOExceptions(
-                                "id",
-                                "name",
+                        retryingExecutor.executeAndSwallowIOExceptions("id", "name",
                                 () -> { throw new IOException("Test IO exception");}
                         )
                 )
@@ -131,9 +108,7 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
         // Non-IO thrown
         assertThrows(
                 NullPointerException.class,
-                () -> retryingExecutor.executeAndSwallowIOExceptions(
-                        "id",
-                        "name",
+                () -> retryingExecutor.executeAndSwallowIOExceptions("id", "name",
                         () -> { throw new NullPointerException("Test NullPointer exception");}
                 )
         );
@@ -149,18 +124,13 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
         );
         RetryingInMemoryIdempotentImportExecutor retryingExecutor = new RetryingInMemoryIdempotentImportExecutor(
                 mock(Monitor.class),
-                new RetryStrategyLibrary(
-                        ImmutableList.of(),
-                        uniformRetryStrategy
-                )
+                new RetryStrategyLibrary( ImmutableList.of(), uniformRetryStrategy )
         );
 
         // IO exceptions thrown
         assertThrows(
                 IOException.class,
-                () -> retryingExecutor.executeOrThrowException(
-                        "id",
-                        "name",
+                () -> retryingExecutor.executeOrThrowException("id", "name",
                         () -> { throw new IOException("Test IO exception");}
                 )
         );
@@ -168,9 +138,7 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
         // Non-IO thrown as well
         assertThrows(
                 NullPointerException.class,
-                () -> retryingExecutor.executeOrThrowException(
-                        "id",
-                        "name",
+                () -> retryingExecutor.executeOrThrowException("id", "name",
                         () -> { throw new NullPointerException("Test NullPointer exception");}
                 )
         );
@@ -182,18 +150,13 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
         RetryStrategy noRetryStrategy = new NoRetryStrategy();
         RetryingInMemoryIdempotentImportExecutor retryingExecutor = new RetryingInMemoryIdempotentImportExecutor(
                 mock(Monitor.class),
-                new RetryStrategyLibrary(
-                        ImmutableList.of(),
-                        noRetryStrategy
-                )
+                new RetryStrategyLibrary(ImmutableList.of(), noRetryStrategy)
         );
 
         // IO exceptions swallowed
         assertThat(
                 Optional.ofNullable(
-                        retryingExecutor.executeAndSwallowIOExceptions(
-                                "id",
-                                "name",
+                        retryingExecutor.executeAndSwallowIOExceptions("id", "name",
                                 () -> { throw new IOException("Test IO exception");}
                         )
                 )
@@ -202,9 +165,7 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
         // Non-IO thrown
         assertThrows(
                 NullPointerException.class,
-                () -> retryingExecutor.executeAndSwallowIOExceptions(
-                        "id",
-                        "name",
+                () -> retryingExecutor.executeAndSwallowIOExceptions("id", "name",
                         () -> { throw new NullPointerException("Test NullPointer exception");}
                 )
         );
@@ -216,18 +177,13 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
         RetryStrategy noRetryStrategy = new NoRetryStrategy();
         RetryingInMemoryIdempotentImportExecutor retryingExecutor = new RetryingInMemoryIdempotentImportExecutor(
                 mock(Monitor.class),
-                new RetryStrategyLibrary(
-                        ImmutableList.of(),
-                        noRetryStrategy
-                )
+                new RetryStrategyLibrary( ImmutableList.of(), noRetryStrategy )
         );
 
         // IO exceptions thrown
         assertThrows(
                 IOException.class,
-                () -> retryingExecutor.executeOrThrowException(
-                        "id",
-                        "name",
+                () -> retryingExecutor.executeOrThrowException("id", "name",
                         () -> { throw new IOException("Test IO exception");}
                 )
         );
@@ -235,9 +191,7 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
         // Non-IO thrown as well
         assertThrows(
                 NullPointerException.class,
-                () -> retryingExecutor.executeOrThrowException(
-                        "id",
-                        "name",
+                () -> retryingExecutor.executeOrThrowException("id", "name",
                         () -> { throw new NullPointerException("Test NullPointer exception");}
                 )
         );
@@ -255,18 +209,13 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
         );
         RetryingInMemoryIdempotentImportExecutor retryingExecutor = new RetryingInMemoryIdempotentImportExecutor(
                 mock(Monitor.class),
-                new RetryStrategyLibrary(
-                        ImmutableList.of(),
-                        exponentialBackoffStrategy
-                )
+                new RetryStrategyLibrary( ImmutableList.of(), exponentialBackoffStrategy )
         );
 
         // IO exceptions swallowed
         assertThat(
                 Optional.ofNullable(
-                        retryingExecutor.executeAndSwallowIOExceptions(
-                                "id",
-                                "name",
+                        retryingExecutor.executeAndSwallowIOExceptions("id", "name",
                                 () -> { throw new IOException("Test IO exception");}
                         )
                 )
@@ -275,9 +224,7 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
         // Non-IO thrown
         assertThrows(
                 NullPointerException.class,
-                () -> retryingExecutor.executeAndSwallowIOExceptions(
-                        "id",
-                        "name",
+                () -> retryingExecutor.executeAndSwallowIOExceptions("id", "name",
                         () -> { throw new NullPointerException("Test NullPointer exception");}
                 )
         );
@@ -294,18 +241,13 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
         );
         RetryingInMemoryIdempotentImportExecutor retryingExecutor = new RetryingInMemoryIdempotentImportExecutor(
                 mock(Monitor.class),
-                new RetryStrategyLibrary(
-                        ImmutableList.of(),
-                        exponentialBackoffStrategy
-                )
+                new RetryStrategyLibrary( ImmutableList.of(), exponentialBackoffStrategy )
         );
 
         // IO exceptions thrown
         assertThrows(
                 IOException.class,
-                () -> retryingExecutor.executeOrThrowException(
-                        "id",
-                        "name",
+                () -> retryingExecutor.executeOrThrowException("id", "name",
                         () -> {
                             throw new IOException("Test IO exception");
                         }
@@ -315,9 +257,7 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
         // Non-IO thrown as well
         assertThrows(
                 NullPointerException.class,
-                () -> retryingExecutor.executeOrThrowException(
-                        "id",
-                        "name",
+                () -> retryingExecutor.executeOrThrowException("id", "name",
                         () -> {
                             throw new NullPointerException("Test NullPointer exception");
                         }
