@@ -15,6 +15,7 @@
  */
 package org.datatransferproject.transfer.copier;
 
+import com.google.cloud.datastore.DatastoreException;
 import com.google.common.base.Stopwatch;
 import com.google.inject.Provider;
 import java.io.IOException;
@@ -223,7 +224,7 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
         try {
           jobStore.addCounts(jobId, importResult.getCounts().orElse(null));
           jobStore.addBytes(jobId, importResult.getBytes().orElse(null));
-        } catch (IOException e) {
+        } catch (IOException | DatastoreException e) {
           monitor.debug(() -> jobIdPrefix + "Unable to add counts to job: ", e);
         }
       }
