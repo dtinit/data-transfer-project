@@ -12,7 +12,7 @@ import org.datatransferproject.types.transfer.errors.ErrorDetail;
  * This class logs errors that should appear as failures in the completion email.
  */
 public class GoogleErrorLogger {
-  // TODO: Don't use this!! not convention, system needs to be refactored
+  // TODO: Don't replicate this, it is not convention.
   // The correct solution is to log the errors in the ExportResult class, and then use that as the
   // source-of-truth in the copier.
   public static void logFailedItemErrors(JobStore jobStore, UUID jobId, ImmutableList<ErrorDetail> errorDetails) throws IOException {
@@ -28,9 +28,9 @@ public class GoogleErrorLogger {
    */
   public static ErrorDetail createErrorDetail(String idempotentId, String title, Exception e, boolean canSkip) {
     return ErrorDetail.builder()
-        .setId(idempotentId)
-        .setTitle(title)
-        .setException(Throwables.getStackTraceAsString(e))
-        .setCanSkip(canSkip).build();
+            .setId(idempotentId)
+            .setTitle(title)
+            .setException(Throwables.getStackTraceAsString(e))
+            .setCanSkip(canSkip).build();
   }
 }

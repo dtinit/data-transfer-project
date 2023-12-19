@@ -368,9 +368,9 @@ public class GooglePhotosExporter
         monitor.info(
             () ->
                 String.format(
-                    "%s: MediaItem failed to be converted to PhotoModel, and is being "
+                    "%s: MediaItem (id: %s) failed to be converted to PhotoModel, and is being "
                         + "skipped: %s",
-                    jobId, e));
+                    jobId, mediaItem.getId(),e));
 
         ErrorDetail errorDetail =
             GoogleErrorLogger.createErrorDetail(
@@ -394,12 +394,16 @@ public class GooglePhotosExporter
     }
 
     if (!shouldUpload)
-      throw new InvalidExportedItemException("Failed to convert media item into a PhotoModel");
+      throw new InvalidExportedItemException(
+              String.format("Failed to convert media item (id: %s) into a PhotoModel", mediaItem.getId())
+      );
 
     try {
       return GoogleMediaItem.convertToPhotoModel(albumId, mediaItem);
     } catch (IllegalArgumentException e) {
-      throw new InvalidExportedItemException("Failed to convert media item into a PhotoModel", e);
+      throw new InvalidExportedItemException(
+              String.format("Failed to convert media item (id: %s) into a PhotoModel", mediaItem.getId())
+      );
     }
   }
 
