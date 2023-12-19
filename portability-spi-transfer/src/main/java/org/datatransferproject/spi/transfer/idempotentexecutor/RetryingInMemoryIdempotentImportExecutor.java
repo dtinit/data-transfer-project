@@ -105,7 +105,7 @@ public class RetryingInMemoryIdempotentImportExecutor implements IdempotentImpor
         errors.put(idempotentId, errorDetail);
         recentErrors.put(idempotentId, errorDetail);
         monitor.severe(() -> jobIdPrefix + "Problem with importing item, cannot be skipped: " + errorDetail);
-        throw e;
+        throw e.getCause();
       }
     }
   }
