@@ -17,10 +17,10 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
     @Test
     public void skipRetryStrategy_executeAndSwallowIOExceptions() throws Exception {
         // Retries and then by default ALWAYS skips
-        RetryStrategy skipRetryStrategy = new SkipRetryStrategy();
+        RetryStrategy SKIP_RETRY_STRATEGY = new SkipRetryStrategy();
         RetryingInMemoryIdempotentImportExecutor retryingExecutor = new RetryingInMemoryIdempotentImportExecutor(
                 mock(Monitor.class),
-                new RetryStrategyLibrary( ImmutableList.of(), skipRetryStrategy )
+                new RetryStrategyLibrary( ImmutableList.of(), SKIP_RETRY_STRATEGY )
         );
 
         assertThat(
@@ -51,10 +51,10 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
     @Test
     public void skipRetryStrategy_executeOrThrowException() throws Exception {
         // Retries and then by default ALWAYS skips
-        RetryStrategy skipRetryStrategy = new SkipRetryStrategy();
+        RetryStrategy SKIP_RETRY_STRATEGY = new SkipRetryStrategy();
         RetryingInMemoryIdempotentImportExecutor retryingExecutor = new RetryingInMemoryIdempotentImportExecutor(
                 mock(Monitor.class),
-                new RetryStrategyLibrary( ImmutableList.of(), skipRetryStrategy )
+                new RetryStrategyLibrary( ImmutableList.of(), SKIP_RETRY_STRATEGY )
         );
 
         // Execute or throw does NOT throw, as the RetryStrategy has default of skip=true.
@@ -86,14 +86,14 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
     @Test
     public void uniformRetryStrategy_executeAndSwallowIOExceptions() throws Exception {
         // Retries and then by default does NOT skip
-        RetryStrategy uniformRetryStrategy = new UniformRetryStrategy(
+        RetryStrategy UNIFORM_RETRY_STRATEGY = new UniformRetryStrategy(
                 /* maxAttempts = */ 3,
                 /* intervalMillis = */ 100,
                 /* identifier = */ "identifier"
         );
         RetryingInMemoryIdempotentImportExecutor retryingExecutor = new RetryingInMemoryIdempotentImportExecutor(
                 mock(Monitor.class),
-                new RetryStrategyLibrary( ImmutableList.of(), uniformRetryStrategy )
+                new RetryStrategyLibrary( ImmutableList.of(), UNIFORM_RETRY_STRATEGY )
         );
 
         // IO exceptions swallowed
@@ -117,14 +117,14 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
     @Test
     public void uniformRetryStrategy_executeOrThrowException() throws Exception {
         // Retries and then by default does NOT skip
-        RetryStrategy uniformRetryStrategy = new UniformRetryStrategy(
+        RetryStrategy UNIFORM_RETRY_STRATEGY = new UniformRetryStrategy(
                 /* maxAttempts = */ 3,
                 /* intervalMillis = */ 1,
                 /* identifier = */ "identifier"
         );
         RetryingInMemoryIdempotentImportExecutor retryingExecutor = new RetryingInMemoryIdempotentImportExecutor(
                 mock(Monitor.class),
-                new RetryStrategyLibrary( ImmutableList.of(), uniformRetryStrategy )
+                new RetryStrategyLibrary( ImmutableList.of(), UNIFORM_RETRY_STRATEGY )
         );
 
         // IO exceptions thrown
@@ -147,10 +147,10 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
     @Test
     public void noRetryStrategy_executeAndSwallowIOExceptions() throws Exception {
         // Retries and then by default does NOT skip
-        RetryStrategy noRetryStrategy = new NoRetryStrategy();
+        RetryStrategy NO_RETRY_STRATEGY = new NoRetryStrategy();
         RetryingInMemoryIdempotentImportExecutor retryingExecutor = new RetryingInMemoryIdempotentImportExecutor(
                 mock(Monitor.class),
-                new RetryStrategyLibrary(ImmutableList.of(), noRetryStrategy)
+                new RetryStrategyLibrary(ImmutableList.of(), NO_RETRY_STRATEGY)
         );
 
         // IO exceptions swallowed
@@ -174,10 +174,10 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
     @Test
     public void noRetryStrategy_executeOrThrowException() {
         // Retries and then by default does NOT skip
-        RetryStrategy noRetryStrategy = new NoRetryStrategy();
+        RetryStrategy NO_RETRY_STRATEGY = new NoRetryStrategy();
         RetryingInMemoryIdempotentImportExecutor retryingExecutor = new RetryingInMemoryIdempotentImportExecutor(
                 mock(Monitor.class),
-                new RetryStrategyLibrary( ImmutableList.of(), noRetryStrategy )
+                new RetryStrategyLibrary( ImmutableList.of(), NO_RETRY_STRATEGY )
         );
 
         // IO exceptions thrown
@@ -201,7 +201,7 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
     @Test
     public void exponentialBackoffStrategy_executeAndSwallowIOExceptions() throws Exception {
         // Retries and then by default does NOT skip
-        RetryStrategy exponentialBackoffStrategy = new ExponentialBackoffStrategy(
+        RetryStrategy EXPONENTIAL_BACKOFF_STRATEGY = new ExponentialBackoffStrategy(
                 /* maxAttempts = */ 3,
                 /* intervalMillis = */ 1,
                 /* multiplier = */ 1,
@@ -209,7 +209,7 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
         );
         RetryingInMemoryIdempotentImportExecutor retryingExecutor = new RetryingInMemoryIdempotentImportExecutor(
                 mock(Monitor.class),
-                new RetryStrategyLibrary( ImmutableList.of(), exponentialBackoffStrategy )
+                new RetryStrategyLibrary( ImmutableList.of(), EXPONENTIAL_BACKOFF_STRATEGY )
         );
 
         // IO exceptions swallowed
@@ -233,7 +233,7 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
     @Test
     public void exponentialBackoffStrategy_executeOrThrowException() {
         // Retries and then by default does NOT skip
-        RetryStrategy exponentialBackoffStrategy = new ExponentialBackoffStrategy(
+        RetryStrategy EXPONENTIAL_BACKOFF_STRATEGY = new ExponentialBackoffStrategy(
                 /* maxAttempts = */ 3,
                 /* intervalMillis = */ 1,
                 /* multiplier = */ 1,
@@ -241,7 +241,7 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
         );
         RetryingInMemoryIdempotentImportExecutor retryingExecutor = new RetryingInMemoryIdempotentImportExecutor(
                 mock(Monitor.class),
-                new RetryStrategyLibrary( ImmutableList.of(), exponentialBackoffStrategy )
+                new RetryStrategyLibrary( ImmutableList.of(), EXPONENTIAL_BACKOFF_STRATEGY )
         );
 
         // IO exceptions thrown
