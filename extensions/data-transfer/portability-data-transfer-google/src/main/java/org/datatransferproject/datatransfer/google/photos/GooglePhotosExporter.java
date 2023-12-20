@@ -113,7 +113,7 @@ public class GooglePhotosExporter
       // if ExportInformation is a photos container, this is a request to only export the contents
       // in that container instead of the whole user library
       return exportPhotosContainer(
-          (PhotosContainerResource) exportInformation.get().getContainerResource(), authData);
+          (PhotosContainerResource) exportInformation.get().getContainerResource(), authData, jobId);
     }
 
     /*
@@ -154,10 +154,11 @@ public class GooglePhotosExporter
   }
 
   private ExportResult<PhotosContainerResource> exportPhotosContainer(
-      PhotosContainerResource container, TokensAndUrlAuthData authData)
+      PhotosContainerResource container, TokensAndUrlAuthData authData, UUID jobId)
       throws IOException, InvalidTokenException, PermissionDeniedException {
     ImmutableList.Builder<PhotoAlbum> albumBuilder = ImmutableList.builder();
     ImmutableList.Builder<PhotoModel> photosBuilder = ImmutableList.builder();
+    ImmutableList.Builder<ErrorDetail> errors = ImmutableList.builder();
     List<IdOnlyContainerResource> subResources = new ArrayList<>();
 
     for (PhotoAlbum album : container.getAlbums()) {
@@ -173,10 +174,16 @@ public class GooglePhotosExporter
       try {
         photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), googleMediaItem));
       } catch(ParseException e) {
-        monitor.debug(() -> "Parse exception occurred while converting photo, skipping this item. "
+        monitor.info(() -> "Parse exception occurred while converting photo, skipping this item. "
             + "Failure message : %s ", e.getMessage());
+
+        errors.add(GoogleErrorLogger.createErrorDetail(
+            googleMediaItem.getId(), googleMediaItem.getFilename(), e, /* canSkip= */ true));
       }
     }
+
+    // Log all the errors in 1 commit to DataStore
+    GoogleErrorLogger.logFailedItemErrors(jobStore, jobId, errors.build());
 
     PhotosContainerResource photosContainerResource =
         new PhotosContainerResource(albumBuilder.build(), photosBuilder.build());
@@ -378,10 +385,18 @@ public class GooglePhotosExporter
                         + "skipped: %s",
                     jobId, mediaItem.getId(),e));
 
-        ErrorDetail errorDetail =
-            GoogleErrorLogger.createErrorDetail(
-                mediaItem.getId(), mediaItem.getFilename(), e, /* canSkip= */ true);
-        errors.add(errorDetail);
+        errors.add(GoogleErrorLogger.createErrorDetail(
+            mediaItem.getId(), mediaItem.getFilename(), e, /* canSkip= */ true));
+      } catch (ParseException e) {
+        monitor.info(
+            () ->
+                String.format(
+                    "%s: Parse exception occurred while converting MediaItem(id: %s), and is being "
+                        + "skipped: %s",
+                    jobId, mediaItem.getId(),e));
+
+        errors.add(GoogleErrorLogger.createErrorDetail(
+            mediaItem.getId(), mediaItem.getFilename(), e, /* canSkip= */ true));
       }
     }
 
@@ -393,7 +408,7 @@ public class GooglePhotosExporter
   private static PhotoModel convertToPhotoModel(
       GoogleMediaItem mediaItem,
       Optional<String> albumId,
-      TempMediaData tempMediaData) throws InvalidExportedItemException {
+      TempMediaData tempMediaData) throws InvalidExportedItemException, ParseException {
     boolean shouldUpload = albumId.isPresent();
     if (tempMediaData != null) {
       shouldUpload = shouldUpload || !tempMediaData.isContainedPhotoId(mediaItem.getId());
@@ -401,14 +416,19 @@ public class GooglePhotosExporter
 
     if (!shouldUpload)
       throw new InvalidExportedItemException(
-              String.format("Failed to convert media item (id: %s) into a PhotoModel", mediaItem.getId())
+          String.format("Failed to convert media item (id: %s) into a PhotoModel", mediaItem.getId())
       );
 
     try {
       return GoogleMediaItem.convertToPhotoModel(albumId, mediaItem);
     } catch (IllegalArgumentException e) {
       throw new InvalidExportedItemException(
-              String.format("Failed to convert media item (id: %s) into a PhotoModel", mediaItem.getId())
+          String.format("Failed to convert media item (id: %s) into a PhotoModel", mediaItem.getId())
+      );
+    } catch (ParseException e) {
+      throw new ParseException(
+          String.format("Parse exception occurred while converting MediaItem (id: %s), skipping this item. "
+          + "Failure message : %s", mediaItem.getId(), e.getMessage()), e.getErrorOffset()
       );
     }
   }
