@@ -40,7 +40,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
@@ -52,7 +51,7 @@ import org.datatransferproject.datatransfer.google.mediaModels.MediaMetadata;
 import org.datatransferproject.datatransfer.google.mediaModels.Photo;
 import org.datatransferproject.datatransfer.google.mediaModels.Video;
 import org.datatransferproject.datatransfer.google.photos.GooglePhotosInterface;
-import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.idempotentexecutor.RetryingInMemoryIdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
@@ -98,7 +97,7 @@ public class GoogleMediaExporterTest {
   private RetryingInMemoryIdempotentImportExecutor retryingExecutor;
   private GoogleMediaExporter googleMediaExporter;
   private GoogleMediaExporter retryingGoogleMediaExporter;
-  private TemporaryPerJobDataStore jobStore;
+  private JobStore jobStore;
   private GooglePhotosInterface photosInterface;
 
   private MediaItemSearchResponse mediaItemSearchResponse;
@@ -108,7 +107,7 @@ public class GoogleMediaExporterTest {
   public void setup()
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     GoogleCredentialFactory credentialFactory = mock(GoogleCredentialFactory.class);
-    jobStore = mock(TemporaryPerJobDataStore.class);
+    jobStore = mock(JobStore.class);
     when(jobStore.getStream(any(), anyString())).thenReturn(mock(InputStreamWrapper.class));
     photosInterface = mock(GooglePhotosInterface.class);
 

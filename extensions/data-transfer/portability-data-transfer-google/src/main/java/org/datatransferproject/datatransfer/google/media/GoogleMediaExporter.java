@@ -42,6 +42,7 @@ import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
 import org.datatransferproject.datatransfer.google.photos.GooglePhotosInterface;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
@@ -70,7 +71,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
   static final String MEDIA_TOKEN_PREFIX = "media:";
 
   private final GoogleCredentialFactory credentialFactory;
-  private final TemporaryPerJobDataStore jobStore;
+  private final JobStore jobStore;
   private final JsonFactory jsonFactory;
   private final Monitor monitor;
   private volatile GooglePhotosInterface photosInterface;
@@ -79,7 +80,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
 
   public GoogleMediaExporter(
       GoogleCredentialFactory credentialFactory,
-      TemporaryPerJobDataStore jobStore,
+      JobStore jobStore,
       JsonFactory jsonFactory,
       Monitor monitor) {
     this(
@@ -94,7 +95,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
   @VisibleForTesting
   GoogleMediaExporter(
       GoogleCredentialFactory credentialFactory,
-      TemporaryPerJobDataStore jobStore,
+      JobStore jobStore,
       JsonFactory jsonFactory,
       Monitor monitor, @Nullable
       GooglePhotosInterface photosInterface
@@ -112,7 +113,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
   @VisibleForTesting
   public GoogleMediaExporter(
       GoogleCredentialFactory credentialFactory,
-      TemporaryPerJobDataStore jobStore,
+      JobStore jobStore,
       JsonFactory jsonFactory,
       Monitor monitor,
       @Nullable GooglePhotosInterface photosInterface,
