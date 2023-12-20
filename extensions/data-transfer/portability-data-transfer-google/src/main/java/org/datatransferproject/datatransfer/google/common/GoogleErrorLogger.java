@@ -28,9 +28,9 @@ public class GoogleErrorLogger {
    */
   public static ErrorDetail createErrorDetail(String idempotentId, String title, Exception e, boolean canSkip) {
     return ErrorDetail.builder()
-            .setId(idempotentId)
-            .setTitle(title)
-            .setException(Throwables.getStackTraceAsString(e))
-            .setCanSkip(canSkip).build();
+        .setId(idempotentId)
+        .setTitle(title)
+        .setException(Throwables.getStackTraceAsString(e))
+        .setCanSkip(canSkip).build();
   }
 }
