@@ -232,10 +232,8 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
         monitor.info(() -> "Parse exception occurred while converting photo, skipping this item. "
             + "Failure message : %s ", e.getMessage());
 
-        ErrorDetail errorDetail =
-            GoogleErrorLogger.createErrorDetail(
-                googleMediaItem.getId(), googleMediaItem.getFilename(), e, /* canSkip= */ true);
-        errors.add(errorDetail);
+        errors.add(GoogleErrorLogger.createErrorDetail(
+            googleMediaItem.getId(), googleMediaItem.getFilename(), e, /* canSkip= */ true));
       }
     }
     // Log all the errors in 1 commit to DataStore
@@ -283,10 +281,8 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
         monitor.info(() -> "Parse exception occurred while converting photo, skipping this item. "
             + "Failure message : %s ", e.getMessage());
 
-        ErrorDetail errorDetail =
-            GoogleErrorLogger.createErrorDetail(
-                photoMediaItem.getId(), photoMediaItem.getFilename(), e, /* canSkip= */ true);
-        errors.add(errorDetail);
+        errors.add(GoogleErrorLogger.createErrorDetail(
+            photoMediaItem.getId(), photoMediaItem.getFilename(), e, /* canSkip= */ true));
       }
     }
 
@@ -303,10 +299,8 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
         monitor.info(() -> "Parse exception occurred while converting video, skipping this item. "
             + "Failure message : %s ", e.getMessage());
 
-        ErrorDetail errorDetail =
-            GoogleErrorLogger.createErrorDetail(
-                videoMediaItem.getId(), videoMediaItem.getFilename(), e, /* canSkip= */ true);
-        errors.add(errorDetail);
+        errors.add(GoogleErrorLogger.createErrorDetail(
+            videoMediaItem.getId(), videoMediaItem.getFilename(), e, /* canSkip= */ true));
       }
     }
 
@@ -495,10 +489,8 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
             monitor.info(() -> "Parse exception occurred while converting photo, skipping this item. "
                 + "Failure message : %s ", e.getMessage());
 
-            ErrorDetail errorDetail =
-                GoogleErrorLogger.createErrorDetail(
-                    mediaItem.getId(), mediaItem.getFilename(), e, /* canSkip= */ true);
-            errors.add(errorDetail);
+            errors.add(GoogleErrorLogger.createErrorDetail(
+                mediaItem.getId(), mediaItem.getFilename(), e, /* canSkip= */ true));
           }
         }
       } else if (mediaItem.isVideo()) {
@@ -513,10 +505,8 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
             monitor.info(() -> "Parse exception occurred while converting video, skipping this item. "
                 + "Failure message : %s ", e.getMessage());
 
-            ErrorDetail errorDetail =
-                GoogleErrorLogger.createErrorDetail(
-                    mediaItem.getId(), mediaItem.getFilename(), e, /* canSkip= */ true);
-            errors.add(errorDetail);
+            errors.add(GoogleErrorLogger.createErrorDetail(
+                mediaItem.getId(), mediaItem.getFilename(), e, /* canSkip= */ true));
           }
         }
       }
