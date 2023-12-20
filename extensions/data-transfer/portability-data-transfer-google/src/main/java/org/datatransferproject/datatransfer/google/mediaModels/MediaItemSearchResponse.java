@@ -34,4 +34,12 @@ public class MediaItemSearchResponse implements Serializable {
   public String getNextPageToken() {
     return nextPageToken;
   }
+
+  public void setMediaItems(GoogleMediaItem[] mediaItems) {
+    this.mediaItems = mediaItems;
+  }
+
+  public void setNextPageToken(String nextPageToken) {
+    this.nextPageToken = nextPageToken;
+  }
 }
