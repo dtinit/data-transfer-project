@@ -37,6 +37,7 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
+import org.datatransferproject.datatransfer.google.common.GoogleErrorLogger;
 import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
@@ -64,6 +65,7 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, MediaContainerResource> {
 
@@ -150,13 +152,13 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       // if ExportInformation is a photos container, this is a request to only export the contents
       // in that container instead of the whole user library
       return exportPhotosContainer(
-          (PhotosContainerResource) exportInformation.get().getContainerResource(), authData);
+          (PhotosContainerResource) exportInformation.get().getContainerResource(), authData, jobId);
     } else if (exportInformation.get().getContainerResource() instanceof MediaContainerResource) {
       // if ExportInformation is a media container, this is a request to only export the contents
       // in that container instead of the whole user library (this is to support backwards
       // compatibility with the GooglePhotosExporter)
       return exportMediaContainer(
-          (MediaContainerResource) exportInformation.get().getContainerResource(), authData);
+          (MediaContainerResource) exportInformation.get().getContainerResource(), authData, jobId);
     }
 
     /*
@@ -199,10 +201,11 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
 
   /* Maintain this for backwards compatability, so that we can pull out the album information */
   private ExportResult<MediaContainerResource> exportPhotosContainer(
-      PhotosContainerResource container, TokensAndUrlAuthData authData)
+      PhotosContainerResource container, TokensAndUrlAuthData authData, UUID jobId)
       throws IOException, InvalidTokenException, PermissionDeniedException {
     ImmutableList.Builder<MediaAlbum> albumBuilder = ImmutableList.builder();
     ImmutableList.Builder<PhotoModel> photosBuilder = ImmutableList.builder();
+    ImmutableList.Builder<ErrorDetail> errors = ImmutableList.builder();
     List<IdOnlyContainerResource> subResources = new ArrayList<>();
 
     for (PhotoAlbum album : container.getAlbums()) {
@@ -226,10 +229,17 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       try {
         photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), googleMediaItem));
       } catch(ParseException e) {
-        monitor.debug(() -> "Parse exception occurred while converting photo, skipping this item. "
+        monitor.info(() -> "Parse exception occurred while converting photo, skipping this item. "
             + "Failure message : %s ", e.getMessage());
+
+        ErrorDetail errorDetail =
+            GoogleErrorLogger.createErrorDetail(
+                googleMediaItem.getId(), googleMediaItem.getFilename(), e, /* canSkip= */ true);
+        errors.add(errorDetail);
       }
     }
+    // Log all the errors in 1 commit to DataStore
+    GoogleErrorLogger.logFailedItemErrors(jobStore, jobId, errors.build());
 
     MediaContainerResource mediaContainerResource =
         new MediaContainerResource(albumBuilder.build(), photosBuilder.build(), null);
@@ -240,11 +250,12 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
 
   /* Maintain this for backwards compatability, so that we can pull out the album information */
   private ExportResult<MediaContainerResource> exportMediaContainer(
-      MediaContainerResource container, TokensAndUrlAuthData authData)
+      MediaContainerResource container, TokensAndUrlAuthData authData, UUID jobId)
       throws IOException, InvalidTokenException, PermissionDeniedException {
     ImmutableList.Builder<MediaAlbum> albumBuilder = ImmutableList.builder();
     ImmutableList.Builder<PhotoModel> photosBuilder = ImmutableList.builder();
     ImmutableList.Builder<VideoModel> videosBuilder = ImmutableList.builder();
+    ImmutableList.Builder<ErrorDetail> errors = ImmutableList.builder();
 
     List<IdOnlyContainerResource> subResources = new ArrayList<>();
 
@@ -269,8 +280,13 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       try {
         photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem));
       } catch(ParseException e) {
-        monitor.debug(() -> "Parse exception occurred while converting photo, skipping this item. "
+        monitor.info(() -> "Parse exception occurred while converting photo, skipping this item. "
             + "Failure message : %s ", e.getMessage());
+
+        ErrorDetail errorDetail =
+            GoogleErrorLogger.createErrorDetail(
+                photoMediaItem.getId(), photoMediaItem.getFilename(), e, /* canSkip= */ true);
+        errors.add(errorDetail);
       }
     }
 
@@ -284,10 +300,18 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       try {
         videosBuilder.add(GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem));
       } catch(ParseException e) {
-        monitor.debug(() -> "Parse exception occurred while converting video, skipping this item. "
+        monitor.info(() -> "Parse exception occurred while converting video, skipping this item. "
             + "Failure message : %s ", e.getMessage());
+
+        ErrorDetail errorDetail =
+            GoogleErrorLogger.createErrorDetail(
+                videoMediaItem.getId(), videoMediaItem.getFilename(), e, /* canSkip= */ true);
+        errors.add(errorDetail);
       }
     }
+
+    // Log all the errors in 1 commit to DataStore
+    GoogleErrorLogger.logFailedItemErrors(jobStore, jobId, errors.build());
 
     MediaContainerResource mediaContainerResource =
         new MediaContainerResource(
@@ -443,6 +467,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       Optional<String> albumId, GoogleMediaItem[] mediaItems, UUID jobId) throws IOException {
     List<PhotoModel> photos = new ArrayList<>(mediaItems.length);
     List<VideoModel> videos = new ArrayList<>(mediaItems.length);
+    ImmutableList.Builder<ErrorDetail> errors = ImmutableList.builder();
 
     TempMediaData tempMediaData = null;
     InputStream stream = jobStore.getStream(jobId, createCacheKey()).getStream();
@@ -467,8 +492,13 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
             monitor.debug(
                 () -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
           } catch(ParseException e) {
-            monitor.debug(() -> "Parse exception occurred while converting photo, skipping this item. "
+            monitor.info(() -> "Parse exception occurred while converting photo, skipping this item. "
                 + "Failure message : %s ", e.getMessage());
+
+            ErrorDetail errorDetail =
+                GoogleErrorLogger.createErrorDetail(
+                    mediaItem.getId(), mediaItem.getFilename(), e, /* canSkip= */ true);
+            errors.add(errorDetail);
           }
         }
       } else if (mediaItem.isVideo()) {
@@ -480,12 +510,20 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
             monitor.debug(
                 () -> String.format("%s: Google exporting video: %s", jobId, videoModel.getDataId()));
           } catch(ParseException e) {
-            monitor.debug(() -> "Parse exception occurred while converting video, skipping this item. "
+            monitor.info(() -> "Parse exception occurred while converting video, skipping this item. "
                 + "Failure message : %s ", e.getMessage());
+
+            ErrorDetail errorDetail =
+                GoogleErrorLogger.createErrorDetail(
+                    mediaItem.getId(), mediaItem.getFilename(), e, /* canSkip= */ true);
+            errors.add(errorDetail);
           }
         }
       }
     }
+
+    // Log all the errors in 1 commit to DataStore
+    GoogleErrorLogger.logFailedItemErrors(jobStore, jobId, errors.build());
     return new MediaContainerResource(null  /*albums*/, photos, videos);
   }
 
