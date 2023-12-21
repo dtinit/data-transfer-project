@@ -460,7 +460,6 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       Optional<String> albumId, GoogleMediaItem[] mediaItems, UUID jobId) throws IOException {
     List<PhotoModel> photos = new ArrayList<>(mediaItems.length);
     List<VideoModel> videos = new ArrayList<>(mediaItems.length);
-    ImmutableList.Builder<ErrorDetail> errors = ImmutableList.builder();
 
     TempMediaData tempMediaData = null;
     InputStream stream = jobStore.getStream(jobId, createCacheKey()).getStream();
@@ -469,6 +468,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       stream.close();
     }
 
+    ImmutableList.Builder<ErrorDetail> errors = ImmutableList.builder();
     for (GoogleMediaItem mediaItem : mediaItems) {
       boolean shouldUpload = albumId.isPresent();
 

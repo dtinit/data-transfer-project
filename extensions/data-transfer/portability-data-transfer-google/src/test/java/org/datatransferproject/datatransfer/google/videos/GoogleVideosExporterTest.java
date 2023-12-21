@@ -37,6 +37,7 @@ import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaMetadata;
 import org.datatransferproject.datatransfer.google.mediaModels.Video;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
@@ -55,7 +56,7 @@ public class GoogleVideosExporterTest {
   private UUID uuid = UUID.randomUUID();
 
   private GoogleVideosExporter googleVideosExporter;
-  private TemporaryPerJobDataStore jobStore;
+  private JobStore jobStore;
   private GoogleVideosInterface videosInterface;
 
   private MediaItemSearchResponse mediaItemSearchResponse;
@@ -65,13 +66,13 @@ public class GoogleVideosExporterTest {
   public void setup() throws IOException {
     GoogleCredentialFactory credentialFactory = mock(GoogleCredentialFactory.class);
     Monitor monitor = mock(Monitor.class);
-    jobStore = mock(TemporaryPerJobDataStore.class);
+    jobStore = mock(JobStore.class);
     videosInterface = mock(GoogleVideosInterface.class);
 
     albumListResponse = mock(AlbumListResponse.class);
     mediaItemSearchResponse = mock(MediaItemSearchResponse.class);
 
-    googleVideosExporter = new GoogleVideosExporter(credentialFactory, videosInterface, monitor);
+    googleVideosExporter = new GoogleVideosExporter(credentialFactory, jobStore, videosInterface, monitor);
 
     when(videosInterface.listVideoItems(any(Optional.class)))
             .thenReturn(mediaItemSearchResponse);
@@ -88,7 +89,7 @@ public class GoogleVideosExporterTest {
 
     // Run test
     ExportResult<VideosContainerResource> result =
-            googleVideosExporter.exportVideos(null, Optional.empty());
+            googleVideosExporter.exportVideos(null, Optional.empty(), uuid);
 
 
     // Verify correct methods were called

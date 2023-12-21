@@ -158,7 +158,6 @@ public class GooglePhotosExporter
       throws IOException, InvalidTokenException, PermissionDeniedException {
     ImmutableList.Builder<PhotoAlbum> albumBuilder = ImmutableList.builder();
     ImmutableList.Builder<PhotoModel> photosBuilder = ImmutableList.builder();
-    ImmutableList.Builder<ErrorDetail> errors = ImmutableList.builder();
     List<IdOnlyContainerResource> subResources = new ArrayList<>();
 
     for (PhotoAlbum album : container.getAlbums()) {
@@ -168,6 +167,7 @@ public class GooglePhotosExporter
       subResources.add(new IdOnlyContainerResource(googleAlbum.getId()));
     }
 
+    ImmutableList.Builder<ErrorDetail> errors = ImmutableList.builder();
     for (PhotoModel photo : container.getPhotos()) {
       GoogleMediaItem googleMediaItem =
           getOrCreatePhotosInterface(authData).getMediaItem(photo.getDataId());

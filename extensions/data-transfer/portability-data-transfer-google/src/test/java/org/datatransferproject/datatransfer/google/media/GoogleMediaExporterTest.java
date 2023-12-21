@@ -394,7 +394,6 @@ public class GoogleMediaExporterTest {
     when(photosInterface.getMediaItem(any())).thenReturn(setUpSingleMediaItem(mediaItemID, mediaItemID, mediaMetadata));
 
     assertThat(retryingGoogleMediaExporter.getGoogleMediaItem(mediaItemID, mediaItemID, mediaItemID, authData)).isInstanceOf(GoogleMediaItem.class);
-
   }
 
   @Test
