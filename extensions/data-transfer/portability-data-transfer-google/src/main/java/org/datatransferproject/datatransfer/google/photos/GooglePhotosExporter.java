@@ -377,21 +377,11 @@ public class GooglePhotosExporter
 
         monitor.debug(
             () -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
-      } catch (InvalidExportedItemException e) {
+      } catch (InvalidExportedItemException | ParseException e) {
         monitor.info(
             () ->
                 String.format(
                     "%s: MediaItem (id: %s) failed to be converted to PhotoModel, and is being "
-                        + "skipped: %s",
-                    jobId, mediaItem.getId(),e));
-
-        errors.add(GoogleErrorLogger.createErrorDetail(
-            mediaItem.getId(), mediaItem.getFilename(), e, /* canSkip= */ true));
-      } catch (ParseException e) {
-        monitor.info(
-            () ->
-                String.format(
-                    "%s: Parse exception occurred while converting MediaItem(id: %s), and is being "
                         + "skipped: %s",
                     jobId, mediaItem.getId(),e));
 
@@ -421,14 +411,9 @@ public class GooglePhotosExporter
 
     try {
       return GoogleMediaItem.convertToPhotoModel(albumId, mediaItem);
-    } catch (IllegalArgumentException e) {
+    } catch (IllegalArgumentException | ParseException e) {
       throw new InvalidExportedItemException(
-          String.format("Failed to convert media item (id: %s) into a PhotoModel", mediaItem.getId())
-      );
-    } catch (ParseException e) {
-      throw new ParseException(
-          String.format("Parse exception occurred while converting MediaItem (id: %s), skipping this item. "
-          + "Failure message : %s", mediaItem.getId(), e.getMessage()), e.getErrorOffset()
+          String.format("Failed to convert media item (id: %s) into a PhotoModel : %s", mediaItem.getId(), e)
       );
     }
   }

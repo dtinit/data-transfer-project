@@ -113,7 +113,7 @@ public class GoogleVideosExporter
         try {
           videos.add(GoogleMediaItem.convertToVideoModel(Optional.empty(), mediaItem));
         } catch(ParseException e) {
-          monitor.debug(() -> "Parse exception occurred while converting video, skipping this item. "
+          monitor.info(() -> "Parse exception occurred while converting video, skipping this item. "
               + "Failure message : %s ", e.getMessage());
         }
       }

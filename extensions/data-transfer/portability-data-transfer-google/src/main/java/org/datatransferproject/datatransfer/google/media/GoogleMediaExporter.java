@@ -205,7 +205,6 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       throws IOException, InvalidTokenException, PermissionDeniedException {
     ImmutableList.Builder<MediaAlbum> albumBuilder = ImmutableList.builder();
     ImmutableList.Builder<PhotoModel> photosBuilder = ImmutableList.builder();
-    ImmutableList.Builder<ErrorDetail> errors = ImmutableList.builder();
     List<IdOnlyContainerResource> subResources = new ArrayList<>();
 
     for (PhotoAlbum album : container.getAlbums()) {
@@ -219,6 +218,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       subResources.add(new IdOnlyContainerResource(googleAlbum.getId()));
     }
 
+    ImmutableList.Builder<ErrorDetail> errors = ImmutableList.builder();
     for (PhotoModel photo : container.getPhotos()) {
       GoogleMediaItem googleMediaItem =
           getGoogleMediaItem(photo.getIdempotentId(), photo.getDataId(), photo.getName(), authData);
@@ -253,8 +253,6 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
     ImmutableList.Builder<MediaAlbum> albumBuilder = ImmutableList.builder();
     ImmutableList.Builder<PhotoModel> photosBuilder = ImmutableList.builder();
     ImmutableList.Builder<VideoModel> videosBuilder = ImmutableList.builder();
-    ImmutableList.Builder<ErrorDetail> errors = ImmutableList.builder();
-
     List<IdOnlyContainerResource> subResources = new ArrayList<>();
 
     for (MediaAlbum album : container.getAlbums()) {
@@ -268,6 +266,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       subResources.add(new IdOnlyContainerResource(googleAlbum.getId()));
     }
 
+    ImmutableList.Builder<ErrorDetail> errors = ImmutableList.builder();
     for (PhotoModel photo : container.getPhotos()) {
       GoogleMediaItem photoMediaItem =
           getGoogleMediaItem(photo.getIdempotentId(), photo.getDataId(), photo.getName(), authData);
