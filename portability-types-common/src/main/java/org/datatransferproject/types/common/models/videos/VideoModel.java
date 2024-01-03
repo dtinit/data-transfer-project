@@ -31,6 +31,9 @@ public class VideoModel extends MediaObject implements DownloadableFile {
   private String dataId;
   private String albumId;
   private boolean inTempStore;
+
+  // TODO akshaysinghh - rename the field to creationTime since creation time is what all the
+  //  services use to display the photos timeline, instead of uploadTime.
   private Date uploadedTime;
 
   @JsonCreator
