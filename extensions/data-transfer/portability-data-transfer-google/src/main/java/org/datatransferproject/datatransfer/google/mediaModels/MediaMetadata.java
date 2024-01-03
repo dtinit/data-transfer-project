@@ -32,8 +32,7 @@ public class MediaMetadata implements Serializable {
   @JsonProperty("video")
   private Video video;
 
-  public String getCreationTime()
-  {
+  public String getCreationTime() {
     return creationTime;
   }
   public Photo getPhoto() {
@@ -44,8 +43,7 @@ public class MediaMetadata implements Serializable {
     return video;
   }
 
-  public void setCreationTime(String creationTime)
-  {
+  public void setCreationTime(String creationTime) {
     this.creationTime = creationTime;
   }
 

@@ -15,6 +15,8 @@
  */
 package org.datatransferproject.datatransfer.google.media;
 
+import static java.lang.String.format;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
@@ -27,17 +29,21 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
+import org.datatransferproject.datatransfer.google.common.GoogleErrorLogger;
 import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
 import org.datatransferproject.datatransfer.google.photos.GooglePhotosInterface;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
@@ -59,6 +65,7 @@ import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, MediaContainerResource> {
 
@@ -66,7 +73,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
   static final String MEDIA_TOKEN_PREFIX = "media:";
 
   private final GoogleCredentialFactory credentialFactory;
-  private final TemporaryPerJobDataStore jobStore;
+  private final JobStore jobStore;
   private final JsonFactory jsonFactory;
   private final Monitor monitor;
   private volatile GooglePhotosInterface photosInterface;
@@ -75,59 +82,44 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
 
   public GoogleMediaExporter(
       GoogleCredentialFactory credentialFactory,
-      TemporaryPerJobDataStore jobStore,
+      JobStore jobStore,
       JsonFactory jsonFactory,
       Monitor monitor) {
     this(
         credentialFactory,
         jobStore,
         jsonFactory,
-        null,
-        monitor
-    );
-  }
-
-  public GoogleMediaExporter(
-      GoogleCredentialFactory credentialFactory,
-      TemporaryPerJobDataStore jobStore,
-      JsonFactory jsonFactory,
-      Monitor monitor,
-      IdempotentImportExecutor retryingExecutor,
-      boolean enableRetrying) {
-    this(
-        credentialFactory,
-        jobStore,
-        jsonFactory,
-        null,
         monitor,
-        retryingExecutor,
-        enableRetrying
+        /* photosInterface= */ null
     );
   }
 
   @VisibleForTesting
   GoogleMediaExporter(
       GoogleCredentialFactory credentialFactory,
-      TemporaryPerJobDataStore jobStore,
+      JobStore jobStore,
       JsonFactory jsonFactory,
-      GooglePhotosInterface photosInterface,
-      Monitor monitor) {
+      Monitor monitor, @Nullable
+      GooglePhotosInterface photosInterface
+  ) {
     this(
         credentialFactory,
         jobStore,
         jsonFactory,
-        photosInterface,
         monitor,
-        null,
+        photosInterface,
+        /* retryingExecutor= */ null,
         false);
   }
 
-  GoogleMediaExporter(GoogleCredentialFactory credentialFactory,
-      TemporaryPerJobDataStore jobStore,
+  @VisibleForTesting
+  public GoogleMediaExporter(
+      GoogleCredentialFactory credentialFactory,
+      JobStore jobStore,
       JsonFactory jsonFactory,
-      GooglePhotosInterface photosInterface,
       Monitor monitor,
-      IdempotentImportExecutor retryingExecutor,
+      @Nullable GooglePhotosInterface photosInterface,
+      @Nullable IdempotentImportExecutor retryingExecutor,
       boolean enableRetrying) {
     this.credentialFactory = credentialFactory;
     this.jobStore = jobStore;
@@ -160,13 +152,13 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       // if ExportInformation is a photos container, this is a request to only export the contents
       // in that container instead of the whole user library
       return exportPhotosContainer(
-          (PhotosContainerResource) exportInformation.get().getContainerResource(), authData);
+          (PhotosContainerResource) exportInformation.get().getContainerResource(), authData, jobId);
     } else if (exportInformation.get().getContainerResource() instanceof MediaContainerResource) {
       // if ExportInformation is a media container, this is a request to only export the contents
       // in that container instead of the whole user library (this is to support backwards
       // compatibility with the GooglePhotosExporter)
       return exportMediaContainer(
-          (MediaContainerResource) exportInformation.get().getContainerResource(), authData);
+          (MediaContainerResource) exportInformation.get().getContainerResource(), authData, jobId);
     }
 
     /*
@@ -209,24 +201,43 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
 
   /* Maintain this for backwards compatability, so that we can pull out the album information */
   private ExportResult<MediaContainerResource> exportPhotosContainer(
-      PhotosContainerResource container, TokensAndUrlAuthData authData)
+      PhotosContainerResource container, TokensAndUrlAuthData authData, UUID jobId)
       throws IOException, InvalidTokenException, PermissionDeniedException {
     ImmutableList.Builder<MediaAlbum> albumBuilder = ImmutableList.builder();
     ImmutableList.Builder<PhotoModel> photosBuilder = ImmutableList.builder();
     List<IdOnlyContainerResource> subResources = new ArrayList<>();
 
     for (PhotoAlbum album : container.getAlbums()) {
-      GoogleAlbum googleAlbum = getOrCreatePhotosInterface(authData).getAlbum(album.getId());
+      GoogleAlbum googleAlbum = getGoogleAlbum(album.getIdempotentId(), album.getId(), album.getName(), authData);
+      if (googleAlbum == null) {
+        continue;
+      }
+
       albumBuilder.add(new MediaAlbum(googleAlbum.getId(), googleAlbum.getTitle(), null));
       // Adding subresources tells the framework to recall export to get all the photos
       subResources.add(new IdOnlyContainerResource(googleAlbum.getId()));
     }
 
+    ImmutableList.Builder<ErrorDetail> errors = ImmutableList.builder();
     for (PhotoModel photo : container.getPhotos()) {
       GoogleMediaItem googleMediaItem =
-          getOrCreatePhotosInterface(authData).getMediaItem(photo.getDataId());
-      photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), googleMediaItem));
+          getGoogleMediaItem(photo.getIdempotentId(), photo.getDataId(), photo.getName(), authData);
+      if (googleMediaItem == null) {
+        continue;
+      }
+
+      try {
+        photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), googleMediaItem));
+      } catch(ParseException e) {
+        monitor.info(() -> "Parse exception occurred while converting photo, skipping this item. "
+            + "Failure message : %s ", e.getMessage());
+
+        errors.add(GoogleErrorLogger.createErrorDetail(
+            googleMediaItem.getId(), googleMediaItem.getFilename(), e, /* canSkip= */ true));
+      }
     }
+    // Log all the errors in 1 commit to DataStore
+    GoogleErrorLogger.logFailedItemErrors(jobStore, jobId, errors.build());
 
     MediaContainerResource mediaContainerResource =
         new MediaContainerResource(albumBuilder.build(), photosBuilder.build(), null);
@@ -237,31 +248,63 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
 
   /* Maintain this for backwards compatability, so that we can pull out the album information */
   private ExportResult<MediaContainerResource> exportMediaContainer(
-      MediaContainerResource container, TokensAndUrlAuthData authData)
+      MediaContainerResource container, TokensAndUrlAuthData authData, UUID jobId)
       throws IOException, InvalidTokenException, PermissionDeniedException {
     ImmutableList.Builder<MediaAlbum> albumBuilder = ImmutableList.builder();
     ImmutableList.Builder<PhotoModel> photosBuilder = ImmutableList.builder();
     ImmutableList.Builder<VideoModel> videosBuilder = ImmutableList.builder();
-
     List<IdOnlyContainerResource> subResources = new ArrayList<>();
 
     for (MediaAlbum album : container.getAlbums()) {
-      GoogleAlbum googleAlbum = getOrCreatePhotosInterface(authData).getAlbum(album.getId());
+      GoogleAlbum googleAlbum = getGoogleAlbum(album.getIdempotentId(), album.getId(), album.getName(), authData);
+      if (googleAlbum == null) {
+        continue;
+      }
+
       albumBuilder.add(new MediaAlbum(googleAlbum.getId(), googleAlbum.getTitle(), null));
       // Adding subresources tells the framework to recall export to get all the photos
       subResources.add(new IdOnlyContainerResource(googleAlbum.getId()));
     }
 
+    ImmutableList.Builder<ErrorDetail> errors = ImmutableList.builder();
     for (PhotoModel photo : container.getPhotos()) {
-      GoogleMediaItem googleMediaItem =
-          getOrCreatePhotosInterface(authData).getMediaItem(photo.getDataId());
-      photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), googleMediaItem));
+      GoogleMediaItem photoMediaItem =
+          getGoogleMediaItem(photo.getIdempotentId(), photo.getDataId(), photo.getName(), authData);
+      if (photoMediaItem == null) {
+        continue;
+      }
+
+      try {
+        photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem));
+      } catch(ParseException e) {
+        monitor.info(() -> "Parse exception occurred while converting photo, skipping this item. "
+            + "Failure message : %s ", e.getMessage());
+
+        errors.add(GoogleErrorLogger.createErrorDetail(
+            photoMediaItem.getId(), photoMediaItem.getFilename(), e, /* canSkip= */ true));
+      }
     }
 
     for (VideoModel video : container.getVideos()) {
-      GoogleMediaItem googleMediaItem = getOrCreatePhotosInterface(authData).getMediaItem(video.getDataId());
-      videosBuilder.add(GoogleMediaItem.convertToVideoModel(Optional.empty(), googleMediaItem));
+      GoogleMediaItem videoMediaItem =
+          getGoogleMediaItem(video.getIdempotentId(), video.getDataId(), video.getName(), authData);
+      if (videoMediaItem == null) {
+        continue;
+      }
+
+      try {
+        videosBuilder.add(GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem));
+      } catch(ParseException e) {
+        monitor.info(() -> "Parse exception occurred while converting video, skipping this item. "
+            + "Failure message : %s ", e.getMessage());
+
+        errors.add(GoogleErrorLogger.createErrorDetail(
+            videoMediaItem.getId(), videoMediaItem.getFilename(), e, /* canSkip= */ true));
+      }
     }
+
+    // Log all the errors in 1 commit to DataStore
+    GoogleErrorLogger.logFailedItemErrors(jobStore, jobId, errors.build());
 
     MediaContainerResource mediaContainerResource =
         new MediaContainerResource(
@@ -310,7 +353,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
         albums.add(album);
 
         monitor.debug(
-            () -> String.format("%s: Google Photos exporting album: %s", jobId, album.getId()));
+            () -> format("%s: Google Photos exporting album: %s", jobId, album.getId()));
 
         // Add album id to continuation data
         continuationData.addContainerResource(new IdOnlyContainerResource(googleAlbum.getId()));
@@ -425,6 +468,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       stream.close();
     }
 
+    ImmutableList.Builder<ErrorDetail> errors = ImmutableList.builder();
     for (GoogleMediaItem mediaItem : mediaItems) {
       boolean shouldUpload = albumId.isPresent();
 
@@ -434,22 +478,84 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
 
       if (mediaItem.isPhoto()) {
         if (shouldUpload) {
-          PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(albumId, mediaItem);
-          photos.add(photoModel);
+          try {
+            PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(albumId, mediaItem);
+            photos.add(photoModel);
 
-          monitor.debug(
-              () -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
+            monitor.debug(
+                () -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
+          } catch(ParseException e) {
+            monitor.info(() -> "Parse exception occurred while converting photo, skipping this item. "
+                + "Failure message : %s ", e.getMessage());
+
+            errors.add(GoogleErrorLogger.createErrorDetail(
+                mediaItem.getId(), mediaItem.getFilename(), e, /* canSkip= */ true));
+          }
         }
       } else if (mediaItem.isVideo()) {
         if (shouldUpload) {
-          VideoModel videoModel = GoogleMediaItem.convertToVideoModel(albumId, mediaItem);
-          videos.add(videoModel);
-          monitor.debug(
-              () -> String.format("%s: Google exporting video: %s", jobId, videoModel.getDataId()));
+          try {
+            VideoModel videoModel = GoogleMediaItem.convertToVideoModel(albumId, mediaItem);
+            videos.add(videoModel);
+
+            monitor.debug(
+                () -> String.format("%s: Google exporting video: %s", jobId, videoModel.getDataId()));
+          } catch(ParseException e) {
+            monitor.info(() -> "Parse exception occurred while converting video, skipping this item. "
+                + "Failure message : %s ", e.getMessage());
+
+            errors.add(GoogleErrorLogger.createErrorDetail(
+                mediaItem.getId(), mediaItem.getFilename(), e, /* canSkip= */ true));
+          }
         }
       }
     }
+
+    // Log all the errors in 1 commit to DataStore
+    GoogleErrorLogger.logFailedItemErrors(jobStore, jobId, errors.build());
     return new MediaContainerResource(null  /*albums*/, photos, videos);
+  }
+
+  @VisibleForTesting
+  @Nullable
+  GoogleAlbum getGoogleAlbum(String albumIdempotentId, String albumId, String albumName,
+      TokensAndUrlAuthData authData) throws IOException, InvalidTokenException,
+      PermissionDeniedException {
+    if (retryingExecutor == null || !enableRetrying) {
+      return getOrCreatePhotosInterface(authData).getAlbum(albumId);
+    }
+
+    try {
+      GoogleAlbum googleAlbum = retryingExecutor.executeAndSwallowIOExceptions(
+          albumIdempotentId, albumName,
+          () -> getOrCreatePhotosInterface(authData).getAlbum(albumId)
+      );
+      return googleAlbum;
+    } catch (Exception e) {
+      monitor.info(() -> format("Retry exception encountered while fetching an album: %s", e));
+    }
+    return null;
+  }
+
+  //TODO(#1308): Make the retrying methods API & adaptor agnostic
+  @VisibleForTesting
+  @Nullable
+  GoogleMediaItem getGoogleMediaItem(String photoIdempotentId, String photoDataId,
+      String photoName, TokensAndUrlAuthData authData) throws IOException, InvalidTokenException, PermissionDeniedException {
+    if (retryingExecutor == null || !enableRetrying) {
+      return getOrCreatePhotosInterface(authData).getMediaItem(photoDataId);
+    }
+
+    try {
+      GoogleMediaItem googleMediaItem = retryingExecutor.executeAndSwallowIOExceptions(
+          photoIdempotentId, photoName,
+          () -> getOrCreatePhotosInterface(authData).getMediaItem(photoDataId)
+      );
+      return googleMediaItem;
+    } catch (Exception e) {
+      monitor.info(() -> format("Retry exception encountered while fetching a photo: %s", e));
+    }
+    return null;
   }
 
   private synchronized GooglePhotosInterface getOrCreatePhotosInterface(
