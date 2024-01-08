@@ -399,7 +399,7 @@ public class GoogleMediaExporterTest {
   }
 
   @Test
-  public void testExportPhotosContainer_photosRetrying() throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException, FailedToListAlbumsException {
+  public void testExportPhotosContainer_photosRetrying() throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException, FailedToListAlbumsException, FailedToListMediaItemsException {
     String photoIdToFail1 = "photo3";
     String photoIdToFail2 = "photo5";
 
