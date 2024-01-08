@@ -405,7 +405,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
 
   /** Method for storing a list of all photos that are already contained in albums */
   void populateContainedMediaList(UUID jobId, TokensAndUrlAuthData authData)
-          throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException, FailedToListAlbumsException {
+          throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException, FailedToListAlbumsException, FailedToListMediaItemsException {
     // This method is only called once at the beginning of the transfer, so we can start by
     // initializing a new TempMediaData to be store in the job store.
     TempMediaData tempMediaData = new TempMediaData(jobId);
@@ -425,9 +425,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
         String photoToken = null;
 
         do {
-          containedMediaSearchResponse =
-              getOrCreatePhotosInterface(authData)
-                  .listMediaItems(Optional.of(albumId), Optional.ofNullable(photoToken));
+          containedMediaSearchResponse = listMediaItems(jobId, authData, Optional.of(albumId), Optional.ofNullable(photoToken));
           if (containedMediaSearchResponse.getMediaItems() != null) {
             for (GoogleMediaItem mediaItem : containedMediaSearchResponse.getMediaItems()) {
               tempMediaData.addContainedPhotoId(mediaItem.getId());
