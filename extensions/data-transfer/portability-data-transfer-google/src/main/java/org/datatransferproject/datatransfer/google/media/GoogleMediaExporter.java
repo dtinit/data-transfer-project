@@ -38,6 +38,7 @@ import javax.annotation.Nullable;
 
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.FailedToListAlbumsException;
+import org.datatransferproject.datatransfer.google.common.FailedToListMediaItemsException;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.common.GoogleErrorLogger;
 import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
@@ -144,7 +145,7 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
   @Override
   public ExportResult<MediaContainerResource> export(
       UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation)
-          throws UploadErrorException, FailedToListAlbumsException, InvalidTokenException, PermissionDeniedException, IOException {
+          throws UploadErrorException, FailedToListAlbumsException, InvalidTokenException, PermissionDeniedException, IOException, FailedToListMediaItemsException {
     if (!exportInformation.isPresent()) {
       // Make list of photos contained in albums so they are not exported twice later on
       populateContainedMediaList(jobId, authData);
@@ -371,15 +372,14 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       Optional<IdOnlyContainerResource> albumData,
       Optional<PaginationData> paginationData,
       UUID jobId)
-      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+      throws IOException, FailedToListMediaItemsException {
     Optional<String> albumId = Optional.empty();
     if (albumData.isPresent()) {
       albumId = Optional.of(albumData.get().getId());
     }
     Optional<String> paginationToken = getPhotosPaginationToken(paginationData);
 
-    MediaItemSearchResponse mediaItemSearchResponse =
-        getOrCreatePhotosInterface(authData).listMediaItems(albumId, paginationToken);
+    MediaItemSearchResponse mediaItemSearchResponse = listMediaItems(jobId, authData, albumId, paginationToken);
 
     PaginationData nextPageData = null;
     if (!Strings.isNullOrEmpty(mediaItemSearchResponse.getNextPageToken())) {
@@ -583,6 +583,36 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
       );
     } catch (Exception e) {
       throw new FailedToListAlbumsException(e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Tries to call PhotosInterface.ListMediaItems, and retries on failure. If unsuccessful, throws a
+   * FailedToListMediaItemsException.
+   */
+  private MediaItemSearchResponse listMediaItems(
+          UUID jobId,
+          TokensAndUrlAuthData authData,
+          Optional<String> albumId,
+          Optional<String> pageToken
+  )
+          throws FailedToListMediaItemsException {
+    if (retryingExecutor == null || !enableRetrying) {
+      try {
+        return getOrCreatePhotosInterface(authData).listMediaItems(albumId, pageToken);
+      } catch (IOException | InvalidTokenException | PermissionDeniedException | UploadErrorException e) {
+        throw new FailedToListMediaItemsException(e.getMessage(), e);
+      }
+    }
+
+    try {
+      return retryingExecutor.executeOrThrowException(
+              format("%s: listMediaItems(albumId=%s, page=%s)", jobId, albumId, pageToken),
+              format("listMediaItems(albumId=%s, page=%s)", albumId, pageToken),
+              () -> getOrCreatePhotosInterface(authData).listMediaItems(albumId, pageToken)
+      );
+    } catch (Exception e) {
+      throw new FailedToListMediaItemsException(e.getMessage(), e);
     }
   }
 
