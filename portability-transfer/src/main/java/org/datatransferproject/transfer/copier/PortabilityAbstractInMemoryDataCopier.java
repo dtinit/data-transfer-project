@@ -126,7 +126,7 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
     if (exportedData != null) {
       PortabilityJob job = jobStore.findJob(jobId);
       TransferMode transferMode =
-          job.transferMode() == null ? TransferMode.DATA_TRANSFER : job.transferMode();
+          job == null ? TransferMode.DATA_TRANSFER : job.transferMode();
       switch (transferMode) {
         case DATA_TRANSFER:
           importIteration(jobId, importAuthData, jobIdPrefix, copyIteration, exportedData);
