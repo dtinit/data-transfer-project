@@ -42,6 +42,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.datatransfer.google.common.FailedToListAlbumsException;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
@@ -145,7 +146,7 @@ public class GoogleMediaExporterTest {
   }
 
   @Test
-  public void exportAlbumFirstSet() throws IOException, InvalidTokenException, PermissionDeniedException {
+  public void exportAlbumFirstSet() throws IOException, InvalidTokenException, PermissionDeniedException, FailedToListAlbumsException {
     setUpSingleAlbum();
     when(albumListResponse.getNextPageToken()).thenReturn(ALBUM_TOKEN);
 
@@ -183,7 +184,7 @@ public class GoogleMediaExporterTest {
   }
 
   @Test
-  public void exportAlbumSubsequentSet() throws IOException, InvalidTokenException, PermissionDeniedException {
+  public void exportAlbumSubsequentSet() throws IOException, InvalidTokenException, PermissionDeniedException, FailedToListAlbumsException {
     setUpSingleAlbum();
     when(albumListResponse.getNextPageToken()).thenReturn(null);
 
@@ -319,7 +320,7 @@ public class GoogleMediaExporterTest {
 
   @Test
   public void populateContainedMediaList()
-      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+          throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException, FailedToListAlbumsException {
     // Set up an album with two photos
     setUpSingleAlbum();
     when(albumListResponse.getNextPageToken()).thenReturn(null);
@@ -397,7 +398,7 @@ public class GoogleMediaExporterTest {
   }
 
   @Test
-  public void testExportPhotosContainer_photosRetrying() throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+  public void testExportPhotosContainer_photosRetrying() throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException, FailedToListAlbumsException {
     String photoIdToFail1 = "photo3";
     String photoIdToFail2 = "photo5";
 
