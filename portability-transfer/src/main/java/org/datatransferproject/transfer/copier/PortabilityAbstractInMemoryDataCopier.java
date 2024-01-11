@@ -129,7 +129,7 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
       Preconditions.checkNotNull(job, "Transfer cannot proceed without fetching the job. "
           + "Something in very wrong so halting the transfer.");
       TransferMode transferMode =
-          job == null ? TransferMode.DATA_TRANSFER : job.transferMode();
+          job.transferMode() == null ? TransferMode.DATA_TRANSFER : job.transferMode();
       switch (transferMode) {
         case DATA_TRANSFER:
           importIteration(jobId, importAuthData, jobIdPrefix, copyIteration, exportedData);
