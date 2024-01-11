@@ -16,6 +16,7 @@
 package org.datatransferproject.transfer.copier;
 
 import com.google.cloud.datastore.DatastoreException;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.inject.Provider;
 import java.io.IOException;
@@ -125,6 +126,8 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
     DataModel exportedData = exportResult.getExportedData();
     if (exportedData != null) {
       PortabilityJob job = jobStore.findJob(jobId);
+      Preconditions.checkNotNull(job, "Transfer cannot proceed without fetching the job. "
+          + "Something in very wrong so halting the transfer.");
       TransferMode transferMode =
           job == null ? TransferMode.DATA_TRANSFER : job.transferMode();
       switch (transferMode) {
