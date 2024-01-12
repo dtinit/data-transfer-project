@@ -43,6 +43,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.FailedToListAlbumsException;
+import org.datatransferproject.datatransfer.google.common.FailedToListMediaItemsException;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
@@ -209,7 +210,7 @@ public class GoogleMediaExporterTest {
 
   @Test
   public void exportPhotoFirstSet()
-      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+          throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException, FailedToListMediaItemsException {
     setUpSingleAlbum();
     when(albumListResponse.getNextPageToken()).thenReturn(null);
     GoogleMediaItem mediaItem = setUpSinglePhoto("some://fake/gphotoapi/uri", "some-upstream-generated-photo-id");
@@ -249,7 +250,7 @@ public class GoogleMediaExporterTest {
 
   @Test
   public void exportVideoFirstSet()
-      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+          throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException, FailedToListMediaItemsException {
     setUpSingleAlbum();
     when(albumListResponse.getNextPageToken()).thenReturn(null);
     GoogleMediaItem mediaItem = setUpSingleVideo(
@@ -290,7 +291,7 @@ public class GoogleMediaExporterTest {
 
   @Test
   public void exportPhotoSubsequentSet()
-      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+          throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException, FailedToListMediaItemsException {
     setUpSingleAlbum();
     when(albumListResponse.getNextPageToken()).thenReturn(null);
     GoogleMediaItem mediaItem = setUpSinglePhoto(
@@ -320,7 +321,7 @@ public class GoogleMediaExporterTest {
 
   @Test
   public void populateContainedMediaList()
-          throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException, FailedToListAlbumsException {
+          throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException, FailedToListAlbumsException, FailedToListMediaItemsException {
     // Set up an album with two photos
     setUpSingleAlbum();
     when(albumListResponse.getNextPageToken()).thenReturn(null);
@@ -354,7 +355,7 @@ public class GoogleMediaExporterTest {
   photos are exported.
   */
   public void onlyExportAlbumlessPhoto()
-      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+          throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException, FailedToListMediaItemsException {
     // Set up - two photos will be returned by a media item search without an album id, but one of
     // them will have already been put into the list of contained photos
     String containedPhotoUri = "contained photo uri";
@@ -398,7 +399,7 @@ public class GoogleMediaExporterTest {
   }
 
   @Test
-  public void testExportPhotosContainer_photosRetrying() throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException, FailedToListAlbumsException {
+  public void testExportPhotosContainer_photosRetrying() throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException, FailedToListAlbumsException, FailedToListMediaItemsException {
     String photoIdToFail1 = "photo3";
     String photoIdToFail2 = "photo5";
 
