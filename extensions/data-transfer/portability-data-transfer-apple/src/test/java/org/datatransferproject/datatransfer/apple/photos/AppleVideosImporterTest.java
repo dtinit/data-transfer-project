@@ -205,20 +205,25 @@ public class AppleVideosImporterTest extends AppleImporterTestBase {
               .setTitle(video.getName())
               .setException(
                   String.format(
-                      "java.io.IOException: Fail to get upload url, error code: %d",
+                      "java.io.IOException: %s Fail to get upload url, errorCode:%d",
+                      ApplePhotosConstants.APPLE_PHOTOS_IMPORT_ERROR_PREFIX,
                       SC_INTERNAL_SERVER_ERROR));
       if (i < errorCountGetUploadURL) {
         errorDetailBuilder.setException(
             String.format(
-                "java.io.IOException: Fail to get upload url, error code: %d",
+                "java.io.IOException: %s Fail to get upload url, errorCode:%d",
+                ApplePhotosConstants.APPLE_PHOTOS_IMPORT_ERROR_PREFIX,
                 SC_INTERNAL_SERVER_ERROR));
       } else if (i < errorCountGetUploadURL + errorCountGetUploadURL) {
-        errorDetailBuilder.setException("java.io.IOException: Fail to upload content");
+        errorDetailBuilder.setException(String.format(
+                "java.io.IOException: %s Fail to upload content",
+                ApplePhotosConstants.APPLE_PHOTOS_IMPORT_ERROR_PREFIX));
       } else {
         errorDetailBuilder.setException(
             String.format(
-                "java.io.IOException: Fail to create media, error code: %d",
-                SC_INTERNAL_SERVER_ERROR));
+                "java.io.IOException: %s Fail to create media, errorCode:%d",
+                    ApplePhotosConstants.APPLE_PHOTOS_IMPORT_ERROR_PREFIX,
+                    SC_INTERNAL_SERVER_ERROR));
       }
       expectedErrors.add(errorDetailBuilder.build());
     }

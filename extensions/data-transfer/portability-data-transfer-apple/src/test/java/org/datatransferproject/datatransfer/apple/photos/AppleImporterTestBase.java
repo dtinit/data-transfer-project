@@ -161,7 +161,7 @@ public class AppleImporterTestBase {
                 });
   }
 
-  protected void setUpCreateMediaResponse(@NotNull final Map<String, Integer> datatIdToStatus)
+  protected void setUpCreateMediaResponse(@NotNull final Map<String, Integer> dataIdToStatus)
       throws IOException, CopyExceptionWithFailureReason {
     when(mediaInterface.createMedia(any(String.class), any(String.class), any(List.class)))
         .thenAnswer(
@@ -185,7 +185,7 @@ public class AppleImporterTestBase {
                                       .setStatus(
                                           PhotosProtocol.Status.newBuilder()
                                               .setCode(
-                                                  datatIdToStatus.get(newMediaRequest.getDataId()))
+                                                  dataIdToStatus.get(newMediaRequest.getDataId()))
                                               .build())
                                       .build())
                           .collect(Collectors.toList());
@@ -220,7 +220,7 @@ public class AppleImporterTestBase {
     final Map<String, ErrorDetail> actualIdToErrorDetail =
         executor.getErrors().stream()
             .collect(Collectors.toMap(ErrorDetail::id, errorDetail -> errorDetail));
-    assertThat(actualIdToErrorDetail.size() == expected.size());
+    assertThat(actualIdToErrorDetail.size() == expected.size()).isTrue();
     for (ErrorDetail expectedErrorDetail : expected) {
       validateError(expectedErrorDetail, actualIdToErrorDetail.get(expectedErrorDetail.id()));
     }
@@ -230,7 +230,7 @@ public class AppleImporterTestBase {
     final Map<String, ErrorDetail> actualIdToErrorDetail =
         executor.getRecentErrors().stream()
             .collect(Collectors.toMap(ErrorDetail::id, errorDetail -> errorDetail));
-    assertThat(actualIdToErrorDetail.size() == expected.size());
+    assertThat(actualIdToErrorDetail.size() == expected.size()).isTrue();
     for (ErrorDetail expectedErrorDetail : expected) {
       validateError(expectedErrorDetail, actualIdToErrorDetail.get(expectedErrorDetail.id()));
     }
@@ -240,7 +240,7 @@ public class AppleImporterTestBase {
       @NotNull final ErrorDetail expected, @NotNull final ErrorDetail actual) {
     assertThat(actual.id()).isEqualTo(expected.id());
     assertThat(actual.title()).isEqualTo(expected.title());
-    assertThat(actual.exception()).startsWith(expected.exception()); // the error message is a long stack trace, we just want to make sure
+    assertThat(actual.exception()).contains(expected.exception()); // the error message is a long stack trace, we just want to make sure
     // we have the right error code and error message
   }
 

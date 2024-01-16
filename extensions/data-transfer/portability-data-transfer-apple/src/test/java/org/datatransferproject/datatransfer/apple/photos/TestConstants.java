@@ -22,6 +22,8 @@ public class TestConstants {
   public static final String IMPORT_FOLDER_NAME_BASE = "Imported From ";
 
   public static final String IMPORT_ZONE_PREFIX = "IMPORT:";
+  public static final int RETRY_MAX_ATTEMPTS = 1;
+  public static final long RETRY_INTERVAL_MILLIS = 100L;
 
   public static String getImportZoneName(@NotNull String importId) {
     return IMPORT_ZONE_PREFIX + importId;
