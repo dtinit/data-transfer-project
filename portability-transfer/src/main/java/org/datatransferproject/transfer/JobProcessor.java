@@ -20,6 +20,8 @@ import static java.lang.String.format;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Optional;
@@ -33,6 +35,8 @@ import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.spi.cloud.types.PortabilityJob.State;
 import org.datatransferproject.spi.transfer.hooks.JobHooks;
+import org.datatransferproject.spi.transfer.provider.SignalHandler;
+import org.datatransferproject.spi.transfer.types.signals.SignalType;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.types.CopyException;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
@@ -42,6 +46,7 @@ import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.AuthDataPair;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
+import org.datatransferproject.types.transfer.retry.RetryException;
 
 /**
  * Process a job in two steps: <br>
@@ -55,6 +60,8 @@ class JobProcessor {
   private final ObjectMapper objectMapper;
   private final InMemoryDataCopier copier;
   private final AuthDataDecryptService decryptService;
+  private final Provider<SignalHandler> exportSignalHandlerProvider;
+  private final Provider<SignalHandler> importSignalHandlerProvider;
   private final Monitor monitor;
   private final DtpInternalMetricRecorder dtpInternalMetricRecorder;
 
@@ -65,6 +72,8 @@ class JobProcessor {
       ObjectMapper objectMapper,
       InMemoryDataCopier copier,
       AuthDataDecryptService decryptService,
+      Provider<SignalHandler> exportSignalHandlerProvider,
+      Provider<SignalHandler> importSignalHandlerProvider,
       Monitor monitor,
       DtpInternalMetricRecorder dtpInternalMetricRecorder) {
     this.store = store;
@@ -72,6 +81,8 @@ class JobProcessor {
     this.objectMapper = objectMapper;
     this.copier = copier;
     this.decryptService = decryptService;
+    this.exportSignalHandlerProvider = exportSignalHandlerProvider;
+    this.importSignalHandlerProvider = importSignalHandlerProvider;
     this.monitor = monitor;
     this.dtpInternalMetricRecorder = dtpInternalMetricRecorder;
   }
@@ -81,6 +92,8 @@ class JobProcessor {
     boolean success = false;
     UUID jobId = JobMetadata.getJobId();
     monitor.debug(() -> format("Begin processing jobId: %s", jobId), EventCode.WORKER_JOB_STARTED);
+    AuthData exportAuthData = null;
+    AuthData importAuthData = null;
 
     try {
       markJobStarted(jobId);
@@ -109,8 +122,9 @@ class JobProcessor {
       String encrypted = jobAuthorization.encryptedAuthData();
       byte[] encodedPrivateKey = JobMetadata.getPrivateKey();
       AuthDataPair pair = decryptService.decrypt(encrypted, encodedPrivateKey);
-      AuthData exportAuthData = objectMapper.readValue(pair.getExportAuthData(), AuthData.class);
-      AuthData importAuthData = objectMapper.readValue(pair.getImportAuthData(), AuthData.class);
+
+      exportAuthData = objectMapper.readValue(pair.getExportAuthData(), AuthData.class);
+      importAuthData = objectMapper.readValue(pair.getImportAuthData(), AuthData.class);
 
       String exportInfoStr = job.exportInformation();
       Optional<ExportInformation> exportInfo = Optional.empty();
@@ -124,6 +138,7 @@ class JobProcessor {
           JobMetadata.getExportService(),
           JobMetadata.getImportService());
       JobMetadata.getStopWatch().start();
+      sendSignals(jobId, exportAuthData, importAuthData, SignalType.JOB_BEGIN, monitor);
       copier.copy(exportAuthData, importAuthData, jobId, exportInfo);
       success = true;
     } catch (CopyExceptionWithFailureReason e) {
@@ -159,6 +174,8 @@ class JobProcessor {
           EventCode.WORKER_JOB_FINISHED);
       addErrorsAndMarkJobFinished(jobId, success, loggedErrors);
       hooks.jobFinished(jobId, success);
+      SignalType finalStatus = success ? SignalType.JOB_COMPLETED : SignalType.JOB_ERRORED;
+      sendSignals(jobId, exportAuthData, importAuthData, finalStatus, monitor);
       dtpInternalMetricRecorder.finishedJob(
           JobMetadata.getDataType(),
           JobMetadata.getExportService(),
@@ -167,6 +184,15 @@ class JobProcessor {
           JobMetadata.getStopWatch().elapsed());
       monitor.flushLogs();
       JobMetadata.reset();
+    }
+  }
+
+  private void sendSignals(UUID jobId, AuthData exportAuthData, AuthData importAuthData, SignalType signalType, Monitor monitor) {
+    try {
+      exportSignalHandlerProvider.get().sendSignal(jobId, signalType, exportAuthData, monitor);
+      importSignalHandlerProvider.get().sendSignal(jobId, signalType, importAuthData, monitor);
+    } catch (CopyExceptionWithFailureReason | IOException | RetryException e) {
+      // Swallow the exception. The Job Processing shouldn't be effected by Signal failure.
     }
   }
 

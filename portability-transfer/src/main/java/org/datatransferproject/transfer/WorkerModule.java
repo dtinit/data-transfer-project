@@ -48,6 +48,7 @@ import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportE
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.spi.transfer.provider.SignalHandler;
 import org.datatransferproject.spi.transfer.provider.TransferCompatibilityProvider;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
@@ -194,6 +195,22 @@ final class WorkerModule extends FlagBindingModule {
         getTransferServiceConfig(extension));
     extension.initialize(serviceSpecificContext);
     return compatibilityProvider.getCompatibleImporter(extension, JobMetadata.getDataType());
+  }
+
+  @Provides
+  @Singleton
+  SignalHandler getImportSignalHandler(ImmutableList<TransferExtension> transferExtensions) {
+    TransferExtension extension =
+        findTransferExtension(transferExtensions, JobMetadata.getImportService());
+    return extension.getSignalHandler();
+  }
+
+  @Provides
+  @Singleton
+  SignalHandler getExportSignalHandler(ImmutableList<TransferExtension> transferExtensions) {
+    TransferExtension extension =
+        findTransferExtension(transferExtensions, JobMetadata.getExportService());
+    return extension.getSignalHandler();
   }
 
   @Provides

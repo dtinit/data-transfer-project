@@ -16,15 +16,8 @@
 
 package org.datatransferproject.datatransfer.apple.photos;
 
-import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CONFLICT;
-import static org.apache.http.HttpStatus.SC_INSUFFICIENT_STORAGE;
-import static org.apache.http.HttpStatus.SC_INTERNAL_SERVER_ERROR;
-import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
-import static org.apache.http.HttpStatus.SC_PRECONDITION_FAILED;
-import static org.apache.http.HttpStatus.SC_SERVICE_UNAVAILABLE;
-import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
@@ -40,7 +33,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -65,9 +57,6 @@ import org.datatransferproject.datatransfer.apple.photos.photosproto.PhotosProto
 import org.datatransferproject.datatransfer.apple.photos.streaming.StreamingContentClient;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
-import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
-import org.datatransferproject.spi.transfer.types.DestinationNotFoundException;
-import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.spi.transfer.types.UnconfirmedUserException;
 import org.datatransferproject.transfer.JobMetadata;
@@ -80,9 +69,6 @@ import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 /**
  * An interface that is synonymous to HTTP client to interact with the Apple Photos APIs.
@@ -234,7 +220,7 @@ public class AppleMediaInterface implements AppleBaseInterface {
     return CreateMediaResponse.parseFrom(responseData);
   }
 
-  private String sendPostRequest(@NotNull String url, @NotNull final byte[] requestData)
+  public String sendPostRequest(@NotNull String url, @NotNull final byte[] requestData)
       throws IOException, CopyExceptionWithFailureReason {
 
     final String appleRequestUUID = UUID.randomUUID().toString();
@@ -278,31 +264,6 @@ public class AppleMediaInterface implements AppleBaseInterface {
     return responseString;
   }
 
-  private void convertAndThrowException(@NotNull final IOException e, @NotNull final HttpURLConnection con)
-      throws IOException, CopyExceptionWithFailureReason {
-
-    switch (con.getResponseCode()) {
-      case SC_UNAUTHORIZED:
-        throw new UnconfirmedUserException("Unauthorized iCloud User", e);
-      case SC_PRECONDITION_FAILED:
-        throw new PermissionDeniedException("Permission Denied", e);
-      case SC_NOT_FOUND:
-        throw new DestinationNotFoundException("iCloud Photos Library not found", e);
-      case SC_INSUFFICIENT_STORAGE:
-        throw new DestinationMemoryFullException("iCloud Storage is full", e);
-      case SC_SERVICE_UNAVAILABLE:
-        throw new IOException("DTP import service unavailable", e);
-      case SC_BAD_REQUEST:
-        throw new IOException("Bad request sent to iCloud Photos import api", e);
-      case SC_INTERNAL_SERVER_ERROR:
-        throw new IOException("Internal server error in iCloud Photos service", e);
-      case SC_OK:
-        break;
-      default:
-        throw e;
-    }
-  }
-
   public byte[] makePhotosServicePostRequest(
       @NotNull final String url, @NotNull final byte[] requestData)
       throws IOException, CopyExceptionWithFailureReason {
@@ -313,7 +274,7 @@ public class AppleMediaInterface implements AppleBaseInterface {
     } catch (CopyExceptionWithFailureReason e) {
       if (e instanceof UnconfirmedUserException
           || e instanceof PermissionDeniedException) {
-        refreshTokens();
+        this.authData = refreshTokens(authData, appCredentials, monitor);
         final String responseString = sendPostRequest(url, requestData);
         responseData = responseString.getBytes(StandardCharsets.ISO_8859_1);
       } else {
@@ -321,40 +282,6 @@ public class AppleMediaInterface implements AppleBaseInterface {
       }
     }
     return responseData;
-  }
-
-  private void refreshTokens() throws IOException, InvalidTokenException {
-    final String refreshToken = authData.getRefreshToken();
-    final String refreshUrlString = authData.getTokenServerEncodedUrl();
-    final String clientId = appCredentials.getKey();
-    final String clientSecret = appCredentials.getSecret();
-
-    final Map<String, String> parameters = new HashMap<String, String>();
-    parameters.put("client_id", clientId);
-    parameters.put("client_secret", clientSecret);
-    parameters.put("grant_type", "refresh_token");
-    parameters.put("refresh_token", refreshToken);
-    StringJoiner sj = new StringJoiner("&");
-    for (Map.Entry<String, String> entry : parameters.entrySet()) {
-      sj.add(entry.getKey() + "=" + entry.getValue());
-    }
-
-    final byte[] requestData = sj.toString().getBytes(StandardCharsets.ISO_8859_1);
-    try {
-      final String responseString = sendPostRequest(refreshUrlString, requestData);
-      final JSONParser parser = new JSONParser();
-      final JSONObject json = (JSONObject) parser.parse(responseString);
-      final String accessToken = (String) json.get("access_token");
-      this.authData = new TokensAndUrlAuthData(accessToken, refreshToken, refreshUrlString);
-
-      monitor.debug(() -> "Successfully refreshed token");
-
-    } catch (ParseException | IOException | CopyExceptionWithFailureReason e) {
-
-      monitor.debug(() -> "Failed to refresh token", e);
-
-      throw new InvalidTokenException("Unable to refresh token", e);
-    }
   }
 
   public static NewMediaRequest createNewMediaRequest(
