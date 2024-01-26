@@ -18,22 +18,33 @@ package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serializable;
+import java.util.Date;
 
 /** Metadata about a {@code MediaItem}. */
 public class MediaMetadata implements Serializable {
 
+  //Time when the media item was first created (not when it was uploaded to Google Photos).
+  @JsonProperty("creationTime")
+  private String creationTime;
   @JsonProperty("photo")
   private Photo photo;
 
   @JsonProperty("video")
   private Video video;
 
+  public String getCreationTime() {
+    return creationTime;
+  }
   public Photo getPhoto() {
     return photo;
   }
 
   public Video getVideo() {
     return video;
+  }
+
+  public void setCreationTime(String creationTime) {
+    this.creationTime = creationTime;
   }
 
   public void setPhoto(Photo photo) {

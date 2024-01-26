@@ -37,6 +37,9 @@ public class PhotoModel implements DownloadableFile {
   private final boolean inTempStore;
   private String dataId;
   @Nullable private String sha1;  // SHA-1 hash in Hex (base16).
+
+  // TODO akshaysinghh - rename the field to creationTime since creation time is what all the
+  //  services use to display the photos timeline, instead of uploadTime.
   private Date uploadedTime;
 
   @JsonCreator

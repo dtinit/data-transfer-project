@@ -22,11 +22,15 @@ import com.google.common.base.Strings;
 import java.io.File;
 import java.io.Serializable;
 import java.nio.file.Files;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Optional;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.apache.tika.Tika;
+import com.google.common.base.Strings;
+
 
 /** Media item returned by queries to the Google Photos API. Represents what is stored by Google. */
 public class GoogleMediaItem implements Serializable {
@@ -35,6 +39,7 @@ public class GoogleMediaItem implements Serializable {
   private final static String DEFAULT_VIDEO_MIMETYPE = "video/mp4";
   // If Tika cannot detect the mimetype, it returns the binary mimetype. This can be considered null
   private final static String DEFAULT_BINARY_MIMETYPE = "application/octet-stream";
+  private final static SimpleDateFormat CREATION_TIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
   @JsonProperty("id")
   private String id;
@@ -58,6 +63,8 @@ public class GoogleMediaItem implements Serializable {
   private String productUrl;
 
   @JsonProperty("uploadedTime")
+  // TODO akshaysinghh - rename the field to creationTime since creation time is what all the
+  //  services use to display the photos timeline, instead of uploadTime.
   private Date uploadedTime;
 
   public boolean isPhoto() {
@@ -80,7 +87,7 @@ public class GoogleMediaItem implements Serializable {
   }
 
   public static VideoModel convertToVideoModel(
-      Optional<String> albumId, GoogleMediaItem mediaItem) {
+      Optional<String> albumId, GoogleMediaItem mediaItem) throws ParseException{
     Preconditions.checkArgument(mediaItem.isVideo());
 
     return new VideoModel(
@@ -91,11 +98,11 @@ public class GoogleMediaItem implements Serializable {
         mediaItem.getId(),
         albumId.orElse(null),
         false /*inTempStore*/,
-        mediaItem.getUploadedTime());
+        getCreationTime(mediaItem));
   }
 
-  public static PhotoModel convertToPhotoModel(
-      Optional<String> albumId, GoogleMediaItem mediaItem) {
+  public static PhotoModel convertToPhotoModel (
+      Optional<String> albumId, GoogleMediaItem mediaItem) throws ParseException{
     Preconditions.checkArgument(mediaItem.isPhoto());
 
     return new PhotoModel(
@@ -107,7 +114,18 @@ public class GoogleMediaItem implements Serializable {
         albumId.orElse(null),
         false  /*inTempStore*/,
         null  /*sha1*/,
-        mediaItem.getUploadedTime());
+        getCreationTime(mediaItem));
+  }
+
+  private static Date getCreationTime(GoogleMediaItem mediaItem) throws ParseException  {
+    // cannot be empty or null based. Verified the backend code.
+    try {
+      return CREATION_TIME_FORMAT.parse(mediaItem.getMediaMetadata().getCreationTime());
+    } catch (ParseException parseException) {
+      throw new ParseException(String.format("Failed to parse the string %s to get creationTime for "
+              + "MediaItem %s .", mediaItem.getId(), mediaItem.getMediaMetadata().getCreationTime()),
+          parseException.getErrorOffset());
+    }
   }
 
   private static String getMimeType(GoogleMediaItem mediaItem) {

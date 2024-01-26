@@ -34,12 +34,16 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.ParseException;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.datatransfer.google.common.FailedToListAlbumsException;
+import org.datatransferproject.datatransfer.google.common.FailedToListMediaItemsException;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
@@ -143,7 +147,7 @@ public class GoogleMediaExporterTest {
   }
 
   @Test
-  public void exportAlbumFirstSet() throws IOException, InvalidTokenException, PermissionDeniedException {
+  public void exportAlbumFirstSet() throws IOException, InvalidTokenException, PermissionDeniedException, FailedToListAlbumsException {
     setUpSingleAlbum();
     when(albumListResponse.getNextPageToken()).thenReturn(ALBUM_TOKEN);
 
@@ -181,7 +185,7 @@ public class GoogleMediaExporterTest {
   }
 
   @Test
-  public void exportAlbumSubsequentSet() throws IOException, InvalidTokenException, PermissionDeniedException {
+  public void exportAlbumSubsequentSet() throws IOException, InvalidTokenException, PermissionDeniedException, FailedToListAlbumsException {
     setUpSingleAlbum();
     when(albumListResponse.getNextPageToken()).thenReturn(null);
 
@@ -206,7 +210,7 @@ public class GoogleMediaExporterTest {
 
   @Test
   public void exportPhotoFirstSet()
-      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+          throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException, FailedToListMediaItemsException {
     setUpSingleAlbum();
     when(albumListResponse.getNextPageToken()).thenReturn(null);
     GoogleMediaItem mediaItem = setUpSinglePhoto("some://fake/gphotoapi/uri", "some-upstream-generated-photo-id");
@@ -246,7 +250,7 @@ public class GoogleMediaExporterTest {
 
   @Test
   public void exportVideoFirstSet()
-      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+          throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException, FailedToListMediaItemsException {
     setUpSingleAlbum();
     when(albumListResponse.getNextPageToken()).thenReturn(null);
     GoogleMediaItem mediaItem = setUpSingleVideo(
@@ -287,7 +291,7 @@ public class GoogleMediaExporterTest {
 
   @Test
   public void exportPhotoSubsequentSet()
-      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+          throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException, FailedToListMediaItemsException {
     setUpSingleAlbum();
     when(albumListResponse.getNextPageToken()).thenReturn(null);
     GoogleMediaItem mediaItem = setUpSinglePhoto(
@@ -317,7 +321,7 @@ public class GoogleMediaExporterTest {
 
   @Test
   public void populateContainedMediaList()
-      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+          throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException, FailedToListAlbumsException, FailedToListMediaItemsException {
     // Set up an album with two photos
     setUpSingleAlbum();
     when(albumListResponse.getNextPageToken()).thenReturn(null);
@@ -351,7 +355,7 @@ public class GoogleMediaExporterTest {
   photos are exported.
   */
   public void onlyExportAlbumlessPhoto()
-      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+          throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException, FailedToListMediaItemsException {
     // Set up - two photos will be returned by a media item search without an album id, but one of
     // them will have already been put into the list of contained photos
     String containedPhotoUri = "contained photo uri";
@@ -388,14 +392,14 @@ public class GoogleMediaExporterTest {
   @Test
   public void testGetGoogleMediaItemSucceeds() throws IOException, InvalidTokenException, PermissionDeniedException {
     String mediaItemID = "media_id";
-    when(photosInterface.getMediaItem(any())).thenReturn(setUpSingleMediaItem(mediaItemID, mediaItemID, null));
+    MediaMetadata mediaMetadata = new MediaMetadata();
+    when(photosInterface.getMediaItem(any())).thenReturn(setUpSingleMediaItem(mediaItemID, mediaItemID, mediaMetadata));
 
     assertThat(retryingGoogleMediaExporter.getGoogleMediaItem(mediaItemID, mediaItemID, mediaItemID, authData)).isInstanceOf(GoogleMediaItem.class);
-
   }
 
   @Test
-  public void testExportPhotosContainer_photosRetrying() throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+  public void testExportPhotosContainer_photosRetrying() throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException, FailedToListAlbumsException, FailedToListMediaItemsException {
     String photoIdToFail1 = "photo3";
     String photoIdToFail2 = "photo5";
 
@@ -590,7 +594,8 @@ public class GoogleMediaExporterTest {
   }
 
   private static PhotoModel setUpSinglePhotoModel(String albumId, String dataId) {
-    return new PhotoModel("Title", "fetchableUrl", "description", "photo", dataId, albumId, false);
+    return new PhotoModel("Title", "fetchableUrl", "description",
+        "photo", dataId, albumId, false, new Date(1370420961000L));
   }
 
   /** Sets up a response for a single photo */
@@ -599,6 +604,7 @@ public class GoogleMediaExporterTest {
   private static GoogleMediaItem setUpSinglePhoto(String imageUri, String photoId) {
     MediaMetadata mediaMetadata = new MediaMetadata();
     mediaMetadata.setPhoto(new Photo());
+    mediaMetadata.setCreationTime("2022-09-01T20:25:38Z");
     GoogleMediaItem googleMediaItem =
         setUpSingleMediaItem(imageUri, photoId, mediaMetadata);
     googleMediaItem.setMimeType("image/jpeg");
@@ -609,6 +615,7 @@ public class GoogleMediaExporterTest {
   private static GoogleMediaItem setUpSingleVideo(String videoUri, String videoId) {
     MediaMetadata mediaMetadata = new MediaMetadata();
     mediaMetadata.setVideo(new Video());
+    mediaMetadata.setCreationTime("2022-09-01T20:25:38Z");
     GoogleMediaItem googleMediaItem =
         setUpSingleMediaItem(videoUri, videoId, mediaMetadata);
     googleMediaItem.setMimeType("video/mp4");
@@ -622,6 +629,7 @@ public class GoogleMediaExporterTest {
     googleMediaItem.setBaseUrl(mediaUri);
     googleMediaItem.setId(mediaId);
     googleMediaItem.setFilename(FILENAME);
+    mediaMetadata.setCreationTime("2022-09-01T20:25:38Z");
     googleMediaItem.setMediaMetadata(mediaMetadata);
     return googleMediaItem;
   }
