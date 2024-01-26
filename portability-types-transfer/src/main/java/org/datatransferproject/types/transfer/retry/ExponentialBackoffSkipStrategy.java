@@ -16,8 +16,8 @@
 
 package org.datatransferproject.types.transfer.retry;
 
-    import com.fasterxml.jackson.annotation.JsonProperty;
-    import com.google.common.base.Preconditions;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Preconditions;
 
 /**
  * {@link RetryStrategy} that uses an exponential backoff approach that allows exception to be skipped.
