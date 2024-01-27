@@ -33,7 +33,8 @@ public class ExponentialBackoffSkipStrategy implements RetryStrategy {
   @JsonProperty("identifier")
   private String identifier;
 
-  public ExponentialBackoffSkipStrategy(@JsonProperty("maxAttempts") int maxAttempts,
+  public ExponentialBackoffSkipStrategy(
+     @JsonProperty("maxAttempts") int maxAttempts,
       @JsonProperty("initialIntervalMillis") long initialIntervalMillis,
       @JsonProperty("multiplier") double multiplier,
       @JsonProperty("identifier") String identifier) {
