@@ -31,7 +31,8 @@ public class UniformRetrySkipStrategy implements RetryStrategy {
   @JsonProperty("identifier")
   private String identifier;
 
-  public UniformRetrySkipStrategy(@JsonProperty("maxAttempts") int maxAttempts,
+  public UniformRetrySkipStrategy(
+     @JsonProperty("maxAttempts") int maxAttempts,
       @JsonProperty("intervalMillis") long intervalMillis,
       @JsonProperty("identifier") String identifier) {
     Preconditions.checkArgument(maxAttempts > 0, "Max attempts should be > 0");
