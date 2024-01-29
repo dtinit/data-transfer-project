@@ -33,6 +33,8 @@ import org.datatransferproject.datatransfer.apple.photos.ApplePhotosImporter;
 import org.datatransferproject.datatransfer.apple.photos.AppleVideosImporter;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.common.models.DataVertical;
@@ -86,11 +88,15 @@ public class AppleTransferExtension implements TransferExtension {
       return;
     }
 
+    IdempotentImportExecutor idempotentImportExecutor = context.getService(
+            IdempotentImportExecutorExtension.class).getRetryingIdempotentImportExecutor(context);
+    boolean enableRetrying = context.getSetting("enableRetrying", false);
+
     importerMap =
         ImmutableMap.<DataVertical, Importer>builder()
             .put(PHOTOS, new ApplePhotosImporter(appCredentials, monitor))
             .put(VIDEOS, new AppleVideosImporter(appCredentials, monitor))
-            .put(MEDIA, new AppleMediaImporter(appCredentials, monitor))
+            .put(MEDIA, new AppleMediaImporter(appCredentials, monitor, idempotentImportExecutor, enableRetrying))
             .build();
 
     exporterMap = ImmutableMap.<DataVertical, Exporter>builder().build();
