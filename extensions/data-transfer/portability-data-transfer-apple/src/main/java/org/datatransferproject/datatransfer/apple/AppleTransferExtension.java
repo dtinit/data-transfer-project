@@ -31,6 +31,7 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.apple.photos.AppleMediaImporter;
 import org.datatransferproject.datatransfer.apple.photos.ApplePhotosImporter;
 import org.datatransferproject.datatransfer.apple.photos.AppleVideosImporter;
+import org.datatransferproject.datatransfer.apple.signals.AppleSignalHandler;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;

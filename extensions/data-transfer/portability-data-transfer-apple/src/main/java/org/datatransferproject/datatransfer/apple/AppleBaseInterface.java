@@ -40,7 +40,6 @@ import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.spi.transfer.types.UnconfirmedUserException;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
-import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.jetbrains.annotations.NotNull;
 import org.json.simple.JSONObject;
@@ -55,7 +54,7 @@ public interface AppleBaseInterface {
     String sendPostRequest(@NotNull String url, @NotNull final byte[] requestData) throws IOException, CopyExceptionWithFailureReason;
 
     default TokensAndUrlAuthData refreshTokens(final TokensAndUrlAuthData authData, final AppCredentials appCredentials, Monitor monitor)
-        throws IOException, InvalidTokenException {
+        throws InvalidTokenException {
 
         final String refreshToken = authData.getRefreshToken();
         final String refreshUrlString = authData.getTokenServerEncodedUrl();

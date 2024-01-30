@@ -19,10 +19,10 @@ package org.datatransferproject.datatransfer.apple;
 import com.google.common.base.Preconditions;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.apple.photos.AppleMediaInterface;
+import org.datatransferproject.datatransfer.apple.signals.AppleSignalInterface;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
@@ -57,5 +57,19 @@ public class AppleInterfaceFactory {
     Preconditions.checkNotNull(monitor, errorMessage, "monitor");
 
     return new AppleMediaInterface(authData, appCredentials, exportingService, monitor);
+  }
+
+  public synchronized AppleSignalInterface makeSignalInterface(
+    TokensAndUrlAuthData authData,
+    AppCredentials appCredentials,
+    String exportingService,
+    Monitor monitor) {
+
+    Preconditions.checkNotNull(authData, errorMessage, "authData");
+    Preconditions.checkNotNull(appCredentials, errorMessage, "appCredentials");
+    Preconditions.checkNotNull(exportingService, errorMessage, "exportingService");
+    Preconditions.checkNotNull(monitor, errorMessage, "monitor");
+
+    return new AppleSignalInterface(authData, appCredentials, exportingService, monitor);
   }
 }
