@@ -1,5 +1,7 @@
 package org.datatransferproject.datatransfer.google.mediaModels;
 
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -8,7 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
 import static java.lang.String.format;
 import static org.junit.Assert.assertTrue;
-import java.util.Date;
+import java.text.ParseException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -47,8 +49,9 @@ public class GoogleMediaItemTest {
     }
     assertTrue(serializable);
   }
+
   @Test
-  public void getMimeType_photoModel_mimeTypeFromFilename() throws Exception {
+  public void getMimeType_photoModel_mimeTypeFromFilename() throws ParseException {
     GoogleMediaItem photoMediaItem = getPhotoMediaItem();
     Map<String, String> filenameToMimeTypeMap = Map.of(
         "file.jpg", "image/jpeg",
@@ -68,7 +71,7 @@ public class GoogleMediaItemTest {
   }
 
   @Test
-  public void getMimeType_videoModel_mimeTypeFromFilename() {
+  public void getMimeType_videoModel_mimeTypeFromFilename() throws ParseException{
     GoogleMediaItem videoMediaItem = getVideoMediaItem();
     Map<String, String> filenameToMimeTypeMap =
         Map.of(
@@ -85,14 +88,15 @@ public class GoogleMediaItemTest {
       videoMediaItem.setMimeType("INVALID_MIME");
       videoMediaItem.setFilename(entry.getKey().toString());
 
-      VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem);
+      VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(),
+          videoMediaItem);
 
       assertEquals(entry.getValue(), videoModel.getMimeType());
     }
   }
 
   @Test
-  public void getMimeType_photoModel_filenameMimeTypeIsNull() {
+  public void getMimeType_photoModel_filenameMimeTypeIsNull() throws ParseException{
     GoogleMediaItem photoMediaItem = getPhotoMediaItem();
     photoMediaItem.setFilename("file");
     photoMediaItem.setMimeType("image/webp");
@@ -103,7 +107,7 @@ public class GoogleMediaItemTest {
   }
 
   @Test
-  public void getMimeType_videoModel_filenameMimeTypeIsNull() {
+  public void getMimeType_videoModel_filenameMimeTypeIsNull() throws ParseException{
     GoogleMediaItem videoMediaItem = getVideoMediaItem();
     videoMediaItem.setFilename("file");
     videoMediaItem.setMimeType("video/webm");
@@ -114,7 +118,7 @@ public class GoogleMediaItemTest {
   }
 
   @Test
-  public void getMimeType_photoModel_nullMimeTypeReturnsDefault() {
+  public void getMimeType_photoModel_nullMimeTypeReturnsDefault() throws ParseException{
     GoogleMediaItem photoMediaItem = getPhotoMediaItem();
     photoMediaItem.setFilename("file");
     photoMediaItem.setMimeType(null);
@@ -126,7 +130,7 @@ public class GoogleMediaItemTest {
   }
 
   @Test
-  public void getMimeType_videoModel_nullMimeTypeReturnsDefault() {
+  public void getMimeType_videoModel_nullMimeTypeReturnsDefault() throws ParseException{
     GoogleMediaItem videoMediaItem = getVideoMediaItem();
     videoMediaItem.setFilename("file");
     videoMediaItem.setMimeType(null);
@@ -138,7 +142,7 @@ public class GoogleMediaItemTest {
   }
 
   @Test
-  public void getMimeType_photoModel_unsupportedFileExtension() {
+  public void getMimeType_photoModel_unsupportedFileExtension() throws ParseException{
     GoogleMediaItem photoMediaItem = getPhotoMediaItem();
     photoMediaItem.setFilename("file.avif");
     photoMediaItem.setMimeType("image/png");
@@ -149,16 +153,45 @@ public class GoogleMediaItemTest {
     assertEquals("image/png", photoModel.getMimeType());
   }
 
+  @Test
+  public void getUploadTime_videoModel() throws ParseException{
+    GoogleMediaItem videoMediaItem = getVideoMediaItem();
+    MediaMetadata metadata = new MediaMetadata();
+    metadata.setVideo(new Video());
+    // CreationTime in GoogleMediaItem is populated as uploadTime in our common models.
+    metadata.setCreationTime("2023-10-02T22:33:38Z");
+    videoMediaItem.setMediaMetadata(metadata);
+
+    VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem);
+
+    assertEquals("Mon Oct 02 22:33:38 UTC 2023", videoModel.getUploadedTime().toString());
+
+  }
+
+  @Test
+  public void getUploadTime_photoModel() throws ParseException{
+    GoogleMediaItem photoMediaItem = getPhotoMediaItem();
+    MediaMetadata metadata = new MediaMetadata();
+    metadata.setPhoto(new Photo());
+    // CreationTime in GoogleMediaItem is populated as uploadTime in our common models.
+    metadata.setCreationTime("2023-10-02T22:33:38Z");
+    photoMediaItem.setMediaMetadata(metadata);
+
+    PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem);
+
+    assertEquals("Mon Oct 02 22:33:38 UTC 2023", photoModel.getUploadedTime().toString());
+  }
+
   public static GoogleMediaItem getPhotoMediaItem() {
     MediaMetadata photoMetadata = new MediaMetadata();
     photoMetadata.setPhoto(new Photo());
+    photoMetadata.setCreationTime("2022-09-01T20:25:38Z");
 
     GoogleMediaItem photoMediaItem = new GoogleMediaItem();
     photoMediaItem.setMimeType("image/png");
     photoMediaItem.setDescription("Description");
     photoMediaItem.setFilename("filename.png");
     photoMediaItem.setBaseUrl("https://www.google.com");
-    photoMediaItem.setUploadedTime(new Date());
     photoMediaItem.setId("photo_id");
     photoMediaItem.setMediaMetadata(photoMetadata);
     return photoMediaItem;
@@ -167,13 +200,13 @@ public class GoogleMediaItemTest {
   public static GoogleMediaItem getVideoMediaItem() {
     MediaMetadata videoMetadata = new MediaMetadata();
     videoMetadata.setVideo(new Video());
+    videoMetadata.setCreationTime("2022-09-01T20:25:38Z");
 
     GoogleMediaItem videoMediaItem = new GoogleMediaItem();
     videoMediaItem.setMimeType("video/mp4");
     videoMediaItem.setDescription("Description");
     videoMediaItem.setFilename("filename.mp4");
     videoMediaItem.setBaseUrl("https://www.google.com");
-    videoMediaItem.setUploadedTime(new Date());
     videoMediaItem.setId("video_id");
     videoMediaItem.setMediaMetadata(videoMetadata);
     return videoMediaItem;

@@ -178,13 +178,11 @@ public class AppleMediaInterface implements AppleBaseInterface {
           totalSize += data.length;
 
           if (totalSize > ApplePhotosConstants.maxMediaTransferByteSize) {
-            monitor.severe(
-              () -> "file too large to import to Apple: ",
-              AuditKeys.dataId, dataId,
-              AuditKeys.downloadURL, downloadURL,
-              authorizeUploadResponse.getUploadUrl());
             uploadClient.completeUpload();
-            throw new AppleContentException("file too large to import to Apple");
+            throw new AppleContentException(getApplePhotosImportThrowingMessage("file too large to import to Apple", ImmutableMap.of(
+                    AuditKeys.dataId, dataId,
+                    AuditKeys.downloadURL, downloadURL,
+                    AuditKeys.uploadUrl, authorizeUploadResponse.getUploadUrl())));
           }
 
           uploadClient.uploadBytes(data);
@@ -369,16 +367,11 @@ public class AppleMediaInterface implements AppleBaseInterface {
             mediaAlbum.getId(),
             mediaAlbum.getName(),
             () -> {
-              monitor.severe(
-                () -> "Error importing album: ",
-                AuditKeys.jobId, jobId,
-                AuditKeys.albumId, mediaAlbum.getId(),
-                AuditKeys.errorCode, newPhotoAlbumResponse.getStatus().getCode());
-
-              throw new IOException(
-                String.format(
-                  "Failed to create album, error code: %d",
-                  newPhotoAlbumResponse.getStatus().getCode()));
+              throw new IOException(getApplePhotosImportThrowingMessage("Fail to create album",
+                      ImmutableMap.of(
+                              AuditKeys.errorCode, String.valueOf(newPhotoAlbumResponse.getStatus().getCode()),
+                              AuditKeys.jobId, jobId.toString(),
+                              AuditKeys.albumId, mediaAlbum.getId())));
             });
         }
       }
@@ -457,16 +450,13 @@ public class AppleMediaInterface implements AppleBaseInterface {
           downloadableFile.getIdempotentId(),
           downloadableFile.getName(),
           () -> {
-            monitor.severe(
-              () -> "Fail to get upload url: ",
-              AuditKeys.jobId, jobId,
-              AuditKeys.dataId, getDataId(downloadableFile),
-              AuditKeys.albumId, downloadableFile.getFolderId(),
-              AuditKeys.statusCode, authorizeUploadResponse.getStatus().getCode());
             throw new IOException(
-              String.format(
-                "Fail to get upload url, error code: %d",
-                authorizeUploadResponse.getStatus().getCode()));
+                    getApplePhotosImportThrowingMessage(
+                            "Fail to get upload url", ImmutableMap.of(
+                                    AuditKeys.errorCode, String.valueOf(authorizeUploadResponse.getStatus().getCode()),
+                                    AuditKeys.jobId, jobId.toString(),
+                                    AuditKeys.dataId, getDataId(downloadableFile),
+                                    AuditKeys.albumId, downloadableFile.getFolderId())));
           });
       }
     }
@@ -491,12 +481,11 @@ public class AppleMediaInterface implements AppleBaseInterface {
           downloadableFile.getIdempotentId(),
           downloadableFile.getName(),
           () -> {
-            monitor.severe(
-              () -> "Fail to upload content: ",
-              AuditKeys.jobId, jobId,
-              AuditKeys.dataId, getDataId(downloadableFile),
-              AuditKeys.albumId, downloadableFile.getFolderId());
-            throw new IOException("Fail to upload content");
+            throw new IOException(getApplePhotosImportThrowingMessage("Fail to upload content", ImmutableMap.of(
+                    AuditKeys.jobId, jobId.toString(),
+                    AuditKeys.dataId, getDataId(downloadableFile),
+                    AuditKeys.albumId, downloadableFile.getFolderId()
+            )));
           });
       }
     }
@@ -568,16 +557,13 @@ public class AppleMediaInterface implements AppleBaseInterface {
           downloadableFile.getIdempotentId(),
           downloadableFile.getName(),
           () -> {
-            monitor.severe(
-              () -> "Fail to create media: ",
-              AuditKeys.jobId, jobId,
-              AuditKeys.dataId, getDataId(downloadableFile),
-              AuditKeys.albumId, downloadableFile.getFolderId(),
-              AuditKeys.statusCode, newMediaResponse.getStatus().getCode());
             throw new IOException(
-              String.format(
-                "Fail to create media, error code: %d",
-                newMediaResponse.getStatus().getCode()));
+                    getApplePhotosImportThrowingMessage(
+                "Fail to create media", ImmutableMap.of(
+                            AuditKeys.errorCode, String.valueOf(newMediaResponse.getStatus().getCode()),
+                            AuditKeys.jobId, jobId.toString(),
+                            AuditKeys.dataId, getDataId(downloadableFile),
+                            AuditKeys.albumId, downloadableFile.getFolderId())));
           });
       }
     }
@@ -622,5 +608,17 @@ public class AppleMediaInterface implements AppleBaseInterface {
       return ((VideoModel) downloadableFile).getDescription();
     }
     return null;
+  }
+
+  public static String getApplePhotosImportThrowingMessage(final String cause) {
+    return getApplePhotosImportThrowingMessage(cause, ImmutableMap.of());
+  }
+
+  public static String getApplePhotosImportThrowingMessage(final String cause, final ImmutableMap<AuditKeys, String> keyValuePairs) {
+    String finalLogMessage = String.format("%s " + cause, ApplePhotosConstants.APPLE_PHOTOS_IMPORT_ERROR_PREFIX);
+    for (AuditKeys key: keyValuePairs.keySet()){
+      finalLogMessage = String.format("%s, %s:%s", finalLogMessage, key.name(), keyValuePairs.get(key));
+    }
+    return finalLogMessage;
   }
 }
