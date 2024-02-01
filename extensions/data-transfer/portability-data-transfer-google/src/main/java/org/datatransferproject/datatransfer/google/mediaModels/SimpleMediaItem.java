@@ -26,8 +26,12 @@ public class SimpleMediaItem {
   @JsonProperty("uploadToken")
   private String uploadToken;
 
-  SimpleMediaItem(String uploadToken) {
+  @JsonProperty("fileName")
+  private String fileName;
+
+  SimpleMediaItem(String uploadToken, String fileName) {
     this.uploadToken = uploadToken;
+    this.fileName = fileName;
   }
 
   public String getUploadToken() {
