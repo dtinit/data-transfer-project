@@ -65,6 +65,7 @@ public enum AuditKeys {
   transactionId,
   updatedTimeInMs,
   uri,
+  uploadUrl,
   value,
   error,
 }
