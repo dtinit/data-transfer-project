@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +46,7 @@ import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 import org.junit.platform.commons.util.ReflectionUtils;
 import org.junit.platform.commons.util.ReflectionUtils.HierarchyTraversalMode;
 import org.mockito.stubbing.Answer;
@@ -266,7 +268,8 @@ public class AppleImporterTestBase {
               PHOTOS_DATAID_BASE + i,
               ALBUM_DATAID_BASE + i,
               false,
-              (String) null);
+                  null,
+                  new Date());
       photos.add(photoModel);
     }
     return photos;
@@ -284,7 +287,7 @@ public class AppleImporterTestBase {
               VIDEOS_DATAID_BASE + i,
               ALBUM_DATAID_BASE + i,
               false,
-              null);
+                  new Date());
       videos.add(videoModel);
     }
     return videos;
