@@ -16,12 +16,8 @@
 package org.datatransferproject.datatransfer.apple.photos;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.apache.http.HttpStatus.SC_INTERNAL_SERVER_ERROR;
 import static org.apache.http.HttpStatus.SC_OK;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -36,9 +32,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableList;
-import org.datatransferproject.datatransfer.apple.constants.ApplePhotosConstants;
 import org.datatransferproject.datatransfer.apple.photos.photosproto.PhotosProtocol;
-import org.datatransferproject.datatransfer.apple.photos.TestConstants;
 import org.datatransferproject.spi.transfer.idempotentexecutor.RetryingInMemoryIdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
@@ -137,7 +131,11 @@ public class AppleMediaImporterTest extends AppleImporterTestBase {
     verify(mediaInterface)
         .getUploadUrl(uuid.toString(), DataVertical.MEDIA.getDataType(), videosDataIds);
     verify(mediaInterface, times(2)).uploadContent(anyMap(), anyList());
-    verify(mediaInterface, times(2)).createMedia(anyString(), anyString(), anyList());
+    verify(mediaInterface, times(2)).createMedia(anyString(), anyString(), argThat(newMediaRequestList -> {
+      assertThat(newMediaRequestList).isNotNull();
+      assertThat(newMediaRequestList.stream().allMatch(newMediaRequest -> newMediaRequest.hasCreationDateInMillis())).isTrue();
+      return true;
+    }));
 
     // check the result
     assertThat(importResult.getCounts().isPresent()).isTrue();

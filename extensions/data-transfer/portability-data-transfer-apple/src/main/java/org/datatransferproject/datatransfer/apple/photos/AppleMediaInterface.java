@@ -226,6 +226,13 @@ public class AppleMediaInterface implements AppleBaseInterface {
     createMediaRequestBuilder.setDataClass(dataClass);
     createMediaRequestBuilder.addAllNewMediaRequests(newMediaRequestList);
     CreateMediaRequest createMediaRequest = createMediaRequestBuilder.build();
+
+    for (NewMediaRequest newMediaRequest: newMediaRequestList) {
+      monitor.info(() -> "AppleMediaImporter send data to Apple Photos Service",
+              AuditKeys.dataId, newMediaRequest.getDataId(),
+              AuditKeys.updatedTimeInMs, newMediaRequest.getCreationDateInMillis());
+    }
+
     final byte[] payload = createMediaRequest.toByteArray();
 
     final byte[] responseData = makePhotosServicePostRequest(baseUrl + "createmedia", payload);
