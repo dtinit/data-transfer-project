@@ -164,7 +164,7 @@ public class GoogleMediaItemTest {
 
     VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem);
 
-    assertEquals("Mon Oct 02 22:33:38 BST 2023", videoModel.getUploadedTime().toString());
+    assertEquals("Mon Oct 02 22:33:38 UTC 2023", videoModel.getUploadedTime().toString());
 
   }
 
@@ -179,7 +179,7 @@ public class GoogleMediaItemTest {
 
     PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem);
 
-    assertEquals("Mon Oct 02 22:33:38 BST 2023", photoModel.getUploadedTime().toString());
+    assertEquals("Mon Oct 02 22:33:38 UTC 2023", photoModel.getUploadedTime().toString());
   }
 
   public static GoogleMediaItem getPhotoMediaItem() {
