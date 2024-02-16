@@ -27,7 +27,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.datatransfer.apple.constants.AppleConstants;
 import org.datatransferproject.datatransfer.apple.constants.ApplePhotosConstants;
+import org.datatransferproject.datatransfer.apple.constants.Headers;
 import org.datatransferproject.datatransfer.apple.exceptions.AppleContentException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,6 +68,7 @@ public class StreamingContentClient {
       connection.setDoInput(true);
       connection.setChunkedStreamingMode(ApplePhotosConstants.contentRequestLength);
       connection.setRequestMethod("POST");
+      connection.setRequestProperty(Headers.OPERATION_GROUP.getValue(), AppleConstants.DTP_IMPORT_OPERATION_GROUP);
       outputStream = new DataOutputStream(connection.getOutputStream());
     } else {
       connection.setRequestMethod("GET");
