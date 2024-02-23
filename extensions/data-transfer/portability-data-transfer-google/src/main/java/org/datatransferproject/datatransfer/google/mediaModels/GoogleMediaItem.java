@@ -23,7 +23,8 @@ import java.io.File;
 import java.io.Serializable;
 import java.nio.file.Files;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Optional;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
@@ -38,8 +39,7 @@ public class GoogleMediaItem implements Serializable {
   private final static String DEFAULT_PHOTO_MIMETYPE = "image/jpg";
   private final static String DEFAULT_VIDEO_MIMETYPE = "video/mp4";
   // If Tika cannot detect the mimetype, it returns the binary mimetype. This can be considered null
-  private final static String DEFAULT_BINARY_MIMETYPE = "application/octet-stream";
-  private final static SimpleDateFormat CREATION_TIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+  private static final String DEFAULT_BINARY_MIMETYPE = "application/octet-stream";
 
   @JsonProperty("id")
   private String id;
@@ -70,10 +70,10 @@ public class GoogleMediaItem implements Serializable {
   public boolean isPhoto() {
     return this.getMediaMetadata().getPhoto() != null;
   }
+
   public boolean isVideo() {
     return this.getMediaMetadata().getVideo() != null;
   }
-
 
   public String getFetchableUrl() {
     if (this.isPhoto()) {
@@ -117,13 +117,24 @@ public class GoogleMediaItem implements Serializable {
         getCreationTime(mediaItem));
   }
 
-  private static Date getCreationTime(GoogleMediaItem mediaItem) throws ParseException  {
-    // cannot be empty or null based. Verified the backend code.
+  private static Date parseIso8601DateTime(String zonedIso8601DateTime) throws ParseException {
+    return Date.from(
+        DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(zonedIso8601DateTime, Instant::from));
+  }
+
+  private static Date getCreationTime(GoogleMediaItem mediaItem) throws ParseException {
+    // per https://developers.google.com/photos/library/reference/rest/v1/mediaItems#mediametadata
+    // we expect an iso 8601 date-time with a timezone/offset indicator.
+    // per verified backend code, this cannot be empty or null
+    final String zonedIso8601DateTime = mediaItem.getMediaMetadata().getCreationTime();
+
     try {
-      return CREATION_TIME_FORMAT.parse(mediaItem.getMediaMetadata().getCreationTime());
+      return parseIso8601DateTime(zonedIso8601DateTime);
     } catch (ParseException parseException) {
-      throw new ParseException(String.format("Failed to parse the string %s to get creationTime for "
-              + "MediaItem %s .", mediaItem.getId(), mediaItem.getMediaMetadata().getCreationTime()),
+      throw new ParseException(
+          String.format(
+              "Failed parsing creation time from \"%s\" for MediaItem %s",
+              mediaItem.getMediaMetadata().getCreationTime(), mediaItem.getId()),
           parseException.getErrorOffset());
     }
   }
