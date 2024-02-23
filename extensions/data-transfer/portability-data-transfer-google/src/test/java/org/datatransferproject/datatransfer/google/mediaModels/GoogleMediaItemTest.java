@@ -11,6 +11,8 @@ import java.io.ObjectOutputStream;
 import static java.lang.String.format;
 import static org.junit.Assert.assertTrue;
 import java.text.ParseException;
+import java.time.Instant;
+import java.util.Date;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -154,32 +156,34 @@ public class GoogleMediaItemTest {
   }
 
   @Test
-  public void getUploadTime_videoModel() throws ParseException{
+  public void getUploadTime_videoModel() throws ParseException {
+    String fakePhotosApiTimestamp = "2023-10-02T22:33:38Z";
     GoogleMediaItem videoMediaItem = getVideoMediaItem();
     MediaMetadata metadata = new MediaMetadata();
     metadata.setVideo(new Video());
     // CreationTime in GoogleMediaItem is populated as uploadTime in our common models.
-    metadata.setCreationTime("2023-10-02T22:33:38Z");
+    metadata.setCreationTime(fakePhotosApiTimestamp);
     videoMediaItem.setMediaMetadata(metadata);
 
     VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem);
 
-    assertEquals("Mon Oct 02 22:33:38 UTC 2023", videoModel.getUploadedTime().toString());
-
+    assertEquals(videoModel.getUploadedTime().toInstant(), Instant.parse(fakePhotosApiTimestamp));
   }
 
   @Test
-  public void getUploadTime_photoModel() throws ParseException{
+  public void getUploadTime_photoModel() throws ParseException {
+    String fakePhotosApiTimestamp = "2023-10-02T22:33:38Z";
+
     GoogleMediaItem photoMediaItem = getPhotoMediaItem();
     MediaMetadata metadata = new MediaMetadata();
     metadata.setPhoto(new Photo());
     // CreationTime in GoogleMediaItem is populated as uploadTime in our common models.
-    metadata.setCreationTime("2023-10-02T22:33:38Z");
+    metadata.setCreationTime(fakePhotosApiTimestamp);
     photoMediaItem.setMediaMetadata(metadata);
 
     PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem);
 
-    assertEquals("Mon Oct 02 22:33:38 UTC 2023", photoModel.getUploadedTime().toString());
+    assertEquals(photoModel.getUploadedTime().toInstant(), Instant.parse(fakePhotosApiTimestamp));
   }
 
   public static GoogleMediaItem getPhotoMediaItem() {
