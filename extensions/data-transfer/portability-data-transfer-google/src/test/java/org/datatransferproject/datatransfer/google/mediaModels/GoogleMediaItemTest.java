@@ -168,7 +168,7 @@ public class GoogleMediaItemTest {
     VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem);
 
     assertEquals(
-        videoModel.getUploadedTime().toInstant(),
+        videoModel.getUploadedTime(),
         GoogleMediaItem.parseIso8601DateTime(fakePhotosApiTimestamp));
   }
 
@@ -186,7 +186,7 @@ public class GoogleMediaItemTest {
     PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem);
 
     assertEquals(
-        photoModel.getUploadedTime().toInstant(),
+        photoModel.getUploadedTime(),
         GoogleMediaItem.parseIso8601DateTime(fakePhotosApiTimestamp));
   }
 
