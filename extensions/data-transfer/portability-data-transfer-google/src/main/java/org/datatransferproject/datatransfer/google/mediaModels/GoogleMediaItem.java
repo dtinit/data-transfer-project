@@ -20,21 +20,25 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.File;
 import java.io.Serializable;
+import java.nio.file.Files;
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Optional;
-import org.apache.tika.Tika;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.videos.VideoModel;
+import org.apache.tika.Tika;
+import com.google.common.base.Strings;
+
 
 /** Media item returned by queries to the Google Photos API. Represents what is stored by Google. */
 public class GoogleMediaItem implements Serializable {
-  public static final Tika TIKA = new Tika();
-  private static final String DEFAULT_PHOTO_MIMETYPE = "image/jpg";
-  private static final String DEFAULT_VIDEO_MIMETYPE = "video/mp4";
+  public final static Tika TIKA = new Tika();
+  private final static String DEFAULT_PHOTO_MIMETYPE = "image/jpg";
+  private final static String DEFAULT_VIDEO_MIMETYPE = "video/mp4";
   // If Tika cannot detect the mimetype, it returns the binary mimetype. This can be considered null
   private static final String DEFAULT_BINARY_MIMETYPE = "application/octet-stream";
 
@@ -83,8 +87,8 @@ public class GoogleMediaItem implements Serializable {
     }
   }
 
-  public static VideoModel convertToVideoModel(Optional<String> albumId, GoogleMediaItem mediaItem)
-      throws ParseException {
+  public static VideoModel convertToVideoModel(
+      Optional<String> albumId, GoogleMediaItem mediaItem) throws ParseException{
     Preconditions.checkArgument(mediaItem.isVideo());
 
     return new VideoModel(
@@ -98,8 +102,8 @@ public class GoogleMediaItem implements Serializable {
         getCreationTime(mediaItem));
   }
 
-  public static PhotoModel convertToPhotoModel(Optional<String> albumId, GoogleMediaItem mediaItem)
-      throws ParseException {
+  public static PhotoModel convertToPhotoModel (
+      Optional<String> albumId, GoogleMediaItem mediaItem) throws ParseException{
     Preconditions.checkArgument(mediaItem.isPhoto());
 
     return new PhotoModel(
@@ -109,8 +113,8 @@ public class GoogleMediaItem implements Serializable {
         getMimeType(mediaItem),
         mediaItem.getId(),
         albumId.orElse(null),
-        false /*inTempStore*/,
-        null /*sha1*/,
+        false  /*inTempStore*/,
+        null  /*sha1*/,
         getCreationTime(mediaItem));
   }
 

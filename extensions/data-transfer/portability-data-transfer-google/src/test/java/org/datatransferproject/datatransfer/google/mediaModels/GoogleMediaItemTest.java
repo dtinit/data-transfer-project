@@ -1,14 +1,18 @@
 package org.datatransferproject.datatransfer.google.mediaModels;
 
-import static java.lang.String.format;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectOutputStream;
+import static java.lang.String.format;
+import static org.junit.Assert.assertTrue;
 import java.text.ParseException;
+import java.time.Instant;
+import java.util.Date;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -17,38 +21,31 @@ import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.junit.Test;
 
 public class GoogleMediaItemTest {
-  private static final ObjectMapper mapper =
-      new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+  private static final ObjectMapper mapper = new ObjectMapper()
+      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
 
   @Test
   public void googleMediaItem_isSerializable() {
-    String photoStringJSON =
-        "{\"cameraMake\":\"testMake\", \"cameraModel\":\"testModel\","
-            + "\"focalLength\":\"5.0\", \"apertureFNumber\":\"2.0\", \"isoEquivalent\":\"8.0\", "
-            + "\"exposureTime\":\"testExposureTime\"}";
-    String videoStringJSON =
-        "{\"cameraMake\":\"testMake\", \"cameraModel\":\"testModel\","
-            + "\"fps\": \"30\", \"status\": \"READY\"}";
-    String mediaMetadataStringJSON =
-        format("{\"photo\": %s, \"video\": %s}", photoStringJSON, videoStringJSON);
-    String googleMediaItemStringJSON =
-        format(
-            "{\"id\":\"test_id\", \"description\":\"test description\","
-                + " \"baseUrl\":\"www.testUrl.com\", \"mimeType\":\"image/png\", \"mediaMetadata\":"
-                + " %s, \"filename\":\"filename.png\", \"productUrl\":\"www.testProductUrl.com\", "
-                + "\"uploadedTime\":\"1697153355456\"}",
-            mediaMetadataStringJSON);
+    String photoStringJSON = "{\"cameraMake\":\"testMake\", \"cameraModel\":\"testModel\","
+        + "\"focalLength\":\"5.0\", \"apertureFNumber\":\"2.0\", \"isoEquivalent\":\"8.0\", "
+        + "\"exposureTime\":\"testExposureTime\"}";
+    String videoStringJSON = "{\"cameraMake\":\"testMake\", \"cameraModel\":\"testModel\","
+        + "\"fps\": \"30\", \"status\": \"READY\"}";
+    String mediaMetadataStringJSON = format("{\"photo\": %s, \"video\": %s}", photoStringJSON, videoStringJSON);
+    String googleMediaItemStringJSON = format("{\"id\":\"test_id\", \"description\":\"test description\","
+        + " \"baseUrl\":\"www.testUrl.com\", \"mimeType\":\"image/png\", \"mediaMetadata\": %s,"
+        + " \"filename\":\"filename.png\", \"productUrl\":\"www.testProductUrl.com\", "
+        + "\"uploadedTime\":\"1697153355456\"}", mediaMetadataStringJSON);
 
     boolean serializable = true;
     // Turning an object into a byte array can only be done if the class is serializable.
     try {
-      GoogleMediaItem googleMediaItem =
-          mapper.readValue(googleMediaItemStringJSON, GoogleMediaItem.class);
+      GoogleMediaItem googleMediaItem = mapper.readValue(googleMediaItemStringJSON, GoogleMediaItem.class);
       ByteArrayOutputStream bos = new ByteArrayOutputStream();
       ObjectOutputStream oos = new ObjectOutputStream(bos);
       oos.writeObject(googleMediaItem);
       oos.flush();
-      byte[] data = bos.toByteArray();
+      byte [] data = bos.toByteArray();
     } catch (Exception e) {
       serializable = false;
     }
@@ -58,14 +55,14 @@ public class GoogleMediaItemTest {
   @Test
   public void getMimeType_photoModel_mimeTypeFromFilename() throws ParseException {
     GoogleMediaItem photoMediaItem = getPhotoMediaItem();
-    Map<String, String> filenameToMimeTypeMap =
-        Map.of(
-            "file.jpg", "image/jpeg",
-            "file.png", "image/png",
-            "file.gif", "image/gif",
-            "file.webp", "image/webp");
+    Map<String, String> filenameToMimeTypeMap = Map.of(
+        "file.jpg", "image/jpeg",
+        "file.png", "image/png",
+        "file.gif", "image/gif",
+        "file.webp", "image/webp"
+    );
 
-    for (Entry entry : filenameToMimeTypeMap.entrySet()) {
+    for (Entry entry: filenameToMimeTypeMap.entrySet()) {
       photoMediaItem.setMimeType("INVALID_MIME");
       photoMediaItem.setFilename(entry.getKey().toString());
 
@@ -76,7 +73,7 @@ public class GoogleMediaItemTest {
   }
 
   @Test
-  public void getMimeType_videoModel_mimeTypeFromFilename() throws ParseException {
+  public void getMimeType_videoModel_mimeTypeFromFilename() throws ParseException{
     GoogleMediaItem videoMediaItem = getVideoMediaItem();
     Map<String, String> filenameToMimeTypeMap =
         Map.of(
@@ -89,18 +86,19 @@ public class GoogleMediaItemTest {
             "file.wmv", "video/x-ms-wmv",
             "file.3gp", "video/3gpp");
 
-    for (Entry entry : filenameToMimeTypeMap.entrySet()) {
+    for (Entry entry: filenameToMimeTypeMap.entrySet()) {
       videoMediaItem.setMimeType("INVALID_MIME");
       videoMediaItem.setFilename(entry.getKey().toString());
 
-      VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem);
+      VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(),
+          videoMediaItem);
 
       assertEquals(entry.getValue(), videoModel.getMimeType());
     }
   }
 
   @Test
-  public void getMimeType_photoModel_filenameMimeTypeIsNull() throws ParseException {
+  public void getMimeType_photoModel_filenameMimeTypeIsNull() throws ParseException{
     GoogleMediaItem photoMediaItem = getPhotoMediaItem();
     photoMediaItem.setFilename("file");
     photoMediaItem.setMimeType("image/webp");
@@ -111,7 +109,7 @@ public class GoogleMediaItemTest {
   }
 
   @Test
-  public void getMimeType_videoModel_filenameMimeTypeIsNull() throws ParseException {
+  public void getMimeType_videoModel_filenameMimeTypeIsNull() throws ParseException{
     GoogleMediaItem videoMediaItem = getVideoMediaItem();
     videoMediaItem.setFilename("file");
     videoMediaItem.setMimeType("video/webm");
@@ -122,7 +120,7 @@ public class GoogleMediaItemTest {
   }
 
   @Test
-  public void getMimeType_photoModel_nullMimeTypeReturnsDefault() throws ParseException {
+  public void getMimeType_photoModel_nullMimeTypeReturnsDefault() throws ParseException{
     GoogleMediaItem photoMediaItem = getPhotoMediaItem();
     photoMediaItem.setFilename("file");
     photoMediaItem.setMimeType(null);
@@ -134,7 +132,7 @@ public class GoogleMediaItemTest {
   }
 
   @Test
-  public void getMimeType_videoModel_nullMimeTypeReturnsDefault() throws ParseException {
+  public void getMimeType_videoModel_nullMimeTypeReturnsDefault() throws ParseException{
     GoogleMediaItem videoMediaItem = getVideoMediaItem();
     videoMediaItem.setFilename("file");
     videoMediaItem.setMimeType(null);
@@ -146,7 +144,7 @@ public class GoogleMediaItemTest {
   }
 
   @Test
-  public void getMimeType_photoModel_unsupportedFileExtension() throws ParseException {
+  public void getMimeType_photoModel_unsupportedFileExtension() throws ParseException{
     GoogleMediaItem photoMediaItem = getPhotoMediaItem();
     photoMediaItem.setFilename("file.avif");
     photoMediaItem.setMimeType("image/png");
