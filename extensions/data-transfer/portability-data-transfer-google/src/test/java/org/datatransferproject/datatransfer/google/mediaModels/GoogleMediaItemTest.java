@@ -167,12 +167,13 @@ public class GoogleMediaItemTest {
 
     VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem);
 
-    assertEquals(videoModel.getUploadedTime().toInstant(), Instant.parse(fakePhotosApiTimestamp));
+    assertEquals(
+        videoModel.getUploadedTime(), GoogleMediaItem.parseIso8601DateTime(fakePhotosApiTimestamp));
   }
 
   @Test
   public void getUploadTime_photoModel() throws ParseException {
-    String fakePhotosApiTimestamp = "2023-10-02T22:33:38Z";
+    String fakePhotosApiTimestamp = "2014-10-02T15:01:23.045123456Z";
 
     GoogleMediaItem photoMediaItem = getPhotoMediaItem();
     MediaMetadata metadata = new MediaMetadata();
@@ -183,7 +184,8 @@ public class GoogleMediaItemTest {
 
     PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem);
 
-    assertEquals(photoModel.getUploadedTime().toInstant(), Instant.parse(fakePhotosApiTimestamp));
+    assertEquals(
+        photoModel.getUploadedTime(), GoogleMediaItem.parseIso8601DateTime(fakePhotosApiTimestamp));
   }
 
   public static GoogleMediaItem getPhotoMediaItem() {
