@@ -17,6 +17,8 @@ package org.datatransferproject.datatransfer.apple.photos;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.apache.http.HttpStatus.SC_OK;
+import static org.apache.http.HttpStatus.SC_INTERNAL_SERVER_ERROR;
+import static org.apache.http.HttpStatus.SC_SERVICE_UNAVAILABLE;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -32,6 +34,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.datatransferproject.datatransfer.apple.photos.photosproto.PhotosProtocol;
 import org.datatransferproject.spi.transfer.idempotentexecutor.RetryingInMemoryIdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
@@ -187,28 +190,14 @@ public class AppleMediaImporterTest extends AppleImporterTestBase {
     setUpGetUploadUrlResponse(dataIdToStatus);
     setUpCreateMediaResponse(dataIdToStatus);
 
-    // 2 photos will fail to upload content
-    final List<String> errorDataIds = Arrays.asList(PHOTOS_DATAID_BASE + 0, PHOTOS_DATAID_BASE + 1);
-
-    when(mediaInterface.uploadContent(any(Map.class), any(List.class)))
-            .thenAnswer(
-                    (Answer<Map<String, String>>)
-                            invocation -> {
-                              Object[] args = invocation.getArguments();
-                              final List<PhotosProtocol.AuthorizeUploadResponse> authorizeUploadResponseList =
-                                      (List<PhotosProtocol.AuthorizeUploadResponse>) args[1];
-                              final Map<String, String> dataIdToSingleFileUploadResponseMap =
-                                      authorizeUploadResponseList.stream()
-                                              .filter(
-                                                      authorizeUploadResponse ->
-                                                              !errorDataIds.contains(authorizeUploadResponse.getDataId()))
-                                              .collect(
-                                                      Collectors.toMap(
-                                                              PhotosProtocol.AuthorizeUploadResponse::getDataId,
-                                                              authorizeUploadResponse -> "SingleUploadContentResponse"));
-                              return dataIdToSingleFileUploadResponseMap;
-                            });
-
+    // Same fake data set as before, but with 2 of the existing photos failing somewhere in the
+    // download/upload sequence.
+    ImmutableMap<String, Integer> dataIdToStatusForDownupSeq = new ImmutableMap.Builder<String, Integer>()
+        .putAll(dataIdToStatus)
+        .put(PHOTOS_DATAID_BASE + 0, SC_INTERNAL_SERVER_ERROR)
+        .put(PHOTOS_DATAID_BASE + 1, SC_SERVICE_UNAVAILABLE)
+        .build();
+    setUpUploadContentResponse(dataIdToStatusForDownupSeq);
 
     MediaContainerResource mediaData = new MediaContainerResource(new ArrayList<>(), photos, new ArrayList<>());
 
