@@ -2,6 +2,13 @@ package org.datatransferproject.datatransfer.apple.photos;
 
 import com.google.auto.value.AutoOneOf;
 
+/**
+ * {@link AppleMediaInterface}'s internal representation of an download/upload sequence for a single
+ * file.
+ *
+ * <p>Either download or the upload could fail. Or they could both succeed. {@link #isOk} indicates
+ * which it is.
+ */
 @AutoOneOf(DownUpResult.Status.class)
 public abstract class DownUpResult {
   public enum Status {

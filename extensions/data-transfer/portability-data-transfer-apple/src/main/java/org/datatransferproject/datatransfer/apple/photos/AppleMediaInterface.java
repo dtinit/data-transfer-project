@@ -541,7 +541,7 @@ public class AppleMediaInterface implements AppleBaseInterface {
     }
 
     // download then upload content
-    final Map<String, String> dataIdToUploadResponse =
+    final Map<String, DownUpResult> dataIdToUploadResponse =
       uploadContent(
         dataIdToDownloadableFiles.values().stream()
           .collect(Collectors
