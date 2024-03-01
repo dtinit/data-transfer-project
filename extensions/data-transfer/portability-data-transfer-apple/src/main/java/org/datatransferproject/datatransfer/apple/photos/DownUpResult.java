@@ -23,7 +23,7 @@ public abstract class DownUpResult {
   }
 
   /**
-   * Data-ID returned from Apple servers, indicaing the upload start is successful.
+   * Data-ID returned from Apple servers, indicating the upload start is successful.
    *
    * <p>Sometimes called the "single file upload response"
    */
