@@ -192,7 +192,6 @@ public class AppleMediaImporterTest extends AppleImporterTestBase {
 
     // Same fake data set as before, but with 2 of the existing photos failing somewhere in the
     // download/upload sequence.
-    int countOfBadUpdownFiles = 2;
     ImmutableMap<String, Integer> dataIdToStatusForFailingDownupSeq = new ImmutableMap.Builder<String, Integer>()
         .put(PHOTOS_DATAID_BASE + 0, SC_INTERNAL_SERVER_ERROR)
         .put(PHOTOS_DATAID_BASE + 1, SC_SERVICE_UNAVAILABLE)
