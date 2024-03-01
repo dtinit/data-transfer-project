@@ -1,0 +1,75 @@
+syntax = "proto2";
+package musicproto;
+
+option java_package="org.datatransferproject.datatransfer.apple.music.musicproto";
+
+option java_outer_classname="MusicProtocol";
+
+message ImportMusicPlaylistsRequest {
+  optional string importSessionId       = 1;
+  optional string exportService         = 3;
+  repeated MusicPlaylist musicPlaylist  = 4;
+}
+
+message ImportMusicPlaylistsResponse {
+  optional string importSessionId       = 1;
+  repeated MusicPlaylistResponse musicPlaylistResponse = 2;
+}
+
+message MusicPlaylistResponse {
+  optional string id                    = 1;
+  optional string name                  = 2;
+  optional Status status                = 3;
+}
+
+message ImportMusicPlaylistTracksResponse {
+  optional string importSessionId       = 1;
+  repeated MusicPlaylistTrackResponse musicPlaylistTrackResponse = 2;
+}
+
+message MusicPlaylistTrackResponse {
+  optional string id                    = 1;
+  optional string name                  = 2;
+  optional Status status                = 3;
+}
+
+message ImportMusicPlaylistTracksRequest {
+  optional string importSessionId       = 1;
+  optional string exportService         = 2;
+  repeated MusicTrack musicTrack        = 3;
+}
+
+message MusicPlaylist {
+  optional string id                    = 1;
+  optional string title                 = 2;
+  optional string description           = 3;
+  optional int64 timeCreated            = 4;
+  optional int64 timeUpdated            = 5;
+}
+
+message MusicTrack {
+  optional string playlistId            = 1;
+  optional int32 playlistPosition       = 2;
+  optional string isrcCode              = 3;
+  optional string title                 = 4;
+  optional int64 durationMillis         = 5;
+  optional MusicAlbum musicAlbum        = 6;
+  repeated MusicArtist trackArtist      = 7;
+  optional bool isExplicit              = 8;
+}
+
+message MusicAlbum {
+  optional string icpnCode              = 1;
+  optional string title                 = 2;
+  repeated MusicArtist albumArtist      = 3;
+}
+
+message MusicArtist {
+  optional string name                  = 1;
+}
+
+message Status {
+  optional int32 code                   = 1;
+  optional string message               = 2;
+}
+
