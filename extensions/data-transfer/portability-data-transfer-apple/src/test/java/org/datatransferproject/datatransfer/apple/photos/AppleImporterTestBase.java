@@ -145,21 +145,32 @@ public class AppleImporterTestBase {
       throws IOException, CopyExceptionWithFailureReason {
     when(mediaInterface.uploadContent(any(Map.class), any(List.class)))
         .thenAnswer(
-            (Answer<Map<String, String>>)
+            (Answer<Map<String, DownUpResult>>)
                 invocation -> {
                   Object[] args = invocation.getArguments();
                   final List<PhotosProtocol.AuthorizeUploadResponse> authorizeUploadResponseList =
                       (List<PhotosProtocol.AuthorizeUploadResponse>) args[1];
-                  final Map<String, String> dataIdToSingleFileUploadResponseMap =
-                      authorizeUploadResponseList.stream()
-                          .filter(
-                              authorizeUploadResponse ->
-                                  datatIdToStatus.get(authorizeUploadResponse.getDataId()) == SC_OK)
-                          .collect(
-                              Collectors.toMap(
-                                  PhotosProtocol.AuthorizeUploadResponse::getDataId,
-                                  authorizeUploadResponse -> "SingleUploadContentResponse"));
-                  return dataIdToSingleFileUploadResponseMap;
+                  final Map<String, DownUpResult> fakeResponse = new HashMap<>();
+                  for (PhotosProtocol.AuthorizeUploadResponse authorizeUploadResponse :
+                      authorizeUploadResponseList) {
+                    int fakeServerHttpStatus =
+                        datatIdToStatus.get(authorizeUploadResponse.getDataId());
+                    if (fakeServerHttpStatus == SC_OK) {
+                      fakeResponse.put(
+                          authorizeUploadResponse.getDataId(),
+                          DownUpResult.ofDataId(
+                              "fake-SingleUploadContentResponse-for-"
+                                  + authorizeUploadResponse.getDataId()));
+                    } else {
+                      fakeResponse.put(
+                          authorizeUploadResponse.getDataId(),
+                          DownUpResult.ofError(
+                              new IOException(
+                                  String.format(
+                                      "fake server error with status %d", fakeServerHttpStatus))));
+                    }
+                  }
+                  return fakeResponse;
                 });
   }
 
