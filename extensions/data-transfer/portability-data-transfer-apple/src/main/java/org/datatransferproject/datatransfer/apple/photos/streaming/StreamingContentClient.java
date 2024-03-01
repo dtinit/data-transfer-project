@@ -54,7 +54,7 @@ public class StreamingContentClient implements AutoCloseable {
    *
    * @param url the url to upload or download from
    * @param mode indicates if this is an upload or a download session
-   * @throws IOException
+   * @throws AppleContentException
    */
   public StreamingContentClient(
       @NotNull final String url, @NotNull final StreamingMode mode, @NotNull Monitor monitor)
