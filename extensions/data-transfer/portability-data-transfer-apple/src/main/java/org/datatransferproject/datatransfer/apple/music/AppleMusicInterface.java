@@ -53,11 +53,13 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_INSUFFICIENT_STORAGE;
 import static org.apache.http.HttpStatus.SC_INTERNAL_SERVER_ERROR;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
@@ -319,6 +321,14 @@ public class AppleMusicInterface implements AppleBaseInterface {
 
             HttpClient client = HttpClient.newBuilder().build();
             response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
+
+            if (response == null) {
+                convertAndThrowException(new RuntimeException("No response from Apple Music Library Service"), SC_INTERNAL_SERVER_ERROR);
+            } else {
+                if (response.statusCode() > SC_CREATED) {
+                    convertAndThrowException(new RuntimeException("Apple Music Library Service Error: " + new String(response.body())), response.statusCode());
+                }
+            }
 
         }  catch (IOException | InterruptedException e) {
             monitor.severe(
