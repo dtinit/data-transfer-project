@@ -26,4 +26,6 @@ public class AppleConstants {
   public static final String DTP_SERVICE_ID = "Apple";
   public static final String APPLE_KEY = "APPLE_KEY";
   public static final String APPLE_SECRET = "APPLE_SECRET";
+
+  public static final String DTP_IMPORT_OPERATION_GROUP = "DTP%20Import";
 }

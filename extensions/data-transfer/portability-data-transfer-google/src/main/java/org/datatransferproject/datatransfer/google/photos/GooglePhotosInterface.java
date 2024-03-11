@@ -66,6 +66,7 @@ import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.spi.transfer.types.UploadErrorException;
 
+// TODO (#1307): Find a way to consolidate all 3P API interfaces
 public class GooglePhotosInterface {
 
   public static final String ERROR_HASH_MISMATCH = "Hash mismatch";

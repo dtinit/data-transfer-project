@@ -30,14 +30,14 @@ public class GoogleTrack {
   @JsonProperty("isrc")
   private String isrc;
 
-  @JsonProperty("release")
-  private GoogleRelease release;
+  @JsonProperty("releaseReference")
+  private GoogleRelease releaseReference;
 
   @JsonProperty("title")
   private String title;
 
-  @JsonProperty("artists")
-  private GoogleArtist[] artists;
+  @JsonProperty("artistReferences")
+  private GoogleArtist[] artistReferences;
 
   // Json format of google.protobuf.Duration is encoded as a string ends in the suffix "s".
   // 3 seconds and 1 microsecond should be expressed in JSON format as "3.000001s".
@@ -51,16 +51,16 @@ public class GoogleTrack {
     return isrc;
   }
 
-  public GoogleRelease getRelease() {
-    return release;
+  public GoogleRelease getReleaseReference() {
+    return releaseReference;
   }
 
   public String getTitle() {
     return title;
   }
 
-  public GoogleArtist[] getArtists() {
-    return artists;
+  public GoogleArtist[] getArtistReferences() {
+    return artistReferences;
   }
 
   public String getDuration() {
@@ -82,16 +82,16 @@ public class GoogleTrack {
     this.isrc = isrc;
   }
 
-  public void setRelease(GoogleRelease release) {
-    this.release = release;
+  public void setReleaseReference(GoogleRelease releaseReference) {
+    this.releaseReference = releaseReference;
   }
 
   public void setTitle(String title) {
     this.title = title;
   }
 
-  public void setArtists(GoogleArtist[] artists) {
-    this.artists = artists;
+  public void setArtistReferences(GoogleArtist[] artistReferences) {
+    this.artistReferences = artistReferences;
   }
 
   public void setDuration(String duration) {
@@ -112,9 +112,9 @@ public class GoogleTrack {
     }
     GoogleTrack that = (GoogleTrack) o;
     return Objects.equals(isrc, that.isrc)
-        && Objects.equals(release, that.release)
+        && Objects.equals(releaseReference, that.releaseReference)
         && Objects.equals(title, that.title)
-        && Arrays.equals(artists, that.artists)
+        && Arrays.equals(artistReferences, that.artistReferences)
         && Objects.equals(duration, that.duration)
         && Objects.equals(explicitType, that.explicitType);
   }
@@ -123,9 +123,9 @@ public class GoogleTrack {
   public int hashCode() {
     return Objects.hash(
         getIsrc(),
-        getRelease(),
+        getReleaseReference(),
         getTitle(),
-        Arrays.hashCode(getArtists()),
+        Arrays.hashCode(getArtistReferences()),
         getDuration(),
         getExplicitType());
   }

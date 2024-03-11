@@ -41,9 +41,9 @@ public class NewMediaItem {
     this.simpleMediaItem = simpleMediaItem;
   }
 
-  public NewMediaItem(String description, String uploadToken) {
+  public NewMediaItem(String description, String uploadToken, String fileName) {
     this.description = description;
-    this.simpleMediaItem = new SimpleMediaItem(uploadToken);
+    this.simpleMediaItem = new SimpleMediaItem(uploadToken, fileName);
   }
 
   public SimpleMediaItem getSimpleMediaItem() {

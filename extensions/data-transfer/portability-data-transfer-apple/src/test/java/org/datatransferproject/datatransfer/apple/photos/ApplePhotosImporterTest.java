@@ -94,8 +94,8 @@ public class ApplePhotosImporterTest extends AppleImporterTestBase {
                 .collect(Collectors.toList()));
 
     // check the result
-    assertThat(importResult.getCounts().isPresent());
-    assertThat(importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == albumCount);
+    assertThat(importResult.getCounts().isPresent()).isTrue();
+    assertThat(importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == albumCount).isTrue();
     final Map<String, Serializable> expectedKnownValue =
         photoAlbums.stream()
             .collect(
@@ -152,8 +152,8 @@ public class ApplePhotosImporterTest extends AppleImporterTestBase {
                             .collect(Collectors.toList()));
 
     // check the result
-    assertThat(importResult.getCounts().isPresent());
-    assertThat(importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == albumCount);
+    assertThat(importResult.getCounts().isPresent()).isTrue();
+    assertThat(importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == albumCount).isTrue();
     final Map<String, Serializable> expectedKnownValue =
             photoAlbums.stream()
                     .collect(
@@ -196,8 +196,8 @@ public class ApplePhotosImporterTest extends AppleImporterTestBase {
                 .collect(Collectors.toList()));
 
     // check the result
-    assertThat(importResult.getCounts().isPresent());
-    assertThat(importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == albumCount);
+    assertThat(importResult.getCounts().isPresent()).isTrue();
+    assertThat(importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == albumCount).isTrue();
     final Map<String, Serializable> expectedKnownValue =
         photoAlbums.stream()
             .collect(
@@ -242,9 +242,9 @@ public class ApplePhotosImporterTest extends AppleImporterTestBase {
                 .collect(Collectors.toList()));
 
     // check the result
-    assertThat(importResult.getCounts().isPresent());
+    assertThat(importResult.getCounts().isPresent()).isTrue();
     assertThat(
-        importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == albumCount - errorCount);
+        importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == albumCount - errorCount).isTrue();
     final Map<String, Serializable> expectedKnownValue =
         photoAlbums.stream()
             .filter(
@@ -264,7 +264,8 @@ public class ApplePhotosImporterTest extends AppleImporterTestBase {
               .setTitle(ALBUM_NAME_BASE + i)
               .setException(
                   String.format(
-                      "java.io.IOException: Failed to create album, error code: %d",
+                      "java.io.IOException: %s Fail to create album, errorCode:%d",
+                      ApplePhotosConstants.APPLE_PHOTOS_IMPORT_ERROR_PREFIX,
                       SC_INTERNAL_SERVER_ERROR))
               .build();
       expectedErrors.add(errorDetail);
@@ -303,10 +304,10 @@ public class ApplePhotosImporterTest extends AppleImporterTestBase {
     verify(mediaInterface).createMedia(anyString(), anyString(), anyList());
 
     // check the result
-    assertThat(importResult.getCounts().isPresent());
-    assertThat(importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == 0);
-    assertThat(importResult.getCounts().get().get(PHOTOS_COUNT_DATA_NAME) == photoCount);
-    assertThat(importResult.getBytes().get() == photoCount * PHOTOS_FILE_SIZE);
+    assertThat(importResult.getCounts().isPresent()).isTrue();
+    assertThat(importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == 0).isTrue();
+    assertThat(importResult.getCounts().get().get(PHOTOS_COUNT_DATA_NAME) == photoCount).isTrue();
+    assertThat(importResult.getBytes().get() == photoCount * PHOTOS_FILE_SIZE).isTrue();
 
     final Map<String, Serializable> expectedKnownValue =
         photos.stream()
@@ -358,10 +359,10 @@ public class ApplePhotosImporterTest extends AppleImporterTestBase {
     verify(mediaInterface, times(2)).createMedia(anyString(), anyString(), anyList());
 
     // check the result
-    assertThat(importResult.getCounts().isPresent());
-    assertThat(importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == 0);
-    assertThat(importResult.getCounts().get().get(PHOTOS_COUNT_DATA_NAME) == photoCount);
-    assertThat(importResult.getBytes().get() == photoCount * PHOTOS_FILE_SIZE);
+    assertThat(importResult.getCounts().isPresent()).isTrue();
+    assertThat(importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == 0).isTrue();
+    assertThat(importResult.getCounts().get().get(PHOTOS_COUNT_DATA_NAME) == photoCount).isTrue();
+    assertThat(importResult.getBytes().get() == photoCount * PHOTOS_FILE_SIZE).isTrue();
 
     final Map<String, Serializable> expectedKnownValue =
         photos.stream()
@@ -422,10 +423,10 @@ public class ApplePhotosImporterTest extends AppleImporterTestBase {
     verify(mediaInterface, times(2)).createMedia(anyString(), anyString(), anyList());
 
     // check the result
-    assertThat(importResult.getCounts().isPresent());
-    assertThat(importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == 0);
-    assertThat(importResult.getCounts().get().get(PHOTOS_COUNT_DATA_NAME) == successCount);
-    assertThat(importResult.getBytes().get() == successCount * PHOTOS_FILE_SIZE);
+    assertThat(importResult.getCounts().isPresent()).isTrue();
+    assertThat(importResult.getCounts().get().get(ALBUMS_COUNT_DATA_NAME) == 0).isTrue();
+    assertThat(importResult.getCounts().get().get(PHOTOS_COUNT_DATA_NAME) == successCount).isTrue();
+    assertThat(importResult.getBytes().get() == successCount * PHOTOS_FILE_SIZE).isTrue();
 
     final Map<String, Serializable> expectedKnownValue =
         photos.stream()
@@ -459,19 +460,22 @@ public class ApplePhotosImporterTest extends AppleImporterTestBase {
               .setTitle(photoModel.getTitle())
               .setException(
                   String.format(
-                      "java.io.IOException: Fail to get upload url, error code: %d",
+                      "java.io.IOException: %s Fail to get upload url, errorCode:%d",
+                      ApplePhotosConstants.APPLE_PHOTOS_IMPORT_ERROR_PREFIX,
                       SC_INTERNAL_SERVER_ERROR));
       if (i < errorCountGetUploadURL) {
         errorDetailBuilder.setException(
             String.format(
-                "java.io.IOException: Fail to get upload url, error code: %d",
+                "java.io.IOException: %s Fail to get upload url, errorCode:%d",
+                ApplePhotosConstants.APPLE_PHOTOS_IMPORT_ERROR_PREFIX,
                 SC_INTERNAL_SERVER_ERROR));
       } else if (i < errorCountGetUploadURL + errorCountGetUploadURL) {
-        errorDetailBuilder.setException("java.io.IOException: Fail to upload content");
+        errorDetailBuilder.setException(String.format("java.io.IOException: %s Fail to upload content", ApplePhotosConstants.APPLE_PHOTOS_IMPORT_ERROR_PREFIX));
       } else {
         errorDetailBuilder.setException(
             String.format(
-                "java.io.IOException: Fail to create media, error code: %d",
+                "java.io.IOException: %s Fail to create media, errorCode:%d",
+                ApplePhotosConstants.APPLE_PHOTOS_IMPORT_ERROR_PREFIX,
                 SC_INTERNAL_SERVER_ERROR));
       }
       expectedErrors.add(errorDetailBuilder.build());
