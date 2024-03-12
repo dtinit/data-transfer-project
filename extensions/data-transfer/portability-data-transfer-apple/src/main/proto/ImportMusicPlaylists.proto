@@ -12,25 +12,25 @@ message ImportMusicPlaylistsRequest {
 }
 
 message ImportMusicPlaylistsResponse {
-  optional string importSessionId       = 1;
+  optional string importSessionId       = 1; // as passed in the request
   repeated MusicPlaylistResponse musicPlaylistResponse = 2;
 }
 
 message MusicPlaylistResponse {
-  optional string id                    = 1;
-  optional string name                  = 2;
-  optional Status status                = 3;
+  optional string id                    = 1; // as passed in the request playlist
+  optional string name                  = 2; // as passed in the request playlist
+  optional Status status                = 3; // for this particular playlist
 }
 
 message ImportMusicPlaylistTracksResponse {
-  optional string importSessionId       = 1;
+  optional string importSessionId       = 1; // as passed in the request
   repeated MusicPlaylistTrackResponse musicPlaylistTrackResponse = 2;
 }
 
 message MusicPlaylistTrackResponse {
-  optional string id                    = 1;
-  optional string name                  = 2;
-  optional Status status                = 3;
+  optional string id                    = 1; // as passed in the request playlist item
+  optional string name                  = 2; // as passed in the request playlist item
+  optional Status status                = 3; // for this particular playlist item
 }
 
 message ImportMusicPlaylistTracksRequest {
