@@ -38,9 +38,12 @@ public class AppleMusicPlaylistConverter {
     public static List<MusicProtocol.MusicTrack> convertToAppleMusicPlaylistTracks(Collection<MusicPlaylistItem> musicPlaylistItems) {
         List<MusicProtocol.MusicTrack> convertedTracks = new ArrayList<>();
         for (MusicPlaylistItem item : musicPlaylistItems) {
-            if (item == null || StringUtils.isBlank(item.getPlaylistId())) {
-                // Skip null items and items without valid playlist ids
-                continue;
+            if (item == null) {
+                throw new IllegalStateException("MusicPlaylistItem cannot be null");
+            }
+
+            if (StringUtils.isBlank(item.getPlaylistId())) {
+                throw new IllegalStateException("MusicPlaylistIte::getPlaylistId cannot be blank");
             }
 
             MusicProtocol.MusicTrack.Builder trackBuilder = convertMusicRecordingToTrackBuilder(item.getTrack());
@@ -58,8 +61,7 @@ public class AppleMusicPlaylistConverter {
         List<MusicProtocol.MusicPlaylist> convertedPlaylists = new ArrayList<>();
         for (MusicPlaylist playlist : musicPlaylists) {
             if (playlist == null) {
-                // Skip null playlists
-                continue;
+                throw new IllegalStateException("MusicPlaylist cannot be null");
             }
 
             MusicProtocol.MusicPlaylist.Builder playlistBuilder = MusicProtocol.MusicPlaylist.newBuilder();

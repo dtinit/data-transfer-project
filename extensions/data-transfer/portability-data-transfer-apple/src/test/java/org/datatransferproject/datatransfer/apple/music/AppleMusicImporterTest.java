@@ -16,15 +16,6 @@
 
 package org.datatransferproject.datatransfer.apple.music;
 
-import static com.google.common.truth.Truth.assertThat;
-import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
-import static org.apache.http.HttpStatus.SC_OK;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.datatransferproject.api.launcher.Monitor;
@@ -34,7 +25,7 @@ import org.datatransferproject.datatransfer.apple.music.musicproto.MusicProtocol
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.InMemoryIdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
-import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
+import org.datatransferproject.spi.transfer.types.CopyException;
 import org.datatransferproject.types.common.models.music.MusicContainerResource;
 import org.datatransferproject.types.common.models.music.MusicGroup;
 import org.datatransferproject.types.common.models.music.MusicPlaylist;
@@ -43,7 +34,6 @@ import org.datatransferproject.types.common.models.music.MusicRecording;
 import org.datatransferproject.types.common.models.music.MusicRelease;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,6 +50,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import static com.google.common.truth.Truth.assertThat;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.http.HttpStatus.SC_OK;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class AppleMusicImporterTest {
 
@@ -161,7 +160,7 @@ public class AppleMusicImporterTest {
     }
 
     private void setUpImportPlaylistsBatchResponse(@Nonnull final Map<String, Integer> dataIdToStatus)
-            throws CopyExceptionWithFailureReason, IOException, URISyntaxException {
+            throws CopyException, IOException, URISyntaxException {
         when(appleMusicInterface.importPlaylistsBatch(any(String.class), any(List.class)))
                 .thenAnswer((Answer<MusicProtocol.ImportMusicPlaylistsResponse>)
                         invocation -> {

@@ -16,6 +16,7 @@
 
 package org.datatransferproject.datatransfer.apple.music;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
 import org.datatransferproject.api.launcher.Monitor;
@@ -23,11 +24,12 @@ import org.datatransferproject.datatransfer.apple.AppleBaseInterface;
 import org.datatransferproject.datatransfer.apple.constants.AppleMusicConstants;
 import org.datatransferproject.datatransfer.apple.constants.AuditKeys;
 import org.datatransferproject.datatransfer.apple.constants.Headers;
-import org.datatransferproject.datatransfer.apple.exceptions.AppleHttpException;
+import org.datatransferproject.datatransfer.apple.exceptions.AppleHttpCopyException;
 import org.datatransferproject.datatransfer.apple.music.data.converters.AppleMusicPlaylistConverter;
 import org.datatransferproject.datatransfer.apple.music.musicproto.MusicProtocol;
 import org.datatransferproject.datatransfer.apple.music.musicproto.MusicProtocol.ImportMusicPlaylistsRequest;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.types.CopyException;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
@@ -53,7 +55,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -101,6 +102,9 @@ public class AppleMusicInterface implements AppleBaseInterface {
     }
 
 
+    /**
+     * @return the total number of playlists acknowledged by the Apple Music Library Service in this page
+     */
     public int importPlaylists(final UUID jobId,
             IdempotentImportExecutor idempotentImportExecutor,
             Collection<MusicPlaylist> musicPlaylists) throws Exception {
@@ -113,11 +117,13 @@ public class AppleMusicInterface implements AppleBaseInterface {
             MusicProtocol.ImportMusicPlaylistsResponse importMusicPlaylistsResponse = importPlaylistsBatch(jobId.toString(), batches.next());
 
             for (MusicProtocol.MusicPlaylistResponse playlistResponse : importMusicPlaylistsResponse.getMusicPlaylistResponseList()) {
+                String playlistId = playlistResponse.getId();
+                String playlistName = playlistResponse.getName();
                 if (playlistResponse.hasStatus() && playlistResponse.getStatus().getCode() == SC_OK) {
                     successPlaylistsCount.getAndIncrement();
                     idempotentImportExecutor.executeAndSwallowIOExceptions(
-                            playlistResponse.getId(),
-                            playlistResponse.getName(),
+                            playlistId,
+                            playlistName,
                             () -> {
                                 monitor.debug(
                                         () -> "Apple importing music playlist",
@@ -127,18 +133,19 @@ public class AppleMusicInterface implements AppleBaseInterface {
                             });
                 } else {
                     idempotentImportExecutor.executeAndSwallowIOExceptions(
-                            playlistResponse.getId(),
-                            playlistResponse.getName(),
+                            playlistId,
+                            playlistName,
                             () -> {
                                 monitor.severe(
-                                        () -> "Error importing playlist: ",
+                                        () -> "Error importing playlist to Apple Music: ",
                                         AuditKeys.jobId, jobId,
                                         AuditKeys.playlistId, playlistResponse.getId());
 
                                 throw new IOException(
                                         String.format(
-                                                "Failed to create playlist, error code: %d",
-                                                playlistResponse.getStatus().getCode()));
+                                                "Failed to create playlist in Apple Music, server's error code: %d, error message: %s",
+                                                playlistResponse.getStatus().getCode(),
+                                                playlistResponse.getStatus().getMessage()));
                             });
                 }
             }
@@ -146,8 +153,9 @@ public class AppleMusicInterface implements AppleBaseInterface {
         return successPlaylistsCount.get();
     }
 
+    @VisibleForTesting
     public MusicProtocol.ImportMusicPlaylistsResponse importPlaylistsBatch(final String jobId, List<MusicPlaylist> musicPlaylistsBatch)
-            throws IOException, CopyExceptionWithFailureReason, URISyntaxException {
+            throws IOException, CopyException, URISyntaxException {
         final ImportMusicPlaylistsRequest.Builder requestBuilder = ImportMusicPlaylistsRequest.newBuilder();
 
         List<MusicProtocol.MusicPlaylist> convertedMusicPlaylists = AppleMusicPlaylistConverter.convertToAppleMusicPlaylist(musicPlaylistsBatch);
@@ -162,7 +170,9 @@ public class AppleMusicInterface implements AppleBaseInterface {
         return MusicProtocol.ImportMusicPlaylistsResponse.parseFrom(responseBody);
     }
 
-
+    /**
+     * @return the total number of playlist tracks acknowledged by the Apple Music Library Service in this page
+     */
     public int importMusicPlaylistItems(
             final UUID jobId,
             IdempotentImportExecutor idempotentImportExecutor,
@@ -175,11 +185,13 @@ public class AppleMusicInterface implements AppleBaseInterface {
             MusicProtocol.ImportMusicPlaylistTracksResponse importMusicPlaylistTracksResponse = importMusicPlaylistItemsBatch(jobId.toString(), batches.next());
 
             for (MusicProtocol.MusicPlaylistTrackResponse trackResponse : importMusicPlaylistTracksResponse.getMusicPlaylistTrackResponseList()) {
+                String trackId = trackResponse.getId();
+                String trackName = trackResponse.getName();
                 if (trackResponse.hasStatus() && trackResponse.getStatus().getCode() == SC_OK) {
                     successItemsCount.getAndIncrement();
                     idempotentImportExecutor.executeAndSwallowIOExceptions(
-                            trackResponse.getId(),
-                            trackResponse.getName(),
+                            trackId,
+                            trackName,
                             () -> {
                                 monitor.debug(
                                         () -> "Apple importing music playlist track ",
@@ -189,8 +201,8 @@ public class AppleMusicInterface implements AppleBaseInterface {
                             });
                 } else {
                     idempotentImportExecutor.executeAndSwallowIOExceptions(
-                            trackResponse.getId(),
-                            trackResponse.getName(),
+                            trackId,
+                            trackName,
                             () -> {
                                 monitor.severe(
                                         () -> "Error importing playlist track: ",
@@ -199,8 +211,9 @@ public class AppleMusicInterface implements AppleBaseInterface {
 
                                 throw new IOException(
                                         String.format(
-                                                "Failed to import playlist track, error code: %d",
-                                                trackResponse.getStatus().getCode()));
+                                                "Failed to import playlist track, error code: %d, error message: %s",
+                                                trackResponse.getStatus().getCode(),
+                                                trackResponse.getStatus().getMessage()));
                             });
                 }
             }
@@ -208,8 +221,9 @@ public class AppleMusicInterface implements AppleBaseInterface {
         return successItemsCount.get();
     }
 
+    @VisibleForTesting
     public MusicProtocol.ImportMusicPlaylistTracksResponse importMusicPlaylistItemsBatch(final String jobId, List<MusicPlaylistItem> playlistItems)
-            throws CopyExceptionWithFailureReason, IOException, URISyntaxException {
+            throws CopyException, IOException, URISyntaxException {
 
         List<MusicProtocol.MusicTrack> convertedMusicPlaylistTracks = AppleMusicPlaylistConverter.convertToAppleMusicPlaylistTracks(playlistItems);
         final MusicProtocol.ImportMusicPlaylistTracksRequest.Builder requestBuilder = MusicProtocol.ImportMusicPlaylistTracksRequest.newBuilder();
@@ -225,14 +239,14 @@ public class AppleMusicInterface implements AppleBaseInterface {
         return MusicProtocol.ImportMusicPlaylistTracksResponse.parseFrom(responseBody);
     }
 
-    public byte[] sendPostRequest(@Nonnull final String url, @Nonnull final byte[] requestData)
-            throws IOException, URISyntaxException, CopyExceptionWithFailureReason {
-        HttpRequest.Builder requestBuilder = createMusicImportRequest(url, requestData);
+    private byte[] sendPostRequest(@Nonnull final String url, @Nonnull final byte[] requestData)
+            throws URISyntaxException, CopyException {
+        HttpRequest.Builder requestBuilder = createMusicImportRequest(new URI(url), requestData);
         return makeMusicServiceRequest(requestBuilder);
     }
 
-    public byte[] makeMusicServiceRequest(@Nonnull final HttpRequest.Builder requestBuilder)
-            throws IOException, CopyExceptionWithFailureReason {
+    private byte[] makeMusicServiceRequest(@Nonnull final HttpRequest.Builder requestBuilder)
+            throws CopyException {
 
         byte[] responseByteArray;
         try {
@@ -249,7 +263,7 @@ public class AppleMusicInterface implements AppleBaseInterface {
         return responseByteArray;
     }
 
-    private void refreshTokens() throws InvalidTokenException {
+    private void refreshTokens() throws CopyException {
         final String refreshToken = authData.getRefreshToken();
         final String refreshUrlString = authData.getTokenServerEncodedUrl();
         final String clientId = appCredentials.getKey();
@@ -266,41 +280,41 @@ public class AppleMusicInterface implements AppleBaseInterface {
         }
 
         try {
-            final HttpRequest.Builder refreshRequest = createRefreshTokensRequest(refreshUrlString, sj.toString());
+            final HttpRequest.Builder refreshRequest = createRefreshTokensRequest(new URI(refreshUrlString), sj.toString());
             final String responseString = new String(sendRequest(refreshRequest));
             final JSONParser parser = new JSONParser();
             final JSONObject json = (JSONObject) parser.parse(responseString);
             final String accessToken = (String) json.get("access_token");
             this.authData = new TokensAndUrlAuthData(accessToken, refreshToken, refreshUrlString);
 
-            monitor.debug(() -> "Successfully refreshed token");
+            monitor.debug(() -> "Successfully refreshed Apple Music token");
 
-        } catch (ParseException | IOException | CopyExceptionWithFailureReason | URISyntaxException e) {
-            monitor.debug(() -> "Failed to refresh token", e);
-            throw new InvalidTokenException("Unable to refresh token", e);
+        } catch (ParseException | CopyException | URISyntaxException e) {
+            monitor.debug(() -> "Failed to refresh Apple Music token", e);
+            throw new InvalidTokenException("Unable to refresh Apple Music token", e);
         }
     }
 
-    private HttpRequest.Builder createRefreshTokensRequest(String refreshUrlString, String body) throws URISyntaxException {
-        HttpRequest.Builder requestBuilder = createBaseRequestBuilder(refreshUrlString);
+    private HttpRequest.Builder createRefreshTokensRequest(URI refreshUrl, String body) {
+        HttpRequest.Builder requestBuilder = createBaseRequestBuilder(refreshUrl);
         return requestBuilder
                 .POST(HttpRequest.BodyPublishers.ofString(body));
     }
 
-    private HttpRequest.Builder createMusicImportRequest(String url, byte[] body) throws URISyntaxException {
+    private HttpRequest.Builder createMusicImportRequest(URI url, byte[] body) {
         HttpRequest.Builder requestBuilder = createBaseRequestBuilder(url);
         return requestBuilder
                 .POST(HttpRequest.BodyPublishers.ofByteArray(body))
                 .header("Content-Type", "application/x-protobuf");
     }
 
-    private HttpRequest.Builder createBaseRequestBuilder(String url) throws URISyntaxException {
+    private HttpRequest.Builder createBaseRequestBuilder(URI url) {
         return HttpRequest.newBuilder()
-                .uri(new URI(url));
+                .uri(url);
     }
 
     private byte[] sendRequest(@Nonnull HttpRequest.Builder requestBuilder)
-            throws IOException, CopyExceptionWithFailureReason {
+            throws CopyException {
 
         final UUID jobId = JobMetadata.getJobId();
         final String appleRequestUUID = UUID.randomUUID().toString();
@@ -346,26 +360,26 @@ public class AppleMusicInterface implements AppleBaseInterface {
     }
 
     private void convertAndThrowException(@Nonnull final Exception e, final int statusCode)
-            throws CopyExceptionWithFailureReason, IOException {
+            throws CopyException {
 
         switch (statusCode) {
             case SC_OK:
                 break;
             case SC_UNAUTHORIZED:
-                throw new UnconfirmedUserException("Unauthorized Apple Music User", e);
+                throw new UnconfirmedUserException(String.format("http status code: %d: Unauthorized Apple Music User", statusCode), e);
             case SC_PRECONDITION_FAILED:
-                throw new PermissionDeniedException("Apple Music Library Service Permission Denied", e);
+                throw new PermissionDeniedException(String.format("http status code: %d: Apple Music Library Service Permission Denied", statusCode), e);
             case SC_NOT_FOUND:
-                throw new AppleHttpException("Apple Music Library Not Found", e, SC_NOT_FOUND);
+                throw new AppleHttpCopyException(String.format("http status code: %d: Apple Music Library Not Found", statusCode), e, SC_NOT_FOUND);
             case SC_INSUFFICIENT_STORAGE:
-                throw new DestinationMemoryFullException("Apple Music Library Storage Full", e);
+                throw new DestinationMemoryFullException(String.format("http status code: %d: Apple Music Library Storage Full", statusCode), e);
             case SC_SERVICE_UNAVAILABLE:
-                throw new IOException("Apple Music Library Service Unavailable", e);
+                throw new AppleHttpCopyException(String.format("http status code: %d: Apple Music Library Service Unavailable", statusCode), e, SC_SERVICE_UNAVAILABLE);
             case SC_BAD_REQUEST:
-                throw new IOException("Bad Apple Music Library Service Request", e);
+                throw new AppleHttpCopyException(String.format("http status code: %d: Bad Apple Music Library Service Request", statusCode), e, SC_BAD_REQUEST);
             case SC_INTERNAL_SERVER_ERROR:
             default:
-                throw new IOException("Apple Music Library Service Error", e);
+                throw new AppleHttpCopyException(String.format("http status code: %d: Unknown Apple Music Library Service Error", statusCode), e, SC_INTERNAL_SERVER_ERROR);
         }
     }
 }

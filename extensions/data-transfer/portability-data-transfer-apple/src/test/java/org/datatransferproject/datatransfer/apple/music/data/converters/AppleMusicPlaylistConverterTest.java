@@ -52,14 +52,18 @@ public class AppleMusicPlaylistConverterTest {
 
         List<MusicPlaylistItem> playlistItems = new ArrayList<>();
         playlistItems.add(musicPlaylistItem);
-        playlistItems.add(null);
 
-        // One null playlist item
-        List<MusicProtocol.MusicTrack> oneNullMusicTracks = AppleMusicPlaylistConverter.convertToAppleMusicPlaylistTracks(playlistItems);
-        Assertions.assertNotNull(oneNullMusicTracks);
-        Assertions.assertFalse(oneNullMusicTracks.isEmpty());
-        Assertions.assertEquals(oneNullMusicTracks.size(), 1);
-        MusicProtocol.MusicTrack validMusicTrack = oneNullMusicTracks.get(0);
+        // Null playlist
+        List<MusicPlaylistItem> nullPlaylistItems = new ArrayList<>();
+        nullPlaylistItems.add(null);
+        Assertions.assertThrows(IllegalStateException.class, () -> AppleMusicPlaylistConverter.convertToAppleMusicPlaylistTracks(nullPlaylistItems));
+
+        // One playlist item
+        List<MusicProtocol.MusicTrack> musicTracks = AppleMusicPlaylistConverter.convertToAppleMusicPlaylistTracks(playlistItems);
+        Assertions.assertNotNull(musicTracks);
+        Assertions.assertFalse(musicTracks.isEmpty());
+        Assertions.assertEquals(musicTracks.size(), 1);
+        MusicProtocol.MusicTrack validMusicTrack = musicTracks.get(0);
         Assertions.assertNotNull(validMusicTrack);
         Assertions.assertTrue(validMusicTrack.hasPlaylistId());
         Assertions.assertEquals(validMusicTrack.getPlaylistId(), expectedPlaylistId);
@@ -75,23 +79,7 @@ public class AppleMusicPlaylistConverterTest {
 
         // One playlist item with invalid playlist id
         MusicPlaylistItem invalidPlaylistIdItem = new MusicPlaylistItem(musicRecording, invalidPlaylistId, expectedOrder);
-        List<MusicProtocol.MusicTrack> oneInvalidMusicTrack = AppleMusicPlaylistConverter.convertToAppleMusicPlaylistTracks(List.of(musicPlaylistItem, invalidPlaylistIdItem));
-        Assertions.assertNotNull(oneInvalidMusicTrack);
-        Assertions.assertFalse(oneInvalidMusicTrack.isEmpty());
-        Assertions.assertEquals(oneInvalidMusicTrack.size(), 1);
-        MusicProtocol.MusicTrack validMusicTrack2 = oneInvalidMusicTrack.get(0);
-        Assertions.assertNotNull(validMusicTrack2);
-        Assertions.assertTrue(validMusicTrack2.hasPlaylistId());
-        Assertions.assertEquals(validMusicTrack2.getPlaylistId(), expectedPlaylistId);
-        Assertions.assertTrue(validMusicTrack2.hasPlaylistPosition());
-        Assertions.assertEquals(validMusicTrack2.getPlaylistPosition(), expectedOrder);
-        // Tested in testConvertMusicRecordingToTrackBuilder
-        Assertions.assertTrue(validMusicTrack2.hasMusicAlbum());
-        Assertions.assertTrue(validMusicTrack2.hasIsrcCode());
-        Assertions.assertTrue(validMusicTrack2.hasTitle());
-        Assertions.assertTrue(validMusicTrack2.hasDurationMillis());
-        Assertions.assertTrue(validMusicTrack2.hasIsExplicit());
-        Assertions.assertEquals(validMusicTrack2.getIsExplicit(), expectedIsExplicit);
+        Assertions.assertThrows(IllegalStateException.class, () -> AppleMusicPlaylistConverter.convertToAppleMusicPlaylistTracks(List.of(musicPlaylistItem, invalidPlaylistIdItem)));
     }
 
     @Test
@@ -107,15 +95,19 @@ public class AppleMusicPlaylistConverterTest {
         Assertions.assertNotNull(emptyCollectionMusicPlaylists);
         Assertions.assertTrue(emptyCollectionMusicPlaylists.isEmpty());
 
-        // One playlist and one null
+        // Null playlist
+        List<MusicPlaylist> nullPlaylists = new ArrayList<>();
+        nullPlaylists.add(null);
+        Assertions.assertThrows(IllegalStateException.class, () -> AppleMusicPlaylistConverter.convertToAppleMusicPlaylist(nullPlaylists));
+
+        // One playlist
         MusicPlaylist fullMusicPlaylist = new MusicPlaylist(expectedId1, expectedTitle1, expectedDescription1, expectedTimeCreated1, expectedTimeUpdated1);
         List<MusicPlaylist> musicPlaylists = new ArrayList<>();
-        musicPlaylists.add(null);
         musicPlaylists.add(fullMusicPlaylist);
-        List<MusicProtocol.MusicPlaylist> oneValidPlaylistMusicPlaylists = AppleMusicPlaylistConverter.convertToAppleMusicPlaylist(musicPlaylists);
-        Assertions.assertNotNull(oneValidPlaylistMusicPlaylists);
-        Assertions.assertFalse(oneValidPlaylistMusicPlaylists.isEmpty());
-        MusicProtocol.MusicPlaylist validMusicPlaylist = oneValidPlaylistMusicPlaylists.get(0);
+        List<MusicProtocol.MusicPlaylist> validPlaylistMusicPlaylists = AppleMusicPlaylistConverter.convertToAppleMusicPlaylist(musicPlaylists);
+        Assertions.assertNotNull(validPlaylistMusicPlaylists);
+        Assertions.assertFalse(validPlaylistMusicPlaylists.isEmpty());
+        MusicProtocol.MusicPlaylist validMusicPlaylist = validPlaylistMusicPlaylists.get(0);
         Assertions.assertNotNull(validMusicPlaylist);
         Assertions.assertTrue(validMusicPlaylist.hasId());
         Assertions.assertEquals(validMusicPlaylist.getId(), expectedId1);

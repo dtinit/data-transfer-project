@@ -16,17 +16,17 @@
 
 package org.datatransferproject.datatransfer.apple.exceptions;
 
-import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
+import org.datatransferproject.spi.transfer.types.CopyException;
 
 import javax.annotation.Nonnull;
 
 /**
  * A generic Exception for all Apple Transfer HTTP APIs.
  */
-public class AppleHttpException extends CopyExceptionWithFailureReason {
+public class AppleHttpCopyException extends CopyException {
   private final int responseStatus;
 
-  public AppleHttpException(@Nonnull final String message, @Nonnull final Throwable cause, final int responseStatus) {
+  public AppleHttpCopyException(@Nonnull final String message, @Nonnull final Throwable cause, final int responseStatus) {
     super(message, cause);
     this.responseStatus = responseStatus;
   }
@@ -36,7 +36,6 @@ public class AppleHttpException extends CopyExceptionWithFailureReason {
   }
 
   @Nonnull
-  @Override
   public String getFailureReason() {
     return getMessage();
   }
