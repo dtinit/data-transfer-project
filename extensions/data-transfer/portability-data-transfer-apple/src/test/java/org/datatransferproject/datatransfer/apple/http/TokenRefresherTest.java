@@ -18,7 +18,7 @@ package org.datatransferproject.datatransfer.apple.http;
 import static org.datatransferproject.datatransfer.apple.http.FakeSynchronousSubscriber.assertPublishes;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -60,11 +60,12 @@ public class TokenRefresherTest {
 
   @Test
   public void test_buildRefreshRequestUrlForAccessToken_detectsIllegalStates() {
-    assertTrue(false); /* DO NOT MERGE finish writing */
-    //  assertThrows(
-    //      IllegalStateException.class,
-    //      () -> {
-    //        return "";
-    //      }); /* DO NOT MERGE*/
+    TokensAndUrlAuthData fakeAuthData =
+        new TokensAndUrlAuthData(
+            "my_access_token", "my_refresh_token", "https://fake-server/auth-url");
+    AppCredentials emptyAppCredsMock = mock(AppCredentials.class);
+    assertThrows(
+        IllegalStateException.class,
+        () -> TokenRefresher.buildRefreshRequestUrlForAccessToken(fakeAuthData, emptyAppCredsMock));
   }
 }
