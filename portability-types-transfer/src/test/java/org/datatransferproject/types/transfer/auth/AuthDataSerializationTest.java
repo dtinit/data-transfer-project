@@ -1,6 +1,7 @@
 package org.datatransferproject.types.transfer.auth;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -87,5 +88,31 @@ public class AuthDataSerializationTest {
     final TokenSecretAuthData readAuthData = (TokenSecretAuthData) readValue;
     assertEquals(token, readAuthData.getToken(), "Expect token to be the same");
     assertEquals(secret, readAuthData.getSecret(), "Expect secret to be the same");
+  }
+
+  @Test
+  public void verifyGetTokenServerEncodedUri() throws IOException {
+    final String accessToken = "my_access_token";
+    final String refreshToken = "my_refresh_token";
+
+    final String fakeAuthUrl = "https://www.example.com/auth";
+    assertEquals(
+        new TokensAndUrlAuthData(accessToken, refreshToken, fakeAuthUrl)
+            .getTokenServerEncodedUri()
+            .toString(),
+        fakeAuthUrl);
+  }
+
+  @Test
+  public void verifyGetTokenServerEncodedUriDisallowsIlegalUrls() throws IOException {
+    final String accessToken = "my_access_token";
+    final String refreshToken = "my_refresh_token";
+    final String fakeMalformedAuthUrl = "https//www.example.com/auth"; // missing ":"
+    assertThrows(
+        IllegalStateException.class,
+        () ->
+            new TokensAndUrlAuthData(accessToken, refreshToken, fakeMalformedAuthUrl)
+                .getTokenServerEncodedUri()
+                .toURL());
   }
 }

@@ -1,14 +1,13 @@
 package org.datatransferproject.types.transfer.auth;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Strings.isNullOrEmpty;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
-
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -41,21 +40,39 @@ public class TokensAndUrlAuthData extends AuthData {
     return tokenServerEncodedUrl;
   }
 
+  // TODO(jzacsh, hgandhi90) all of this is internal validation logic; it should really probably
+  // happen at construction time; maybe there's a jackson annotation for this?
   @JsonIgnore
   public URI getTokenServerEncodedUri() throws IllegalStateException {
     final String urlString = getTokenServerEncodedUrl();
-    // TODO(jzacsh, hgandhi90) this should probably happen at construction time; maybe there's a jackson annotation for this?
     checkState(
         !isNullOrEmpty(urlString),
-        "malformed construction TokensAndUrlAuthData getTokenServerEncodedUrl() should be non-empty, but got \"%s\"",
+        "malformed construction TokensAndUrlAuthData getTokenServerEncodedUrl() should be"
+            + " non-empty, but got \"%s\"",
         urlString);
+    final URI uri;
     try {
-      return new URI(urlString);
+      uri = new URI(urlString);
     } catch (URISyntaxException e) {
       throw new IllegalStateException(
-          String.format("TokensAndUrlAuthData built with a malformed token-refresh URI (\"%s\")", urlString),
+          String.format(
+              "TokensAndUrlAuthData built with a malformed token-refresh URI (\"%s\")", urlString),
           e);
     }
+
+    // Run java.net.URL validation; we're returning a URI for flexibility/usage with other things,
+    // but ultimately these should really be (more specificaly) web URLs.
+    try {
+      uri.toURL();
+    } catch (IllegalArgumentException | MalformedURLException e) {
+      throw new IllegalStateException(
+          String.format(
+              "TokensAndUrlAuthData built with a token-refresh URI that's not a valid URL (\"%s\")",
+              urlString),
+          e);
+    }
+
+    return uri;
   }
 
   @JsonIgnore
