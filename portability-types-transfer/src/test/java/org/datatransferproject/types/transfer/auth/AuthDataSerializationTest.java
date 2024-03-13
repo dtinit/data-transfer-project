@@ -115,4 +115,33 @@ public class AuthDataSerializationTest {
                 .getTokenServerEncodedUri()
                 .toURL());
   }
+
+  @Test
+  public void verifyRebuildWithRefresh() throws IOException {
+    //
+    // Arrange
+    //
+    final String accessToken = "my_access_token";
+    final String refreshToken = "my_refresh_token";
+    final String authUrl = "https://www.example.com/auth";
+
+    final TokensAndUrlAuthData original =
+        new TokensAndUrlAuthData(accessToken, refreshToken, authUrl);
+    final String someOtherFakeToken = "foo-bar-baz";
+
+    //
+    // Act
+    //
+    final TokensAndUrlAuthData rebuilt = original.rebuildWithRefresh(someOtherFakeToken);
+
+    //
+    // Assert
+    //
+
+    // identical:
+    assertEquals(rebuilt.getRefreshToken(), original.getRefreshToken());
+    assertEquals(rebuilt.getTokenServerEncodedUrl(), original.getTokenServerEncodedUrl());
+    // accept for this variation:
+    assertEquals(rebuilt.getAccessToken(), someOtherFakeToken);
+  }
 }
