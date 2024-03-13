@@ -27,7 +27,6 @@ import java.util.StringJoiner;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-// DO NOT MERGE unit test
 public class TokenRefresher {
   private TokenRefresher() {} // prevent instantiation
 
