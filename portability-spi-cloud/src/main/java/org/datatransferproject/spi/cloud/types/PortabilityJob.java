@@ -43,6 +43,7 @@ public abstract class PortabilityJob {
   private static final String NUMBER_OF_FAILED_FILES_KEY = "NUM_FAILED_FILES";
   private static final String USER_TIMEZONE = "USER_TIMEZONE";
   private static final String USER_LOCALE = "USER_LOCALE";
+  private static final String USER_ALIAS = "USER_ALIAS";
 
   public static PortabilityJob.Builder builder() {
     Instant now = Instant.now();
@@ -96,6 +97,9 @@ public abstract class PortabilityJob {
     String userLocale =
         properties.containsKey(USER_LOCALE) ? (String) properties.get(USER_LOCALE) : null;
 
+    String userAlias =
+        properties.containsKey(USER_ALIAS) ? (String) properties.get(USER_ALIAS) : null;
+
     TransferMode transferMode =
         properties.containsKey(TRANSFER_MODE)
             ? TransferMode.valueOf((String) properties.get(TRANSFER_MODE))
@@ -129,6 +133,7 @@ public abstract class PortabilityJob {
                 .build())
         .setUserTimeZone(userTimeZone)
         .setUserLocale(userLocale)
+        .setUserAlias(userAlias)
         .setTransferMode(transferMode)
         .build();
   }
@@ -183,6 +188,10 @@ public abstract class PortabilityJob {
   @Nullable
   @JsonProperty("userLocale")
   public abstract String userLocale();
+
+  @Nullable
+  @JsonProperty("userAlias")
+  public abstract String userAlias();
 
   @Nullable
   @JsonProperty("transferMode")
@@ -244,6 +253,10 @@ public abstract class PortabilityJob {
 
     if (null != userLocale()) {
       builder.put(USER_LOCALE, userLocale());
+    }
+
+    if (null != userAlias()) {
+      builder.put(USER_ALIAS, userAlias());
     }
 
     if (null != transferMode()) {
@@ -339,6 +352,10 @@ public abstract class PortabilityJob {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("userLocale")
     public abstract Builder setUserLocale(String locale);
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("userAlias")
+    public abstract Builder setUserAlias(String alias);
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("transferMode")

@@ -28,6 +28,8 @@ import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.apple.AppleInterfaceFactory;
 import org.datatransferproject.datatransfer.apple.constants.ApplePhotosConstants;
+import org.datatransferproject.datatransfer.apple.constants.AuditKeys;
+import org.datatransferproject.datatransfer.apple.constants.Headers;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.RetryingInMemoryIdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
@@ -35,6 +37,8 @@ import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
+import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
@@ -82,6 +86,19 @@ public class AppleMediaImporter implements Importer<TokensAndUrlAuthData, MediaC
       throws Exception {
     if (data == null) {
       return ImportResult.OK;
+    }
+
+    // log
+    for (PhotoModel photoModel: data.getPhotos()) {
+      monitor.info(() -> "AppleMediaImporter received data",
+              AuditKeys.dataId, photoModel.getDataId(),
+              AuditKeys.updatedTimeInMs, photoModel.getUploadedTime());
+    }
+
+    for (VideoModel videoModel: data.getVideos()) {
+      monitor.info(() -> "AppleMediaImporter received data",
+              AuditKeys.dataId, videoModel.getDataId(),
+              AuditKeys.updatedTimeInMs, videoModel.getUploadedTime());
     }
 
     IdempotentImportExecutor executor =

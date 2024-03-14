@@ -20,22 +20,25 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.URL;
 import java.util.Arrays;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.datatransfer.apple.constants.AppleConstants;
 import org.datatransferproject.datatransfer.apple.constants.ApplePhotosConstants;
+import org.datatransferproject.datatransfer.apple.constants.Headers;
 import org.datatransferproject.datatransfer.apple.exceptions.AppleContentException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * An Http Client to handle uploading and downloading of the streaming content.
- */
-public class StreamingContentClient {
+/** An Http Client to handle uploading and downloading of the streaming content. */
+public class StreamingContentClient implements AutoCloseable {
   private HttpURLConnection connection;
   private DataOutputStream outputStream;
 
@@ -51,25 +54,70 @@ public class StreamingContentClient {
    *
    * @param url the url to upload or download from
    * @param mode indicates if this is an upload or a download session
-   * @throws IOException
+   * @throws AppleContentException
    */
   public StreamingContentClient(
       @NotNull final String url, @NotNull final StreamingMode mode, @NotNull Monitor monitor)
-      throws IOException {
+      throws AppleContentException {
     this.monitor = monitor;
-    URL urlObject = new URL(url);
-    connection = (HttpURLConnection) urlObject.openConnection();
+    URL urlObject;
+    try {
+      urlObject = new URL(url);
+    } catch (MalformedURLException e) {
+      throw new IllegalStateException(
+          String.format("Another DTP service or Apple API produced bad URL (%s)", url), e);
+    }
+
+    try {
+      connection = (HttpURLConnection) urlObject.openConnection();
+    } catch (IOException e) {
+      throw new AppleContentException(
+          String.format("[mode=%s] failed opening connection to server at %s", mode, url), e);
+    }
+
     connection.setRequestProperty("Transfer-Encoding", "chunked");
     connection.setRequestProperty("content-type", "application/octet-stream");
     connection.setDoOutput(true);
     if (mode.equals(StreamingMode.UPLOAD)) {
       connection.setDoInput(true);
       connection.setChunkedStreamingMode(ApplePhotosConstants.contentRequestLength);
-      connection.setRequestMethod("POST");
-      outputStream = new DataOutputStream(connection.getOutputStream());
+      setValidHttpMethod(connection, ValidHttpMethod.POST);
+      connection.setRequestProperty(
+          Headers.OPERATION_GROUP.getValue(), AppleConstants.DTP_IMPORT_OPERATION_GROUP);
+
+      OutputStream connectionOutputStream;
+      try {
+        connectionOutputStream = connection.getOutputStream();
+      } catch (IOException e) {
+        throw new AppleContentException(
+            String.format(
+                "[mode=%s] failed creating output stream to write to server at %s", mode, url),
+            e);
+      }
+      outputStream = new DataOutputStream(connectionOutputStream);
     } else {
-      connection.setRequestMethod("GET");
+      setValidHttpMethod(connection, ValidHttpMethod.GET);
     }
+  }
+
+  private enum ValidHttpMethod {
+    GET,
+    POST
+  }
+
+  private static void setValidHttpMethod(HttpURLConnection connection, ValidHttpMethod method)
+      throws IllegalStateException {
+    try {
+      connection.setRequestMethod(method.name());
+    } catch (ProtocolException e) {
+      throw new IllegalStateException(
+          String.format("failed setting %s as HTTP method", method.name()), e);
+    }
+  }
+
+  @Override
+  public void close() {
+    connection.disconnect();
   }
 
   /**
