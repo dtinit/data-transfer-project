@@ -16,12 +16,14 @@
 
 package org.datatransferproject.datatransfer.apple;
 
-import com.google.common.base.Preconditions;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+
+import com.google.common.base.Preconditions;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.datatransfer.apple.music.AppleMusicInterface;
 import org.datatransferproject.datatransfer.apple.photos.AppleMediaInterface;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
@@ -31,31 +33,55 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
  */
 public class AppleInterfaceFactory {
 
-  private static String errorMessage = "%s is required";
-  private Map<UUID, AppleBaseInterface> interfacesByAuthData = new HashMap<>();
+  private static final String ERROR_MESSAGE = "%s is required";
+  private final Map<UUID, AppleBaseInterface> interfacesByAuthData = new HashMap<>();
   public synchronized AppleMediaInterface getOrCreateMediaInterface(
     UUID jobId,
     TokensAndUrlAuthData authData,
     AppCredentials appCredentials,
     String exportingService,
     Monitor monitor) {
-    AppleMediaInterface mediaInterface = (AppleMediaInterface)interfacesByAuthData
+    return (AppleMediaInterface)interfacesByAuthData
       .computeIfAbsent(jobId, key ->  makeMediaInterface(authData, appCredentials,
         exportingService, monitor));
-    return mediaInterface;
   }
 
   protected synchronized AppleMediaInterface makeMediaInterface(
-    TokensAndUrlAuthData authData,
-    AppCredentials appCredentials,
-    String exportingService,
-    Monitor monitor) {
+          TokensAndUrlAuthData authData,
+          AppCredentials appCredentials,
+          String exportingService,
+          Monitor monitor) {
 
-    Preconditions.checkNotNull(authData, errorMessage, "authData");
-    Preconditions.checkNotNull(appCredentials, errorMessage, "appCredentials");
-    Preconditions.checkNotNull(exportingService, errorMessage, "exportingService");
-    Preconditions.checkNotNull(monitor, errorMessage, "monitor");
+    Objects.requireNonNull(authData);
+    Objects.requireNonNull(appCredentials);
+    Objects.requireNonNull(exportingService);
+    Objects.requireNonNull(monitor);
 
     return new AppleMediaInterface(authData, appCredentials, exportingService, monitor);
+  }
+
+  public synchronized AppleMusicInterface getOrCreateMusicInterface(
+          UUID jobId,
+          TokensAndUrlAuthData authData,
+          AppCredentials appCredentials,
+          String exportingService,
+          Monitor monitor) {
+    return (AppleMusicInterface) interfacesByAuthData
+            .computeIfAbsent(jobId, key -> makeMusicInterface(authData, appCredentials,
+                    exportingService, monitor));
+  }
+
+  protected synchronized  AppleMusicInterface makeMusicInterface(
+          TokensAndUrlAuthData authData,
+          AppCredentials appCredentials,
+          String exportingService,
+          Monitor monitor) {
+
+    Preconditions.checkNotNull(authData, ERROR_MESSAGE, "authData");
+    Preconditions.checkNotNull(appCredentials, ERROR_MESSAGE, "appCredentials");
+    Preconditions.checkNotNull(exportingService, ERROR_MESSAGE, "exportingService");
+    Preconditions.checkNotNull(monitor, ERROR_MESSAGE, "monitor");
+
+    return new AppleMusicInterface(authData, appCredentials, exportingService, monitor);
   }
 }
