@@ -35,6 +35,7 @@ import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.spi.transfer.types.UnconfirmedUserException;
+import org.datatransferproject.spi.transfer.types.UpstreamApiUnexpectedResponseException;
 import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.common.models.music.MusicPlaylist;
 import org.datatransferproject.types.common.models.music.MusicPlaylistItem;
@@ -52,14 +53,12 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_INSUFFICIENT_STORAGE;
 import static org.apache.http.HttpStatus.SC_INTERNAL_SERVER_ERROR;
@@ -68,6 +67,7 @@ import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.http.HttpStatus.SC_PRECONDITION_FAILED;
 import static org.apache.http.HttpStatus.SC_SERVICE_UNAVAILABLE;
 import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
+import static org.datatransferproject.datatransfer.apple.http.TokenRefresher.buildRefreshRequestUrlForAccessToken;
 
 /**
  * Apple Music implementation for the AppleBaseInterface.
@@ -264,41 +264,34 @@ public class AppleMusicInterface implements AppleBaseInterface {
     }
 
     private void refreshTokens() throws CopyException {
-        final String refreshToken = authData.getRefreshToken();
-        final String refreshUrlString = authData.getTokenServerEncodedUrl();
-        final String clientId = appCredentials.getKey();
-        final String clientSecret = appCredentials.getSecret();
-
-        final Map<String, String> parameters = new HashMap<>();
-        parameters.put("client_id", clientId);
-        parameters.put("client_secret", clientSecret);
-        parameters.put("grant_type", "refresh_token");
-        parameters.put("refresh_token", refreshToken);
-        StringJoiner sj = new StringJoiner("&");
-        for (Map.Entry<String, String> entry : parameters.entrySet()) {
-            sj.add(entry.getKey() + "=" + entry.getValue());
-        }
-
+        final HttpRequest.Builder refreshRequest = buildRefreshRequestUrlForAccessToken(
+            authData, appCredentials);
+        final String responseString;
         try {
-            final HttpRequest.Builder refreshRequest = createRefreshTokensRequest(new URI(refreshUrlString), sj.toString());
-            final String responseString = new String(sendRequest(refreshRequest));
-            final JSONParser parser = new JSONParser();
-            final JSONObject json = (JSONObject) parser.parse(responseString);
-            final String accessToken = (String) json.get("access_token");
-            this.authData = new TokensAndUrlAuthData(accessToken, refreshToken, refreshUrlString);
-
-            monitor.debug(() -> "Successfully refreshed Apple Music token");
-
-        } catch (ParseException | CopyException | URISyntaxException e) {
+            responseString = new String(sendRequest(refreshRequest));
+        } catch (CopyException e) {
+            // TODO(jzacsh, hgandhi90) CopyException should never happen; consider refactoring
+            // convertAndThrowException from the internals of low-level http logic like sendRequest
+            // and sendPost, so callers can interpret such errors instead.
+            // - eg: sendRequest -> sendHttpMETHODRequest throws IOException, InterruptedException
+            // - eg: sendAppleCopyRequest -> has convertAndThrowException logic
             monitor.debug(() -> "Failed to refresh Apple Music token", e);
             throw new InvalidTokenException("Unable to refresh Apple Music token", e);
         }
-    }
+        final JSONParser jsonParser = new JSONParser();
+        final String refreshedAccessToken;
+        try {
+            final JSONObject json = (JSONObject) jsonParser.parse(responseString);
+            refreshedAccessToken = checkNotNull(
+                (String) json.get("access_token"),
+                "apple oauth server response body missing access_token, despite OK response");
+        } catch (IllegalStateException | ParseException e) {
+          throw new UpstreamApiUnexpectedResponseException(String.format(
+                  "apple oauth server sent back malformed refresh token response for body:\n\"\"\"\n%s\"\"\"\n\"\"\"", responseString), e);
+        }
+        this.authData = this.authData.rebuildWithRefresh(refreshedAccessToken);
 
-    private HttpRequest.Builder createRefreshTokensRequest(URI refreshUrl, String body) {
-        HttpRequest.Builder requestBuilder = createBaseRequestBuilder(refreshUrl);
-        return requestBuilder
-                .POST(HttpRequest.BodyPublishers.ofString(body));
+        monitor.debug(() -> "Successfully refreshed Apple Music token");
     }
 
     private HttpRequest.Builder createMusicImportRequest(URI url, byte[] body) {
