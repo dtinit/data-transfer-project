@@ -250,12 +250,12 @@ public class AppleMusicInterface implements AppleBaseInterface {
 
         byte[] responseByteArray;
         try {
-            responseByteArray = sendRequest(requestBuilder);
+            responseByteArray = sendAppleCopyRequest(requestBuilder);
         } catch (CopyExceptionWithFailureReason e) {
             if (e instanceof UnconfirmedUserException
                     || e instanceof PermissionDeniedException) {
                 refreshTokens();
-                responseByteArray = sendRequest(requestBuilder);
+                responseByteArray = sendAppleCopyRequest(requestBuilder);
             } else {
                 throw e;
             }
@@ -263,31 +263,42 @@ public class AppleMusicInterface implements AppleBaseInterface {
         return responseByteArray;
     }
 
-    private void refreshTokens() throws CopyException {
-        final HttpRequest.Builder refreshRequest = buildRefreshRequestUrlForAccessToken(
-            authData, appCredentials);
+    private void refreshTokens() throws InvalidTokenException, UpstreamApiUnexpectedResponseException {
+        final HttpRequest.Builder refreshRequest =
+                buildRefreshRequestUrlForAccessToken(authData, appCredentials);
         final String responseString;
         try {
-            responseString = new String(sendRequest(refreshRequest));
+            responseString = new String(sendAppleCopyRequest(refreshRequest));
         } catch (CopyException e) {
-            // TODO(jzacsh, hgandhi90) CopyException should never happen; consider refactoring
-            // convertAndThrowException from the internals of low-level http logic like sendRequest
-            // and sendPost, so callers can interpret such errors instead.
-            // - eg: sendRequest -> sendHttpMETHODRequest throws IOException, InterruptedException
-            // - eg: sendAppleCopyRequest -> has convertAndThrowException logic
+            // TODO(jzacsh, hgandhi90) copious spare time make a lower-level request (than sendAppleCopyRequest is
+            // today) that can _ONLY_ throw Http exceptions or InvalidTokenException
+            //
+            // In the meantime: this is why we are catching all CopyExceptions and re-throw
+
             monitor.debug(() -> "Failed to refresh Apple Music token", e);
-            throw new InvalidTokenException("Unable to refresh Apple Music token", e);
+            if (e instanceof InvalidTokenException) {
+                throw new InvalidTokenException("Unable to refresh Apple Music token", e);
+            } else {
+                throw new UpstreamApiUnexpectedResponseException("Unknown Apple Music Library Service Error", e);
+            }
         }
         final JSONParser jsonParser = new JSONParser();
         final String refreshedAccessToken;
         try {
             final JSONObject json = (JSONObject) jsonParser.parse(responseString);
-            refreshedAccessToken = checkNotNull(
-                (String) json.get("access_token"),
-                "apple oauth server response body missing access_token, despite OK response");
+            refreshedAccessToken =
+                    checkNotNull(
+                            (String) json.get("access_token"),
+                            "apple oauth server response body missing access_token, despite OK response");
         } catch (IllegalStateException | ParseException e) {
-          throw new UpstreamApiUnexpectedResponseException(String.format(
-                  "apple oauth server sent back malformed refresh token response for body:\n\"\"\"\n%s\"\"\"\n\"\"\"", responseString), e);
+            throw new UpstreamApiUnexpectedResponseException(
+                    String.format(
+                            "apple oauth server sent back malformed refresh token response for body:\n"
+                                    + "\"\"\"\n"
+                                    + "%s\"\"\"\n"
+                                    + "\"\"\"",
+                            responseString),
+                    e);
         }
         this.authData = this.authData.rebuildWithRefresh(refreshedAccessToken);
 
@@ -306,7 +317,7 @@ public class AppleMusicInterface implements AppleBaseInterface {
                 .uri(url);
     }
 
-    private byte[] sendRequest(@Nonnull HttpRequest.Builder requestBuilder)
+    private byte[] sendAppleCopyRequest(@Nonnull HttpRequest.Builder requestBuilder)
             throws CopyException {
 
         final UUID jobId = JobMetadata.getJobId();
