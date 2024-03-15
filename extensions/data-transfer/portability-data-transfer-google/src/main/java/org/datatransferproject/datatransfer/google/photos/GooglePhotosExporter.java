@@ -27,17 +27,20 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
+import org.datatransferproject.datatransfer.google.common.GoogleErrorLogger;
+import org.datatransferproject.datatransfer.google.common.InvalidExportedItemException;
 import org.datatransferproject.datatransfer.google.mediaModels.AlbumListResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleAlbum;
 import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
-import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -54,8 +57,8 @@ import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
-// Not ready for prime-time!
 // TODO: fix duplication problems introduced by exporting all photos in 'root' directory first
 
 // TODO WARNING DO NOT MODIFY THIS CLASS! (unless you're willing to mirror your changes to
@@ -67,7 +70,7 @@ public class GooglePhotosExporter
   static final String PHOTO_TOKEN_PREFIX = "media:";
 
   private final GoogleCredentialFactory credentialFactory;
-  private final TemporaryPerJobDataStore jobStore;
+  private final JobStore jobStore;
   private final JsonFactory jsonFactory;
   private volatile GooglePhotosInterface photosInterface;
 
@@ -75,7 +78,7 @@ public class GooglePhotosExporter
 
   public GooglePhotosExporter(
       GoogleCredentialFactory credentialFactory,
-      TemporaryPerJobDataStore jobStore,
+      JobStore jobStore,
       JsonFactory jsonFactory,
       Monitor monitor) {
     this.credentialFactory = credentialFactory;
@@ -87,7 +90,7 @@ public class GooglePhotosExporter
   @VisibleForTesting
   GooglePhotosExporter(
       GoogleCredentialFactory credentialFactory,
-      TemporaryPerJobDataStore jobStore,
+      JobStore jobStore,
       JsonFactory jsonFactory,
       GooglePhotosInterface photosInterface,
       Monitor monitor) {
@@ -110,7 +113,7 @@ public class GooglePhotosExporter
       // if ExportInformation is a photos container, this is a request to only export the contents
       // in that container instead of the whole user library
       return exportPhotosContainer(
-          (PhotosContainerResource) exportInformation.get().getContainerResource(), authData);
+          (PhotosContainerResource) exportInformation.get().getContainerResource(), authData, jobId);
     }
 
     /*
@@ -151,7 +154,7 @@ public class GooglePhotosExporter
   }
 
   private ExportResult<PhotosContainerResource> exportPhotosContainer(
-      PhotosContainerResource container, TokensAndUrlAuthData authData)
+      PhotosContainerResource container, TokensAndUrlAuthData authData, UUID jobId)
       throws IOException, InvalidTokenException, PermissionDeniedException {
     ImmutableList.Builder<PhotoAlbum> albumBuilder = ImmutableList.builder();
     ImmutableList.Builder<PhotoModel> photosBuilder = ImmutableList.builder();
@@ -164,11 +167,23 @@ public class GooglePhotosExporter
       subResources.add(new IdOnlyContainerResource(googleAlbum.getId()));
     }
 
+    ImmutableList.Builder<ErrorDetail> errors = ImmutableList.builder();
     for (PhotoModel photo : container.getPhotos()) {
       GoogleMediaItem googleMediaItem =
           getOrCreatePhotosInterface(authData).getMediaItem(photo.getDataId());
-      photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), googleMediaItem));
+      try {
+        photosBuilder.add(GoogleMediaItem.convertToPhotoModel(Optional.empty(), googleMediaItem));
+      } catch(ParseException e) {
+        monitor.info(() -> "Parse exception occurred while converting photo, skipping this item. "
+            + "Failure message : %s ", e.getMessage());
+
+        errors.add(GoogleErrorLogger.createErrorDetail(
+            googleMediaItem.getId(), googleMediaItem.getFilename(), e, /* canSkip= */ true));
+      }
     }
+
+    // Log all the errors in 1 commit to DataStore
+    GoogleErrorLogger.logFailedItemErrors(jobStore, jobId, errors.build());
 
     PhotosContainerResource photosContainerResource =
         new PhotosContainerResource(albumBuilder.build(), photosBuilder.build());
@@ -285,24 +300,27 @@ public class GooglePhotosExporter
     do {
       albumListResponse =
           getOrCreatePhotosInterface(authData).listAlbums(Optional.ofNullable(albumToken));
-      if (albumListResponse.getAlbums() != null) {
-        for (GoogleAlbum album : albumListResponse.getAlbums()) {
-          String albumId = album.getId();
-          String photoToken = null;
-          do {
-            containedMediaSearchResponse =
-                getOrCreatePhotosInterface(authData)
-                    .listMediaItems(Optional.of(albumId), Optional.ofNullable(photoToken));
-            if (containedMediaSearchResponse.getMediaItems() != null) {
-              for (GoogleMediaItem mediaItem : containedMediaSearchResponse.getMediaItems()) {
-                tempMediaData.addContainedPhotoId(mediaItem.getId());
-              }
-            }
-            photoToken = containedMediaSearchResponse.getNextPageToken();
-          } while (photoToken != null);
-        }
-      }
       albumToken = albumListResponse.getNextPageToken();
+
+      if (albumListResponse.getAlbums() == null) {
+        continue;
+      }
+
+      for (GoogleAlbum album : albumListResponse.getAlbums()) {
+        String albumId = album.getId();
+        String photoToken = null;
+        do {
+          containedMediaSearchResponse =
+              getOrCreatePhotosInterface(authData)
+                  .listMediaItems(Optional.of(albumId), Optional.ofNullable(photoToken));
+          if (containedMediaSearchResponse.getMediaItems() != null) {
+            for (GoogleMediaItem mediaItem : containedMediaSearchResponse.getMediaItems()) {
+              tempMediaData.addContainedPhotoId(mediaItem.getId());
+            }
+          }
+          photoToken = containedMediaSearchResponse.getNextPageToken();
+        } while (photoToken != null);
+      }
     } while (albumToken != null);
 
     // TODO: if we see complaints about objects being too large for JobStore in other places, we
@@ -332,7 +350,6 @@ public class GooglePhotosExporter
 
   private List<PhotoModel> convertPhotosList(
       Optional<String> albumId, GoogleMediaItem[] mediaItems, UUID jobId) throws IOException {
-    List<PhotoModel> photos = new ArrayList<>(mediaItems.length);
 
     TempMediaData tempMediaData = null;
     InputStream stream = jobStore.getStream(jobId, createCacheKey()).getStream();
@@ -341,25 +358,64 @@ public class GooglePhotosExporter
       stream.close();
     }
 
+    return convertMediaItemsToPhotoModels(jobId, albumId, mediaItems, tempMediaData);
+  }
+
+  // Converts GoogleMediaItems into PhotoModel items and commits any failures to DataStore.
+  private List<PhotoModel> convertMediaItemsToPhotoModels(
+      UUID jobId,
+      Optional<String> albumId,
+      GoogleMediaItem[] mediaItems,
+      TempMediaData tempMediaData) throws IOException {
+    List<PhotoModel> photos = new ArrayList<>(mediaItems.length);
+    ImmutableList.Builder<ErrorDetail> errors = ImmutableList.builder();
+
     for (GoogleMediaItem mediaItem : mediaItems) {
-      if (mediaItem.getMediaMetadata().getPhoto() != null) {
-        // TODO: address videos
-        boolean shouldUpload = albumId.isPresent();
+      try {
+        PhotoModel photoModel = convertToPhotoModel(mediaItem, albumId, tempMediaData);
+        photos.add(photoModel);
 
-        if (tempMediaData != null) {
-          shouldUpload = shouldUpload || !tempMediaData.isContainedPhotoId(mediaItem.getId());
-        }
+        monitor.debug(
+            () -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
+      } catch (InvalidExportedItemException | ParseException e) {
+        monitor.info(
+            () ->
+                String.format(
+                    "%s: MediaItem (id: %s) failed to be converted to PhotoModel, and is being "
+                        + "skipped: %s",
+                    jobId, mediaItem.getId(),e));
 
-        if (shouldUpload) {
-          PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(albumId, mediaItem);
-          photos.add(photoModel);
-
-          monitor.debug(
-              () -> String.format("%s: Google exporting photo: %s", jobId, photoModel.getDataId()));
-        }
+        errors.add(GoogleErrorLogger.createErrorDetail(
+            mediaItem.getId(), mediaItem.getFilename(), e, /* canSkip= */ true));
       }
     }
+
+    // Log all the errors in 1 commit to DataStore
+    GoogleErrorLogger.logFailedItemErrors(jobStore, jobId, errors.build());
     return photos;
+  }
+
+  private static PhotoModel convertToPhotoModel(
+      GoogleMediaItem mediaItem,
+      Optional<String> albumId,
+      TempMediaData tempMediaData) throws InvalidExportedItemException, ParseException {
+    boolean shouldUpload = albumId.isPresent();
+    if (tempMediaData != null) {
+      shouldUpload = shouldUpload || !tempMediaData.isContainedPhotoId(mediaItem.getId());
+    }
+
+    if (!shouldUpload)
+      throw new InvalidExportedItemException(
+          String.format("Failed to convert media item (id: %s) into a PhotoModel", mediaItem.getId())
+      );
+
+    try {
+      return GoogleMediaItem.convertToPhotoModel(albumId, mediaItem);
+    } catch (IllegalArgumentException | ParseException e) {
+      throw new InvalidExportedItemException(
+          String.format("Failed to convert media item (id: %s) into a PhotoModel : %s", mediaItem.getId(), e)
+      );
+    }
   }
 
   private synchronized GooglePhotosInterface getOrCreatePhotosInterface(

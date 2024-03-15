@@ -149,9 +149,9 @@ public class GoogleTransferExtension implements TransferExtension {
     exporterBuilder.put(TASKS, new GoogleTasksExporter(credentialFactory, monitor));
     exporterBuilder.put(
         PHOTOS, new GooglePhotosExporter(credentialFactory, jobStore, jsonFactory, monitor));
-    exporterBuilder.put(VIDEOS, new GoogleVideosExporter(credentialFactory, jsonFactory));
+    exporterBuilder.put(VIDEOS, new GoogleVideosExporter(credentialFactory, jobStore, jsonFactory, monitor));
     exporterBuilder.put(
-        MEDIA, new GoogleMediaExporter(credentialFactory, jobStore, jsonFactory, monitor, idempotentImportExecutor, enableRetrying));
+        MEDIA, new GoogleMediaExporter(credentialFactory, jobStore, jsonFactory, monitor, /* photosInterface= */ null, idempotentImportExecutor, enableRetrying));
     exporterBuilder.put(MUSIC, new GoogleMusicExporter(credentialFactory, jsonFactory, monitor));
 
     exporterMap = exporterBuilder.build();

@@ -16,6 +16,7 @@
 
 package org.datatransferproject.datatransfer.apple.photos;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static org.apache.http.HttpStatus.SC_INSUFFICIENT_STORAGE;
@@ -168,21 +169,21 @@ public class AppleMediaInterface implements AppleBaseInterface {
   }
 
   // download from external server then upload to apple
-  public Map<String, String> uploadContent(
+  public Map<String, DownUpResult> uploadContent(
       @NotNull final Map<String, String> dataIdToDownloadURLMap,
       @NotNull final List<AuthorizeUploadResponse> authorizeUploadResponseList) {
-    final Map<String, String> dataIdToUploadResponseMap = new HashMap<>();
+    final Map<String, DownUpResult> dataIdToUploadResponseMap = new HashMap<>();
     for (AuthorizeUploadResponse authorizeUploadResponse : authorizeUploadResponseList) {
       final String dataId = authorizeUploadResponse.getDataId();
       final String downloadURL = dataIdToDownloadURLMap.get(dataId);
-      try {
-        final StreamingContentClient downloadClient =
-          new StreamingContentClient(
-            downloadURL, StreamingContentClient.StreamingMode.DOWNLOAD, monitor);
-        final StreamingContentClient uploadClient =
-          new StreamingContentClient(
-            authorizeUploadResponse.getUploadUrl(),
-            StreamingContentClient.StreamingMode.UPLOAD, monitor);
+      try (final StreamingContentClient downloadClient =
+              new StreamingContentClient(
+                  downloadURL, StreamingContentClient.StreamingMode.DOWNLOAD, monitor);
+          final StreamingContentClient uploadClient =
+              new StreamingContentClient(
+                  authorizeUploadResponse.getUploadUrl(),
+                  StreamingContentClient.StreamingMode.UPLOAD,
+                  monitor)) {
 
         final int maxRequestBytes = ApplePhotosConstants.contentRequestLength;
         int totalSize = 0;
@@ -192,13 +193,11 @@ public class AppleMediaInterface implements AppleBaseInterface {
           totalSize += data.length;
 
           if (totalSize > ApplePhotosConstants.maxMediaTransferByteSize) {
-            monitor.severe(
-              () -> "file too large to import to Apple: ",
-              AuditKeys.dataId, dataId,
-              AuditKeys.downloadURL, downloadURL,
-              authorizeUploadResponse.getUploadUrl());
             uploadClient.completeUpload();
-            throw new AppleContentException("file too large to import to Apple");
+            throw new AppleContentException(getApplePhotosImportThrowingMessage("file too large to import to Apple", ImmutableMap.of(
+                    AuditKeys.dataId, Optional.of(dataId),
+                    AuditKeys.downloadURL, Optional.of(downloadURL),
+                    AuditKeys.uploadUrl, Optional.of(authorizeUploadResponse.getUploadUrl()))));
           }
 
           uploadClient.uploadBytes(data);
@@ -207,9 +206,9 @@ public class AppleMediaInterface implements AppleBaseInterface {
           }
         }
         final String singleFileUploadResponse = uploadClient.completeUpload();
-        dataIdToUploadResponseMap.put(dataId, singleFileUploadResponse);
-      } catch (AppleContentException | IOException e) {
-        continue;
+        dataIdToUploadResponseMap.put(dataId, DownUpResult.ofDataId(singleFileUploadResponse));
+      } catch (AppleContentException e) {
+        dataIdToUploadResponseMap.put(dataId, DownUpResult.ofError(e));
       }
     }
     return dataIdToUploadResponseMap;
@@ -228,6 +227,13 @@ public class AppleMediaInterface implements AppleBaseInterface {
     createMediaRequestBuilder.setDataClass(dataClass);
     createMediaRequestBuilder.addAllNewMediaRequests(newMediaRequestList);
     CreateMediaRequest createMediaRequest = createMediaRequestBuilder.build();
+
+    for (NewMediaRequest newMediaRequest: newMediaRequestList) {
+      monitor.info(() -> "AppleMediaImporter send data to Apple Photos Service",
+              AuditKeys.dataId, newMediaRequest.getDataId(),
+              AuditKeys.updatedTimeInMs, newMediaRequest.getCreationDateInMillis());
+    }
+
     final byte[] payload = createMediaRequest.toByteArray();
 
     final byte[] responseData = makePhotosServicePostRequest(baseUrl + "createmedia", payload);
@@ -283,19 +289,19 @@ public class AppleMediaInterface implements AppleBaseInterface {
 
     switch (con.getResponseCode()) {
       case SC_UNAUTHORIZED:
-        throw new UnconfirmedUserException("Unauthorized iCloud User", e);
+        throw new UnconfirmedUserException(getApplePhotosImportThrowingMessage("Unauthorized iCloud User"), e);
       case SC_PRECONDITION_FAILED:
-        throw new PermissionDeniedException("Permission Denied", e);
+        throw new PermissionDeniedException(getApplePhotosImportThrowingMessage("Permission Denied"), e);
       case SC_NOT_FOUND:
-        throw new DestinationNotFoundException("iCloud Photos Library not found", e);
+        throw new DestinationNotFoundException(getApplePhotosImportThrowingMessage("iCloud Photos Library not found"), e);
       case SC_INSUFFICIENT_STORAGE:
-        throw new DestinationMemoryFullException("iCloud Storage is full", e);
+        throw new DestinationMemoryFullException(getApplePhotosImportThrowingMessage("iCloud Storage is full"), e);
       case SC_SERVICE_UNAVAILABLE:
-        throw new IOException("DTP import service unavailable", e);
+        throw new IOException(getApplePhotosImportThrowingMessage("DTP import service unavailable"), e);
       case SC_BAD_REQUEST:
-        throw new IOException("Bad request sent to iCloud Photos import api", e);
+        throw new IOException(getApplePhotosImportThrowingMessage("Bad request sent to iCloud Photos import api"), e);
       case SC_INTERNAL_SERVER_ERROR:
-        throw new IOException("Internal server error in iCloud Photos service", e);
+        throw new IOException(getApplePhotosImportThrowingMessage("Internal server error in iCloud Photos service"), e);
       case SC_OK:
         break;
       default:
@@ -323,7 +329,7 @@ public class AppleMediaInterface implements AppleBaseInterface {
     return responseData;
   }
 
-  private void refreshTokens() throws IOException, InvalidTokenException {
+  private void refreshTokens() throws InvalidTokenException {
     final String refreshToken = authData.getRefreshToken();
     final String refreshUrlString = authData.getTokenServerEncodedUrl();
     final String clientId = appCredentials.getKey();
@@ -347,13 +353,11 @@ public class AppleMediaInterface implements AppleBaseInterface {
       final String accessToken = (String) json.get("access_token");
       this.authData = new TokensAndUrlAuthData(accessToken, refreshToken, refreshUrlString);
 
-      monitor.debug(() -> "Successfully refreshed token");
+      monitor.debug(() -> "Successfully refreshed Apple token");
 
     } catch (ParseException | IOException | CopyExceptionWithFailureReason e) {
 
-      monitor.debug(() -> "Failed to refresh token", e);
-
-      throw new InvalidTokenException("Unable to refresh token", e);
+      throw new InvalidTokenException(getApplePhotosImportThrowingMessage("Unable to refresh Apple token"), e);
     }
   }
 
@@ -442,16 +446,11 @@ public class AppleMediaInterface implements AppleBaseInterface {
             mediaAlbum.getId(),
             mediaAlbum.getName(),
             () -> {
-              monitor.severe(
-                () -> "Error importing album: ",
-                AuditKeys.jobId, jobId,
-                AuditKeys.albumId, mediaAlbum.getId(),
-                AuditKeys.errorCode, newPhotoAlbumResponse.getStatus().getCode());
-
-              throw new IOException(
-                String.format(
-                  "Failed to create album, error code: %d",
-                  newPhotoAlbumResponse.getStatus().getCode()));
+              throw new IOException(getApplePhotosImportThrowingMessage("Fail to create album",
+                      ImmutableMap.of(
+                              AuditKeys.errorCode, Optional.of(String.valueOf(newPhotoAlbumResponse.getStatus().getCode())),
+                              AuditKeys.jobId, Optional.of(jobId.toString()),
+                              AuditKeys.albumId, Optional.of(mediaAlbum.getId()))));
             });
         }
       }
@@ -530,22 +529,19 @@ public class AppleMediaInterface implements AppleBaseInterface {
           downloadableFile.getIdempotentId(),
           downloadableFile.getName(),
           () -> {
-            monitor.severe(
-              () -> "Fail to get upload url: ",
-              AuditKeys.jobId, jobId,
-              AuditKeys.dataId, getDataId(downloadableFile),
-              AuditKeys.albumId, downloadableFile.getFolderId(),
-              AuditKeys.statusCode, authorizeUploadResponse.getStatus().getCode());
             throw new IOException(
-              String.format(
-                "Fail to get upload url, error code: %d",
-                authorizeUploadResponse.getStatus().getCode()));
+                    getApplePhotosImportThrowingMessage(
+                            "Fail to get upload url", ImmutableMap.of(
+                                    AuditKeys.errorCode, Optional.of(String.valueOf(authorizeUploadResponse.getStatus().getCode())),
+                                    AuditKeys.jobId, Optional.of(jobId.toString()),
+                                    AuditKeys.dataId, Optional.of(getDataId(downloadableFile)),
+                                    AuditKeys.albumId, Optional.of(downloadableFile.getFolderId()))));
           });
       }
     }
 
     // download then upload content
-    final Map<String, String> dataIdToUploadResponse =
+    final Map<String, DownUpResult> dataIdToUploadResponse =
       uploadContent(
         dataIdToDownloadableFiles.values().stream()
           .collect(Collectors
@@ -554,47 +550,48 @@ public class AppleMediaInterface implements AppleBaseInterface {
               DownloadableItem::getFetchableUrl)),
         successAuthorizeUploadResponseList);
 
-    // collect errors in upload content
-    for (PhotosProtocol.AuthorizeUploadResponse authorizeUploadResponse :
-        successAuthorizeUploadResponseList) {
-      final String dataId = authorizeUploadResponse.getDataId();
-      if (!dataIdToUploadResponse.containsKey(dataId)) {
-        final DownloadableFile downloadableFile = dataIdToDownloadableFiles.get(dataId);
-        idempotentImportExecutor.executeAndSwallowIOExceptions(
-          downloadableFile.getIdempotentId(),
-          downloadableFile.getName(),
-          () -> {
-            monitor.severe(
-              () -> "Fail to upload content: ",
-              AuditKeys.jobId, jobId,
-              AuditKeys.dataId, getDataId(downloadableFile),
-              AuditKeys.albumId, downloadableFile.getFolderId());
-            throw new IOException("Fail to upload content");
-          });
-      }
-    }
 
-    // generate newMediaRequest
-    final List<PhotosProtocol.NewMediaRequest> newMediaRequestList = new ArrayList<>();
-    for (String dataId : dataIdToUploadResponse.keySet()) {
+    // Tell DTP about errors and prep for NewMediaRequest calls for the successes
+    final List<NewMediaRequest> newMediaRequestList = new ArrayList<>();
+    for (AuthorizeUploadResponse authorizeUploadResponse : successAuthorizeUploadResponseList) {
+      final String dataId = authorizeUploadResponse.getDataId();
       final DownloadableFile downloadableFile = dataIdToDownloadableFiles.get(dataId);
-      final String singleFileUploadResponse =
-          dataIdToUploadResponse.get(dataId);
-      String filename = downloadableFile.getName();
-      String description = getDescription(downloadableFile);
-      String mediaType = downloadableFile.getMimeType();
-      String albumId = downloadableFile.getFolderId();
-      Long creationDateInMillis = getUploadedTime(downloadableFile);
-      newMediaRequestList.add(
-        AppleMediaInterface.createNewMediaRequest(
-          dataId,
-          filename,
-          description,
-          albumId,
-          mediaType,
-          null,
-          creationDateInMillis,
-          singleFileUploadResponse));
+      DownUpResult result =
+          checkNotNull(
+              dataIdToUploadResponse.get(dataId), "somehow missing result for dataid=%s", dataId);
+      // generate newMediaRequest
+      if (result.isOk()) {
+        String filename = downloadableFile.getName();
+        String description = getDescription(downloadableFile);
+        String mediaType = downloadableFile.getMimeType();
+        String albumId = downloadableFile.getFolderId();
+        Long creationDateInMillis = getUploadedTime(downloadableFile);
+        newMediaRequestList.add(
+            AppleMediaInterface.createNewMediaRequest(
+                dataId,
+                filename,
+                description,
+                albumId,
+                mediaType,
+                null,
+                creationDateInMillis,
+                result.successDataId()));
+      } else {
+        // collect errors in upload content
+        idempotentImportExecutor.executeAndSwallowIOExceptions(
+            downloadableFile.getIdempotentId(),
+            downloadableFile.getName(),
+            () -> {
+              throw new IOException(
+                  getApplePhotosImportThrowingMessage(
+                      "Fail to upload content",
+                      ImmutableMap.of(
+                          AuditKeys.jobId, Optional.of(jobId.toString()),
+                          AuditKeys.dataId, Optional.of(getDataId(downloadableFile)),
+                          AuditKeys.albumId, Optional.of(downloadableFile.getFolderId()))),
+                  result.error());
+            });
+      }
     }
 
     final PhotosProtocol.CreateMediaResponse createMediaResponse =
@@ -641,16 +638,13 @@ public class AppleMediaInterface implements AppleBaseInterface {
           downloadableFile.getIdempotentId(),
           downloadableFile.getName(),
           () -> {
-            monitor.severe(
-              () -> "Fail to create media: ",
-              AuditKeys.jobId, jobId,
-              AuditKeys.dataId, getDataId(downloadableFile),
-              AuditKeys.albumId, downloadableFile.getFolderId(),
-              AuditKeys.statusCode, newMediaResponse.getStatus().getCode());
             throw new IOException(
-              String.format(
-                "Fail to create media, error code: %d",
-                newMediaResponse.getStatus().getCode()));
+                    getApplePhotosImportThrowingMessage(
+                "Fail to create media", ImmutableMap.of(
+                            AuditKeys.errorCode, Optional.of(String.valueOf(newMediaResponse.getStatus().getCode())),
+                            AuditKeys.jobId, Optional.of(jobId.toString()),
+                            AuditKeys.dataId, Optional.of(getDataId(downloadableFile)),
+                            AuditKeys.albumId, Optional.of(downloadableFile.getFolderId()))));
           });
       }
     }
@@ -695,5 +689,19 @@ public class AppleMediaInterface implements AppleBaseInterface {
       return ((VideoModel) downloadableFile).getDescription();
     }
     return null;
+  }
+
+  public static String getApplePhotosImportThrowingMessage(final String cause) {
+    return getApplePhotosImportThrowingMessage(cause, ImmutableMap.of());
+  }
+
+  public static String getApplePhotosImportThrowingMessage(
+      final String cause,
+      final ImmutableMap<AuditKeys, Optional<String>> keyValuePairs) {
+    String finalLogMessage = String.format("%s " + cause, ApplePhotosConstants.APPLE_PHOTOS_IMPORT_ERROR_PREFIX);
+    for (AuditKeys key: keyValuePairs.keySet()){
+      finalLogMessage = String.format("%s, %s:%s", finalLogMessage, key.name(), keyValuePairs.get(key).orElse("[n/a]"));
+    }
+    return finalLogMessage;
   }
 }
