@@ -278,8 +278,7 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
             track.convertDurationToMillions(),
             new MusicRelease(
                 release.getIcpn(),
-                release.getTitle(),
-                createMusicGroups(release.getArtists())),
+                release.getTitle(),null),
             createMusicGroups(track.getArtistReferences()),
             "EXPLICIT_TYPE_EXPLICIT".equals(track.getExplicitType())),
         playlistId,
