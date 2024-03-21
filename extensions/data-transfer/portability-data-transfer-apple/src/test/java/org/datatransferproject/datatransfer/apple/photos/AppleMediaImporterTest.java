@@ -94,7 +94,7 @@ public class AppleMediaImporterTest extends AppleImporterTestBase {
                 Collectors.toMap(PhotoModel::getDataId, photoModel -> SC_OK));
 
     // set up videos
-    final int videoCount = 3;
+     final int videoCount = 3;
     final List<VideoModel> videos =
         createTestVideos(videoCount).stream().collect(Collectors.toList());
     dataIdToStatus.putAll(
@@ -160,7 +160,7 @@ public class AppleMediaImporterTest extends AppleImporterTestBase {
         videos.stream()
             .collect(
                 Collectors.toMap(
-                    videoModel -> videoModel.getDataId(),
+                    videoModel -> videoModel.getAlbumId() + "-" +videoModel.getDataId(),
                     videoModel -> MEDIA_RECORDID_BASE + videoModel.getDataId())));
     checkKnownValues(expectedKnownValue);
   }
