@@ -231,7 +231,11 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
       monitor.debug(
           () -> jobIdPrefix + "Finished import, copy iteration: " + copyIteration,
           EventCode.COPIER_FINISHED_IMPORT);
-    } catch (RetryException | RuntimeException e) {
+    } catch (RetryException e) {
+      if (!e.canSkip()) {
+        throw convertToCopyException(jobIdPrefix, "import", e);
+      }
+    } catch (RuntimeException e) {
       throw convertToCopyException(jobIdPrefix, "import", e);
     } finally {
       metricRecorder.importPageFinished(
