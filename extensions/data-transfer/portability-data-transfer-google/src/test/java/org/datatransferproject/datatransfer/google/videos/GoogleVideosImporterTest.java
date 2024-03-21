@@ -252,7 +252,7 @@ public class GoogleVideosImporterTest {
     assertEquals(32L, length,"Expected the number of bytes to be the one files of 32L.");
     assertEquals(1, executor.getErrors().size(),"Expected executor to have one error.");
     ErrorDetail errorDetail = executor.getErrors().iterator().next();
-    assertEquals("myId2", errorDetail.id());
+    assertEquals("null-myId2", errorDetail.id());
     assertThat(errorDetail.exception()).contains("Video item could not be created.");
   }
 
