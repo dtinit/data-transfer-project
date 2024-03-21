@@ -263,8 +263,6 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
 
     googleRelease.setIcpn(playlistItem.getTrack().getMusicRelease().getIcpnCode());
     googleRelease.setReleaseTitle(playlistItem.getTrack().getMusicRelease().getTitle());
-    googleRelease.setArtistTitles(
-        getArtists(playlistItem.getTrack().getMusicRelease().getByArtists()));
 
     googleTrack.setIsrc(playlistItem.getTrack().getIsrcCode());
     googleTrack.setTitle(playlistItem.getTrack().getTitle());
