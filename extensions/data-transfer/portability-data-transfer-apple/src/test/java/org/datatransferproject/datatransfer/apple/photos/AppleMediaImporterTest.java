@@ -94,7 +94,7 @@ public class AppleMediaImporterTest extends AppleImporterTestBase {
                 Collectors.toMap(PhotoModel::getDataId, photoModel -> SC_OK));
 
     // set up videos
-     final int videoCount = 3;
+    final int videoCount = 3;
     final List<VideoModel> videos =
         createTestVideos(videoCount).stream().collect(Collectors.toList());
     dataIdToStatus.putAll(
