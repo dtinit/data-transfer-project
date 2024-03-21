@@ -25,6 +25,8 @@ import java.util.Date;
 import java.util.stream.Collectors;
 import org.datatransferproject.types.common.DownloadableFile;
 import org.datatransferproject.types.common.models.MediaObject;
+import javax.annotation.Nonnull;
+
 
 public class VideoModel extends MediaObject implements DownloadableFile {
 
@@ -87,6 +89,12 @@ public class VideoModel extends MediaObject implements DownloadableFile {
   @Override
   public String getFetchableUrl() {
     return getContentUrl().toString();
+  }
+
+  @Nonnull
+  @Override
+  public String getIdempotentId() {
+    return getAlbumId() + "-" + getDataId();
   }
 
   @JsonIgnore(false)
