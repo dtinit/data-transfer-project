@@ -143,7 +143,7 @@ public class FlickrMediaImporter implements Importer<AuthData, MediaContainerRes
                 } catch (FlickrException e) {
                     if (e.getMessage().contains("Upload limit reached")) {
                         throw new DestinationMemoryFullException("Flickr destination memory reached", e);
-                    } else if (e.getMessage().contains("Video already in set")) {
+                    } else if (e.getMessage().contains("Photo already in set")) {
                         // This can happen if we got a server error on our end, but the request went through.
                         // When our retry strategy kicked in the request was complete and the photo already
                         // uploaded
