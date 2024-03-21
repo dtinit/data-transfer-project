@@ -668,6 +668,9 @@ public class AppleMediaInterface implements AppleBaseInterface {
     if (downloadableFile instanceof PhotoModel) {
       return ((PhotoModel) downloadableFile).getDataId();
     }
+    else if (downloadableFile instanceof VideoModel) {
+      return ((VideoModel) downloadableFile).getDataId();
+    }
     return downloadableFile.getIdempotentId();
   }
 
