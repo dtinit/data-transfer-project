@@ -160,7 +160,7 @@ public class AppleMediaImporterTest extends AppleImporterTestBase {
         videos.stream()
             .collect(
                 Collectors.toMap(
-                    videoModel -> videoModel.getDataId(),
+                    videoModel -> videoModel.getAlbumId() + "-" +videoModel.getDataId(),
                     videoModel -> MEDIA_RECORDID_BASE + videoModel.getDataId())));
     checkKnownValues(expectedKnownValue);
   }
