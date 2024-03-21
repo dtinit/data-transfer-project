@@ -72,7 +72,7 @@ public class AppleVideosImporterTest extends AppleImporterTestBase {
         videos.stream()
             .collect(
                 Collectors.toMap(
-                    VideoModel -> VideoModel.getDataId(),
+                      VideoModel -> VideoModel.getAlbumId() + "-" +VideoModel.getDataId(),
                     VideoModel -> MEDIA_RECORDID_BASE + VideoModel.getDataId()));
     checkKnownValues(expectedKnownValue);
   }
@@ -189,7 +189,7 @@ public class AppleVideosImporterTest extends AppleImporterTestBase {
                     datatIdToCreateMediaStatus.get(VideoModel.getDataId()) == SC_OK)
             .collect(
                 Collectors.toMap(
-                    video -> video.getDataId(),
+                    video -> video.getAlbumId() + "-" +video.getDataId(),
                     video -> VIDEOS_DATAID_BASE + video.getDataId()));
     checkKnownValues(expectedKnownValue);
 
