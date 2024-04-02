@@ -535,7 +535,7 @@ public class AppleMediaInterface implements AppleBaseInterface {
                                     AuditKeys.errorCode, Optional.of(String.valueOf(authorizeUploadResponse.getStatus().getCode())),
                                     AuditKeys.jobId, Optional.of(jobId.toString()),
                                     AuditKeys.dataId, Optional.of(getDataId(downloadableFile)),
-                                    AuditKeys.albumId, Optional.of(downloadableFile.getFolderId()))));
+                                    AuditKeys.albumId, Optional.ofNullable(downloadableFile.getFolderId()))));
           });
       }
     }
@@ -588,7 +588,7 @@ public class AppleMediaInterface implements AppleBaseInterface {
                       ImmutableMap.of(
                           AuditKeys.jobId, Optional.of(jobId.toString()),
                           AuditKeys.dataId, Optional.of(getDataId(downloadableFile)),
-                          AuditKeys.albumId, Optional.of(downloadableFile.getFolderId()))),
+                          AuditKeys.albumId, Optional.ofNullable(downloadableFile.getFolderId()))),
                   result.error());
             });
       }
@@ -644,7 +644,7 @@ public class AppleMediaInterface implements AppleBaseInterface {
                             AuditKeys.errorCode, Optional.of(String.valueOf(newMediaResponse.getStatus().getCode())),
                             AuditKeys.jobId, Optional.of(jobId.toString()),
                             AuditKeys.dataId, Optional.of(getDataId(downloadableFile)),
-                            AuditKeys.albumId, Optional.of(downloadableFile.getFolderId()))));
+                            AuditKeys.albumId, Optional.ofNullable(downloadableFile.getFolderId()))));
           });
       }
     }
