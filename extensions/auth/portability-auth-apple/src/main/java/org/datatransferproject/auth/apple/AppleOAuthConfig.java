@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.datatransferproject.types.common.models.DataVertical.MEDIA;
+import static org.datatransferproject.types.common.models.DataVertical.MUSIC;
 import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
 import static org.datatransferproject.types.common.models.DataVertical.VIDEOS;
 
@@ -34,8 +35,10 @@ import static org.datatransferproject.types.common.models.DataVertical.VIDEOS;
 public class AppleOAuthConfig implements OAuth2Config {
     private static final String PHOTOS_APPEND_ONLY = "photos-appendonly";
     private static final String VIDEOS_APPEND_ONLY = "videos-appendonly";
-  private static final String PHOTOS_READONLY_ONLY = "photos-readonly";
-  private static final String VIDEOS_READONLY_ONLY = "videos-readonly";
+    private static final String PHOTOS_READONLY_ONLY = "photos-readonly";
+    private static final String VIDEOS_READONLY_ONLY = "videos-readonly";
+    private static final String MUSIC_PLAYLISTS_APPEND_ONLY = "music-playlists-appendonly";
+    private static final String MUSIC_PLAYLISTS_READ_ONLY = "music-playlists-readonly";
 
     @Override
     public String getServiceName() {
@@ -55,9 +58,10 @@ public class AppleOAuthConfig implements OAuth2Config {
     @Override
     public Map<DataVertical, Set<String>> getExportScopes() {
       return ImmutableMap.<DataVertical, Set<String>>builder()
-        .put(PHOTOS, ImmutableSet.of(PHOTOS_READONLY_ONLY))
-        .put(VIDEOS, ImmutableSet.of(VIDEOS_READONLY_ONLY))
-        .put(MEDIA, ImmutableSet.of(PHOTOS_READONLY_ONLY, VIDEOS_READONLY_ONLY))
+              .put(PHOTOS, ImmutableSet.of(PHOTOS_READONLY_ONLY))
+              .put(VIDEOS, ImmutableSet.of(VIDEOS_READONLY_ONLY))
+              .put(MEDIA, ImmutableSet.of(PHOTOS_READONLY_ONLY, VIDEOS_READONLY_ONLY))
+              .put(MUSIC, ImmutableSet.of(MUSIC_PLAYLISTS_READ_ONLY))
         .build();
     }
 
@@ -67,6 +71,7 @@ public class AppleOAuthConfig implements OAuth2Config {
                 .put(PHOTOS, ImmutableSet.of(PHOTOS_APPEND_ONLY))
                 .put(VIDEOS, ImmutableSet.of(VIDEOS_APPEND_ONLY))
                 .put(MEDIA, ImmutableSet.of(PHOTOS_APPEND_ONLY, VIDEOS_APPEND_ONLY))
+                .put(MUSIC, ImmutableSet.of(MUSIC_PLAYLISTS_APPEND_ONLY))
                 .build();
     }
 }
