@@ -192,7 +192,7 @@ public class GoogleMusicHttpApi {
     HttpRequest postRequest =
         requestFactory.buildPostRequest(
             new GenericUrl(baseUrl + "?" + generateParamsString(parameters)), httpContent);
-    postRequest.setReadTimeout(6000); // 6 seconds read timeout
+    postRequest.setReadTimeout(30000); // 30 seconds read timeout
     HttpResponse response;
 
     try {
