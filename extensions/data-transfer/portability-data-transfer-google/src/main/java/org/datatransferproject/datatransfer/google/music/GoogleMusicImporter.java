@@ -230,7 +230,8 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
         // TODO(critical WIP-feature step): Add permanent failures.
         throw new CopyException("Permanent Failure:", e);
       } else if (StringUtils.contains(e.getMessage(), "Fail to find track matching")
-          || StringUtils.contains(e.getMessage(), "Missing ISRC in playlist item")) {
+          || StringUtils.contains(e.getMessage(), "Missing ISRC in playlist item")
+          || StringUtils.contains(e.getMessage(), "Max videos exceeded")) {
         // Skippable Failure: we skip this batch and log some data to understand it better
         // TODO(critical WIP-feature step): Add skippable failures.
         monitor.info(() -> "Skippable Failure:", e);
