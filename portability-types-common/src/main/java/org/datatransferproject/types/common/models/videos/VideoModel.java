@@ -24,6 +24,7 @@ import com.google.common.base.Objects;
 import java.util.Date;
 import java.util.stream.Collectors;
 import org.datatransferproject.types.common.DownloadableFile;
+import org.datatransferproject.types.common.models.FavoriteInfo;
 import org.datatransferproject.types.common.models.MediaObject;
 import javax.annotation.Nonnull;
 
@@ -38,6 +39,8 @@ public class VideoModel extends MediaObject implements DownloadableFile {
   //  services use to display the photos timeline, instead of uploadTime.
   private Date uploadedTime;
 
+  private FavoriteInfo favoriteInfo;
+
   @JsonCreator
   public VideoModel(
       @JsonProperty("name") String name,
@@ -47,7 +50,8 @@ public class VideoModel extends MediaObject implements DownloadableFile {
       @JsonProperty("dataId") String dataId,
       @JsonProperty("albumId") String albumId,
       @JsonProperty("inTempStore") boolean inTempStore,
-      @JsonProperty("uploadedTime") Date uploadedTime) {
+      @JsonProperty("uploadedTime") Date uploadedTime,
+      @JsonProperty("favoriteInfo") FavoriteInfo favoriteInfo) {
     super(dataId);
     setName(name);
     setContentUrl(contentUrl);
@@ -57,6 +61,28 @@ public class VideoModel extends MediaObject implements DownloadableFile {
     this.albumId = albumId;
     this.inTempStore = inTempStore;
     this.uploadedTime = uploadedTime;
+    this.favoriteInfo = favoriteInfo;
+  }
+
+  public VideoModel(
+      String name,
+      String contentUrl,
+      String description,
+      String encodingFormat,
+      String dataId,
+      String albumId,
+      boolean inTempStore,
+      Date uploadedTime) {
+    this(name,
+        contentUrl,
+        description,
+        encodingFormat,
+        dataId,
+        albumId,
+        inTempStore,
+        uploadedTime,
+        FavoriteInfo.unfavoritedAt(uploadedTime)
+    );
   }
 
   // TODO(zacsh) remove this in favor of getFolderId
@@ -108,6 +134,9 @@ public class VideoModel extends MediaObject implements DownloadableFile {
     return uploadedTime;
   }
 
+  public FavoriteInfo getFavoriteInfo() {
+    return favoriteInfo;
+  }
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
