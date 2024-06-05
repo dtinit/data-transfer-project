@@ -14,6 +14,9 @@ public class FavoriteInfo implements Serializable {
   @JsonProperty("lastUpdateTime")
   private Date lastUpdateTime;
 
+  public FavoriteInfo(){
+  }
+
   public FavoriteInfo(boolean favorited, Date lastUpdateTime)
   {
     this.favorited = favorited;
