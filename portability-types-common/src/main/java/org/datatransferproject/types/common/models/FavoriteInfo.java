@@ -10,7 +10,9 @@ public class FavoriteInfo implements Serializable {
   @JsonProperty("favorite")
   private boolean favorited;
 
-  /* the most recent time when the favorite state was changed. */
+  /* the most recent time when the favorite state was changed or set. For new items, this field
+   * might be set to the item creation time.
+  */
   @JsonProperty("lastUpdateTime")
   private Date lastUpdateTime;
 
@@ -23,7 +25,7 @@ public class FavoriteInfo implements Serializable {
     this.lastUpdateTime = lastUpdateTime;
   }
 
-  /* whether is favorited as of the last updated time */
+  /* Expected possibly true IFF lastUpdatedTime field is populated.  */
   public boolean getFavorited() {
     return favorited;
   }
@@ -38,5 +40,13 @@ public class FavoriteInfo implements Serializable {
 
   public void setLastUpdateTime(Date lastUpdateTime) {
     this.lastUpdateTime = lastUpdateTime;
+  }
+
+  public static FavoriteInfo unknown() {
+    return new FavoriteInfo(false /*favorited*/, null /*lastUpdateTime*/);
+  }
+
+  public static FavoriteInfo unfavoritedAt(Date lastUpdateTime) {
+    return new FavoriteInfo(false /*favorited*/, lastUpdateTime );
   }
 }

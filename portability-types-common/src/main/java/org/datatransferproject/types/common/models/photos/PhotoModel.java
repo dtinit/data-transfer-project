@@ -91,7 +91,7 @@ public class PhotoModel implements DownloadableFile {
         inTempStore,
         /* sha1= */ null,
         uploadedTime,
-        new FavoriteInfo(false, uploadedTime));
+        FavoriteInfo.unfavoritedAt(uploadedTime));
   }
 
   public PhotoModel(
@@ -112,7 +112,7 @@ public class PhotoModel implements DownloadableFile {
         inTempStore,
         /* sha1= */ null,
         /* uploadedTime= */ null,
-        new FavoriteInfo(false, null));
+        FavoriteInfo.unknown());
 
   }
 
@@ -135,7 +135,7 @@ public class PhotoModel implements DownloadableFile {
         inTempStore,
         sha1,
         /*uploadedTime=*/ null,
-        new FavoriteInfo(false, null));
+        FavoriteInfo.unknown());
   }
 
   public PhotoModel(
@@ -158,7 +158,7 @@ public class PhotoModel implements DownloadableFile {
         inTempStore,
         sha1,
         uploadedTime,
-        new FavoriteInfo(false, null));
+        FavoriteInfo.unknown());
   }
 
 

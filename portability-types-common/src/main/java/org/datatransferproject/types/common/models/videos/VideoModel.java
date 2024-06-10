@@ -81,7 +81,7 @@ public class VideoModel extends MediaObject implements DownloadableFile {
         albumId,
         inTempStore,
         uploadedTime,
-        new FavoriteInfo(false, uploadedTime)
+        FavoriteInfo.unfavoritedAt(uploadedTime)
     );
   }
 
