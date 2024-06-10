@@ -158,7 +158,7 @@ public class PhotoModel implements DownloadableFile {
         inTempStore,
         sha1,
         uploadedTime,
-        FavoriteInfo.unknown());
+        FavoriteInfo.unfavoritedAt(uploadedTime));
   }
 
 
