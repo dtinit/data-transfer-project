@@ -39,6 +39,7 @@ import org.datatransferproject.datatransfer.apple.photos.photosproto.PhotosProto
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.InMemoryIdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
+import org.datatransferproject.types.common.models.FavoriteInfo;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.videos.VideoModel;
@@ -280,7 +281,8 @@ public class AppleImporterTestBase {
               ALBUM_DATAID_BASE + i,
               false,
                   null,
-                  new Date());
+                  new Date(),
+                  new FavoriteInfo(true, new Date()));
       photos.add(photoModel);
     }
     return photos;
@@ -298,7 +300,8 @@ public class AppleImporterTestBase {
               VIDEOS_DATAID_BASE + i,
               ALBUM_DATAID_BASE + i,
               false,
-                  new Date());
+                  new Date(),
+                  new FavoriteInfo(true, new Date()));
       videos.add(videoModel);
     }
     return videos;
