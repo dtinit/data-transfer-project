@@ -58,6 +58,7 @@ message NewMediaRequest {
   optional string encodingFormat = 6;
   optional uint64 creationDateInMillis = 7;
   optional string singleFileUploadResponse = 8;
+  optional uint64 isFavorite = 9; // boolean delivered as int; will always be 1 (true) or 0 (false)
 }
 
 message CreateMediaRequest {
