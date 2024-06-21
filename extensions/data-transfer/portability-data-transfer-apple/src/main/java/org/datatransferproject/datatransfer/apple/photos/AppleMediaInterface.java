@@ -369,7 +369,8 @@ public class AppleMediaInterface implements AppleBaseInterface {
       @Nullable final String mediaType,
       @Nullable final String encodingFormat,
       @Nullable final Long creationDateInMillis,
-      @Nullable final String singleFileUploadResponse) {
+      @Nullable final String singleFileUploadResponse,
+      final boolean isFavorite) {
 
     final NewMediaRequest.Builder newMediaRequest = NewMediaRequest.newBuilder();
 
@@ -404,6 +405,8 @@ public class AppleMediaInterface implements AppleBaseInterface {
     if (encodingFormat != null) {
       newMediaRequest.setEncodingFormat(encodingFormat);
     }
+
+    newMediaRequest.setIsFavorite(isFavorite == true ? 1L: 0L);
 
     return newMediaRequest.build();
   }
@@ -566,6 +569,12 @@ public class AppleMediaInterface implements AppleBaseInterface {
         String mediaType = downloadableFile.getMimeType();
         String albumId = downloadableFile.getFolderId();
         Long creationDateInMillis = getUploadedTime(downloadableFile);
+        boolean isFavorite = false;
+        if (downloadableFile instanceof VideoModel) {
+          isFavorite = ((VideoModel) downloadableFile).getFavoriteInfo().getFavorited();
+        } else if (downloadableFile instanceof PhotoModel) {
+          isFavorite = ((PhotoModel) downloadableFile).getFavoriteInfo().getFavorited();
+        }
         newMediaRequestList.add(
             AppleMediaInterface.createNewMediaRequest(
                 dataId,
@@ -575,7 +584,8 @@ public class AppleMediaInterface implements AppleBaseInterface {
                 mediaType,
                 null,
                 creationDateInMillis,
-                result.successDataId()));
+                result.successDataId(),
+                    isFavorite));
       } else {
         // collect errors in upload content
         idempotentImportExecutor.executeAndSwallowIOExceptions(
