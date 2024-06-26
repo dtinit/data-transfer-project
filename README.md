@@ -1,5 +1,5 @@
 # Data Transfer Project
-
+ 
 ## Overview
 The Data Transfer Project makes it easy for people to transfer their data between online services. We provide a common framework and ecosystem to accept contributions from service providers to enable seamless transfer of data into and out of their service.
 
