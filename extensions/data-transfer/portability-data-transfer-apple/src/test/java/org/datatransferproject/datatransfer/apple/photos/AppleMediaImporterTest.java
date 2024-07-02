@@ -127,6 +127,7 @@ public class AppleMediaImporterTest extends AppleImporterTestBase {
     verify(mediaInterface, times(2)).createMedia(anyString(), anyString(), argThat(newMediaRequestList -> {
       assertThat(newMediaRequestList).isNotNull();
       assertThat(newMediaRequestList.stream().allMatch(newMediaRequest -> newMediaRequest.hasCreationDateInMillis())).isTrue();
+      assertThat(newMediaRequestList.stream().allMatch(newMediaRequest -> newMediaRequest.hasIsFavorite() && newMediaRequest.getIsFavorite()==1L)).isTrue();
       return true;
     }));
 

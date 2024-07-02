@@ -177,6 +177,7 @@ public class FlickrMediaImporter implements Importer<AuthData, MediaContainerRes
                         photo.getIdempotentId(),
                         photo.getTitle(),
                         () -> uploadPhoto(photo, id));
+        monitor.debug(() -> String.format("photo - %s has favorite state %b ", photo.getTitle(), photo.getFavoriteInfo().getFavorited()));
         if (photoId == null) {
             return;
         }
