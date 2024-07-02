@@ -36,7 +36,10 @@ public class TokenRefresher {
       TokensAndUrlAuthData authData, AppCredentials appCredentials) throws IllegalStateException {
     BodyPublisher postBody = buildRefreshRequestPostBody(authData, appCredentials);
     URI refreshUri = authData.getTokenServerEncodedUri();
-    return HttpRequest.newBuilder().uri(refreshUri).POST(postBody);
+    return HttpRequest.newBuilder()
+      .uri(refreshUri)
+      .POST(postBody)
+      .header("content-type", "application/x-www-form-urlencoded");
   }
 
   private static BodyPublisher buildRefreshRequestPostBody(
