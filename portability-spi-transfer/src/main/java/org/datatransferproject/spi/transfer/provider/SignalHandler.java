@@ -22,14 +22,15 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 import org.datatransferproject.spi.transfer.types.signals.SignalType;
 import org.datatransferproject.types.transfer.auth.AuthData;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.retry.RetryException;
 
 /**
  * Signals the status of the Job to the corresponding Service.
  */
 public interface SignalHandler<A extends AuthData> {
-    default void sendSignal(UUID jobId, SignalType signalType, A authData, Monitor monitor)
-      throws CopyExceptionWithFailureReason, IOException, RetryException {
-        monitor.info(() -> "Default Signaller: Sending the " + signalType.name() + " signal for job with ID " + jobId);
-    }
+  default void sendSignal(SignalRequest signalRequest, AuthData authData, Monitor monitor)
+    throws CopyExceptionWithFailureReason, IOException, RetryException {
+    monitor.info(() -> "Default Signaller::" + signalRequest.toString());
+  }
 }

@@ -18,17 +18,15 @@ package org.datatransferproject.datatransfer.apple.signals;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.time.Clock;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.concurrent.Callable;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.apple.AppleInterfaceFactory;
 import org.datatransferproject.spi.transfer.provider.SignalHandler;
-import org.datatransferproject.spi.transfer.types.signals.SignalType;
+import org.datatransferproject.spi.transfer.provider.SignalRequest;
 import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
+import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.retry.RetryException;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
@@ -71,31 +69,20 @@ public class AppleSignalHandler implements SignalHandler<TokensAndUrlAuthData> {
 
   @Override
   public void sendSignal(
-      final UUID jobId,
-      final SignalType signalType,
-      final TokensAndUrlAuthData authData,
-      final Monitor monitor)
-      throws RetryException {
-    Objects.requireNonNull(jobId, "jobId cannot be null");
-    Objects.requireNonNull(signalType, "signalType cannot be null");
+    final SignalRequest signalRequest,
+    final AuthData authData,
+    final Monitor monitor) throws RetryException {
+    Objects.requireNonNull(signalRequest, "signalRequest cannot be null");
     Objects.requireNonNull(authData, "authData cannot be null");
     Objects.requireNonNull(monitor, "monitor cannot be null");
 
-    Map<String, String> requestBody =
-        new HashMap<>() {
-          {
-            put("jobId", jobId.toString());
-            put("jobStatus", signalType.name());
-            put("exportingService", exportingService);
-          }
-        };
 
     Callable<Void> callable =
         () -> {
           AppleSignalInterface signalInterface =
               interfaceFactory.makeSignalInterface(
-                  authData, appCredentials, exportingService, monitor);
-          signalInterface.sendSignal(jobId, requestBody);
+                (TokensAndUrlAuthData) authData, appCredentials, exportingService, monitor);
+          signalInterface.sendSignal(signalRequest);
           return null;
         };
 

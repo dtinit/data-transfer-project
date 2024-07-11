@@ -34,6 +34,7 @@ import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.spi.transfer.hooks.JobHooks;
 import org.datatransferproject.spi.transfer.provider.SignalHandler;
+import org.datatransferproject.spi.transfer.provider.SignalRequest;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.types.CopyException;
 import org.datatransferproject.spi.transfer.types.signals.SignalType;
@@ -154,11 +155,11 @@ public class JobProcessorTest {
 
     Mockito.verify(importSignalHandlerProvider, Mockito.times(1)).get();
     Mockito.verify(importSignalHandler, Mockito.times(1))
-      .sendSignal(eq(jobId), any(SignalType.class), eq(importAuthData), any(Monitor.class));
+      .sendSignal(any(SignalRequest.class), eq(importAuthData), any(Monitor.class));
 
     Mockito.verify(exportSignalHandlerProvider, Mockito.times(1)).get();
     Mockito.verify(exportSignalHandler, Mockito.times(1))
-      .sendSignal(eq(jobId), any(SignalType.class), eq(exportAuthData), any(Monitor.class));
+      .sendSignal(any(SignalRequest.class), eq(exportAuthData), any(Monitor.class));
   }
 
   @Test
@@ -177,10 +178,10 @@ public class JobProcessorTest {
 
     Mockito.verify(importSignalHandlerProvider, Mockito.times(2)).get();
     Mockito.verify(importSignalHandler, Mockito.times(2))
-      .sendSignal(eq(jobId), any(SignalType.class), eq(importAuthData), any(Monitor.class));
+      .sendSignal(any(SignalRequest.class), eq(importAuthData), any(Monitor.class));
 
     Mockito.verify(exportSignalHandlerProvider, Mockito.times(2)).get();
     Mockito.verify(exportSignalHandler, Mockito.times(2))
-      .sendSignal(eq(jobId), any(SignalType.class), eq(exportAuthData), any(Monitor.class));
+      .sendSignal(any(SignalRequest.class), eq(exportAuthData), any(Monitor.class));
   }
 }

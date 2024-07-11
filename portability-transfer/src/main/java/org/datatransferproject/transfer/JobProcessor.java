@@ -36,6 +36,7 @@ import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.spi.cloud.types.PortabilityJob.State;
 import org.datatransferproject.spi.transfer.hooks.JobHooks;
 import org.datatransferproject.spi.transfer.provider.SignalHandler;
+import org.datatransferproject.spi.transfer.provider.SignalRequest;
 import org.datatransferproject.spi.transfer.types.signals.SignalType;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.types.CopyException;
@@ -188,9 +189,17 @@ class JobProcessor {
   }
 
   private void sendSignals(UUID jobId, AuthData exportAuthData, AuthData importAuthData, SignalType signalType, Monitor monitor) {
+    SignalRequest signalRequest = SignalRequest.newBuilder()
+      .withJobId(jobId.toString())
+      .withDataType(JobMetadata.getDataType().getDataType())
+      .withJobStatus(signalType.name())
+      .withExportingService(JobMetadata.getExportService())
+      .withImportingService(JobMetadata.getImportService())
+      .build();
+
     try {
-      exportSignalHandlerProvider.get().sendSignal(jobId, signalType, exportAuthData, monitor);
-      importSignalHandlerProvider.get().sendSignal(jobId, signalType, importAuthData, monitor);
+      exportSignalHandlerProvider.get().sendSignal(signalRequest, exportAuthData, monitor);
+      importSignalHandlerProvider.get().sendSignal(signalRequest, importAuthData, monitor);
     } catch (CopyExceptionWithFailureReason | IOException | RetryException e) {
       // Swallow the exception. The Job Processing shouldn't be effected by Signal failure.
     }

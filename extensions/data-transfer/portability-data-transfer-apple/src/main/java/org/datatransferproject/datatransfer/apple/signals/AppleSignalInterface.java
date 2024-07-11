@@ -16,6 +16,7 @@
 
 package org.datatransferproject.datatransfer.apple.signals;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.io.Serializable;
@@ -31,6 +32,7 @@ import org.datatransferproject.datatransfer.apple.AppleBaseInterface;
 import org.datatransferproject.datatransfer.apple.AppleInterfaceFactory;
 import org.datatransferproject.datatransfer.apple.constants.AuditKeys;
 import org.datatransferproject.datatransfer.apple.constants.Headers;
+import org.datatransferproject.spi.transfer.provider.SignalRequest;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.spi.transfer.types.UnconfirmedUserException;
@@ -41,6 +43,8 @@ import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 import org.jetbrains.annotations.NotNull;
 
 public class AppleSignalInterface implements AppleBaseInterface {
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
   protected String baseUrl;
   protected AppCredentials appCredentials;
   protected String exportingService;
@@ -109,12 +113,11 @@ public class AppleSignalInterface implements AppleBaseInterface {
     return null;
   }
 
-  public byte[] sendSignal(@NotNull UUID jobId, @NotNull final Map<String, String> requestData)
+  public byte[] sendSignal(@NotNull final SignalRequest signalRequest)
       throws IOException, CopyExceptionWithFailureReason {
     byte[] responseData = null;
-    final String url = String.format(baseUrl, jobId);
-    final byte[] requestBody = SerializationUtils.serialize((Serializable) requestData);
-
+    final String url = String.format(baseUrl, signalRequest.getJobId());
+    final byte[] requestBody = OBJECT_MAPPER.writeValueAsBytes(signalRequest);
     try {
       final String responseString = sendPostRequest(url, requestBody);
       responseData = responseString.getBytes(StandardCharsets.ISO_8859_1);

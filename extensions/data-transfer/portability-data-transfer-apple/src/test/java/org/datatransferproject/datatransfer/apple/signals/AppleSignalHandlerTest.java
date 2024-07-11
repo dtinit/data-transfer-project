@@ -28,8 +28,10 @@ import java.util.Map;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.apple.AppleInterfaceFactory;
+import org.datatransferproject.spi.transfer.provider.SignalRequest;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 import org.datatransferproject.spi.transfer.types.signals.SignalType;
+import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.retry.RetryException;
@@ -43,7 +45,7 @@ public class AppleSignalHandlerTest {
   private TokensAndUrlAuthData authData;
   private RetryStrategyLibrary retryStrategyLibrary;
   private Monitor monitor;
-  private UUID jobId;
+  private String jobId;
   private AppleInterfaceFactory interfaceFactory;
   private AppleSignalHandler signalHandler;
   private AppleSignalInterface signalInterface;
@@ -51,7 +53,7 @@ public class AppleSignalHandlerTest {
 
   @BeforeEach
   public void setUp() throws CopyExceptionWithFailureReason, IOException {
-    jobId = UUID.randomUUID();
+    jobId = UUID.randomUUID().toString();
 
     appCredentials = mock(AppCredentials.class);
     authData = mock(TokensAndUrlAuthData.class);
@@ -64,7 +66,7 @@ public class AppleSignalHandlerTest {
             eq(authData), eq(appCredentials), eq(exportingService), eq(monitor)))
         .thenReturn(signalInterface);
 
-    when(signalInterface.sendSignal(eq(jobId), any(Map.class)))
+    when(signalInterface.sendSignal(any(SignalRequest.class)))
         .thenReturn("response".getBytes());
 
     signalHandler =
@@ -74,14 +76,20 @@ public class AppleSignalHandlerTest {
 
   @Test
   public void testSendSignal() throws RetryException, CopyExceptionWithFailureReason, IOException {
-    signalHandler.sendSignal(jobId, SignalType.JOB_COMPLETED, authData, monitor);
-    Map<String, String> expectedRequestBody = Map.of("jobId", jobId.toString(),
-      "jobStatus", SignalType.JOB_COMPLETED.name(),
-      "exportingService", exportingService);
+    SignalRequest signalRequest =
+        SignalRequest.newBuilder()
+          .withJobId(jobId.toString())
+          .withJobStatus(SignalType.JOB_COMPLETED.name())
+          .withExportingService("EXPORT_SERVICE")
+          .withImportingService("IMPORT_SERVICE")
+          .withDataType(DataVertical.MAIL.getDataType())
+          .build();
+
+    signalHandler.sendSignal(signalRequest, authData, monitor);
 
     verify(interfaceFactory, times(1))
       .makeSignalInterface(eq(authData), eq(appCredentials), eq(exportingService), eq(monitor));
     verify(signalInterface, times(1))
-      .sendSignal(eq(jobId), eq(expectedRequestBody));
+      .sendSignal(eq(signalRequest));
   }
 }
