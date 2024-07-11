@@ -11,9 +11,12 @@ import java.io.ObjectOutputStream;
 import static java.lang.String.format;
 import static org.junit.Assert.assertTrue;
 import java.text.ParseException;
+import java.time.Instant;
+import java.util.Date;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import org.datatransferproject.types.common.models.FavoriteInfo;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.junit.Test;
@@ -154,32 +157,105 @@ public class GoogleMediaItemTest {
   }
 
   @Test
-  public void getUploadTime_videoModel() throws ParseException{
+  public void getUploadTime_videoModel() throws ParseException {
+    String fakePhotosApiTimestamp = "2023-10-02T22:33:38Z";
     GoogleMediaItem videoMediaItem = getVideoMediaItem();
     MediaMetadata metadata = new MediaMetadata();
     metadata.setVideo(new Video());
     // CreationTime in GoogleMediaItem is populated as uploadTime in our common models.
-    metadata.setCreationTime("2023-10-02T22:33:38Z");
+    metadata.setCreationTime(fakePhotosApiTimestamp);
     videoMediaItem.setMediaMetadata(metadata);
 
     VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem);
 
-    assertEquals("Mon Oct 02 22:33:38 UTC 2023", videoModel.getUploadedTime().toString());
-
+    assertEquals(
+        videoModel.getUploadedTime(), GoogleMediaItem.parseIso8601DateTime(fakePhotosApiTimestamp));
   }
 
   @Test
-  public void getUploadTime_photoModel() throws ParseException{
+  public void getUploadTime_photoModel() throws ParseException {
+    String fakePhotosApiTimestamp = "2014-10-02T15:01:23.045123456Z";
+
     GoogleMediaItem photoMediaItem = getPhotoMediaItem();
     MediaMetadata metadata = new MediaMetadata();
     metadata.setPhoto(new Photo());
     // CreationTime in GoogleMediaItem is populated as uploadTime in our common models.
-    metadata.setCreationTime("2023-10-02T22:33:38Z");
+    metadata.setCreationTime(fakePhotosApiTimestamp);
     photoMediaItem.setMediaMetadata(metadata);
 
     PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem);
 
-    assertEquals("Mon Oct 02 22:33:38 UTC 2023", photoModel.getUploadedTime().toString());
+    assertEquals(
+        photoModel.getUploadedTime(), GoogleMediaItem.parseIso8601DateTime(fakePhotosApiTimestamp));
+  }
+
+  @Test
+  public void getFavoriteStateAndTime_favoriteInfoUnset_videoModel() throws ParseException {
+    String fakePhotosApiTimestamp = "2023-10-02T22:33:38Z";
+    GoogleMediaItem videoMediaItem = getVideoMediaItem();
+    MediaMetadata metadata = new MediaMetadata();
+    metadata.setVideo(new Video());
+    // CreationTime in GoogleMediaItem is populated as uploadTime in our common models.
+    metadata.setCreationTime(fakePhotosApiTimestamp);
+    videoMediaItem.setMediaMetadata(metadata);
+
+    VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem);
+
+    assertEquals(
+        videoModel.getUploadedTime(), GoogleMediaItem.parseIso8601DateTime(fakePhotosApiTimestamp));
+  }
+
+  @Test
+  public void getFavoriteStateAndTime_favoriteInfoUnset_photoModel() throws ParseException {
+    String fakePhotosApiTimestamp = "2014-10-02T15:01:23.045123456Z";
+
+    GoogleMediaItem photoMediaItem = getPhotoMediaItem();
+    MediaMetadata metadata = new MediaMetadata();
+    metadata.setPhoto(new Photo());
+    // CreationTime in GoogleMediaItem is populated as uploadTime in our common models.
+    metadata.setCreationTime(fakePhotosApiTimestamp);
+    photoMediaItem.setMediaMetadata(metadata);
+
+    PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem);
+
+    assertEquals(
+        photoModel.getUploadedTime(), GoogleMediaItem.parseIso8601DateTime(fakePhotosApiTimestamp));
+  }
+
+  @Test
+  public void getFavoriteStateAndTime_favoriteInfoset_videoModel() throws ParseException {
+    Date favoriteTimestamp = GoogleMediaItem.parseIso8601DateTime("2023-10-02T22:33:38Z");
+    GoogleMediaItem videoMediaItem = getVideoMediaItem();
+    MediaMetadata metadata = new MediaMetadata();
+    metadata.setVideo(new Video());
+    metadata.setCreationTime("2022-10-02T22:33:38Z");
+    videoMediaItem.setMediaMetadata(metadata);
+    videoMediaItem.setFavoriteInfo(new FavoriteInfo(true, favoriteTimestamp));
+    VideoModel videoModel = GoogleMediaItem.convertToVideoModel(Optional.empty(), videoMediaItem);
+
+    assertEquals(
+        videoModel.getFavoriteInfo().getLastUpdateTime(), favoriteTimestamp);
+    assertEquals(
+        videoModel.getFavoriteInfo().getFavorited(), true);
+  }
+
+  @Test
+  public void getFavoriteStateAndTime_favoriteInfoSet_photoModel() throws ParseException {
+    Date favoriteTimestamp = GoogleMediaItem.parseIso8601DateTime("2023-10-02T22:33:38Z");
+
+    GoogleMediaItem photoMediaItem = getPhotoMediaItem();
+    MediaMetadata metadata = new MediaMetadata();
+    metadata.setPhoto(new Photo());
+    metadata.setCreationTime("2022-10-02T22:33:38Z");
+    photoMediaItem.setFavoriteInfo(new FavoriteInfo(true, favoriteTimestamp));
+    photoMediaItem.setMediaMetadata(metadata);
+
+    PhotoModel photoModel = GoogleMediaItem.convertToPhotoModel(Optional.empty(), photoMediaItem);
+
+    assertEquals(
+        photoModel.getFavoriteInfo().getLastUpdateTime(), favoriteTimestamp);
+    assertEquals(
+        photoModel.getFavoriteInfo().getFavorited(), true);
   }
 
   public static GoogleMediaItem getPhotoMediaItem() {

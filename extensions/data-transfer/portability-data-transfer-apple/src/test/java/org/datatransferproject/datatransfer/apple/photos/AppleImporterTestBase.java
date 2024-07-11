@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +39,7 @@ import org.datatransferproject.datatransfer.apple.photos.photosproto.PhotosProto
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.InMemoryIdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
+import org.datatransferproject.types.common.models.FavoriteInfo;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.videos.VideoModel;
@@ -45,6 +47,7 @@ import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 import org.junit.platform.commons.util.ReflectionUtils;
 import org.junit.platform.commons.util.ReflectionUtils.HierarchyTraversalMode;
 import org.mockito.stubbing.Answer;
@@ -143,21 +146,32 @@ public class AppleImporterTestBase {
       throws IOException, CopyExceptionWithFailureReason {
     when(mediaInterface.uploadContent(any(Map.class), any(List.class)))
         .thenAnswer(
-            (Answer<Map<String, String>>)
+            (Answer<Map<String, DownUpResult>>)
                 invocation -> {
                   Object[] args = invocation.getArguments();
                   final List<PhotosProtocol.AuthorizeUploadResponse> authorizeUploadResponseList =
                       (List<PhotosProtocol.AuthorizeUploadResponse>) args[1];
-                  final Map<String, String> dataIdToSingleFileUploadResponseMap =
-                      authorizeUploadResponseList.stream()
-                          .filter(
-                              authorizeUploadResponse ->
-                                  datatIdToStatus.get(authorizeUploadResponse.getDataId()) == SC_OK)
-                          .collect(
-                              Collectors.toMap(
-                                  PhotosProtocol.AuthorizeUploadResponse::getDataId,
-                                  authorizeUploadResponse -> "SingleUploadContentResponse"));
-                  return dataIdToSingleFileUploadResponseMap;
+                  final Map<String, DownUpResult> fakeResponse = new HashMap<>();
+                  for (PhotosProtocol.AuthorizeUploadResponse authorizeUploadResponse :
+                      authorizeUploadResponseList) {
+                    int fakeServerHttpStatus =
+                        datatIdToStatus.get(authorizeUploadResponse.getDataId());
+                    if (fakeServerHttpStatus == SC_OK) {
+                      fakeResponse.put(
+                          authorizeUploadResponse.getDataId(),
+                          DownUpResult.ofDataId(
+                              "fake-SingleUploadContentResponse-for-"
+                                  + authorizeUploadResponse.getDataId()));
+                    } else {
+                      fakeResponse.put(
+                          authorizeUploadResponse.getDataId(),
+                          DownUpResult.ofError(
+                              new IOException(
+                                  String.format(
+                                      "fake server error with status %d", fakeServerHttpStatus))));
+                    }
+                  }
+                  return fakeResponse;
                 });
   }
 
@@ -266,7 +280,9 @@ public class AppleImporterTestBase {
               PHOTOS_DATAID_BASE + i,
               ALBUM_DATAID_BASE + i,
               false,
-              (String) null);
+                  null,
+                  new Date(),
+                  new FavoriteInfo(true, new Date()));
       photos.add(photoModel);
     }
     return photos;
@@ -284,7 +300,8 @@ public class AppleImporterTestBase {
               VIDEOS_DATAID_BASE + i,
               ALBUM_DATAID_BASE + i,
               false,
-              null);
+                  new Date(),
+                  new FavoriteInfo(true, new Date()));
       videos.add(videoModel);
     }
     return videos;

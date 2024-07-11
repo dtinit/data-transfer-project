@@ -81,7 +81,7 @@ public class AppleSignalHandler implements SignalHandler<TokensAndUrlAuthData> {
         () -> {
           AppleSignalInterface signalInterface =
               interfaceFactory.makeSignalInterface(
-                (TokensAndUrlAuthData) authData, appCredentials, exportingService, monitor);
+                (TokensAndUrlAuthData) authData, appCredentials, monitor);
           signalInterface.sendSignal(signalRequest);
           return null;
         };

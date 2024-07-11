@@ -54,11 +54,9 @@ public class AppleSignalInterface implements AppleBaseInterface {
   public AppleSignalInterface(
       @NotNull final TokensAndUrlAuthData authData,
       @NotNull final AppCredentials appCredentials,
-      @NotNull final String exportingService,
       @NotNull final Monitor monitor) {
     this.authData = authData;
     this.appCredentials = appCredentials;
-    this.exportingService = exportingService;
     this.monitor = monitor;
     this.baseUrl = "https://datatransfer.apple.com/jobs/%s/status";
   }

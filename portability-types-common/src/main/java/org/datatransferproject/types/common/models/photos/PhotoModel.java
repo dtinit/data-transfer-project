@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.datatransferproject.types.common.DownloadableFile;
+import org.datatransferproject.types.common.models.FavoriteInfo;
 
 public class PhotoModel implements DownloadableFile {
 
@@ -42,6 +43,8 @@ public class PhotoModel implements DownloadableFile {
   //  services use to display the photos timeline, instead of uploadTime.
   private Date uploadedTime;
 
+  private FavoriteInfo favoriteInfo;
+
   @JsonCreator
   public PhotoModel(
       @JsonProperty("title") String title,
@@ -52,7 +55,8 @@ public class PhotoModel implements DownloadableFile {
       @JsonProperty("albumId") String albumId,
       @JsonProperty("inTempStore") boolean inTempStore,
       @Nullable @JsonProperty("sha1") String sha1,
-      @JsonProperty("uploadedTime") Date uploadedTime) {
+      @JsonProperty("uploadedTime") Date uploadedTime,
+      @JsonProperty("favoriteInfo") FavoriteInfo favoriteInfo) {
     this.title = title;
     this.fetchableUrl = fetchableUrl;
     this.description = description;
@@ -65,6 +69,7 @@ public class PhotoModel implements DownloadableFile {
     this.inTempStore = inTempStore;
     this.sha1 = sha1;
     this.uploadedTime = uploadedTime;
+    this.favoriteInfo = favoriteInfo;
   }
 
   public PhotoModel(
@@ -85,7 +90,8 @@ public class PhotoModel implements DownloadableFile {
         albumId,
         inTempStore,
         /* sha1= */ null,
-        uploadedTime);
+        uploadedTime,
+        FavoriteInfo.unfavoritedAt(uploadedTime));
   }
 
   public PhotoModel(
@@ -95,7 +101,7 @@ public class PhotoModel implements DownloadableFile {
       String mediaType,
       String dataId,
       String albumId,
-      boolean inTempStore) {
+      boolean inTempStore){
     this(
         title,
         fetchableUrl,
@@ -105,7 +111,9 @@ public class PhotoModel implements DownloadableFile {
         albumId,
         inTempStore,
         /* sha1= */ null,
-        /* uploadedTime= */ null);
+        /* uploadedTime= */ null,
+        FavoriteInfo.unknown());
+
   }
 
   public PhotoModel(
@@ -126,8 +134,33 @@ public class PhotoModel implements DownloadableFile {
         albumId,
         inTempStore,
         sha1,
-        /*uploadedTime=*/ null);
+        /*uploadedTime=*/ null,
+        FavoriteInfo.unknown());
   }
+
+  public PhotoModel(
+      String title,
+      String fetchableUrl,
+      String description,
+      String mediaType,
+      String dataId,
+      String albumId,
+      boolean inTempStore,
+      String sha1,
+      Date uploadedTime){
+    this(
+        title,
+        fetchableUrl,
+        description,
+        mediaType,
+        dataId,
+        albumId,
+        inTempStore,
+        sha1,
+        uploadedTime,
+        FavoriteInfo.unfavoritedAt(uploadedTime));
+  }
+
 
   // TODO(zacsh) convert all callers to ImportableItem#getName() which is an interface guarantee of this class's
   // being a DownloadableItem. Then delete this method.
@@ -179,6 +212,11 @@ public class PhotoModel implements DownloadableFile {
     return sha1;
   }
 
+  public FavoriteInfo getFavoriteInfo()
+  {
+    return favoriteInfo;
+  }
+
   // remove all forbidden characters
   public void cleanTitle(String forbiddenCharacters, char replacementCharacter, int maxLength) {
     title = title.chars()
@@ -216,13 +254,13 @@ public class PhotoModel implements DownloadableFile {
     if (o == null || getClass() != o.getClass()) return false;
     PhotoModel that = (PhotoModel) o;
     return Objects.equal(getTitle(), that.getTitle()) &&
-            Objects.equal(getFetchableUrl(), that.getFetchableUrl()) &&
-            Objects.equal(getDescription(), that.getDescription()) &&
-            Objects.equal(getMediaType(), that.getMediaType()) &&
-            Objects.equal(getDataId(), that.getDataId()) &&
-            Objects.equal(getAlbumId(), that.getAlbumId()) &&
-            Objects.equal(getSha1(), that.getSha1()) &&
-            Objects.equal(getUploadedTime(), that.getUploadedTime());
+        Objects.equal(getFetchableUrl(), that.getFetchableUrl()) &&
+        Objects.equal(getDescription(), that.getDescription()) &&
+        Objects.equal(getMediaType(), that.getMediaType()) &&
+        Objects.equal(getDataId(), that.getDataId()) &&
+        Objects.equal(getAlbumId(), that.getAlbumId()) &&
+        Objects.equal(getSha1(), that.getSha1()) &&
+        Objects.equal(getUploadedTime(), that.getUploadedTime());
   }
 
   @Override

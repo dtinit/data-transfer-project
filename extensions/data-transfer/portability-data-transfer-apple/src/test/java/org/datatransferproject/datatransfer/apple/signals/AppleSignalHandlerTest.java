@@ -63,7 +63,7 @@ public class AppleSignalHandlerTest {
     signalInterface = mock(AppleSignalInterface.class);
 
     when(interfaceFactory.makeSignalInterface(
-            eq(authData), eq(appCredentials), eq(exportingService), eq(monitor)))
+            eq(authData), eq(appCredentials), eq(monitor)))
         .thenReturn(signalInterface);
 
     when(signalInterface.sendSignal(any(SignalRequest.class)))
@@ -88,7 +88,7 @@ public class AppleSignalHandlerTest {
     signalHandler.sendSignal(signalRequest, authData, monitor);
 
     verify(interfaceFactory, times(1))
-      .makeSignalInterface(eq(authData), eq(appCredentials), eq(exportingService), eq(monitor));
+      .makeSignalInterface(eq(authData), eq(appCredentials), eq(monitor));
     verify(signalInterface, times(1))
       .sendSignal(eq(signalRequest));
   }
