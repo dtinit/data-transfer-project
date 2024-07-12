@@ -42,6 +42,9 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * An Interface to send the Transfer Signals to Apple.  
+ */
 public class AppleSignalInterface implements AppleBaseInterface {
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 

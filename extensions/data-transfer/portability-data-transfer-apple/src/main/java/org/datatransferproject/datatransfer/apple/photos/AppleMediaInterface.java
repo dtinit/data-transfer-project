@@ -19,7 +19,13 @@ package org.datatransferproject.datatransfer.apple.photos;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CONFLICT;
+import static org.apache.http.HttpStatus.SC_INSUFFICIENT_STORAGE;
+import static org.apache.http.HttpStatus.SC_INTERNAL_SERVER_ERROR;
+import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
+import static org.apache.http.HttpStatus.SC_PRECONDITION_FAILED;
+import static org.apache.http.HttpStatus.SC_SERVICE_UNAVAILABLE;
+import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
@@ -35,6 +41,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -59,6 +66,9 @@ import org.datatransferproject.datatransfer.apple.photos.photosproto.PhotosProto
 import org.datatransferproject.datatransfer.apple.photos.streaming.StreamingContentClient;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
+import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
+import org.datatransferproject.spi.transfer.types.DestinationNotFoundException;
+import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.spi.transfer.types.UnconfirmedUserException;
 import org.datatransferproject.transfer.JobMetadata;
@@ -71,6 +81,9 @@ import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 /**
  * An interface that is synonymous to HTTP client to interact with the Apple Photos APIs.
@@ -269,6 +282,32 @@ public class AppleMediaInterface implements AppleBaseInterface {
       con.disconnect();
     }
     return responseString;
+  }
+
+  @Override
+  public void convertAndThrowException(@NotNull final IOException e, @NotNull final HttpURLConnection con)
+    throws IOException, CopyExceptionWithFailureReason {
+
+    switch (con.getResponseCode()) {
+      case SC_UNAUTHORIZED:
+        throw new UnconfirmedUserException(getApplePhotosImportThrowingMessage("Unauthorized iCloud User"), e);
+      case SC_PRECONDITION_FAILED:
+        throw new PermissionDeniedException(getApplePhotosImportThrowingMessage("Permission Denied"), e);
+      case SC_NOT_FOUND:
+        throw new DestinationNotFoundException(getApplePhotosImportThrowingMessage("iCloud Photos Library not found"), e);
+      case SC_INSUFFICIENT_STORAGE:
+        throw new DestinationMemoryFullException(getApplePhotosImportThrowingMessage("iCloud Storage is full"), e);
+      case SC_SERVICE_UNAVAILABLE:
+        throw new IOException(getApplePhotosImportThrowingMessage("DTP import service unavailable"), e);
+      case SC_BAD_REQUEST:
+        throw new IOException(getApplePhotosImportThrowingMessage("Bad request sent to iCloud Photos import api"), e);
+      case SC_INTERNAL_SERVER_ERROR:
+        throw new IOException(getApplePhotosImportThrowingMessage("Internal server error in iCloud Photos service"), e);
+      case SC_OK:
+        break;
+      default:
+        throw e;
+    }
   }
 
   public byte[] makePhotosServicePostRequest(
