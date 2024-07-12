@@ -33,6 +33,7 @@ import org.datatransferproject.datatransfer.apple.AppleInterfaceFactory;
 import org.datatransferproject.datatransfer.apple.constants.AuditKeys;
 import org.datatransferproject.datatransfer.apple.constants.Headers;
 import org.datatransferproject.spi.transfer.provider.SignalRequest;
+import org.datatransferproject.spi.transfer.types.CopyException;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.spi.transfer.types.UnconfirmedUserException;
@@ -43,7 +44,7 @@ import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * An Interface to send the Transfer Signals to Apple.  
+ * An Interface to send the Transfer Signals to Apple.
  */
 public class AppleSignalInterface implements AppleBaseInterface {
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();

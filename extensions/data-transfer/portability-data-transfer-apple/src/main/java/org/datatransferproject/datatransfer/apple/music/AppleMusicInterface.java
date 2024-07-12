@@ -165,7 +165,7 @@ public class AppleMusicInterface implements AppleBaseInterface {
             requestBuilder.setExportService(JobMetadata.getExportService());
         }
 
-        final byte[] responseBody = sendPostRequest(baseUrl + API.V1.PLAYLISTS, requestBuilder.build().toByteArray());
+        final byte[] responseBody = _sendPostRequest(baseUrl + API.V1.PLAYLISTS, requestBuilder.build().toByteArray());
 
         return MusicProtocol.ImportMusicPlaylistsResponse.parseFrom(responseBody);
     }
@@ -234,12 +234,12 @@ public class AppleMusicInterface implements AppleBaseInterface {
             requestBuilder.setExportService(JobMetadata.getExportService());
         }
 
-        final byte[] responseBody = sendPostRequest(baseUrl + API.V1.TRACKS, requestBuilder.build().toByteArray());
+        final byte[] responseBody = _sendPostRequest(baseUrl + API.V1.TRACKS, requestBuilder.build().toByteArray());
 
         return MusicProtocol.ImportMusicPlaylistTracksResponse.parseFrom(responseBody);
     }
 
-    private byte[] sendPostRequest(@Nonnull final String url, @Nonnull final byte[] requestData)
+    private byte[] _sendPostRequest(@Nonnull final String url, @Nonnull final byte[] requestData)
             throws URISyntaxException, CopyException {
         HttpRequest.Builder requestBuilder = createMusicImportRequest(new URI(url), requestData);
         return makeMusicServiceRequest(requestBuilder);

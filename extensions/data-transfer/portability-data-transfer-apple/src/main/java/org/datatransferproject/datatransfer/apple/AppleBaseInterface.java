@@ -32,7 +32,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringJoiner;
 
+import javax.annotation.Nonnull;
+import org.apache.commons.lang3.NotImplementedException;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.transfer.types.CopyException;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.DestinationNotFoundException;
@@ -51,10 +54,12 @@ import org.json.simple.parser.ParseException;
  * that Apple Supports.
  */
 public interface AppleBaseInterface {
-    String sendPostRequest(@NotNull String url, @NotNull final byte[] requestData) throws IOException, CopyExceptionWithFailureReason;
+    default String sendPostRequest(@Nonnull String url, @Nonnull final byte[] requestData) throws IOException, CopyExceptionWithFailureReason {
+      throw new NotImplementedException("sendPostRequest is not implemented !! ");
+    }
 
     default TokensAndUrlAuthData refreshTokens(final TokensAndUrlAuthData authData, final AppCredentials appCredentials, Monitor monitor)
-        throws InvalidTokenException {
+        throws CopyExceptionWithFailureReason {
 
         final String refreshToken = authData.getRefreshToken();
         final String refreshUrlString = authData.getTokenServerEncodedUrl();

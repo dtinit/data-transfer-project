@@ -29,6 +29,7 @@ import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.apple.AppleInterfaceFactory;
 import org.datatransferproject.spi.transfer.provider.SignalRequest;
+import org.datatransferproject.spi.transfer.types.CopyException;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 import org.datatransferproject.spi.transfer.types.signals.SignalType;
 import org.datatransferproject.types.common.models.DataVertical;
@@ -52,7 +53,7 @@ public class AppleSignalHandlerTest {
   private final String exportingService = "exportingService";
 
   @BeforeEach
-  public void setUp() throws CopyExceptionWithFailureReason, IOException {
+  public void setUp() throws CopyException, IOException {
     jobId = UUID.randomUUID().toString();
 
     appCredentials = mock(AppCredentials.class);

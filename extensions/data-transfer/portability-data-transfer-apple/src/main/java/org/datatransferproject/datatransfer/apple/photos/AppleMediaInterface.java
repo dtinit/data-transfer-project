@@ -65,6 +65,7 @@ import org.datatransferproject.datatransfer.apple.photos.photosproto.PhotosProto
 import org.datatransferproject.datatransfer.apple.photos.photosproto.PhotosProtocol.NewPhotoAlbumRequest;
 import org.datatransferproject.datatransfer.apple.photos.streaming.StreamingContentClient;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.types.CopyException;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.DestinationNotFoundException;
