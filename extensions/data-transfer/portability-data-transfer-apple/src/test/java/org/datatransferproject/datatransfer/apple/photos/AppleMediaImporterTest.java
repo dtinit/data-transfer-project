@@ -29,18 +29,22 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.datatransferproject.datatransfer.apple.constants.ApplePhotosConstants;
 import org.datatransferproject.datatransfer.apple.photos.photosproto.PhotosProtocol;
 import org.datatransferproject.spi.transfer.idempotentexecutor.RetryingInMemoryIdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.types.common.models.DataVertical;
+import org.datatransferproject.types.common.models.FavoriteInfo;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
@@ -193,5 +197,59 @@ public class AppleMediaImporterTest extends AppleImporterTestBase {
                       .addAllNewPhotoAlbumResponses(newPhotoAlbumResponseList)
                       .build();
                 });
+  }
+
+  @Test
+  public void importEmptyNamePhoto() throws Exception {
+    // set up photos
+    final int photoCount = 1;
+    final List<PhotoModel> photos = Arrays.asList(
+            new PhotoModel(
+                    "", // empty title
+                    "fetchableUrl",
+                    "description",
+                    "mediaType",
+                    PHOTOS_DATAID_BASE + UUID.randomUUID(),
+                    null ,
+                    false,
+                    null,
+                    new Date(),
+                    new FavoriteInfo(true, new Date())),
+            new PhotoModel(
+                    null, // empty title
+                    "fetchableUrl",
+                    "description",
+                    "mediaType",
+                    PHOTOS_DATAID_BASE + UUID.randomUUID(),
+                    null ,
+                    false,
+                    null,
+                    new Date(),
+                    new FavoriteInfo(true, new Date())));
+
+    final Map<String, Integer> dataIdToStatus =
+            photos.stream()
+                    .collect(
+                            Collectors.toMap(PhotoModel::getDataId, photoModel -> SC_OK));
+
+    setUpGetUploadUrlResponse(dataIdToStatus);
+    setUpUploadContentResponse(dataIdToStatus);
+    setUpCreateMediaResponse(dataIdToStatus);
+
+    MediaContainerResource mediaData = new MediaContainerResource(null, photos, null);
+    appleMediaImporter.importItem(uuid, executor, authData, mediaData);
+
+    // verify correct methods were called
+    final List<String> photosDataIds =
+            photos.stream().map(PhotoModel::getDataId).collect(Collectors.toList());
+
+    verify(mediaInterface)
+            .getUploadUrl(uuid.toString(), DataVertical.MEDIA.getDataType(), photosDataIds);
+    verify(mediaInterface, times(1)).uploadContent(anyMap(), anyList());
+    verify(mediaInterface, times(1)).createMedia(anyString(), anyString(), argThat(newMediaRequestList -> {
+      assertThat(newMediaRequestList).isNotNull();
+      assertThat(newMediaRequestList.stream().allMatch(newMediaRequest -> newMediaRequest.getFilename().equals(ApplePhotosConstants.APPLE_PHOTOS_UNTITLED_FILE_NAME))).isTrue();
+      return true;
+    }));
   }
 }

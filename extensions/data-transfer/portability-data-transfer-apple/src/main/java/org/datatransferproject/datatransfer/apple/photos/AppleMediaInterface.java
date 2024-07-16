@@ -564,7 +564,7 @@ public class AppleMediaInterface implements AppleBaseInterface {
               dataIdToUploadResponse.get(dataId), "somehow missing result for dataid=%s", dataId);
       // generate newMediaRequest
       if (result.isOk()) {
-        String filename = downloadableFile.getName();
+        String filename = getFileName(downloadableFile);
         String description = getDescription(downloadableFile);
         String mediaType = downloadableFile.getMimeType();
         String albumId = downloadableFile.getFolderId();
@@ -702,6 +702,14 @@ public class AppleMediaInterface implements AppleBaseInterface {
       return ((VideoModel) downloadableFile).getDescription();
     }
     return null;
+  }
+
+  private static String getFileName(DownloadableFile downloadableFile) {
+    final String fileName = downloadableFile.getName();
+    if (fileName == null || fileName.isEmpty()) {
+      return ApplePhotosConstants.APPLE_PHOTOS_UNTITLED_FILE_NAME;
+    }
+    return fileName;
   }
 
   public static String getApplePhotosImportThrowingMessage(final String cause) {
