@@ -1,12 +1,13 @@
 package org.datatransferproject.cloud.google;
 
+import static java.lang.String.format;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.cloud.datastore.*;
 import com.google.cloud.datastore.StructuredQuery.CompositeFilter;
 import com.google.cloud.datastore.StructuredQuery.PropertyFilter;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
@@ -14,10 +15,6 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
-import org.datatransferproject.types.transfer.errors.ErrorDetail;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.time.Duration;
@@ -28,8 +25,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-
-import static java.lang.String.format;
+import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExecutor {
 
@@ -45,7 +43,8 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
   private final Monitor monitor;
   private final ObjectMapper objectMapper;
 
-  // These are all variables corresponding to the job state. Only initialized when setJobId() is called
+  // These are all variables corresponding to the job state. Only initialized when setJobId() is
+  // called
   private LoadingCache<String, Optional<Serializable>> knownValuesCache = null;
   private LoadingCache<String, Optional<ErrorDetail>> errorsCache = null;
   private UUID jobId;
@@ -77,9 +76,9 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
 
     if (knownValuesCache.get(idempotentId).isPresent()) {
       monitor.debug(
-              () ->
-                      jobIdPrefix
-                              + format("Using cached key %s from cache for %s", idempotentId, itemName));
+          () ->
+              jobIdPrefix
+                  + format("Using cached key %s from cache for %s", idempotentId, itemName));
       return (T) knownValuesCache.get(idempotentId).get();
     }
 
@@ -172,34 +171,35 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
     this.jobId = jobId;
     jobIdPrefix = "Job " + jobId + ": ";
     this.knownValuesCache =
-            CacheBuilder.newBuilder()
-                    .maximumSize(1000)
-                    .expireAfterAccess(Duration.ofMinutes(30))
-                    .build(
-                            new CacheLoader<String, Optional<Serializable>>() {
-                              @Override
-                              public Optional<Serializable> load(String idempotentId) {
-                                return getKnownValue(idempotentId);
-                              }
-                            });
+        CacheBuilder.newBuilder()
+            .maximumSize(1000)
+            .expireAfterAccess(Duration.ofMinutes(30))
+            .build(
+                new CacheLoader<String, Optional<Serializable>>() {
+                  @Override
+                  public Optional<Serializable> load(String idempotentId) {
+                    return getKnownValue(idempotentId);
+                  }
+                });
 
     this.errorsCache =
-            CacheBuilder.newBuilder()
-                    .maximumSize(1000)
-                    .expireAfterAccess(Duration.ofMinutes(30))
-                    .build(
-                            new CacheLoader<String, Optional<ErrorDetail>>() {
-                              @Override
-                              public Optional<ErrorDetail> load(String idempotentId) {
-                                return getError(idempotentId);
-                              }
-                            });
+        CacheBuilder.newBuilder()
+            .maximumSize(1000)
+            .expireAfterAccess(Duration.ofMinutes(30))
+            .build(
+                new CacheLoader<String, Optional<ErrorDetail>>() {
+                  @Override
+                  public Optional<ErrorDetail> load(String idempotentId) {
+                    return getError(idempotentId);
+                  }
+                });
   }
 
   private Optional<Serializable> getKnownValue(String idempotentId) {
     Preconditions.checkNotNull(jobId);
     try {
-      return Optional.of(datastore.get(getResultsKey(idempotentId, jobId)).getString(RESULTS_FIELD));
+      return Optional.of(
+          datastore.get(getResultsKey(idempotentId, jobId)).getString(RESULTS_FIELD));
     } catch (Exception e) {
       return Optional.empty();
     }
@@ -210,8 +210,8 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
     try {
       Entity error = datastore.get(getErrorKey(idempotentId, jobId));
       return error == null
-              ? Optional.empty()
-              : Optional.of(
+          ? Optional.empty()
+          : Optional.of(
               objectMapper.readerFor(ErrorDetail.class).readValue(error.getString(ERROR_FIELD)));
     } catch (IOException e) {
       return Optional.empty();
@@ -260,7 +260,6 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
     return datastoreKnownErrors;
   }
 
-
   private <T extends Serializable> Entity createResultEntity(String idempotentId, T result)
       throws IOException {
     return createResultEntity(idempotentId, this.jobId, result);
@@ -270,10 +269,14 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
   <T extends Serializable> Entity createResultEntity(String idempotentId, UUID jobId, T result)
       throws IOException {
     return GoogleCloudUtils.createEntityBuilder(
-        getResultsKey(idempotentId, jobId),
-        ImmutableMap.of(
-            RESULTS_FIELD, result, JOB_ID_FIELD, jobId.toString(), IDEMPOTENT_ID_FIELD,
-            idempotentId))
+            getResultsKey(idempotentId, jobId),
+            ImmutableMap.of(
+                RESULTS_FIELD,
+                result,
+                JOB_ID_FIELD,
+                jobId.toString(),
+                IDEMPOTENT_ID_FIELD,
+                idempotentId))
         .build();
   }
 
@@ -289,17 +292,16 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
   }
 
   @VisibleForTesting
-  Entity createErrorEntity(String idempotentId, UUID jobId, ErrorDetail error)
-      throws IOException {
+  Entity createErrorEntity(String idempotentId, UUID jobId, ErrorDetail error) throws IOException {
     return GoogleCloudUtils.createEntityBuilder(
-        getErrorKey(idempotentId, jobId),
-        ImmutableMap.of(
-            ERROR_FIELD,
-            objectMapper.writeValueAsString(error),
-            JOB_ID_FIELD,
-            jobId.toString(),
-            IDEMPOTENT_ID_FIELD,
-            idempotentId))
+            getErrorKey(idempotentId, jobId),
+            ImmutableMap.of(
+                ERROR_FIELD,
+                objectMapper.writeValueAsString(error),
+                JOB_ID_FIELD,
+                jobId.toString(),
+                IDEMPOTENT_ID_FIELD,
+                idempotentId))
         .build();
   }
 
