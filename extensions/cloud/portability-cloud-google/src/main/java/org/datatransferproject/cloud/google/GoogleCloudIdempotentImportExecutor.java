@@ -21,6 +21,7 @@ import org.datatransferproject.types.transfer.errors.ErrorDetail;
 import java.io.IOException;
 import java.io.Serializable;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -207,7 +208,7 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
   private Optional<ErrorDetail> getError(String idempotentId) {
     Preconditions.checkNotNull(jobId);
     try {
-      Entity error = datastore.get(getErrorKey(idempotentId));
+      Entity error = datastore.get(getErrorKey(idempotentId, jobId));
       return error == null
               ? Optional.empty()
               : Optional.of(
