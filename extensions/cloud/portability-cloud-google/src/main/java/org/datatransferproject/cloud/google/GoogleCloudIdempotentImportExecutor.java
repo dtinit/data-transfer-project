@@ -20,9 +20,10 @@ import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Collection;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -73,12 +74,12 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
       String idempotentId, String itemName, Callable<T> callable) throws Exception {
     Preconditions.checkNotNull(jobId, "executing a callable before initialization of a job");
 
-    if (knownValues.get(idempotentId).isPresent()) {
+    if (knownValuesCache.get(idempotentId).isPresent()) {
       monitor.debug(
               () ->
                       jobIdPrefix
                               + format("Using cached key %s from cache for %s", idempotentId, itemName));
-      return (T) knownValues.get(idempotentId).get();
+      return (T) knownValuesCache.get(idempotentId).get();
     }
 
     try {
@@ -192,6 +193,28 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
                                 return getError(idempotentId);
                               }
                             });
+  }
+
+  private Optional<Serializable> getKnownValue(String idempotentId) {
+    Preconditions.checkNotNull(jobId);
+    try {
+      return Optional.of(datastore.get(getResultKey(idempotentId)).getString(RESULTS_FIELD));
+    } catch (Exception e) {
+      return Optional.empty();
+    }
+  }
+
+  private Optional<ErrorDetail> getError(String idempotentId) {
+    Preconditions.checkNotNull(jobId);
+    try {
+      Entity error = datastore.get(getErrorKey(idempotentId));
+      return error == null
+              ? Optional.empty()
+              : Optional.of(
+              objectMapper.readerFor(ErrorDetail.class).readValue(error.getString(ERROR_FIELD)));
+    } catch (IOException e) {
+      return Optional.empty();
+    }
   }
 
   private Map<String, Serializable> getKnownValuesForJob(UUID jobId) {
