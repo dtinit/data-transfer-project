@@ -9,6 +9,9 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.datatransferproject.api.launcher.Monitor;
@@ -22,6 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 import static java.lang.String.format;
 
@@ -40,8 +44,8 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
   private final ObjectMapper objectMapper;
 
   // These are all variables corresponding to the job state. Only initialized when setJobId() is called
-  private Map<String, Serializable> knownValues;
-  private Map<String, ErrorDetail> errors;
+  private LoadingCache<String, Optional<Serializable>> knownValuesCache = null;
+  private LoadingCache<String, Optional<ErrorDetail>> errorsCache = null;
   private UUID jobId;
   private String jobIdPrefix;
 
@@ -69,12 +73,12 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
       String idempotentId, String itemName, Callable<T> callable) throws Exception {
     Preconditions.checkNotNull(jobId, "executing a callable before initialization of a job");
 
-    if (knownValues.containsKey(idempotentId)) {
+    if (knownValues.get(idempotentId).isPresent()) {
       monitor.debug(
-          () ->
-              jobIdPrefix
-                  + format("Using cached key %s from cache for %s", idempotentId, itemName));
-      return (T) knownValues.get(idempotentId);
+              () ->
+                      jobIdPrefix
+                              + format("Using cached key %s from cache for %s", idempotentId, itemName));
+      return (T) knownValues.get(idempotentId).get();
     }
 
     try {
@@ -98,54 +102,64 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
 
   private <T extends Serializable> void addResult(String idempotentId, T result)
       throws IOException {
-    knownValues.put(idempotentId, result);
-
     try {
       Transaction transaction = datastore.newTransaction();
-
       transaction.put(createResultEntity(idempotentId, result));
-      if (errors.containsKey(idempotentId)) {
-        // if the errors contain this key, that means the ID
+      if (errorsCache.get(idempotentId).isPresent()) {
+        // if the errors contain this key, that means the ID failed perviously,
+        // since it is succeeding now, remove it from the errors datastore
         transaction.delete(getErrorKey(idempotentId, jobId));
-        errors.remove(idempotentId);
       }
       transaction.commit();
     } catch (DatastoreException e) {
       monitor.severe(() -> jobIdPrefix + "Error writing result to datastore: " + e);
+    } finally {
+      errorsCache.invalidate(idempotentId);
+      knownValuesCache.put(idempotentId, Optional.of(result));
     }
   }
 
   private void addError(String idempotentId, ErrorDetail errorDetail) throws IOException {
-    errors.put(idempotentId, errorDetail);
     try {
       Transaction transaction = datastore.newTransaction();
       transaction.put(createErrorEntity(idempotentId, errorDetail));
       transaction.commit();
     } catch (DatastoreException e) {
       monitor.severe(() -> jobIdPrefix + "Error writing ErrorDetails to datastore: " + e);
+    } finally {
+      errorsCache.put(idempotentId, Optional.of(errorDetail));
     }
   }
 
   @Override
   public <T extends Serializable> T getCachedValue(String idempotentId)
       throws IllegalArgumentException {
-    if (!knownValues.containsKey(idempotentId)) {
-      throw new IllegalArgumentException(
-          idempotentId
-              + " is not a known key, known keys: "
-              + Joiner.on(", ").join(knownValues.keySet()));
+    try {
+      if (knownValuesCache.get(idempotentId).isEmpty()) {
+        throw new IllegalArgumentException(idempotentId + " is not a known key");
+      }
+      return (T) knownValuesCache.get(idempotentId).get();
+    } catch (ExecutionException e) {
+      throw new IllegalStateException(e);
     }
-    return (T) knownValues.get(idempotentId);
   }
 
   @Override
   public boolean isKeyCached(String idempotentId) {
-    return knownValues.containsKey(idempotentId);
+    try {
+      return knownValuesCache.get(idempotentId).isPresent();
+    } catch (ExecutionException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   @Override
   public Collection<ErrorDetail> getErrors() {
-    return ImmutableList.copyOf(errors.values());
+    try {
+      return ImmutableList.copyOf(getErrorDetailsForJob(jobId).values());
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   // In non-tests setJobId is only ever called once per executor, so the initialization of
@@ -154,9 +168,30 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
   public void setJobId(UUID jobId) {
     Preconditions.checkNotNull(jobId);
     this.jobId = jobId;
-    this.knownValues = getKnownValuesForJob(jobId);
-    this.errors = getErrorDetailsForJob(jobId);
     jobIdPrefix = "Job " + jobId + ": ";
+    this.knownValuesCache =
+            CacheBuilder.newBuilder()
+                    .maximumSize(1000)
+                    .expireAfterAccess(Duration.ofMinutes(30))
+                    .build(
+                            new CacheLoader<String, Optional<Serializable>>() {
+                              @Override
+                              public Optional<Serializable> load(String idempotentId) {
+                                return getKnownValue(idempotentId);
+                              }
+                            });
+
+    this.errorsCache =
+            CacheBuilder.newBuilder()
+                    .maximumSize(1000)
+                    .expireAfterAccess(Duration.ofMinutes(30))
+                    .build(
+                            new CacheLoader<String, Optional<ErrorDetail>>() {
+                              @Override
+                              public Optional<ErrorDetail> load(String idempotentId) {
+                                return getError(idempotentId);
+                              }
+                            });
   }
 
   private Map<String, Serializable> getKnownValuesForJob(UUID jobId) {
