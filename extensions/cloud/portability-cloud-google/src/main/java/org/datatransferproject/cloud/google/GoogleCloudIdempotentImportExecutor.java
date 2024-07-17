@@ -112,7 +112,7 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
         transaction.delete(getErrorKey(idempotentId, jobId));
       }
       transaction.commit();
-    } catch (DatastoreException e) {
+    } catch (DatastoreException | ExecutionException e) {
       monitor.severe(() -> jobIdPrefix + "Error writing result to datastore: " + e);
     } finally {
       errorsCache.invalidate(idempotentId);
@@ -156,11 +156,7 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
 
   @Override
   public Collection<ErrorDetail> getErrors() {
-    try {
-      return ImmutableList.copyOf(getErrorDetailsForJob(jobId).values());
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
-    }
+    return ImmutableList.copyOf(getErrorDetailsForJob(jobId).values());
   }
 
   // In non-tests setJobId is only ever called once per executor, so the initialization of
