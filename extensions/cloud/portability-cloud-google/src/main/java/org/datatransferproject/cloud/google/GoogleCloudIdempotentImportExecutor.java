@@ -199,7 +199,7 @@ public class GoogleCloudIdempotentImportExecutor implements IdempotentImportExec
   private Optional<Serializable> getKnownValue(String idempotentId) {
     Preconditions.checkNotNull(jobId);
     try {
-      return Optional.of(datastore.get(getResultKey(idempotentId)).getString(RESULTS_FIELD));
+      return Optional.of(datastore.get(getResultsKey(idempotentId, jobId)).getString(RESULTS_FIELD));
     } catch (Exception e) {
       return Optional.empty();
     }
