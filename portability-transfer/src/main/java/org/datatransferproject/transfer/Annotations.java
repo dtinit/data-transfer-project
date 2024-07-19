@@ -30,5 +30,13 @@ public final class Annotations {
   @Retention(RetentionPolicy.RUNTIME)
   public @interface RetryingExecutor {}
 
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  public @interface ExportSignalHandler {}
+
+  @Qualifier
+  @Retention(RetentionPolicy.RUNTIME)
+  public @interface ImportSignalHandler {}
+
   public Annotations() {}
 }

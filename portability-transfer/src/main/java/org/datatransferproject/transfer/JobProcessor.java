@@ -42,6 +42,8 @@ import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.types.CopyException;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 import org.datatransferproject.spi.transfer.types.FailureReasons;
+import org.datatransferproject.transfer.Annotations.ExportSignalHandler;
+import org.datatransferproject.transfer.Annotations.ImportSignalHandler;
 import org.datatransferproject.transfer.copier.InMemoryDataCopier;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.transfer.auth.AuthData;
@@ -73,8 +75,8 @@ class JobProcessor {
       ObjectMapper objectMapper,
       InMemoryDataCopier copier,
       AuthDataDecryptService decryptService,
-      Provider<SignalHandler> exportSignalHandlerProvider,
-      Provider<SignalHandler> importSignalHandlerProvider,
+      @ExportSignalHandler Provider<SignalHandler> exportSignalHandlerProvider,
+      @ImportSignalHandler Provider<SignalHandler> importSignalHandlerProvider,
       Monitor monitor,
       DtpInternalMetricRecorder dtpInternalMetricRecorder) {
     this.store = store;

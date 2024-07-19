@@ -199,17 +199,40 @@ final class WorkerModule extends FlagBindingModule {
 
   @Provides
   @Singleton
+  @Annotations.ImportSignalHandler
   SignalHandler getImportSignalHandler(ImmutableList<TransferExtension> transferExtensions) {
     TransferExtension extension =
-        findTransferExtension(transferExtensions, JobMetadata.getImportService());
+      findTransferExtension(transferExtensions, JobMetadata.getImportService());
+    DelegatingExtensionContext serviceSpecificContext = new DelegatingExtensionContext(context);
+    serviceSpecificContext.registerOverrideService(
+      MetricRecorder.class,
+      new ServiceAwareMetricRecorder(
+        extension.getServiceId(),
+        context.getService(DtpInternalMetricRecorder.class)));
+    serviceSpecificContext.registerOverrideService(
+      TransferServiceConfig.class,
+      getTransferServiceConfig(extension));
+    extension.initialize(serviceSpecificContext);
+    extension.initialize(serviceSpecificContext);
     return extension.getSignalHandler();
   }
 
   @Provides
   @Singleton
+  @Annotations.ExportSignalHandler
   SignalHandler getExportSignalHandler(ImmutableList<TransferExtension> transferExtensions) {
     TransferExtension extension =
-        findTransferExtension(transferExtensions, JobMetadata.getExportService());
+      findTransferExtension(transferExtensions, JobMetadata.getExportService());
+    DelegatingExtensionContext serviceSpecificContext = new DelegatingExtensionContext(context);
+    serviceSpecificContext.registerOverrideService(
+      MetricRecorder.class,
+      new ServiceAwareMetricRecorder(
+        extension.getServiceId(),
+        context.getService(DtpInternalMetricRecorder.class)));
+    serviceSpecificContext.registerOverrideService(
+      TransferServiceConfig.class,
+      getTransferServiceConfig(extension));
+    extension.initialize(serviceSpecificContext);
     return extension.getSignalHandler();
   }
 
