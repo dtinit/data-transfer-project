@@ -331,38 +331,6 @@ public class AppleMediaInterface implements AppleBaseInterface {
     return responseData;
   }
 
-  private void refreshTokens() throws InvalidTokenException {
-    final String refreshToken = authData.getRefreshToken();
-    final String refreshUrlString = authData.getTokenServerEncodedUrl();
-    final String clientId = appCredentials.getKey();
-    final String clientSecret = appCredentials.getSecret();
-
-    final Map<String, String> parameters = new HashMap<String, String>();
-    parameters.put("client_id", clientId);
-    parameters.put("client_secret", clientSecret);
-    parameters.put("grant_type", "refresh_token");
-    parameters.put("refresh_token", refreshToken);
-    StringJoiner sj = new StringJoiner("&");
-    for (Map.Entry<String, String> entry : parameters.entrySet()) {
-      sj.add(entry.getKey() + "=" + entry.getValue());
-    }
-
-    final byte[] requestData = sj.toString().getBytes(StandardCharsets.ISO_8859_1);
-    try {
-      final String responseString = sendPostRequest(refreshUrlString, requestData);
-      final JSONParser parser = new JSONParser();
-      final JSONObject json = (JSONObject) parser.parse(responseString);
-      final String accessToken = (String) json.get("access_token");
-      this.authData = new TokensAndUrlAuthData(accessToken, refreshToken, refreshUrlString);
-
-      monitor.debug(() -> "Successfully refreshed Apple token");
-
-    } catch (ParseException | IOException | CopyExceptionWithFailureReason e) {
-
-      throw new InvalidTokenException(getApplePhotosImportThrowingMessage("Unable to refresh Apple token"), e);
-    }
-  }
-
   public static NewMediaRequest createNewMediaRequest(
       @Nullable final String dataId,
       @Nullable final String filename,

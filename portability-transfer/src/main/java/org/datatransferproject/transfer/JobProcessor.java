@@ -203,7 +203,7 @@ class JobProcessor {
       exportSignalHandlerProvider.get().sendSignal(signalRequest, exportAuthData, monitor);
       importSignalHandlerProvider.get().sendSignal(signalRequest, importAuthData, monitor);
     } catch (CopyExceptionWithFailureReason | IOException | RetryException e) {
-      // Swallow the exception. The Job Processing shouldn't be effected by Signal failure.
+      monitor.info(() -> "Errored while sending transfer signals.", e);
     }
   }
 
