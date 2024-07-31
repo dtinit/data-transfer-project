@@ -16,6 +16,7 @@
 package org.datatransferproject.spi.transfer.hooks;
 
 import java.util.UUID;
+import org.datatransferproject.spi.transfer.provider.SignalHandler;
 
 /**
  * This interface allows implementations to handle certain events in the job

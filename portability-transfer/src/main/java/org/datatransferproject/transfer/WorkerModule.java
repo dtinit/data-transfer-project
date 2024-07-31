@@ -48,6 +48,7 @@ import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportE
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.spi.transfer.provider.SignalHandler;
 import org.datatransferproject.spi.transfer.provider.TransferCompatibilityProvider;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
@@ -194,6 +195,45 @@ final class WorkerModule extends FlagBindingModule {
         getTransferServiceConfig(extension));
     extension.initialize(serviceSpecificContext);
     return compatibilityProvider.getCompatibleImporter(extension, JobMetadata.getDataType());
+  }
+
+  @Provides
+  @Singleton
+  @Annotations.ImportSignalHandler
+  SignalHandler getImportSignalHandler(ImmutableList<TransferExtension> transferExtensions) {
+    TransferExtension extension =
+      findTransferExtension(transferExtensions, JobMetadata.getImportService());
+    DelegatingExtensionContext serviceSpecificContext = new DelegatingExtensionContext(context);
+    serviceSpecificContext.registerOverrideService(
+      MetricRecorder.class,
+      new ServiceAwareMetricRecorder(
+        extension.getServiceId(),
+        context.getService(DtpInternalMetricRecorder.class)));
+    serviceSpecificContext.registerOverrideService(
+      TransferServiceConfig.class,
+      getTransferServiceConfig(extension));
+    extension.initialize(serviceSpecificContext);
+    extension.initialize(serviceSpecificContext);
+    return extension.getSignalHandler();
+  }
+
+  @Provides
+  @Singleton
+  @Annotations.ExportSignalHandler
+  SignalHandler getExportSignalHandler(ImmutableList<TransferExtension> transferExtensions) {
+    TransferExtension extension =
+      findTransferExtension(transferExtensions, JobMetadata.getExportService());
+    DelegatingExtensionContext serviceSpecificContext = new DelegatingExtensionContext(context);
+    serviceSpecificContext.registerOverrideService(
+      MetricRecorder.class,
+      new ServiceAwareMetricRecorder(
+        extension.getServiceId(),
+        context.getService(DtpInternalMetricRecorder.class)));
+    serviceSpecificContext.registerOverrideService(
+      TransferServiceConfig.class,
+      getTransferServiceConfig(extension));
+    extension.initialize(serviceSpecificContext);
+    return extension.getSignalHandler();
   }
 
   @Provides
