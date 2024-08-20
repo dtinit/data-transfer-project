@@ -25,7 +25,6 @@ import static org.mockito.Mockito.when;
 import static  org.mockito.Mockito.spy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
@@ -33,6 +32,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.UUID;
 import okhttp3.OkHttpClient;
@@ -89,15 +89,15 @@ public class ImgurPhotoExporterTest {
   {
     try {
       albumsResponse =
-          Resources.toString(Resources.getResource("albums.json"), Charsets.UTF_8).trim();
+          Resources.toString(Resources.getResource("albums.json"), StandardCharsets.UTF_8).trim();
       album1ImagesResponse =
-          Resources.toString(Resources.getResource("album_1_images.json"), Charsets.UTF_8).trim();
+          Resources.toString(Resources.getResource("album_1_images.json"), StandardCharsets.UTF_8).trim();
       allImagesResponse =
-          Resources.toString(Resources.getResource("all_images.json"), Charsets.UTF_8).trim();
+          Resources.toString(Resources.getResource("all_images.json"), StandardCharsets.UTF_8).trim();
       page1Response =
-          Resources.toString(Resources.getResource("page1.json"), Charsets.UTF_8).trim();
+          Resources.toString(Resources.getResource("page1.json"), StandardCharsets.UTF_8).trim();
       page2Response =
-          Resources.toString(Resources.getResource("page2.json"), Charsets.UTF_8).trim();
+          Resources.toString(Resources.getResource("page2.json"), StandardCharsets.UTF_8).trim();
     } catch (IOException e) {
       e.printStackTrace();
     }

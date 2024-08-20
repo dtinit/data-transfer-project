@@ -21,7 +21,6 @@ import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.CharStreams;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
@@ -38,6 +37,7 @@ import org.datatransferproject.types.common.models.photos.PhotosContainerResourc
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -119,7 +119,7 @@ public class InstagramPhotoExporter implements
           "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
     }
     String result =
-        CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
+        CharStreams.toString(new InputStreamReader(response.getContent(), StandardCharsets.UTF_8));
     return objectMapper.readValue(result, clazz);
   }
 }
