@@ -24,14 +24,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.apple.AppleInterfaceFactory;
 import org.datatransferproject.spi.transfer.provider.SignalRequest;
 import org.datatransferproject.spi.transfer.types.CopyException;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
-import org.datatransferproject.spi.transfer.types.signals.SignalType;
+import org.datatransferproject.spi.transfer.types.signals.JobLifeCycle;
+import org.datatransferproject.spi.transfer.types.signals.JobLifeCycle.EndReason;
+import org.datatransferproject.spi.transfer.types.signals.JobLifeCycle.State;
 import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
@@ -77,13 +78,18 @@ public class AppleSignalHandlerTest {
 
   @Test
   public void testSendSignal() throws RetryException, CopyExceptionWithFailureReason, IOException {
+    JobLifeCycle jobStatus = JobLifeCycle.builder()
+      .setState(State.ENDED)
+      .setEndReason(EndReason.SUCCESSFULLY_COMPLETED)
+      .build();
+
     SignalRequest signalRequest =
-        SignalRequest.newBuilder()
-          .withJobId(jobId.toString())
-          .withJobStatus(SignalType.JOB_COMPLETED.name())
-          .withExportingService("EXPORT_SERVICE")
-          .withImportingService("IMPORT_SERVICE")
-          .withDataType(DataVertical.MAIL.getDataType())
+        SignalRequest.builder()
+          .setJobId(jobId.toString())
+          .setJobStatus(jobStatus)
+          .setExportingService("EXPORT_SERVICE")
+          .setImportingService("IMPORT_SERVICE")
+          .setDataType(DataVertical.MAIL.getDataType())
           .build();
 
     signalHandler.sendSignal(signalRequest, authData, monitor);

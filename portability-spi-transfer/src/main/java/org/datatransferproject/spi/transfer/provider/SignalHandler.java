@@ -17,12 +17,9 @@
 package org.datatransferproject.spi.transfer.provider;
 
 import java.io.IOException;
-import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
-import org.datatransferproject.spi.transfer.types.signals.SignalType;
 import org.datatransferproject.types.transfer.auth.AuthData;
-import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.retry.RetryException;
 
 /**

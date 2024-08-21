@@ -118,7 +118,7 @@ public class AppleSignalInterface implements AppleBaseInterface {
   public byte[] sendSignal(@NotNull final SignalRequest signalRequest)
       throws IOException, CopyExceptionWithFailureReason {
     byte[] responseData = null;
-    final String url = String.format(baseUrl, signalRequest.getJobId());
+    final String url = String.format(baseUrl, signalRequest.jobId());
     final byte[] requestBody = OBJECT_MAPPER.writeValueAsBytes(signalRequest);
     try {
       final String responseString = sendPostRequest(url, requestBody);

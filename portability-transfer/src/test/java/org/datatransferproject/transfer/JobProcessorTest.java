@@ -37,7 +37,6 @@ import org.datatransferproject.spi.transfer.provider.SignalHandler;
 import org.datatransferproject.spi.transfer.provider.SignalRequest;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.types.CopyException;
-import org.datatransferproject.spi.transfer.types.signals.SignalType;
 import org.datatransferproject.transfer.copier.InMemoryDataCopier;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.models.DataVertical;

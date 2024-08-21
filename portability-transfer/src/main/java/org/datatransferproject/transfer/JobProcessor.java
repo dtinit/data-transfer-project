@@ -37,11 +37,12 @@ import org.datatransferproject.spi.cloud.types.PortabilityJob.State;
 import org.datatransferproject.spi.transfer.hooks.JobHooks;
 import org.datatransferproject.spi.transfer.provider.SignalHandler;
 import org.datatransferproject.spi.transfer.provider.SignalRequest;
-import org.datatransferproject.spi.transfer.types.signals.SignalType;
+import org.datatransferproject.spi.transfer.types.signals.JobLifeCycle;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.types.CopyException;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 import org.datatransferproject.spi.transfer.types.FailureReasons;
+import org.datatransferproject.spi.transfer.types.signals.JobLifeCycle.EndReason;
 import org.datatransferproject.transfer.Annotations.ExportSignalHandler;
 import org.datatransferproject.transfer.Annotations.ImportSignalHandler;
 import org.datatransferproject.transfer.copier.InMemoryDataCopier;
@@ -141,7 +142,7 @@ class JobProcessor {
           JobMetadata.getExportService(),
           JobMetadata.getImportService());
       JobMetadata.getStopWatch().start();
-      sendSignals(jobId, exportAuthData, importAuthData, SignalType.JOB_BEGIN, monitor);
+      sendSignals(jobId, exportAuthData, importAuthData, JobLifeCycle.JOB_STARTED(), monitor);
       copier.copy(exportAuthData, importAuthData, jobId, exportInfo);
       success = true;
     } catch (CopyExceptionWithFailureReason e) {
@@ -177,7 +178,7 @@ class JobProcessor {
           EventCode.WORKER_JOB_FINISHED);
       addErrorsAndMarkJobFinished(jobId, success, loggedErrors);
       hooks.jobFinished(jobId, success);
-      SignalType finalStatus = success ? SignalType.JOB_COMPLETED : SignalType.JOB_ERRORED;
+      JobLifeCycle finalStatus = deriveFinalJobStatus(success);
       sendSignals(jobId, exportAuthData, importAuthData, finalStatus, monitor);
       dtpInternalMetricRecorder.finishedJob(
           JobMetadata.getDataType(),
@@ -190,13 +191,22 @@ class JobProcessor {
     }
   }
 
-  private void sendSignals(UUID jobId, AuthData exportAuthData, AuthData importAuthData, SignalType signalType, Monitor monitor) {
-    SignalRequest signalRequest = SignalRequest.newBuilder()
-      .withJobId(jobId.toString())
-      .withDataType(JobMetadata.getDataType().getDataType())
-      .withJobStatus(signalType.name())
-      .withExportingService(JobMetadata.getExportService())
-      .withImportingService(JobMetadata.getImportService())
+  private static JobLifeCycle deriveFinalJobStatus(boolean success) {
+    return JobLifeCycle.builder()
+      .setState(JobLifeCycle.State.ENDED)
+      .setEndReason(success ? EndReason.SUCCESSFULLY_COMPLETED : EndReason.PARTIALLY_COMPLETED)
+      .build();
+  }
+
+  private void sendSignals(UUID jobId, AuthData exportAuthData, AuthData importAuthData,
+    JobLifeCycle jobLifeCycle, Monitor monitor) {
+
+    SignalRequest signalRequest = SignalRequest.builder()
+      .setJobId(jobId.toString())
+      .setDataType(JobMetadata.getDataType().getDataType())
+      .setJobStatus(jobLifeCycle)
+      .setExportingService(JobMetadata.getExportService())
+      .setImportingService(JobMetadata.getImportService())
       .build();
 
     try {

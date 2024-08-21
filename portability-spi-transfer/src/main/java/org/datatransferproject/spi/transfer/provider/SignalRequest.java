@@ -16,102 +16,29 @@
 
 package org.datatransferproject.spi.transfer.provider;
 
-import java.util.Objects;
-import java.util.UUID;
-import org.datatransferproject.spi.transfer.types.signals.SignalType;
-import org.datatransferproject.types.common.models.DataVertical;
+import com.google.auto.value.AutoValue;
+import org.datatransferproject.spi.transfer.types.signals.JobLifeCycle;
 
-public class SignalRequest {
-  private final String jobId;
-  private final String dataType;
-  private final String jobStatus;
-  private final String exportingService;
-  private final String importingService;
+@AutoValue
+public abstract class SignalRequest {
+  public abstract String jobId();
+  public abstract String dataType();
+  public abstract JobLifeCycle jobStatus();
+  public abstract String exportingService();
+  public abstract String importingService();
 
-
-  public SignalRequest(String jobId, String dataType, String jobStatus, String exportService, String importService) {
-    Objects.requireNonNull(jobId, "jobId cannot be null");
-    Objects.requireNonNull(dataType, "dataType cannot be null");
-    Objects.requireNonNull(jobStatus, "jobStatus cannot be null");
-    Objects.requireNonNull(exportService, "exportService cannot be null");
-    Objects.requireNonNull(importService, "importService cannot be null");
-
-    this.jobId = jobId;
-    this.dataType = dataType;
-    this.jobStatus = jobStatus;
-    this.exportingService = exportService;
-    this.importingService = importService;
+  public static Builder builder() {
+    return new AutoValue_SignalRequest.Builder();
   }
 
-  public String getJobId() {
-    return jobId;
-  }
+  @AutoValue.Builder
+  public abstract static class Builder {
+    public abstract Builder setJobId(String jobId);
+    public abstract Builder setDataType(String dataType);
+    public abstract Builder setJobStatus(JobLifeCycle jobStatus);
+    public abstract Builder setExportingService(String exportingService);
+    public abstract Builder setImportingService(String importingService);
 
-  public String getDataType() {
-    return dataType;
-  }
-
-  public String getJobStatus() {
-    return jobStatus;
-  }
-
-  public String getExportingService() {
-    return exportingService;
-  }
-
-  public String getImportingService() {
-    return importingService;
-  }
-
-  public static SignalRequestBuilder newBuilder() {
-    return new SignalRequestBuilder();
-  }
-
-  @Override
-  public String toString() {
-    return "SignalRequest{" +
-      "jobId='" + jobId + '\'' +
-      ", dataType='" + dataType + '\'' +
-      ", jobStatus='" + jobStatus + '\'' +
-      ", exportingService='" + exportingService + '\'' +
-      ", importingService='" + importingService + '\'' +
-      '}';
-  }
-
-  public static final class SignalRequestBuilder {
-    private String jobId;
-    private String dataType;
-    private String jobStatus;
-    private String exportingService;
-    private String importingService;
-
-    public SignalRequestBuilder withJobId(String jobId) {
-      this.jobId = jobId;
-      return this;
-    }
-
-    public SignalRequestBuilder withDataType(String dataType) {
-      this.dataType = dataType;
-      return this;
-    }
-
-    public SignalRequestBuilder withJobStatus(String jobStatus) {
-      this.jobStatus = jobStatus;
-      return this;
-    }
-
-    public SignalRequestBuilder withExportingService(String exportingService) {
-      this.exportingService = exportingService;
-      return this;
-    }
-
-    public SignalRequestBuilder withImportingService(String importingService) {
-      this.importingService = importingService;
-      return this;
-    }
-
-    public SignalRequest build() {
-      return new SignalRequest(jobId, dataType, jobStatus, exportingService, importingService);
-    }
+    public abstract SignalRequest build();
   }
 }
