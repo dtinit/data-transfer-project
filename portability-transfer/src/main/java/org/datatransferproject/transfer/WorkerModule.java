@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 import org.datatransferproject.api.launcher.DelegatingExtensionContext;
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.api.launcher.ExtensionContext;
+import org.datatransferproject.api.launcher.Flag;
 import org.datatransferproject.api.launcher.MetricRecorder;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.config.FlagBindingModule;
@@ -310,5 +311,10 @@ final class WorkerModule extends FlagBindingModule {
   @Annotations.RetryingExecutor
   public IdempotentImportExecutor getRetryingIdempotentImportExecutor() {
     return idempotentImportExecutorExtension.getRetryingIdempotentImportExecutor(context);
+  }
+
+  @Flag
+  public Boolean transferSignalEnabled() {
+    return context.getSetting("transferSignalEnabled", Boolean.TRUE);
   }
 }

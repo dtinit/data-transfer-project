@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
+import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.JobAuthorization;
@@ -59,6 +60,11 @@ public class JobProcessorTest {
   private Provider<SignalHandler> exportSignalHandlerProvider;
   private SignalHandler importSignalHandler;
   private SignalHandler exportSignalHandler;
+  private JobAuthorization jobAuthorization;
+  private PortabilityJob job;
+  private AuthDataDecryptService decryptionService;
+  private ObjectMapper objectMapper;
+  private JobStore jobStore;
 
   private static class TestJobProcessor extends JobProcessor {
 
@@ -66,6 +72,7 @@ public class JobProcessorTest {
       InMemoryDataCopier copier,
       ObjectMapper objectMapper,
       AuthDataDecryptService decryptionService,
+      Boolean transferSignalEnabled,
       Provider<SignalHandler> importSignalHandler,
       Provider<SignalHandler> exportSignalHandler) {
       super(
@@ -76,6 +83,7 @@ public class JobProcessorTest {
           decryptionService,
           importSignalHandler,
           exportSignalHandler,
+          transferSignalEnabled,
           Mockito.mock(Monitor.class),
           Mockito.mock(DtpInternalMetricRecorder.class)
       );
@@ -94,25 +102,26 @@ public class JobProcessorTest {
     exportSignalHandlerProvider = (Provider<SignalHandler>) Mockito.mock(Provider.class);
 
     final String encryptionScheme = "testEncryptionScheme";
-    JobAuthorization jobAuthorization = Mockito.mock(JobAuthorization.class);
+
+    jobAuthorization = Mockito.mock(JobAuthorization.class);
     Mockito.when(jobAuthorization.encryptionScheme()).thenReturn(encryptionScheme);
     Mockito.when(jobAuthorization.encryptedAuthData()).thenReturn("encryptedData");
 
-    PortabilityJob job = Mockito.mock(PortabilityJob.class);
+    job = Mockito.mock(PortabilityJob.class);
     Mockito.when(job.jobAuthorization()).thenReturn(jobAuthorization);
 
-    JobStore jobStore = Mockito.mock(JobStore.class);
+    jobStore = Mockito.mock(JobStore.class);
     Mockito.when(jobStore.findJob(eq(jobId))).thenReturn(job);
 
     AuthDataPair pair = Mockito.mock(AuthDataPair.class);
     Mockito.when(pair.getExportAuthData()).thenReturn("");
     Mockito.when(pair.getImportAuthData()).thenReturn("");
 
-    AuthDataDecryptService decryptionService = Mockito.mock(AuthDataDecryptService.class);
+    decryptionService = Mockito.mock(AuthDataDecryptService.class);
     Mockito.when(decryptionService.decrypt(anyString(), any(byte[].class))).thenReturn(pair);
     Mockito.when(decryptionService.canHandle(eq(encryptionScheme))).thenReturn(true);
 
-    ObjectMapper objectMapper = Mockito.mock(ObjectMapper.class);
+    objectMapper = Mockito.mock(ObjectMapper.class);
     Mockito.when(objectMapper.readValue(anyString(), eq(AuthData.class)))
       .thenReturn(exportAuthData, importAuthData);
 
@@ -121,6 +130,7 @@ public class JobProcessorTest {
         copier,
         objectMapper,
         decryptionService,
+        Boolean.TRUE,
         importSignalHandlerProvider,
         exportSignalHandlerProvider));
 
@@ -181,6 +191,39 @@ public class JobProcessorTest {
 
     Mockito.verify(exportSignalHandlerProvider, Mockito.times(2)).get();
     Mockito.verify(exportSignalHandler, Mockito.times(2))
+      .sendSignal(any(SignalRequest.class), eq(exportAuthData), any(Monitor.class));
+  }
+
+  @Test
+  public void processJobCopiesSuccessfullyWithTransferSignalDisabled() throws CopyException,
+    IOException, RetryException {
+    processor = Mockito.spy(
+      new TestJobProcessor(jobStore,
+        copier,
+        objectMapper,
+        decryptionService,
+        Boolean.FALSE,
+        importSignalHandlerProvider,
+        exportSignalHandlerProvider));
+
+    JobMetadata.init(
+      jobId,
+      "".getBytes(),
+      DataVertical.BLOBS,
+      "",
+      "",
+      Stopwatch.createUnstarted());
+    Mockito.doThrow(new CopyException("error", new Exception())).when(copier)
+      .copy(importAuthData, exportAuthData, jobId, Optional.of(exportInfo));
+    processor.processJob();
+    Mockito.verify(copier).getErrors(jobId);
+
+    Mockito.verify(importSignalHandlerProvider, Mockito.never()).get();
+    Mockito.verify(importSignalHandler, Mockito.never())
+      .sendSignal(any(SignalRequest.class), eq(importAuthData), any(Monitor.class));
+
+    Mockito.verify(exportSignalHandlerProvider, Mockito.never()).get();
+    Mockito.verify(exportSignalHandler, Mockito.never())
       .sendSignal(any(SignalRequest.class), eq(exportAuthData), any(Monitor.class));
   }
 }

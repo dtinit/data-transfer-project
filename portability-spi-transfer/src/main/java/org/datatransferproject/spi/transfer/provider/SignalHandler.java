@@ -26,6 +26,17 @@ import org.datatransferproject.types.transfer.retry.RetryException;
  * Signals the status of the Job to the corresponding Service.
  */
 public interface SignalHandler<A extends AuthData> {
+
+  /**
+   * Sends the signal to thw provider typically over the Network. The default implementation logs the
+   * signal info via {@link Monitor}. By default, the signal is turned ON via "transferSignalEnabled"
+   * settings flag. Signalling can be explicitly turned off by setting "transferSignalEnabled" to
+   * false in the Settings.
+   *
+   * @see YamlSettingsExtension - for turning off the Signalling feature.
+   * @see JobProcessor - where the signals are triggered.
+   * @see WorkerModule - feature flag (transferSignalEnabled) is wired.
+   */
   default void sendSignal(SignalRequest signalRequest, AuthData authData, Monitor monitor)
     throws CopyExceptionWithFailureReason, IOException, RetryException {
     monitor.info(() -> "Default Signaller::" + signalRequest.toString());

@@ -22,6 +22,7 @@ import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import com.google.inject.name.Named;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Optional;
@@ -68,6 +69,7 @@ class JobProcessor {
   private final Provider<SignalHandler> importSignalHandlerProvider;
   private final Monitor monitor;
   private final DtpInternalMetricRecorder dtpInternalMetricRecorder;
+  private final boolean transferSignalEnabled;
 
   @Inject
   JobProcessor(
@@ -78,6 +80,7 @@ class JobProcessor {
       AuthDataDecryptService decryptService,
       @ExportSignalHandler Provider<SignalHandler> exportSignalHandlerProvider,
       @ImportSignalHandler Provider<SignalHandler> importSignalHandlerProvider,
+      @Named("transferSignalEnabled") Boolean transferSignalEnabled,
       Monitor monitor,
       DtpInternalMetricRecorder dtpInternalMetricRecorder) {
     this.store = store;
@@ -89,6 +92,7 @@ class JobProcessor {
     this.importSignalHandlerProvider = importSignalHandlerProvider;
     this.monitor = monitor;
     this.dtpInternalMetricRecorder = dtpInternalMetricRecorder;
+    this.transferSignalEnabled = transferSignalEnabled.booleanValue();
   }
 
   /** Process our job, whose metadata is available via {@link JobMetadata}. */
@@ -200,6 +204,10 @@ class JobProcessor {
 
   private void sendSignals(UUID jobId, AuthData exportAuthData, AuthData importAuthData,
     JobLifeCycle jobLifeCycle, Monitor monitor) {
+    if(!transferSignalEnabled) {
+      monitor.info(() -> "Transfer Signal Disabled.");
+      return;
+    }
 
     SignalRequest signalRequest = SignalRequest.builder()
       .setJobId(jobId.toString())
