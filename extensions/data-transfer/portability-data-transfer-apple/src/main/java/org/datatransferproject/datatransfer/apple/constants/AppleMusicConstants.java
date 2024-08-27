@@ -24,8 +24,4 @@ public class AppleMusicConstants {
     // Maximum number of playlist items to import in a single request
     public static final Integer MAX_NEW_PLAYLIST_ITEM_REQUESTS = Integer.parseInt(System.getProperty("AppleMusicImporter.MAX_NEW_PLAYLIST_ITEM_REQUESTS", "100"));
 
-    public static final String PLAYLISTS_COUNT_DATA_NAME = "playlistsCount";
-
-    public static final String PLAYLIST_ITEMS_COUNT_DATA_NAME = "playlistItemsCount";
-
 }
