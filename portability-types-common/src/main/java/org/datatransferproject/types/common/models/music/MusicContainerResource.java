@@ -43,6 +43,10 @@ public class MusicContainerResource extends ContainerResource {
   public static final String PLAYLIST_COUNT_DATA_NAME = "playlistCount";
   public static final String PLAYLIST_ITEM_COUNT_DATA_NAME = "playlistItemCount";
 
+  public static final String TRACK_COUNT_DATA_NAME = "trackCount";
+
+  public static final String RELEASES_COUNT_DATA_NAME = "releaseCount";
+
   @JsonCreator
   public MusicContainerResource(
       @JsonProperty("playlists") Collection<MusicPlaylist> playlists,
@@ -106,6 +110,8 @@ public class MusicContainerResource extends ContainerResource {
     return new ImmutableMap.Builder<String, Integer>()
             .put(PLAYLIST_COUNT_DATA_NAME, playlists.size())
             .put(PLAYLIST_ITEM_COUNT_DATA_NAME, playlistItems.size())
+            .put(TRACK_COUNT_DATA_NAME, tracks.size())
+            .put(RELEASES_COUNT_DATA_NAME, releases.size())
             .build();
   }
 
