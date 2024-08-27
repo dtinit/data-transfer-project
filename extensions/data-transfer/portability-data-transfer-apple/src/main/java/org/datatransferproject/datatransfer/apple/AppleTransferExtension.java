@@ -32,18 +32,22 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.apple.photos.AppleMediaImporter;
 import org.datatransferproject.datatransfer.apple.photos.ApplePhotosImporter;
 import org.datatransferproject.datatransfer.apple.photos.AppleVideosImporter;
+import org.datatransferproject.datatransfer.apple.signals.AppleSignalHandler;
 import org.datatransferproject.datatransfer.apple.music.AppleMusicImporter;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.spi.transfer.provider.SignalHandler;
 import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
+import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 
 /** TransferExtension to kick off the Transfer jobs to/from Apple */
 public class AppleTransferExtension implements TransferExtension {
 
   private boolean initialized = false;
+  private AppleSignalHandler signalHandler;
 
   private ImmutableMap<DataVertical, Importer> importerMap;
   private ImmutableMap<DataVertical, Exporter> exporterMap;
@@ -68,6 +72,11 @@ public class AppleTransferExtension implements TransferExtension {
     Preconditions.checkArgument(initialized);
     Preconditions.checkArgument(SUPPORTED_SERVICES.contains(transferDataType));
     return importerMap.get(transferDataType);
+  }
+
+  @Override
+  public SignalHandler<?> getSignalHandler() {
+    return signalHandler;
   }
 
   @Override
@@ -98,6 +107,8 @@ public class AppleTransferExtension implements TransferExtension {
 
     exporterMap = ImmutableMap.<DataVertical, Exporter>builder().build();
 
+    RetryStrategyLibrary retryStrategyLibrary = context.getSetting("retryLibrary", null);
+    signalHandler = new AppleSignalHandler(appCredentials, retryStrategyLibrary, monitor);
     initialized = true;
   }
 }

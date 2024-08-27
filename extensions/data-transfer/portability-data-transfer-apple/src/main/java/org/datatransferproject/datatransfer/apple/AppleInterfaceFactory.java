@@ -25,6 +25,7 @@ import com.google.common.base.Preconditions;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.apple.music.AppleMusicInterface;
 import org.datatransferproject.datatransfer.apple.photos.AppleMediaInterface;
+import org.datatransferproject.datatransfer.apple.signals.AppleSignalInterface;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
@@ -60,6 +61,17 @@ public class AppleInterfaceFactory {
     return new AppleMediaInterface(authData, appCredentials, exportingService, monitor);
   }
 
+  public synchronized AppleSignalInterface makeSignalInterface(
+    TokensAndUrlAuthData authData,
+    AppCredentials appCredentials,
+    Monitor monitor) {
+
+    Preconditions.checkNotNull(authData, ERROR_MESSAGE, "authData");
+    Preconditions.checkNotNull(appCredentials, ERROR_MESSAGE, "appCredentials");
+    Preconditions.checkNotNull(monitor, ERROR_MESSAGE, "monitor");
+
+    return new AppleSignalInterface(authData, appCredentials, monitor);
+  }
   public synchronized AppleMusicInterface getOrCreateMusicInterface(
           UUID jobId,
           TokensAndUrlAuthData authData,

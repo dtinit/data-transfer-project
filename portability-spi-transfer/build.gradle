@@ -25,7 +25,25 @@ dependencies {
     compile project(':portability-types-transfer')
     compile project(':portability-api-launcher')
 
+    compileOnly "com.google.auto.value:auto-value-annotations:${autoValueVersion}"
+    annotationProcessor "com.google.auto.value:auto-value:${autoValueVersion}"
+
     compile('org.apache.commons:commons-lang3:3.11')
+}
+
+sourceSets {
+  main {
+    java {
+      // Includes generated AutoValue_ classes (build/classes/java) as source
+      srcDirs = ['build/classes/java', 'src/main/java']
+    }
+  }
+  test {
+    java {
+      // Include test directories so we can build and run tests in IDE.
+      srcDirs = ['src/test/java']
+    }
+  }
 }
 
 configurePublication(project)
