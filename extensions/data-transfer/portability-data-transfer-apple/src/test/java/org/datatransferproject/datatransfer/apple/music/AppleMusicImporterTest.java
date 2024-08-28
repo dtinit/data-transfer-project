@@ -134,9 +134,9 @@ public class AppleMusicImporterTest {
         assertThat(importResult.getCounts().isPresent());
 
         // Should be the same as the number of playlists sent in.
-        assertThat(importResult.getCounts().get().get(AppleMusicConstants.PLAYLISTS_COUNT_DATA_NAME) == playlistsResource.getPlaylists().size());
+        assertThat(importResult.getCounts().get().get(MusicContainerResource.PLAYLIST_COUNT_DATA_NAME) == playlistsResource.getPlaylists().size());
         // No playlist items were sent.
-        assertThat(importResult.getCounts().get().get(AppleMusicConstants.PLAYLIST_ITEMS_COUNT_DATA_NAME) == 0);
+        assertThat(importResult.getCounts().get().get(MusicContainerResource.PLAYLIST_ITEM_COUNT_DATA_NAME) == 0);
     }
 
     @Test
@@ -198,9 +198,9 @@ public class AppleMusicImporterTest {
 
         assertThat(importResult.getCounts().isPresent());
 
-        assertThat(importResult.getCounts().get().get(AppleMusicConstants.PLAYLIST_ITEMS_COUNT_DATA_NAME) == playlistItemsResource.getPlaylistItems().size());
+        assertThat(importResult.getCounts().get().get(MusicContainerResource.PLAYLIST_ITEM_COUNT_DATA_NAME) == playlistItemsResource.getPlaylistItems().size());
 
-        assertThat(importResult.getCounts().get().get(AppleMusicConstants.PLAYLISTS_COUNT_DATA_NAME) == 0);
+        assertThat(importResult.getCounts().get().get(MusicContainerResource.PLAYLIST_COUNT_DATA_NAME) == 0);
     }
 
     @Test
@@ -241,9 +241,9 @@ public class AppleMusicImporterTest {
         assertThat(executor.getErrors()).isEmpty();
         assertThat(importResult.getCounts().isPresent());
 
-        assertThat(importResult.getCounts().get().get(AppleMusicConstants.PLAYLIST_ITEMS_COUNT_DATA_NAME) == itemsResource.getPlaylistItems().size());
+        assertThat(importResult.getCounts().get().get(MusicContainerResource.PLAYLIST_ITEM_COUNT_DATA_NAME) == itemsResource.getPlaylistItems().size());
 
-        assertThat(importResult.getCounts().get().get(AppleMusicConstants.PLAYLISTS_COUNT_DATA_NAME) == 0);
+        assertThat(importResult.getCounts().get().get(MusicContainerResource.PLAYLIST_COUNT_DATA_NAME) == 0);
     }
 
     private void setUpImportPlaylistTracksBatchResponse(@Nonnull final Map<String, Integer> dataIdToStatus) throws Exception {

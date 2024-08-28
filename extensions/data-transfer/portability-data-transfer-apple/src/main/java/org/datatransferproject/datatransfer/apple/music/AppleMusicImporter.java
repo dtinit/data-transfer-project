@@ -90,8 +90,8 @@ public class AppleMusicImporter implements Importer<TokensAndUrlAuthData, MusicC
 
         final Map<String, Integer> counts =
                 new ImmutableMap.Builder<String, Integer>()
-                        .put(AppleMusicConstants.PLAYLISTS_COUNT_DATA_NAME, playlistsCount)
-                        .put(AppleMusicConstants.PLAYLIST_ITEMS_COUNT_DATA_NAME, playlistItemsCount)
+                        .put(MusicContainerResource.PLAYLIST_COUNT_DATA_NAME, playlistsCount)
+                        .put(MusicContainerResource.PLAYLIST_ITEM_COUNT_DATA_NAME, playlistItemsCount)
                         .build();
         return ImportResult.OK
                 .copyWithCounts(counts);

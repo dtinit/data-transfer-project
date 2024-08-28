@@ -21,9 +21,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import org.datatransferproject.types.common.models.ContainerResource;
 
@@ -37,6 +39,13 @@ public class MusicContainerResource extends ContainerResource {
   private final List<MusicPlaylistItem> playlistItems;
   private final Collection<MusicRecording> tracks;
   private final Collection<MusicRelease> releases;
+
+  public static final String PLAYLIST_COUNT_DATA_NAME = "playlistCount";
+  public static final String PLAYLIST_ITEM_COUNT_DATA_NAME = "playlistItemCount";
+
+  public static final String TRACK_COUNT_DATA_NAME = "trackCount";
+
+  public static final String RELEASES_COUNT_DATA_NAME = "releaseCount";
 
   @JsonCreator
   public MusicContainerResource(
@@ -95,4 +104,15 @@ public class MusicContainerResource extends ContainerResource {
         .add("releases", getReleases())
         .toString();
   }
+
+  @Override
+  public Map<String, Integer> getCounts() {
+    return new ImmutableMap.Builder<String, Integer>()
+            .put(PLAYLIST_COUNT_DATA_NAME, playlists.size())
+            .put(PLAYLIST_ITEM_COUNT_DATA_NAME, playlistItems.size())
+            .put(TRACK_COUNT_DATA_NAME, tracks.size())
+            .put(RELEASES_COUNT_DATA_NAME, releases.size())
+            .build();
+  }
+
 }
