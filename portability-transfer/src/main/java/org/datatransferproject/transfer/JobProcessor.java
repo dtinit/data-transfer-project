@@ -21,8 +21,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-
 import com.google.inject.name.Named;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Optional;

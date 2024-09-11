@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.AbstractScheduledService.Scheduler;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -313,7 +314,8 @@ final class WorkerModule extends FlagBindingModule {
     return idempotentImportExecutorExtension.getRetryingIdempotentImportExecutor(context);
   }
 
-  @Flag
+  @Provides
+  @Named("transferSignalEnabled")
   public Boolean transferSignalEnabled() {
     return context.getSetting("transferSignalEnabled", Boolean.TRUE);
   }
