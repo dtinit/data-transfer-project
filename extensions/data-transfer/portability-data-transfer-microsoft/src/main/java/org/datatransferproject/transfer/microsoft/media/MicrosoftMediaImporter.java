@@ -15,6 +15,8 @@
  */
 package org.datatransferproject.transfer.microsoft.media;
 
+import static org.datatransferproject.transfer.DiscardingStreamCounter.discardForLength;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.common.annotations.VisibleForTesting;
@@ -38,6 +40,7 @@ import okhttp3.ResponseBody;
 import org.apache.commons.lang3.tuple.Pair;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.api.transport.UrlGetStreamer;
+import org.datatransferproject.spi.api.transport.JobFileStream;
 import org.datatransferproject.spi.api.transport.RemoteFileStreamer;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
@@ -60,12 +63,13 @@ public class MicrosoftMediaImporter
     implements Importer<TokensAndUrlAuthData, MediaContainerResource> {
   /** Max number of bytes to upload to Microsoft's APIs at a time. */
   private static final int MICROSOFT_UPLOAD_CHUNK_BYTE_SIZE = 32000 * 1024; // 32000KiB
-                                                                            //
+
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
   private final TemporaryPerJobDataStore jobStore;
   private final Monitor monitor;
   private final MicrosoftCredentialFactory credentialFactory;
+  private final JobFileStream jobFileStream;
   private final MicrosoftTransmogrificationConfig transmogrificationConfig =
       new MicrosoftTransmogrificationConfig();
   private Credential credential;
@@ -78,7 +82,8 @@ public class MicrosoftMediaImporter
 
   public MicrosoftMediaImporter(String baseUrl, OkHttpClient client, ObjectMapper objectMapper,
       TemporaryPerJobDataStore jobStore, Monitor monitor,
-      MicrosoftCredentialFactory credentialFactory) {
+      MicrosoftCredentialFactory credentialFactory,
+      JobFileStream jobFileStream) {
 
     // NOTE: "special/photos" is a specific folder in One Drive that corresponds to items that
     // should appear in https://photos.onedrive.com/, for more information see:  
@@ -86,11 +91,10 @@ public class MicrosoftMediaImporter
     createFolderUrl = baseUrl + "/v1.0/me/drive/special/photos/children";
     albumlessMediaUrlTemplate =
         baseUrl + "/v1.0/me/drive/special/photos:/%s:/createUploadSession%s";
-      
+
     // first param is the folder id, second param is the file name
     // /me/drive/items/{parent-id}:/{filename}:/content;
     uploadMediaUrlTemplate = baseUrl + "/v1.0/me/drive/items/%s:/%s:/createUploadSession%s";
-    
 
     this.client = client;
     this.objectMapper = objectMapper;
@@ -98,6 +102,7 @@ public class MicrosoftMediaImporter
     this.monitor = monitor;
     this.credentialFactory = credentialFactory;
     this.credential = null;
+    this.jobFileStream = jobFileStream;
   }
 
   @Override
@@ -210,16 +215,15 @@ public class MicrosoftMediaImporter
   private String importDownloadableItem(
       DownloadableFile item, UUID jobId, IdempotentImportExecutor idempotentImportExecutor)
       throws Exception {
-    final int totalFileSize = jobStore.ensureStored(jobId, item, remoteFileStreamer);
+    long totalFileSize = discardForLength(jobFileStream.streamFile(item, jobId, jobStore));
     // Download the remote file directly to our temp store.
-    InputStream tmpFileStream =
-        jobStore.getStream(jobId, item.getFetchableUrl()).getStream();
+    InputStream fileStream = jobFileStream.streamFile(item, jobId, jobStore);
 
     String itemUploadUrl = createUploadSession(item, idempotentImportExecutor);
 
     Response finalChunkResponse =
-        uploadStreamInChunks(totalFileSize, itemUploadUrl, item.getMimeType(), tmpFileStream);
-    tmpFileStream.close();
+        uploadStreamInChunks(totalFileSize, itemUploadUrl, item.getMimeType(), fileStream);
+    fileStream.close();
     if (finalChunkResponse.code() != 200 && finalChunkResponse.code() != 201) {
       // Once we upload the last chunk, we should have either 200 or 201.
       // TODO: This should change to a precondition check after we debug some more.
