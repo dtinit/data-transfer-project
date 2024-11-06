@@ -15,7 +15,7 @@
  */
 package org.datatransferproject.transfer.microsoft.media;
 
-import static org.datatransferproject.transfer.DiscardingStreamCounter.discardForLength;
+import static org.datatransferproject.spi.api.transport.DiscardingStreamCounter.discardForLength;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
@@ -215,8 +215,7 @@ public class MicrosoftMediaImporter
   private String importDownloadableItem(
       DownloadableFile item, UUID jobId, IdempotentImportExecutor idempotentImportExecutor)
       throws Exception {
-    long totalFileSize = discardForLength(jobFileStream.streamFile(item, jobId, jobStore));
-    // Download the remote file directly to our temp store.
+    final long totalFileSize = discardForLength(jobFileStream.streamFile(item, jobId, jobStore));
     InputStream fileStream = jobFileStream.streamFile(item, jobId, jobStore);
 
     String itemUploadUrl = createUploadSession(item, idempotentImportExecutor);
@@ -239,7 +238,7 @@ public class MicrosoftMediaImporter
 
   /** Depletes input stream, uploading a chunk of the stream at a time. */
   private Response uploadStreamInChunks(
-      int totalFileSize, String itemUploadUrl, String itemMimeType, InputStream inputStream) throws IOException, DestinationMemoryFullException {
+      long totalFileSize, String itemUploadUrl, String itemMimeType, InputStream inputStream) throws IOException, DestinationMemoryFullException {
     Response lastChunkResponse = null;
     StreamChunker streamChunker = new StreamChunker(MICROSOFT_UPLOAD_CHUNK_BYTE_SIZE, inputStream);
     Optional<DataChunk> nextChunk;
@@ -355,7 +354,7 @@ public class MicrosoftMediaImporter
   // Content-Length: {chunk size in bytes}
   // Content-Range: bytes {begin}-{end}/{total size}
   // body={bytes}
-  private Response uploadChunk(DataChunk chunk, String photoUploadUrl, int totalFileSize,
+  private Response uploadChunk(DataChunk chunk, String photoUploadUrl, long totalFileSize,
       String mediaType) throws IOException, DestinationMemoryFullException {
     Request.Builder uploadRequestBuilder = new Request.Builder().url(photoUploadUrl);
     uploadRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());

@@ -44,6 +44,8 @@ import okhttp3.ResponseBody;
 import okio.Buffer;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.launcher.monitor.ConsoleMonitor;
+import org.datatransferproject.spi.api.transport.JobFileStream;
+import org.datatransferproject.spi.api.transport.RemoteFileStreamer;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
@@ -77,6 +79,7 @@ public class MicrosoftMediaImporterTest {
   MicrosoftCredentialFactory credentialFactory;
   IdempotentImportExecutor executor;
   TokensAndUrlAuthData authData;
+  JobFileStream jobFileStream;
 
   @Before
   public void setUp() throws IOException {
@@ -90,12 +93,15 @@ public class MicrosoftMediaImporterTest {
     monitor = new ConsoleMonitor(ConsoleMonitor.Level.INFO);
     credentialFactory = mock(MicrosoftCredentialFactory.class);
     credential = new Credential.Builder(BearerToken.authorizationHeaderAccessMethod()).build();
+    RemoteFileStreamer remoteFileStreamer = mock(RemoteFileStreamer.class);
+    JobFileStream jobFileStream = new JobFileStream(remoteFileStreamer);
     when(credentialFactory.createCredential(any())).thenReturn(credential);
     when(credentialFactory.refreshCredential(any())).thenReturn(credential);
     credential.setAccessToken("acc");
     credential.setExpirationTimeMilliseconds(null);
-    importer = new MicrosoftMediaImporter(
-        BASE_URL, client, objectMapper, jobStore, monitor, credentialFactory);
+    importer =
+        new MicrosoftMediaImporter(
+            BASE_URL, client, objectMapper, jobStore, monitor, credentialFactory, jobFileStream);
   }
 
   @Test

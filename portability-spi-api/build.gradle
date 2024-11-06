@@ -22,6 +22,7 @@ plugins {
 dependencies {
     compile project(':portability-types-common')
     compile project(':portability-types-transfer')
+    compile project(':portability-spi-cloud')
     compile project(':portability-api-launcher')
 }
 configurePublication(project)

@@ -44,6 +44,8 @@ import okhttp3.ResponseBody;
 import okio.Buffer;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.launcher.monitor.ConsoleMonitor;
+import org.datatransferproject.spi.api.transport.JobFileStream;
+import org.datatransferproject.spi.api.transport.RemoteFileStreamer;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
@@ -78,6 +80,7 @@ public class MicrosoftPhotosImporterTest {
   MicrosoftCredentialFactory credentialFactory;
   IdempotentImportExecutor executor;
   TokensAndUrlAuthData authData;
+  JobFileStream jobFileStream;
 
 
   @Before
@@ -96,13 +99,16 @@ public class MicrosoftPhotosImporterTest {
     when(credentialFactory.refreshCredential(any())).thenReturn(credential);
     credential.setAccessToken("acc");
     credential.setExpirationTimeMilliseconds(null);
+    RemoteFileStreamer remoteFileStreamer = mock(RemoteFileStreamer.class);
+    JobFileStream jobFileStream = new JobFileStream(remoteFileStreamer);
     importer = new MicrosoftPhotosImporter(
         BASE_URL,
         client,
         objectMapper,
         jobStore,
         monitor,
-        credentialFactory
+        credentialFactory,
+        jobFileStream
     );
   }
 
