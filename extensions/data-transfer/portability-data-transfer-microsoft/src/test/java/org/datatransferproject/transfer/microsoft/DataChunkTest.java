@@ -26,8 +26,8 @@ import org.datatransferproject.transfer.microsoft.DataChunk;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-
-/** */
+// TODO once DataChunk is just an autovalue without logic, then delete this test (all cases are
+// fully covered in a mini "integration" via StreamChunker anyway)
 public class DataChunkTest {
 
   private static final int CHUNK_SIZE = 32000 * 1024; // 32000KiB
@@ -35,8 +35,7 @@ public class DataChunkTest {
   InputStream inputStream;
 
   @BeforeEach
-  public void setUp() throws IOException {
-  }
+  public void setUp() throws IOException {}
 
   @Test
   public void testSplitDataSingleFullChunk() throws IOException {
@@ -50,7 +49,7 @@ public class DataChunkTest {
 
   @Test
   public void testSplitDataSingleNotFullChunk() throws IOException {
-    inputStream = new ByteArrayInputStream(new byte[CHUNK_SIZE-1]);
+    inputStream = new ByteArrayInputStream(new byte[CHUNK_SIZE - 1]);
     List<DataChunk> l = DataChunk.splitData(inputStream);
     assertThat(l).hasSize(1);
     assertThat(l.get(0).getSize()).isEqualTo(CHUNK_SIZE - 1);
@@ -67,7 +66,7 @@ public class DataChunkTest {
 
   @Test
   public void testSplitTwoEvenChunks() throws IOException {
-    inputStream = new ByteArrayInputStream(new byte[CHUNK_SIZE*2]);
+    inputStream = new ByteArrayInputStream(new byte[CHUNK_SIZE * 2]);
     List<DataChunk> l = DataChunk.splitData(inputStream);
     assertThat(l).hasSize(2);
     assertThat(l.get(0).getSize()).isEqualTo(CHUNK_SIZE);
@@ -75,12 +74,12 @@ public class DataChunkTest {
     assertThat(l.get(0).getEnd()).isEqualTo(CHUNK_SIZE - 1);
     assertThat(l.get(1).getSize()).isEqualTo(CHUNK_SIZE);
     assertThat(l.get(1).getStart()).isEqualTo(CHUNK_SIZE);
-    assertThat(l.get(1).getEnd()).isEqualTo(2*CHUNK_SIZE - 1);
+    assertThat(l.get(1).getEnd()).isEqualTo(2 * CHUNK_SIZE - 1);
   }
 
   @Test
   public void testSplitTwoChunksUneven() throws IOException {
-    inputStream = new ByteArrayInputStream(new byte[CHUNK_SIZE*2 - 10]);
+    inputStream = new ByteArrayInputStream(new byte[CHUNK_SIZE * 2 - 10]);
     List<DataChunk> l = DataChunk.splitData(inputStream);
     assertThat(l).hasSize(2);
     assertThat(l.get(0).getSize()).isEqualTo(CHUNK_SIZE);
@@ -88,7 +87,6 @@ public class DataChunkTest {
     assertThat(l.get(0).getEnd()).isEqualTo(CHUNK_SIZE - 1);
     assertThat(l.get(1).getSize()).isEqualTo(CHUNK_SIZE - 10);
     assertThat(l.get(1).getStart()).isEqualTo(CHUNK_SIZE);
-    assertThat(l.get(1).getEnd()).isEqualTo(2*CHUNK_SIZE - 11);
+    assertThat(l.get(1).getEnd()).isEqualTo(2 * CHUNK_SIZE - 11);
   }
-
 }

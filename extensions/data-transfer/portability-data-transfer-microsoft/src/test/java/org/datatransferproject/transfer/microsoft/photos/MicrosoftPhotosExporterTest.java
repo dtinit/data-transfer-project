@@ -290,7 +290,7 @@ public class MicrosoftPhotosExporterTest {
     assertThat(actualPhotos.stream().map(PhotoModel::getFetchableUrl).collect(Collectors.toList()))
         .containsExactly(IMAGE_URI);
     assertThat(actualPhotos.stream().map(PhotoModel::getAlbumId).collect(Collectors.toList()))
-        .containsExactly(null);
+        .isEmpty();
     assertThat(actualPhotos.stream().map(PhotoModel::getTitle).collect(Collectors.toList()))
         .containsExactly(FILENAME);
 

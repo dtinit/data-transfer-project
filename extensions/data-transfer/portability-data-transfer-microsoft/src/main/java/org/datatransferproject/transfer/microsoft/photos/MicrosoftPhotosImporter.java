@@ -17,15 +17,18 @@ package org.datatransferproject.transfer.microsoft.photos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -34,6 +37,8 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.api.transport.UrlGetStreamer;
+import org.datatransferproject.spi.api.transport.RemoteFileStreamer;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
@@ -42,6 +47,7 @@ import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.transfer.microsoft.DataChunk;
+import org.datatransferproject.transfer.microsoft.StreamChunker;
 import org.datatransferproject.transfer.microsoft.MicrosoftTransmogrificationConfig;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
@@ -52,8 +58,13 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 /**
  * Imports albums and photos to OneDrive using the Microsoft Graph API.
  */
+// TODO de-dupe Microsoft{Media,Photos}Importer classes. They MediaImporter class is a direct fork
+// of this one (when we thought we might delete this class). The Media fork forunately has more
+// generic model-agnostic internals, so it should be easier to call its factored-out code from this
+// class.
 public class MicrosoftPhotosImporter
     implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
+  private static final int MICROSOFT_UPLOAD_CHUNK_BYTE_SIZE = 32000 * 1024; // 32000KiB
 
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
@@ -189,41 +200,53 @@ public class MicrosoftPhotosImporter
   }
 
   private String importSinglePhoto(
-    PhotoModel photo,
+    PhotoModel item,
     UUID jobId,
     IdempotentImportExecutor idempotentImportExecutor) throws Exception {
     BufferedInputStream inputStream = null;
-    if (photo.isInTempStore()) {
-      inputStream = new BufferedInputStream(jobStore.getStream(jobId, photo.getFetchableUrl()).getStream());
-    } else if (photo.getFetchableUrl() != null) {
-      inputStream = new BufferedInputStream(new URL(photo.getFetchableUrl()).openStream());
+    if (item.isInTempStore()) {
+      inputStream = new BufferedInputStream(jobStore.getStream(jobId, item.getFetchableUrl()).getStream());
+    } else if (item.getFetchableUrl() != null) {
+      inputStream = new BufferedInputStream(new URL(item.getFetchableUrl()).openStream());
     } else {
-      throw new IllegalStateException("Don't know how to get the inputStream for " + photo);
+      throw new IllegalStateException("Don't know how to get the inputStream for " + item);
     }
+    final int totalFileSize = jobStore.ensureStored(jobId, item, remoteFileStreamer);
+    // Download the remote file directly to our temp store.
+    InputStream tmpFileStream =
+        jobStore.getStream(jobId, item.getFetchableUrl()).getStream();
 
-    String photoUploadUrl = createUploadSession(photo, idempotentImportExecutor);
+    String itemUploadUrl = createUploadSession(item, idempotentImportExecutor);
 
-    // Arrange the data to be uploaded in chunks
-    List<DataChunk> chunksToSend = DataChunk.splitData(inputStream);
-    inputStream.close();
-    final int totalFileSize = chunksToSend.stream().map(DataChunk::getSize).reduce(0, Integer::sum);
-    Preconditions.checkState(
-        chunksToSend.size() != 0, "Data was split into zero chunks %s.", photo.getTitle());
-
-    Response chunkResponse = null;
-    for (DataChunk chunk : chunksToSend) {
-      chunkResponse = uploadChunk(chunk, photoUploadUrl, totalFileSize, photo.getMediaType());
-    }
-    if (chunkResponse.code() != 200 && chunkResponse.code() != 201) {
+    Response finalChunkResponse =
+        uploadStreamInChunks(totalFileSize, itemUploadUrl, item.getMimeType(), tmpFileStream);
+    tmpFileStream.close();
+    if (finalChunkResponse.code() != 200 && finalChunkResponse.code() != 201) {
       // Once we upload the last chunk, we should have either 200 or 201.
-      // This should change to a precondition check after we debug some more.
+      // TODO: This should change to a precondition check after we debug some more.
       monitor.debug(
-          () -> "Received a bad code on completion of uploading chunks", chunkResponse.code());
+          () -> "Received a bad code on completion of uploading chunks", finalChunkResponse.code());
     }
     // get complete file response
-    ResponseBody chunkResponseBody = chunkResponse.body();
-    Map<String, Object> chunkResponseData = objectMapper.readValue(chunkResponseBody.bytes(), Map.class);
+    ResponseBody finalChunkResponseBody = finalChunkResponse.body();
+    Map<String, Object> chunkResponseData =
+        objectMapper.readValue(finalChunkResponseBody.bytes(), Map.class);
     return (String) chunkResponseData.get("id");
+  }
+
+  /** Depletes input stream, uploading a chunk of the stream at a time. */
+  private Response uploadStreamInChunks(
+      int totalFileSize, String itemUploadUrl, String itemMimeType, InputStream inputStream) throws IOException, DestinationMemoryFullException {
+    Response lastChunkResponse = null;
+    StreamChunker streamChunker = new StreamChunker(MICROSOFT_UPLOAD_CHUNK_BYTE_SIZE, inputStream);
+    Optional<DataChunk> nextChunk;
+    while (true) {
+      nextChunk = streamChunker.nextChunk();
+      if (!nextChunk.isPresent()) break;
+      lastChunkResponse =
+          uploadChunk(nextChunk.get(), itemUploadUrl, totalFileSize, itemMimeType);
+    }
+    return lastChunkResponse;
   }
 
   private Credential getOrCreateCredential(TokensAndUrlAuthData authData) {
