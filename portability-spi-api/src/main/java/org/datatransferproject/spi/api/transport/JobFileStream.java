@@ -1,5 +1,7 @@
 package org.datatransferproject.spi.api.transport;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,13 +25,11 @@ public class JobFileStream {
   public InputStream streamFile(
       DownloadableFile downloadableFile, UUID jobId, TemporaryPerJobDataStore jobStore)
       throws IOException {
+    checkState(downloadableFile.getFetchableUrl() != null, "missing fetchable URL for file");
     if (downloadableFile.isInTempStore()) {
       return jobStore.getStream(jobId, downloadableFile.getFetchableUrl()).getStream();
-    } else if (downloadableFile.getFetchableUrl() != null) {
-      return this.remoteFileStreamer.get(downloadableFile);
     } else {
-      throw new IllegalStateException(
-          String.format("jobId %s has no methods to fetch file: %s", jobId, downloadableFile));
+      return this.remoteFileStreamer.get(downloadableFile);
     }
   }
 }

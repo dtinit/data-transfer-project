@@ -5,8 +5,7 @@ import java.io.InputStream;
 import java.util.Optional;
 
 /**
- * Allows tracking reads across a stream. (DO NOT MERGE: Probably can be deleted in favor of a java
- * streams API lamda?)
+ * Allows tracking reads across a stream.
  *
  * <p>Does not close the held input stream.
  */

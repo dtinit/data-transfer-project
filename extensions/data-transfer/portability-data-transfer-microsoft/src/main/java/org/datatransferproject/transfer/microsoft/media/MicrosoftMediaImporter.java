@@ -216,6 +216,11 @@ public class MicrosoftMediaImporter
       DownloadableFile item, UUID jobId, IdempotentImportExecutor idempotentImportExecutor)
       throws Exception {
     final long totalFileSize = discardForLength(jobFileStream.streamFile(item, jobId, jobStore));
+    if (totalFileSize <= 0) {
+      throw new IOException(String.format(
+          "jobid %s hit empty unexpectedly empty (bytes=%d) download for file %s",
+          jobId, totalFileSize, item.getFetchableUrl()));
+    }
     InputStream fileStream = jobFileStream.streamFile(item, jobId, jobStore);
 
     String itemUploadUrl = createUploadSession(item, idempotentImportExecutor);
