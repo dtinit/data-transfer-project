@@ -27,6 +27,9 @@ dependencies {
     compile "com.squareup.okhttp3:logging-interceptor:${okHttpVersion}"
     compile("com.google.api-client:google-api-client:${googleApiClient}")
 
+    compileOnly "com.google.auto.value:auto-value-annotations:${autoValueVersion}"
+    annotationProcessor "com.google.auto.value:auto-value:${autoValueVersion}"
+
     // REVIEW: We could standardize the version in gradle.propertoes but this would mean all dependent extensions must be revved at the same time
     compile 'com.googlecode.ez-vcard:ez-vcard:0.10.3'
 
@@ -36,8 +39,6 @@ dependencies {
     testCompile group: 'com.squareup.okhttp', name: 'mockwebserver', version: '2.7.5'
     testCompile group: 'com.squareup.okhttp3', name: 'mockwebserver', version: '3.2.0'
     testCompile("com.google.http-client:google-http-client-gson:${googleHttpClientVersion}")
-
-
 }
 
 configurePublication(project)

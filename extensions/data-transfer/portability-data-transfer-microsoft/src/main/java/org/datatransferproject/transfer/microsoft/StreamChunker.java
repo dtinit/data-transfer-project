@@ -31,7 +31,11 @@ public class StreamChunker {
     Optional<DataChunk> resp =
         chunkOfData.length == 0
             ? Optional.empty()
-            : Optional.of(new DataChunk(chunkOfData, streamByteOffset));
+            : Optional.of(
+                DataChunk.builder()
+                    .setChunk(chunkOfData)
+                    .setStreamByteOffset(streamByteOffset)
+                    .build());
     streamByteOffset += chunkOfData.length;
     return resp;
   }

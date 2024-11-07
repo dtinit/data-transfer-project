@@ -19,9 +19,9 @@ public class StreamChunkerTest {
 
     Optional<DataChunk> l = streamChunker.nextChunk();
     assertThat(l.isPresent()).isTrue();
-    assertThat(l.get().getSize()).isEqualTo(TEST_CHUNK_SIZE);
-    assertThat(l.get().getStart()).isEqualTo(0);
-    assertThat(l.get().getEnd()).isEqualTo(TEST_CHUNK_SIZE - 1);
+    assertThat(l.get().size()).isEqualTo(TEST_CHUNK_SIZE);
+    assertThat(l.get().streamByteOffset()).isEqualTo(0);
+    assertThat(l.get().finalByteOffset()).isEqualTo(TEST_CHUNK_SIZE - 1);
 
     assertThat(streamChunker.nextChunk().isEmpty()).isTrue();
   }
@@ -33,9 +33,9 @@ public class StreamChunkerTest {
 
     Optional<DataChunk> l = streamChunker.nextChunk();
     assertThat(l.isPresent()).isTrue();
-    assertThat(l.get().getSize()).isEqualTo(TEST_CHUNK_SIZE - 1);
-    assertThat(l.get().getStart()).isEqualTo(0);
-    assertThat(l.get().getEnd()).isEqualTo(TEST_CHUNK_SIZE - 2);
+    assertThat(l.get().size()).isEqualTo(TEST_CHUNK_SIZE - 1);
+    assertThat(l.get().streamByteOffset()).isEqualTo(0);
+    assertThat(l.get().finalByteOffset()).isEqualTo(TEST_CHUNK_SIZE - 2);
 
     assertThat(streamChunker.nextChunk().isEmpty()).isTrue();
   }
@@ -56,15 +56,15 @@ public class StreamChunkerTest {
 
     Optional<DataChunk> l = streamChunker.nextChunk();
     assertThat(l.isPresent()).isTrue();
-    assertThat(l.get().getSize()).isEqualTo(TEST_CHUNK_SIZE);
-    assertThat(l.get().getStart()).isEqualTo(0);
-    assertThat(l.get().getEnd()).isEqualTo(TEST_CHUNK_SIZE - 1);
+    assertThat(l.get().size()).isEqualTo(TEST_CHUNK_SIZE);
+    assertThat(l.get().streamByteOffset()).isEqualTo(0);
+    assertThat(l.get().finalByteOffset()).isEqualTo(TEST_CHUNK_SIZE - 1);
 
     l = streamChunker.nextChunk();
     assertThat(l.isPresent()).isTrue();
-    assertThat(l.get().getSize()).isEqualTo(TEST_CHUNK_SIZE);
-    assertThat(l.get().getStart()).isEqualTo(TEST_CHUNK_SIZE);
-    assertThat(l.get().getEnd()).isEqualTo(2 * TEST_CHUNK_SIZE - 1);
+    assertThat(l.get().size()).isEqualTo(TEST_CHUNK_SIZE);
+    assertThat(l.get().streamByteOffset()).isEqualTo(TEST_CHUNK_SIZE);
+    assertThat(l.get().finalByteOffset()).isEqualTo(2 * TEST_CHUNK_SIZE - 1);
 
     assertThat(streamChunker.nextChunk().isEmpty()).isTrue();
   }
@@ -77,15 +77,15 @@ public class StreamChunkerTest {
 
     Optional<DataChunk> l = streamChunker.nextChunk();
     assertThat(l.isPresent()).isTrue();
-    assertThat(l.get().getSize()).isEqualTo(TEST_CHUNK_SIZE);
-    assertThat(l.get().getStart()).isEqualTo(0);
-    assertThat(l.get().getEnd()).isEqualTo(TEST_CHUNK_SIZE - 1);
+    assertThat(l.get().size()).isEqualTo(TEST_CHUNK_SIZE);
+    assertThat(l.get().streamByteOffset()).isEqualTo(0);
+    assertThat(l.get().finalByteOffset()).isEqualTo(TEST_CHUNK_SIZE - 1);
 
     l = streamChunker.nextChunk();
     assertThat(l.isPresent()).isTrue();
-    assertThat(l.get().getSize()).isEqualTo(TEST_CHUNK_SIZE - 10);
-    assertThat(l.get().getStart()).isEqualTo(TEST_CHUNK_SIZE);
-    assertThat(l.get().getEnd()).isEqualTo(2 * TEST_CHUNK_SIZE - 11);
+    assertThat(l.get().size()).isEqualTo(TEST_CHUNK_SIZE - 10);
+    assertThat(l.get().streamByteOffset()).isEqualTo(TEST_CHUNK_SIZE);
+    assertThat(l.get().finalByteOffset()).isEqualTo(2 * TEST_CHUNK_SIZE - 11);
 
     assertThat(streamChunker.nextChunk().isEmpty()).isTrue();
   }
