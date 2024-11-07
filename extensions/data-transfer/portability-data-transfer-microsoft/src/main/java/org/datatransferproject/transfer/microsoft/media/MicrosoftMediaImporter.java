@@ -216,6 +216,11 @@ public class MicrosoftMediaImporter
       DownloadableFile item, UUID jobId, IdempotentImportExecutor idempotentImportExecutor)
       throws Exception {
     final long totalFileSize = discardForLength(jobFileStream.streamFile(item, jobId, jobStore));
+    if (totalFileSize <= 0) {
+      throw new IOException(String.format(
+          "jobid %s hit empty unexpectedly empty (bytes=%d) download for file %s",
+          jobId, totalFileSize, item.getFetchableUrl()));
+    }
     InputStream fileStream = jobFileStream.streamFile(item, jobId, jobStore);
 
     String itemUploadUrl = createUploadSession(item, idempotentImportExecutor);
@@ -361,14 +366,14 @@ public class MicrosoftMediaImporter
 
     // put chunk data in
     RequestBody uploadChunkBody =
-        RequestBody.create(MediaType.parse(mediaType), chunk.getData(), 0, chunk.getSize());
+        RequestBody.create(MediaType.parse(mediaType), chunk.chunk(), 0, chunk.size());
     uploadRequestBuilder.put(uploadChunkBody);
 
     // set chunk data headers, indicating size and chunk range
     final String contentRange =
-        String.format("bytes %d-%d/%d", chunk.getStart(), chunk.getEnd(), totalFileSize);
+        String.format("bytes %d-%d/%d", chunk.streamByteOffset(), chunk.finalByteOffset(), totalFileSize);
     uploadRequestBuilder.header("Content-Range", contentRange);
-    uploadRequestBuilder.header("Content-Length", String.format("%d", chunk.getSize()));
+    uploadRequestBuilder.header("Content-Length", String.format("%d", chunk.size()));
 
     // upload the chunk
     Response chunkResponse = client.newCall(uploadRequestBuilder.build()).execute();
@@ -393,7 +398,7 @@ public class MicrosoftMediaImporter
     } else if (chunkCode == 200 || chunkCode == 201 || chunkCode == 202) {
       monitor.info(()
                        -> String.format("Uploaded chunk %s-%s successfuly, code %d",
-                           chunk.getStart(), chunk.getEnd(), chunkCode));
+                           chunk.streamByteOffset(), chunk.finalByteOffset(), chunkCode));
     }
     return chunkResponse;
   }

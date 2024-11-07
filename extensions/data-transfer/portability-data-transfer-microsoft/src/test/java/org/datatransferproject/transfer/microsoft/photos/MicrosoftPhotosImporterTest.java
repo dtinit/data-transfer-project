@@ -16,6 +16,7 @@
 
 package org.datatransferproject.transfer.microsoft.photos;
 
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -53,12 +54,15 @@ import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
+import org.datatransferproject.types.common.DownloadableFile;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.stubbing.Answer;
+import org.mockito.invocation.InvocationOnMock;
 
 
 /**
@@ -178,6 +182,21 @@ public class MicrosoftPhotosImporterTest {
     });
   }
 
+  private static <M extends DownloadableFile> M fakeJobstoreModel(
+      TemporaryPerJobDataStore jobStore,
+      M model,
+      byte[] contents) throws IOException {
+    checkState(
+        model.isInTempStore(),
+        "nonsensical fake: trying to fake a tempstore entry with isInTempStore() set to false");
+    when(jobStore.getStream(uuid, model.getFetchableUrl())) .thenAnswer(new Answer() {
+      public Object answer(InvocationOnMock invocation) {
+        return new InputStreamWrapper(new ByteArrayInputStream(contents));
+      }
+    });
+    return model;
+  }
+
   @Test
   public void testImportItemAllSuccess() throws Exception {
     List<PhotoAlbum> albums =
@@ -185,15 +204,28 @@ public class MicrosoftPhotosImporterTest {
 
     List<PhotoModel> photos =
         ImmutableList.of(
-            new PhotoModel(
-                "Pic1", "http://fake.com/1.jpg", "A pic", "image/jpg", "p1", "id1",
-                true),
-            new PhotoModel(
-                "Pic2", "https://fake.com/2.png", "fine art", "image/png", "p2", "id1", true));
-    when(jobStore.getStream(uuid, "http://fake.com/1.jpg"))
-        .thenReturn(new InputStreamWrapper(new ByteArrayInputStream(new byte[CHUNK_SIZE])));
-    when(jobStore.getStream(uuid, "https://fake.com/2.png"))
-        .thenReturn(new InputStreamWrapper(new ByteArrayInputStream(new byte[CHUNK_SIZE])));
+            fakeJobstoreModel(
+                jobStore,
+                new PhotoModel(
+                  "Pic1",
+                  "http://fake.com/1.jpg",
+                  "A pic",
+                  "image/jpg",
+                  "p1", // dataId
+                  "id1", // albumId
+                  true /*isInTempStore*/),
+                new byte[CHUNK_SIZE]),
+            fakeJobstoreModel(
+                jobStore,
+                new PhotoModel(
+                  "Pic2",
+                  "https://fake.com/2.png",
+                  "fine art",
+                  "image/png",
+                  "p2", // dataId
+                  "id1", // albumId
+                  true /*isInTempStore*/),
+                new byte[CHUNK_SIZE]));
     PhotosContainerResource data = new PhotosContainerResource(albums, photos);
 
     Call call = mock(Call.class);
