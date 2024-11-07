@@ -15,6 +15,8 @@
  */
 package org.datatransferproject.transfer.microsoft.photos;
 
+import static org.datatransferproject.spi.api.transport.DiscardingStreamCounter.discardForLength;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.common.annotations.VisibleForTesting;
@@ -38,6 +40,7 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.api.transport.UrlGetStreamer;
+import org.datatransferproject.spi.api.transport.JobFileStream;
 import org.datatransferproject.spi.api.transport.RemoteFileStreamer;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
@@ -71,6 +74,7 @@ public class MicrosoftPhotosImporter
   private final TemporaryPerJobDataStore jobStore;
   private final Monitor monitor;
   private final MicrosoftCredentialFactory credentialFactory;
+  private final JobFileStream jobFileStream;
   private final MicrosoftTransmogrificationConfig transmogrificationConfig =
       new MicrosoftTransmogrificationConfig();
   private Credential credential;
@@ -87,7 +91,8 @@ public class MicrosoftPhotosImporter
     ObjectMapper objectMapper,
     TemporaryPerJobDataStore jobStore,
     Monitor monitor,
-    MicrosoftCredentialFactory credentialFactory) {
+    MicrosoftCredentialFactory credentialFactory,
+    JobFileStream jobFileStream) {
     createFolderUrl = baseUrl + "/v1.0/me/drive/special/photos/children";
     // first param is the folder id, second param is the file name
     // /me/drive/items/{parent-id}:/{filename}:/content;
@@ -101,6 +106,7 @@ public class MicrosoftPhotosImporter
     this.monitor = monitor;
     this.credentialFactory = credentialFactory;
     this.credential = null;
+    this.jobFileStream = jobFileStream;
   }
 
   @Override
@@ -203,24 +209,14 @@ public class MicrosoftPhotosImporter
     PhotoModel item,
     UUID jobId,
     IdempotentImportExecutor idempotentImportExecutor) throws Exception {
-    BufferedInputStream inputStream = null;
-    if (item.isInTempStore()) {
-      inputStream = new BufferedInputStream(jobStore.getStream(jobId, item.getFetchableUrl()).getStream());
-    } else if (item.getFetchableUrl() != null) {
-      inputStream = new BufferedInputStream(new URL(item.getFetchableUrl()).openStream());
-    } else {
-      throw new IllegalStateException("Don't know how to get the inputStream for " + item);
-    }
-    final int totalFileSize = jobStore.ensureStored(jobId, item, remoteFileStreamer);
-    // Download the remote file directly to our temp store.
-    InputStream tmpFileStream =
-        jobStore.getStream(jobId, item.getFetchableUrl()).getStream();
+    final long totalFileSize = discardForLength(jobFileStream.streamFile(item, jobId, jobStore));
+    InputStream fileStream = jobFileStream.streamFile(item, jobId, jobStore);
 
     String itemUploadUrl = createUploadSession(item, idempotentImportExecutor);
 
     Response finalChunkResponse =
-        uploadStreamInChunks(totalFileSize, itemUploadUrl, item.getMimeType(), tmpFileStream);
-    tmpFileStream.close();
+        uploadStreamInChunks(totalFileSize, itemUploadUrl, item.getMimeType(), fileStream);
+    fileStream.close();
     if (finalChunkResponse.code() != 200 && finalChunkResponse.code() != 201) {
       // Once we upload the last chunk, we should have either 200 or 201.
       // TODO: This should change to a precondition check after we debug some more.
@@ -236,7 +232,7 @@ public class MicrosoftPhotosImporter
 
   /** Depletes input stream, uploading a chunk of the stream at a time. */
   private Response uploadStreamInChunks(
-      int totalFileSize, String itemUploadUrl, String itemMimeType, InputStream inputStream) throws IOException, DestinationMemoryFullException {
+      long totalFileSize, String itemUploadUrl, String itemMimeType, InputStream inputStream) throws IOException, DestinationMemoryFullException {
     Response lastChunkResponse = null;
     StreamChunker streamChunker = new StreamChunker(MICROSOFT_UPLOAD_CHUNK_BYTE_SIZE, inputStream);
     Optional<DataChunk> nextChunk;
@@ -347,21 +343,21 @@ public class MicrosoftPhotosImporter
   // Content-Length: {chunk size in bytes}
   // Content-Range: bytes {begin}-{end}/{total size}
   // body={bytes}
-  private Response uploadChunk(DataChunk chunk, String photoUploadUrl, int totalFileSize, String mediaType)
+  private Response uploadChunk(DataChunk chunk, String photoUploadUrl, long totalFileSize, String mediaType)
           throws IOException, DestinationMemoryFullException {
 
     Request.Builder uploadRequestBuilder = new Request.Builder().url(photoUploadUrl);
     uploadRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
 
     // put chunk data in
-    RequestBody uploadChunkBody = RequestBody.create(MediaType.parse(mediaType), chunk.getData(), 0, chunk.getSize());
+    RequestBody uploadChunkBody = RequestBody.create(MediaType.parse(mediaType), chunk.chunk(), 0, chunk.size());
     uploadRequestBuilder.put(uploadChunkBody);
 
     // set chunk data headers, indicating size and chunk range
     final String contentRange =
-        String.format("bytes %d-%d/%d", chunk.getStart(), chunk.getEnd(), totalFileSize);
+        String.format("bytes %d-%d/%d", chunk.streamByteOffset(), chunk.finalByteOffset(), totalFileSize);
     uploadRequestBuilder.header("Content-Range", contentRange);
-    uploadRequestBuilder.header("Content-Length", String.format("%d", chunk.getSize()));
+    uploadRequestBuilder.header("Content-Length", String.format("%d", chunk.size()));
 
     // upload the chunk
     Response chunkResponse = client.newCall(uploadRequestBuilder.build()).execute();
@@ -395,7 +391,7 @@ public class MicrosoftPhotosImporter
           () ->
               String.format(
                   "Uploaded chunk %s-%s successfuly, code %d",
-                  chunk.getStart(), chunk.getEnd(), chunkCode));
+                  chunk.streamByteOffset(), chunk.finalByteOffset(), chunkCode));
     }
     return chunkResponse;
   }

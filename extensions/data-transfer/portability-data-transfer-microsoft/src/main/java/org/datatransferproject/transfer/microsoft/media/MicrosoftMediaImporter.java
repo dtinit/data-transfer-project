@@ -15,7 +15,7 @@
  */
 package org.datatransferproject.transfer.microsoft.media;
 
-import static org.datatransferproject.transfer.DiscardingStreamCounter.discardForLength;
+import static org.datatransferproject.spi.api.transport.DiscardingStreamCounter.discardForLength;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
@@ -215,8 +215,12 @@ public class MicrosoftMediaImporter
   private String importDownloadableItem(
       DownloadableFile item, UUID jobId, IdempotentImportExecutor idempotentImportExecutor)
       throws Exception {
-    long totalFileSize = discardForLength(jobFileStream.streamFile(item, jobId, jobStore));
-    // Download the remote file directly to our temp store.
+    final long totalFileSize = discardForLength(jobFileStream.streamFile(item, jobId, jobStore));
+    if (totalFileSize <= 0) {
+      throw new IOException(String.format(
+          "jobid %s hit empty unexpectedly empty (bytes=%d) download for file %s",
+          jobId, totalFileSize, item.getFetchableUrl()));
+    }
     InputStream fileStream = jobFileStream.streamFile(item, jobId, jobStore);
 
     String itemUploadUrl = createUploadSession(item, idempotentImportExecutor);
@@ -239,7 +243,7 @@ public class MicrosoftMediaImporter
 
   /** Depletes input stream, uploading a chunk of the stream at a time. */
   private Response uploadStreamInChunks(
-      int totalFileSize, String itemUploadUrl, String itemMimeType, InputStream inputStream) throws IOException, DestinationMemoryFullException {
+      long totalFileSize, String itemUploadUrl, String itemMimeType, InputStream inputStream) throws IOException, DestinationMemoryFullException {
     Response lastChunkResponse = null;
     StreamChunker streamChunker = new StreamChunker(MICROSOFT_UPLOAD_CHUNK_BYTE_SIZE, inputStream);
     Optional<DataChunk> nextChunk;
@@ -355,21 +359,21 @@ public class MicrosoftMediaImporter
   // Content-Length: {chunk size in bytes}
   // Content-Range: bytes {begin}-{end}/{total size}
   // body={bytes}
-  private Response uploadChunk(DataChunk chunk, String photoUploadUrl, int totalFileSize,
+  private Response uploadChunk(DataChunk chunk, String photoUploadUrl, long totalFileSize,
       String mediaType) throws IOException, DestinationMemoryFullException {
     Request.Builder uploadRequestBuilder = new Request.Builder().url(photoUploadUrl);
     uploadRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
 
     // put chunk data in
     RequestBody uploadChunkBody =
-        RequestBody.create(MediaType.parse(mediaType), chunk.getData(), 0, chunk.getSize());
+        RequestBody.create(MediaType.parse(mediaType), chunk.chunk(), 0, chunk.size());
     uploadRequestBuilder.put(uploadChunkBody);
 
     // set chunk data headers, indicating size and chunk range
     final String contentRange =
-        String.format("bytes %d-%d/%d", chunk.getStart(), chunk.getEnd(), totalFileSize);
+        String.format("bytes %d-%d/%d", chunk.streamByteOffset(), chunk.finalByteOffset(), totalFileSize);
     uploadRequestBuilder.header("Content-Range", contentRange);
-    uploadRequestBuilder.header("Content-Length", String.format("%d", chunk.getSize()));
+    uploadRequestBuilder.header("Content-Length", String.format("%d", chunk.size()));
 
     // upload the chunk
     Response chunkResponse = client.newCall(uploadRequestBuilder.build()).execute();
@@ -394,7 +398,7 @@ public class MicrosoftMediaImporter
     } else if (chunkCode == 200 || chunkCode == 201 || chunkCode == 202) {
       monitor.info(()
                        -> String.format("Uploaded chunk %s-%s successfuly, code %d",
-                           chunk.getStart(), chunk.getEnd(), chunkCode));
+                           chunk.streamByteOffset(), chunk.finalByteOffset(), chunkCode));
     }
     return chunkResponse;
   }
