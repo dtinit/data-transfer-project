@@ -177,6 +177,7 @@ public class MicrosoftMediaImporterTest {
 
     assertThrows(PermissionDeniedException.class, () -> {
       ImportResult result = importer.importItem(uuid, executor, authData, data);
+    });
   }
 
   private static <M extends DownloadableFile> M fakeJobstoreModel(
