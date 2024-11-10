@@ -10,7 +10,7 @@ We want all individuals across the web to be in control of their data.
 
 ## More info
 
-* [Repository master branch](https://github.com/google/data-transfer-project)
+* [Repository master branch](https://github.com/dtinit/data-transfer-project)
 * [Developer documentation](Documentation/Developer.md)
 * [Contributing](CONTRIBUTING.md)
 * [Code of Conduct](CODE_OF_CONDUCT.md)

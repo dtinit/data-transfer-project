@@ -20,6 +20,7 @@ import static org.datatransferproject.datatransfer.apple.constants.AppleConstant
 import static org.datatransferproject.datatransfer.apple.constants.AppleConstants.APPLE_SECRET;
 import static org.datatransferproject.datatransfer.apple.constants.AppleConstants.DTP_SERVICE_ID;
 import static org.datatransferproject.types.common.models.DataVertical.MEDIA;
+import static org.datatransferproject.types.common.models.DataVertical.MUSIC;
 import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
 import static org.datatransferproject.types.common.models.DataVertical.VIDEOS;
 
@@ -31,25 +32,28 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.apple.photos.AppleMediaImporter;
 import org.datatransferproject.datatransfer.apple.photos.ApplePhotosImporter;
 import org.datatransferproject.datatransfer.apple.photos.AppleVideosImporter;
+import org.datatransferproject.datatransfer.apple.signals.AppleSignalHandler;
+import org.datatransferproject.datatransfer.apple.music.AppleMusicImporter;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
-import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
-import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.spi.transfer.provider.SignalHandler;
 import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
+import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 
 /** TransferExtension to kick off the Transfer jobs to/from Apple */
 public class AppleTransferExtension implements TransferExtension {
 
   private boolean initialized = false;
+  private AppleSignalHandler signalHandler;
 
   private ImmutableMap<DataVertical, Importer> importerMap;
   private ImmutableMap<DataVertical, Exporter> exporterMap;
 
   private static final ImmutableList<DataVertical> SUPPORTED_SERVICES =
-      ImmutableList.of(PHOTOS, VIDEOS, MEDIA);
+      ImmutableList.of(PHOTOS, VIDEOS, MEDIA, MUSIC);
 
   @Override
   public String getServiceId() {
@@ -71,6 +75,11 @@ public class AppleTransferExtension implements TransferExtension {
   }
 
   @Override
+  public SignalHandler<?> getSignalHandler() {
+    return signalHandler;
+  }
+
+  @Override
   public void initialize(ExtensionContext context) {
     if (initialized) return;
 
@@ -88,19 +97,18 @@ public class AppleTransferExtension implements TransferExtension {
       return;
     }
 
-    IdempotentImportExecutor idempotentImportExecutor = context.getService(
-            IdempotentImportExecutorExtension.class).getRetryingIdempotentImportExecutor(context);
-    boolean enableRetrying = context.getSetting("enableRetrying", false);
-
     importerMap =
         ImmutableMap.<DataVertical, Importer>builder()
             .put(PHOTOS, new ApplePhotosImporter(appCredentials, monitor))
             .put(VIDEOS, new AppleVideosImporter(appCredentials, monitor))
-            .put(MEDIA, new AppleMediaImporter(appCredentials, monitor, idempotentImportExecutor, enableRetrying))
+            .put(MEDIA, new AppleMediaImporter(appCredentials, monitor))
+            .put(MUSIC, new AppleMusicImporter(appCredentials, monitor))
             .build();
 
     exporterMap = ImmutableMap.<DataVertical, Exporter>builder().build();
 
+    RetryStrategyLibrary retryStrategyLibrary = context.getSetting("retryLibrary", null);
+    signalHandler = new AppleSignalHandler(appCredentials, retryStrategyLibrary, monitor);
     initialized = true;
   }
 }
