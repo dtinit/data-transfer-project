@@ -22,14 +22,6 @@ public class UrlGetStreamer implements RemoteFileStreamer {
     return new BufferedInputStream(toURL(remoteUrl).openStream());
   }
 
-  private static URL toURL(String url) throws IOException {
-    try {
-      return new URI(url).toURL();
-    } catch (MalformedURLException | URISyntaxException e) {
-      throw new IOException(String.format("invalid URL: \"%s\"", url), e);
-    }
-  }
-
   @Override
   public InputStream get(DownloadableItem downloadableItem) throws IOException {
     checkState(
@@ -41,5 +33,14 @@ public class UrlGetStreamer implements RemoteFileStreamer {
         downloadableItem.getFetchableUrl());
 
     return get(downloadableItem.getFetchableUrl());
+  }
+
+  /** Easily construct a {@link java.net.URL} while mapping to the exceptions DTP needs. */
+  private static URL toURL(String url) throws IOException {
+    try {
+      return new URI(url).toURL();
+    } catch (MalformedURLException | URISyntaxException e) {
+      throw new IOException(String.format("invalid URL: \"%s\"", url), e);
+    }
   }
 }
