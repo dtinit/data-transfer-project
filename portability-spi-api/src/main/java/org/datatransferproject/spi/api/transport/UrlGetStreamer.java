@@ -19,7 +19,7 @@ import org.datatransferproject.types.common.DownloadableItem;
 public class UrlGetStreamer implements RemoteFileStreamer {
   @Override
   public InputStream get(String remoteUrl) throws IOException {
-    return new BufferedInputStream(toURL(remoteUrl).openStream());
+    return new BufferedInputStream(toUrl(remoteUrl).openStream());
   }
 
   @Override
@@ -36,7 +36,7 @@ public class UrlGetStreamer implements RemoteFileStreamer {
   }
 
   /** Easily construct a {@link java.net.URL} while mapping to the exceptions DTP needs. */
-  private static URL toURL(String url) throws IOException {
+  private static URL toUrl(String url) throws IOException {
     try {
       return new URI(url).toURL();
     } catch (MalformedURLException | URISyntaxException e) {
