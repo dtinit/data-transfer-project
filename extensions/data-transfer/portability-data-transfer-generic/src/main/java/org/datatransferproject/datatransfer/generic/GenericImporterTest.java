@@ -5,6 +5,7 @@ import static java.lang.String.format;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Random;
@@ -18,10 +19,12 @@ import org.datatransferproject.launcher.monitor.ConsoleMonitor.Level;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.spi.cloud.types.PortabilityJob.State;
-import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.InMemoryIdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.common.models.DataVertical;
+import org.datatransferproject.types.common.models.blob.BlobbyStorageContainerResource;
+import org.datatransferproject.types.common.models.blob.DigitalDocumentWrapper;
+import org.datatransferproject.types.common.models.blob.DtpDigitalDocument;
 import org.datatransferproject.types.common.models.social.SocialActivityActor;
 import org.datatransferproject.types.common.models.social.SocialActivityAttachment;
 import org.datatransferproject.types.common.models.social.SocialActivityAttachmentType;
@@ -117,12 +120,10 @@ class TestJobStore implements JobStore {
 }
 
 class TestExtensionContext implements ExtensionContext {
-  private IdempotentImportExecutor idempotentImportExecutor;
   private Monitor monitor;
   private JobStore jobStore = new TestJobStore();
 
-  TestExtensionContext(IdempotentImportExecutor idempotentImportExecutor, Monitor monitor) {
-    this.idempotentImportExecutor = idempotentImportExecutor;
+  TestExtensionContext(Monitor monitor) {
     this.monitor = monitor;
   }
 
@@ -139,9 +140,6 @@ class TestExtensionContext implements ExtensionContext {
   @SuppressWarnings("unchecked")
   @Override
   public <T> T getService(Class<T> type) {
-    if (type.getName() == IdempotentImportExecutor.class.getName()) {
-      return (T) idempotentImportExecutor;
-    }
     if (type.getName() == JobStore.class.getName()) {
       return (T) jobStore;
     }
@@ -170,7 +168,7 @@ public class GenericImporterTest {
     ConsoleMonitor monitor = new ConsoleMonitor(Level.DEBUG);
     InMemoryIdempotentImportExecutor idempotentImporter =
         new InMemoryIdempotentImportExecutor(monitor);
-    TestExtensionContext context = new TestExtensionContext(idempotentImporter, monitor);
+    TestExtensionContext context = new TestExtensionContext(monitor);
     GenericTransferExtension extension = new GenericTransferExtension();
     extension.initialize(context);
 
@@ -200,5 +198,29 @@ public class GenericImporterTest {
                     "Hello world!",
                     "Hi there",
                     null))));
+
+    @SuppressWarnings("unchecked")
+    Importer<TokensAndUrlAuthData, BlobbyStorageContainerResource> fileImporter =
+        (Importer<TokensAndUrlAuthData, BlobbyStorageContainerResource>)
+            extension.getImporter(DataVertical.BLOBS);
+
+    fileImporter.importItem(
+        jobId,
+        idempotentImporter,
+        new TokensAndUrlAuthData("foo", "bar", "baz"),
+        new BlobbyStorageContainerResource(
+            "root",
+            "rootdir",
+            new ArrayList<>(),
+            Arrays.asList(
+                new BlobbyStorageContainerResource(
+                    "foo",
+                    "foodir",
+                    Arrays.asList(
+                        new DigitalDocumentWrapper(
+                            new DtpDigitalDocument("bar", "2020-02-01", "video/mp4"),
+                            "video/mp4",
+                            "foobarfile")),
+                    new ArrayList<>()))));
   }
 }

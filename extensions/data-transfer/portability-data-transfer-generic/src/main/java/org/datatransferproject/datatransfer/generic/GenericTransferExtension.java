@@ -1,18 +1,27 @@
 package org.datatransferproject.datatransfer.generic;
 
+import static java.lang.String.format;
+import static org.datatransferproject.types.common.models.DataVertical.BLOBS;
 import static org.datatransferproject.types.common.models.DataVertical.SOCIAL_POSTS;
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.stream.Collectors;
 import org.datatransferproject.api.launcher.ExtensionContext;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.common.DownloadableItem;
 import org.datatransferproject.types.common.models.DataVertical;
+import org.datatransferproject.types.common.models.blob.BlobbyStorageContainerResource;
+import org.datatransferproject.types.common.models.blob.DigitalDocumentWrapper;
 import org.datatransferproject.types.common.models.social.SocialActivityContainerResource;
 
 class CachedDownloadableItem implements DownloadableItem {
@@ -51,8 +60,75 @@ public class GenericTransferExtension implements TransferExtension {
 
   private Map<DataVertical, Importer<?, ?>> importerMap = new HashMap<>();
 
+  class BlobbyContainerPath {
+    private BlobbyStorageContainerResource container;
+    private String path;
+
+    public BlobbyContainerPath(BlobbyStorageContainerResource container, String path) {
+      this.container = container;
+      this.path = path;
+    }
+
+    public BlobbyStorageContainerResource getContainer() {
+      return container;
+    }
+
+    public String getPath() {
+      return path;
+    }
+  }
+
   @Override
   public void initialize(ExtensionContext context) {
+    JobStore jobStore = context.getService(JobStore.class);
+
+    importerMap.put(
+        BLOBS,
+        new GenericFileImporter<BlobbyStorageContainerResource>(
+            (head, om) -> {
+              List<ImportableData> results = new ArrayList<>();
+              // Search whole tree of container resource
+              Queue<BlobbyContainerPath> horizon = new ArrayDeque<>();
+              horizon.add(new BlobbyContainerPath(head, ""));
+
+              BlobbyContainerPath containerAndPath;
+              while ((containerAndPath = horizon.poll()) != null) {
+                BlobbyStorageContainerResource container = containerAndPath.getContainer();
+                String parentPath = containerAndPath.getPath();
+                String path = format("%s/%s", parentPath, container.getName());
+                // Import the current folder
+                // TODO: Consider making a POJO for mapping BlobbyFolderData and BlobbyFileData
+                ObjectNode folder = JsonNodeFactory.instance.objectNode();
+                folder.set("@type", JsonNodeFactory.instance.textNode("BlobbyFolderData"));
+                folder.set("path", JsonNodeFactory.instance.textNode(path));
+                results.add(new ImportableData(folder, container.getId(), container.getName()));
+
+                // Add all sub-folders to the search tree
+                for (BlobbyStorageContainerResource child : container.getFolders()) {
+                  horizon.add(new BlobbyContainerPath(child, path));
+                }
+
+                // Import all files in the current folder
+                // Intentionally done after importing the current folder
+                for (DigitalDocumentWrapper file : container.getFiles()) {
+                  ObjectNode fileNode = JsonNodeFactory.instance.objectNode();
+                  fileNode.set("@type", JsonNodeFactory.instance.textNode("BlobbyFileData"));
+                  fileNode.set("folder", JsonNodeFactory.instance.textNode(path));
+                  fileNode.set("document", om.valueToTree(file.getDtpDigitalDocument()));
+                  results.add(
+                      new ImportableFileData(
+                          new CachedDownloadableItem(
+                              file.getCachedContentId(), file.getDtpDigitalDocument().getName()),
+                          fileNode,
+                          file.getCachedContentId(),
+                          file.getDtpDigitalDocument().getName()));
+                }
+              }
+              return results;
+            },
+            jobStore,
+            context.getMonitor()));
+
     importerMap.put(
         SOCIAL_POSTS,
         new GenericImporter<SocialActivityContainerResource>(
