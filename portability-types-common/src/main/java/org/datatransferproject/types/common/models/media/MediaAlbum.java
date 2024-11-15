@@ -3,6 +3,7 @@ package org.datatransferproject.types.common.models.media;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import javax.annotation.Nonnull;
 import org.datatransferproject.types.common.models.videos.VideoAlbum;
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
 public class MediaAlbum implements ImportableItem {
   private final String id;
   private String name;

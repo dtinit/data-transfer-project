@@ -18,6 +18,7 @@ package org.datatransferproject.types.common.models.photos;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
@@ -28,6 +29,7 @@ import javax.annotation.Nullable;
 import org.datatransferproject.types.common.DownloadableFile;
 import org.datatransferproject.types.common.models.FavoriteInfo;
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
 public class PhotoModel implements DownloadableFile {
 
   private String title;

@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Random;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Constants.Environment;
@@ -25,6 +26,9 @@ import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.common.models.blob.BlobbyStorageContainerResource;
 import org.datatransferproject.types.common.models.blob.DigitalDocumentWrapper;
 import org.datatransferproject.types.common.models.blob.DtpDigitalDocument;
+import org.datatransferproject.types.common.models.media.MediaAlbum;
+import org.datatransferproject.types.common.models.media.MediaContainerResource;
+import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.social.SocialActivityActor;
 import org.datatransferproject.types.common.models.social.SocialActivityAttachment;
 import org.datatransferproject.types.common.models.social.SocialActivityAttachmentType;
@@ -32,6 +36,7 @@ import org.datatransferproject.types.common.models.social.SocialActivityContaine
 import org.datatransferproject.types.common.models.social.SocialActivityLocation;
 import org.datatransferproject.types.common.models.social.SocialActivityModel;
 import org.datatransferproject.types.common.models.social.SocialActivityType;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
@@ -218,9 +223,41 @@ public class GenericImporterTest {
                     "foodir",
                     Arrays.asList(
                         new DigitalDocumentWrapper(
-                            new DtpDigitalDocument("bar", "2020-02-01", "video/mp4"),
+                            new DtpDigitalDocument("bar.mp4", "2020-02-01", "video/mp4"),
                             "video/mp4",
                             "foobarfile")),
                     new ArrayList<>()))));
+
+    @SuppressWarnings("unchecked")
+    Importer<TokensAndUrlAuthData, MediaContainerResource> mediaImporter =
+        (Importer<TokensAndUrlAuthData, MediaContainerResource>)
+            extension.getImporter(DataVertical.MEDIA);
+    mediaImporter.importItem(
+        jobId,
+        idempotentImporter,
+        new TokensAndUrlAuthData("foo", "bar", "baz"),
+        new MediaContainerResource(
+            Arrays.asList(new MediaAlbum("album123", "Album 123", "Album description")),
+            Arrays.asList(
+                new PhotoModel(
+                    "bar.jpeg",
+                    "cachedVal2",
+                    "Bar description",
+                    "image/jpeg",
+                    "cachedVal2",
+                    "album123",
+                    true,
+                    null,
+                    new Date())),
+            Arrays.asList(
+                new VideoModel(
+                    "foo.mp4",
+                    "cachedVal1",
+                    "Foo description",
+                    "video/mp4",
+                    "cachedVal1",
+                    "album123",
+                    true,
+                    new Date()))));
   }
 }
