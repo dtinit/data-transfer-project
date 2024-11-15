@@ -5,6 +5,7 @@ import static java.lang.String.format;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -26,6 +27,10 @@ import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.common.models.blob.BlobbyStorageContainerResource;
 import org.datatransferproject.types.common.models.blob.DigitalDocumentWrapper;
 import org.datatransferproject.types.common.models.blob.DtpDigitalDocument;
+import org.datatransferproject.types.common.models.calendar.CalendarAttendeeModel;
+import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
+import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
+import org.datatransferproject.types.common.models.calendar.CalendarModel;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
@@ -176,15 +181,14 @@ public class GenericImporterTest {
     TestExtensionContext context = new TestExtensionContext(monitor);
     GenericTransferExtension extension = new GenericTransferExtension();
     extension.initialize(context);
+    UUID jobId = UUID.randomUUID();
+    idempotentImporter.setJobId(jobId);
 
     @SuppressWarnings("unchecked")
-    Importer<TokensAndUrlAuthData, SocialActivityContainerResource> importer =
+    Importer<TokensAndUrlAuthData, SocialActivityContainerResource> socialImporter =
         (Importer<TokensAndUrlAuthData, SocialActivityContainerResource>)
             extension.getImporter(DataVertical.SOCIAL_POSTS);
-    UUID jobId = UUID.randomUUID();
-
-    idempotentImporter.setJobId(jobId);
-    importer.importItem(
+    socialImporter.importItem(
         jobId,
         idempotentImporter,
         new TokensAndUrlAuthData("foo", "bar", "baz"),
@@ -202,6 +206,29 @@ public class GenericImporterTest {
                     new SocialActivityLocation("foo", 10, 10),
                     "Hello world!",
                     "Hi there",
+                    null))));
+
+    @SuppressWarnings("unchecked")
+    Importer<TokensAndUrlAuthData, CalendarContainerResource> calendarImporter =
+        (Importer<TokensAndUrlAuthData, CalendarContainerResource>)
+            extension.getImporter(DataVertical.CALENDAR);
+    calendarImporter.importItem(
+        jobId,
+        idempotentImporter,
+        new TokensAndUrlAuthData("foo", "bar", "baz"),
+        new CalendarContainerResource(
+            Arrays.asList(new CalendarModel("calendar123", "Calendar 123", "Calendar description")),
+            Arrays.asList(
+                new CalendarEventModel(
+                    "calendar123",
+                    "Event 1",
+                    "Event notes",
+                    Arrays.asList(
+                        new CalendarAttendeeModel("attendee1", "attendee1@example.com", false),
+                        new CalendarAttendeeModel("attendee2", "attendee2@example.com", true)),
+                    "Event Place",
+                    new CalendarEventModel.CalendarEventTime(OffsetDateTime.now(), false),
+                    new CalendarEventModel.CalendarEventTime(OffsetDateTime.now(), false),
                     null))));
 
     @SuppressWarnings("unchecked")

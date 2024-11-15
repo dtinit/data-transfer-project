@@ -2,6 +2,7 @@ package org.datatransferproject.datatransfer.generic;
 
 import static java.lang.String.format;
 import static org.datatransferproject.types.common.models.DataVertical.BLOBS;
+import static org.datatransferproject.types.common.models.DataVertical.CALENDAR;
 import static org.datatransferproject.types.common.models.DataVertical.MEDIA;
 import static org.datatransferproject.types.common.models.DataVertical.SOCIAL_POSTS;
 
@@ -24,6 +25,7 @@ import org.datatransferproject.types.common.DownloadableItem;
 import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.common.models.blob.BlobbyStorageContainerResource;
 import org.datatransferproject.types.common.models.blob.DigitalDocumentWrapper;
+import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.social.SocialActivityContainerResource;
 
@@ -194,6 +196,28 @@ public class GenericTransferExtension implements TransferExtension {
                           return new ImportableData(
                               root, activity.getIdempotentId(), activity.getName());
                         })
+                    .collect(Collectors.toList()),
+            context.getMonitor()));
+
+    importerMap.put(
+        CALENDAR,
+        new GenericImporter<CalendarContainerResource>(
+            (container, om) ->
+                Stream.concat(
+                        container.getCalendars().stream()
+                            .map(
+                                calendar ->
+                                    new ImportableData(
+                                        om.valueToTree(calendar),
+                                        calendar.getId(),
+                                        calendar.getName())),
+                        container.getEvents().stream()
+                            .map(
+                                event ->
+                                    new ImportableData(
+                                        om.valueToTree(event),
+                                        String.valueOf(event.hashCode()),
+                                        event.getTitle())))
                     .collect(Collectors.toList()),
             context.getMonitor()));
   }
