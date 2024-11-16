@@ -17,24 +17,34 @@ package org.datatransferproject.datatransfer.apple.photos;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.apache.http.HttpStatus.SC_OK;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.apache.http.HttpStatus.SC_INTERNAL_SERVER_ERROR;
+import static org.apache.http.HttpStatus.SC_SERVICE_UNAVAILABLE;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import org.datatransferproject.datatransfer.apple.constants.ApplePhotosConstants;
 import org.datatransferproject.datatransfer.apple.photos.photosproto.PhotosProtocol;
+import org.datatransferproject.spi.transfer.idempotentexecutor.RetryingInMemoryIdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
+import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.types.common.models.DataVertical;
+import org.datatransferproject.types.common.models.FavoriteInfo;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
@@ -42,13 +52,21 @@ import org.datatransferproject.types.common.models.photos.PhotosContainerResourc
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
+import org.datatransferproject.types.transfer.errors.ErrorDetail;
+import org.datatransferproject.types.transfer.retry.NoRetryStrategy;
+import org.datatransferproject.types.transfer.retry.RetryMapping;
+import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
+import org.datatransferproject.types.transfer.retry.SkipRetryStrategy;
+import org.datatransferproject.types.transfer.retry.UniformRetryStrategy;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
 
 public class AppleMediaImporterTest extends AppleImporterTestBase {
   private AppleMediaImporter appleMediaImporter;
+  private RetryingInMemoryIdempotentImportExecutor retryingExecutor;
 
   @BeforeEach
   public void setup() throws Exception {
@@ -110,22 +128,27 @@ public class AppleMediaImporterTest extends AppleImporterTestBase {
     verify(mediaInterface)
         .getUploadUrl(uuid.toString(), DataVertical.MEDIA.getDataType(), videosDataIds);
     verify(mediaInterface, times(2)).uploadContent(anyMap(), anyList());
-    verify(mediaInterface, times(2)).createMedia(anyString(), anyString(), anyList());
+    verify(mediaInterface, times(2)).createMedia(anyString(), anyString(), argThat(newMediaRequestList -> {
+      assertThat(newMediaRequestList).isNotNull();
+      assertThat(newMediaRequestList.stream().allMatch(newMediaRequest -> newMediaRequest.hasCreationDateInMillis())).isTrue();
+      assertThat(newMediaRequestList.stream().allMatch(newMediaRequest -> newMediaRequest.hasIsFavorite() && newMediaRequest.getIsFavorite()==1L)).isTrue();
+      return true;
+    }));
 
     // check the result
-    assertThat(importResult.getCounts().isPresent());
+    assertThat(importResult.getCounts().isPresent()).isTrue();
     assertThat(
-        importResult.getCounts().get().get(PhotosContainerResource.ALBUMS_COUNT_DATA_NAME) == 1);
+        importResult.getCounts().get().get(PhotosContainerResource.ALBUMS_COUNT_DATA_NAME) == 1).isTrue();
     assertThat(
         importResult.getCounts().get().get(PhotosContainerResource.PHOTOS_COUNT_DATA_NAME)
-            == photoCount);
+            == photoCount).isTrue();
     assertThat(
         importResult.getCounts().get().get(VideosContainerResource.VIDEOS_COUNT_DATA_NAME)
-            == videoCount);
+            == videoCount).isTrue();
 
     assertThat(
         importResult.getBytes().get()
-            == photoCount * PHOTOS_FILE_SIZE + videoCount * VIDEOS_FILE_SIZE);
+            == photoCount * PHOTOS_FILE_SIZE + videoCount * VIDEOS_FILE_SIZE).isTrue();
 
     final Map<String, Serializable> expectedKnownValue =
         mediaAlbums.stream()
@@ -142,7 +165,7 @@ public class AppleMediaImporterTest extends AppleImporterTestBase {
         videos.stream()
             .collect(
                 Collectors.toMap(
-                    videoModel -> videoModel.getDataId(),
+                    videoModel -> videoModel.getAlbumId() + "-" +videoModel.getDataId(),
                     videoModel -> MEDIA_RECORDID_BASE + videoModel.getDataId())));
     checkKnownValues(expectedKnownValue);
   }
@@ -174,5 +197,59 @@ public class AppleMediaImporterTest extends AppleImporterTestBase {
                       .addAllNewPhotoAlbumResponses(newPhotoAlbumResponseList)
                       .build();
                 });
+  }
+
+  @Test
+  public void importEmptyNamePhoto() throws Exception {
+    // set up photos
+    final int photoCount = 1;
+    final List<PhotoModel> photos = Arrays.asList(
+            new PhotoModel(
+                    "", // empty title
+                    "fetchableUrl",
+                    "description",
+                    "mediaType",
+                    PHOTOS_DATAID_BASE + UUID.randomUUID(),
+                    null ,
+                    false,
+                    null,
+                    new Date(),
+                    new FavoriteInfo(true, new Date())),
+            new PhotoModel(
+                    null, // empty title
+                    "fetchableUrl",
+                    "description",
+                    "mediaType",
+                    PHOTOS_DATAID_BASE + UUID.randomUUID(),
+                    null ,
+                    false,
+                    null,
+                    new Date(),
+                    new FavoriteInfo(true, new Date())));
+
+    final Map<String, Integer> dataIdToStatus =
+            photos.stream()
+                    .collect(
+                            Collectors.toMap(PhotoModel::getDataId, photoModel -> SC_OK));
+
+    setUpGetUploadUrlResponse(dataIdToStatus);
+    setUpUploadContentResponse(dataIdToStatus);
+    setUpCreateMediaResponse(dataIdToStatus);
+
+    MediaContainerResource mediaData = new MediaContainerResource(null, photos, null);
+    appleMediaImporter.importItem(uuid, executor, authData, mediaData);
+
+    // verify correct methods were called
+    final List<String> photosDataIds =
+            photos.stream().map(PhotoModel::getDataId).collect(Collectors.toList());
+
+    verify(mediaInterface)
+            .getUploadUrl(uuid.toString(), DataVertical.MEDIA.getDataType(), photosDataIds);
+    verify(mediaInterface, times(1)).uploadContent(anyMap(), anyList());
+    verify(mediaInterface, times(1)).createMedia(anyString(), anyString(), argThat(newMediaRequestList -> {
+      assertThat(newMediaRequestList).isNotNull();
+      assertThat(newMediaRequestList.stream().allMatch(newMediaRequest -> newMediaRequest.getFilename().equals(ApplePhotosConstants.APPLE_PHOTOS_UNTITLED_FILE_NAME))).isTrue();
+      return true;
+    }));
   }
 }

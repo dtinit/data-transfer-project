@@ -64,15 +64,15 @@ public class AppleVideosImporterTest extends AppleImporterTestBase {
     verify(mediaInterface).createMedia(anyString(), anyString(), anyList());
 
     // check the result
-    assertThat(importResult.getCounts().isPresent());
-    assertThat(importResult.getCounts().get().get(VIDEOS_COUNT_DATA_NAME) == videoCount);
-    assertThat(importResult.getBytes().get() == videoCount * VIDEOS_FILE_SIZE);
+    assertThat(importResult.getCounts().isPresent()).isTrue();
+    assertThat(importResult.getCounts().get().get(VIDEOS_COUNT_DATA_NAME) == videoCount).isTrue();
+    assertThat(importResult.getBytes().get() == videoCount * VIDEOS_FILE_SIZE).isTrue();
 
     final Map<String, Serializable> expectedKnownValue =
         videos.stream()
             .collect(
                 Collectors.toMap(
-                    VideoModel -> VideoModel.getDataId(),
+                      VideoModel -> VideoModel.getAlbumId() + "-" +VideoModel.getDataId(),
                     VideoModel -> MEDIA_RECORDID_BASE + VideoModel.getDataId()));
     checkKnownValues(expectedKnownValue);
   }
@@ -117,9 +117,9 @@ public class AppleVideosImporterTest extends AppleImporterTestBase {
     verify(mediaInterface, times(2)).createMedia(anyString(), anyString(), anyList());
 
     // check the result
-    assertThat(importResult.getCounts().isPresent());
-    assertThat(importResult.getCounts().get().get(VIDEOS_COUNT_DATA_NAME) == videoCount);
-    assertThat(importResult.getBytes().get() == videoCount * VIDEOS_FILE_SIZE);
+    assertThat(importResult.getCounts().isPresent()).isTrue();
+    assertThat(importResult.getCounts().get().get(VIDEOS_COUNT_DATA_NAME) == videoCount).isTrue();
+    assertThat(importResult.getBytes().get() == videoCount * VIDEOS_FILE_SIZE).isTrue();
   }
 
   @Test
@@ -172,9 +172,9 @@ public class AppleVideosImporterTest extends AppleImporterTestBase {
     verify(mediaInterface, times(2)).createMedia(anyString(), anyString(), anyList());
 
     // check the result
-    assertThat(importResult.getCounts().isPresent());
-    assertThat(importResult.getCounts().get().get(VIDEOS_COUNT_DATA_NAME) == videoCount);
-    assertThat(importResult.getBytes().get() == successCount * VIDEOS_FILE_SIZE);
+    assertThat(importResult.getCounts().isPresent()).isTrue();
+    assertThat(importResult.getCounts().get().get(VIDEOS_COUNT_DATA_NAME) == successCount).isTrue();
+    assertThat(importResult.getBytes().get() == successCount * VIDEOS_FILE_SIZE).isTrue();
 
     final Map<String, Serializable> expectedKnownValue =
         videos.stream()
@@ -189,7 +189,7 @@ public class AppleVideosImporterTest extends AppleImporterTestBase {
                     datatIdToCreateMediaStatus.get(VideoModel.getDataId()) == SC_OK)
             .collect(
                 Collectors.toMap(
-                    video -> video.getDataId(),
+                    video -> video.getAlbumId() + "-" +video.getDataId(),
                     video -> VIDEOS_DATAID_BASE + video.getDataId()));
     checkKnownValues(expectedKnownValue);
 
@@ -205,20 +205,25 @@ public class AppleVideosImporterTest extends AppleImporterTestBase {
               .setTitle(video.getName())
               .setException(
                   String.format(
-                      "java.io.IOException: Fail to get upload url, error code: %d",
+                      "java.io.IOException: %s Fail to get upload url, errorCode:%d",
+                      ApplePhotosConstants.APPLE_PHOTOS_IMPORT_ERROR_PREFIX,
                       SC_INTERNAL_SERVER_ERROR));
       if (i < errorCountGetUploadURL) {
         errorDetailBuilder.setException(
             String.format(
-                "java.io.IOException: Fail to get upload url, error code: %d",
+                "java.io.IOException: %s Fail to get upload url, errorCode:%d",
+                ApplePhotosConstants.APPLE_PHOTOS_IMPORT_ERROR_PREFIX,
                 SC_INTERNAL_SERVER_ERROR));
       } else if (i < errorCountGetUploadURL + errorCountGetUploadURL) {
-        errorDetailBuilder.setException("java.io.IOException: Fail to upload content");
+        errorDetailBuilder.setException(String.format(
+                "java.io.IOException: %s Fail to upload content",
+                ApplePhotosConstants.APPLE_PHOTOS_IMPORT_ERROR_PREFIX));
       } else {
         errorDetailBuilder.setException(
             String.format(
-                "java.io.IOException: Fail to create media, error code: %d",
-                SC_INTERNAL_SERVER_ERROR));
+                "java.io.IOException: %s Fail to create media, errorCode:%d",
+                    ApplePhotosConstants.APPLE_PHOTOS_IMPORT_ERROR_PREFIX,
+                    SC_INTERNAL_SERVER_ERROR));
       }
       expectedErrors.add(errorDetailBuilder.build());
     }

@@ -4,6 +4,7 @@ This folder contains the extension implementation for the [Apple](https://www.ap
 ## Data Supported
 
  - Photos Import
+ - Music Playlists Import
  
 ## Current State
 
@@ -11,7 +12,8 @@ This folder contains the extension implementation for the [Apple](https://www.ap
    - Exporting is supported via https://privacy.apple.com/
    - Importing is supported via the exporting source platforms (Ex: Meta, Google etc).
  - Music:
-   - Work is in progress
+   - Exporting is supported via https://privacy.apple.com/
+   - Importing is supported via the exporting source platforms (Ex: Meta, Google etc).
  
 ## Keys & Auth
 Apple uses OAuth2 for authorization.

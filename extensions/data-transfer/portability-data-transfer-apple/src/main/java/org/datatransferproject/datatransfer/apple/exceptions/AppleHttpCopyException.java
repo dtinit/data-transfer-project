@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 The Data Transfer Project Authors.
+ * Copyright 2024 The Data Transfer Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,17 @@
 
 package org.datatransferproject.datatransfer.apple.exceptions;
 
+import org.datatransferproject.spi.transfer.types.CopyException;
+
 import javax.annotation.Nonnull;
-import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * A generic Exception for all Apple Transfer HTTP APIs.
  */
-public class AppleHttpException extends CopyExceptionWithFailureReason {
+public class AppleHttpCopyException extends CopyException {
   private final int responseStatus;
 
-  public AppleHttpException(@NotNull final String message, @NotNull final Throwable cause, @NotNull final int responseStatus) {
+  public AppleHttpCopyException(@Nonnull final String message, @Nonnull final Throwable cause, final int responseStatus) {
     super(message, cause);
     this.responseStatus = responseStatus;
   }
@@ -36,7 +36,6 @@ public class AppleHttpException extends CopyExceptionWithFailureReason {
   }
 
   @Nonnull
-  @Override
   public String getFailureReason() {
     return getMessage();
   }

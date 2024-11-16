@@ -1,0 +1,17 @@
+# YAML formatting of a RetryStrategyLibrary
+# Currently defined per-distribution.  Later on extensions will be able to
+# define their own RetryStrategyLibraries, with custom RetryMappings and
+# RetryStrategies.
+strategyMappings:
+- regexes:
+  - "status code: 4\\d\\d"
+  strategy: !<Fatal> {}
+- regexes:
+  - "simple"
+  strategy: !<Uniform>
+    maxAttempts: 5
+    intervalMillis: 1000
+defaultRetryStrategy: !<Exponential>
+  maxAttempts: 5
+  initialIntervalMillis: 1000
+  multiplier: 1.5

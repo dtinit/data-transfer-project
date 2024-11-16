@@ -30,4 +30,6 @@ public class ApplePhotosConstants {
   public static final Long maxMediaTransferByteSize = 50_000_000_000L;
   public static final String BYTES_KEY = "bytes";
   public static final String COUNT_KEY = "count";
+  public static final String APPLE_PHOTOS_IMPORT_ERROR_PREFIX = "APPLE PHOTOS IMPORT:";
+  public static final String APPLE_PHOTOS_UNTITLED_FILE_NAME = "untitled";
 }

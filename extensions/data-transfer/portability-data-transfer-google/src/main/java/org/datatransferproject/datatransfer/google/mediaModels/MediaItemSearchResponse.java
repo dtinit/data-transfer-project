@@ -17,11 +17,12 @@
 package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.io.Serializable;
 
 /**
  * Response returned by a search for GoogleMediaItems
  */
-public class MediaItemSearchResponse {
+public class MediaItemSearchResponse implements Serializable {
   @JsonProperty("mediaItems")
   private GoogleMediaItem[] mediaItems;
 
@@ -32,5 +33,13 @@ public class MediaItemSearchResponse {
 
   public String getNextPageToken() {
     return nextPageToken;
+  }
+
+  public void setMediaItems(GoogleMediaItem[] mediaItems) {
+    this.mediaItems = mediaItems;
+  }
+
+  public void setNextPageToken(String nextPageToken) {
+    this.nextPageToken = nextPageToken;
   }
 }

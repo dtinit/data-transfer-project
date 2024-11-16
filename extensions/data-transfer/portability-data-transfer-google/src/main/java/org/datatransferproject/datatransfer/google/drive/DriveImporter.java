@@ -2,6 +2,9 @@ package org.datatransferproject.datatransfer.google.drive;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.api.client.auth.oauth2.TokenErrorResponse;
+import com.google.api.client.auth.oauth2.TokenResponseException;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.drive.Drive;
@@ -9,6 +12,8 @@ import com.google.api.services.drive.model.File;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
@@ -16,6 +21,8 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
+import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.types.common.models.blob.BlobbyStorageContainerResource;
 import org.datatransferproject.types.common.models.blob.DigitalDocumentWrapper;
 import org.datatransferproject.types.common.models.blob.DtpDigitalDocument;
@@ -25,6 +32,7 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 public final class DriveImporter
     implements Importer<TokensAndUrlAuthData, BlobbyStorageContainerResource> {
   private static final String ROOT_FOLDER_ID = "root-id";
+  private static final String ROOT_FOLDER_FORMAT_STRING = "transfer-%s";
 
   private final GoogleCredentialFactory credentialFactory;
   private final TemporaryPerJobDataStore jobStore;
@@ -58,7 +66,7 @@ public final class DriveImporter
           idempotentExecutor.executeOrThrowException(
               ROOT_FOLDER_ID,
               data.getName(),
-              () -> importSingleFolder(driveInterface, "MigratedContent", null));
+              () -> importSingleFolder(driveInterface, getRootFolderName(), null));
     } else {
       parentId = idempotentExecutor.getCachedValue(data.getId());
     }
@@ -83,18 +91,32 @@ public final class DriveImporter
   }
 
   private String importSingleFolder(Drive driveInterface, String folderName, String parentId)
-      throws IOException {
+      throws IOException, InvalidTokenException, DestinationMemoryFullException {
     File newFolder = new File().setName(folderName).setMimeType(DriveExporter.FOLDER_MIME_TYPE);
     if (!Strings.isNullOrEmpty(parentId)) {
       newFolder.setParents(ImmutableList.of(parentId));
     }
-    File resultFolder = driveInterface.files().create(newFolder).execute();
-    return resultFolder.getId();
+
+    try {
+      return driveInterface.files().create(newFolder).execute().getId();
+    } catch (TokenResponseException e) {
+      TokenErrorResponse details = e.getDetails();
+      if (details != null && details.getError().equals("invalid_grant")) {
+        throw new InvalidTokenException("Unable to refresh token.", e);
+      }
+      throw e;
+    } catch (GoogleJsonResponseException e) {
+      if (e.getStatusCode() == 403
+          && e.getMessage().contains("storage quota has been exceeded")) {
+        throw new DestinationMemoryFullException("Destination Google Drive storage was full", e);
+      }
+      throw e;
+    }
   }
 
   private String importSingleFile(
       UUID jobId, Drive driveInterface, DigitalDocumentWrapper file, String parentId)
-      throws IOException {
+      throws IOException, InvalidTokenException, DestinationMemoryFullException {
     InputStreamContent content =
         new InputStreamContent(
             null, jobStore.getStream(jobId, file.getCachedContentId()).getStream());
@@ -110,7 +132,21 @@ public final class DriveImporter
         && file.getOriginalEncodingFormat().startsWith("application/vnd.google-apps.")) {
       driveFile.setMimeType(file.getOriginalEncodingFormat());
     }
-    return driveInterface.files().create(driveFile, content).execute().getId();
+    try {
+      return driveInterface.files().create(driveFile, content).execute().getId();
+    } catch (TokenResponseException e) {
+      TokenErrorResponse details = e.getDetails();
+      if (details != null && details.getError().equals("invalid_grant")) {
+        throw new InvalidTokenException("Unable to refresh token.", e);
+      }
+      throw e;
+    } catch (GoogleJsonResponseException e) {
+      if (e.getStatusCode() == 403
+          && e.getMessage().contains("storage quota has been exceeded")) {
+        throw new DestinationMemoryFullException("Destination Google Drive storage was full", e);
+      }
+      throw e;
+    }
   }
 
   private synchronized Drive getDriveInterface(TokensAndUrlAuthData authData) {
@@ -119,5 +155,12 @@ public final class DriveImporter
     }
 
     return driveInterface;
+  }
+
+  private String getRootFolderName() {
+    // TODO(alexeyqu): use PortabilityJob.createdTimestamp here for consistency
+    return String.format(
+            ROOT_FOLDER_FORMAT_STRING,
+            new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date()));
   }
 }

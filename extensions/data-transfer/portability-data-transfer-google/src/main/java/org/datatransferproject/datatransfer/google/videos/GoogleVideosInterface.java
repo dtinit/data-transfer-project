@@ -40,7 +40,6 @@ import com.google.api.gax.rpc.UnauthenticatedException;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.UserCredentials;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
@@ -65,6 +64,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -185,7 +185,7 @@ public class GoogleVideosInterface {
           "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
     }
     String result =
-        CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
+        CharStreams.toString(new InputStreamReader(response.getContent(), StandardCharsets.UTF_8));
     if (clazz.isAssignableFrom(String.class)) {
       return (T) result;
     } else {
@@ -244,6 +244,11 @@ public class GoogleVideosInterface {
     return PhotosLibraryClient.initialize(settings);
   }
 
+  private static boolean isTokenException(String message) {
+    return message.contains("invalid_grant")
+        || message.contains("The upload could not be initialized. Unauthorized");
+  }
+
   /**
    * Uploads `video` via {@link com.google.photos.library.v1.PhotosLibraryClient} APIs.
    *
@@ -278,10 +283,8 @@ public class GoogleVideosInterface {
           String message = cause.getMessage();
           if (message.contains("The upload url is either finalized or rejected by the server")) {
             throw new UploadErrorException("Upload was terminated because of error", cause);
-          } else if (message.contains("invalid_grant")) {
+          } else if (isTokenException(message)) {
             throw new InvalidTokenException("Token has been expired or revoked", cause);
-          } else if (message.contains("The upload could not be initialized. Unauthorized")) {
-            throw new InvalidTokenException("uploadVideo could not be initialized. Unauthorized", cause);
           }
         }
 
@@ -296,7 +299,7 @@ public class GoogleVideosInterface {
       // temp check as exception is not captured and wrapped into UploadMediaItemResponse
       Throwable cause = ex.getCause();
       String message = cause.getMessage();
-      if (message.contains("invalid_grant")) {
+      if (isTokenException(message)) {
         throw new InvalidTokenException("Token has been expired or revoked", cause);
       }
       throw new IOException("An error was encountered while uploading the video.", cause);

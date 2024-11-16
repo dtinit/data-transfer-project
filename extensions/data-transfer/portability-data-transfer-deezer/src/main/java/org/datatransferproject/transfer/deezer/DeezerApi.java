@@ -22,7 +22,6 @@ import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
-import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -41,6 +40,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Map;
 
@@ -140,7 +140,7 @@ public class DeezerApi {
           "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
     }
     String result =
-        CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
+        CharStreams.toString(new InputStreamReader(response.getContent(), StandardCharsets.UTF_8));
     return result;
   }
 
@@ -158,7 +158,7 @@ public class DeezerApi {
           "Bad status code: " + statusCode + " error: " + response.getStatusMessage());
     }
     String result =
-        CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
+        CharStreams.toString(new InputStreamReader(response.getContent(), StandardCharsets.UTF_8));
     return MAPPER.readValue(result, clazz);
   }
 }

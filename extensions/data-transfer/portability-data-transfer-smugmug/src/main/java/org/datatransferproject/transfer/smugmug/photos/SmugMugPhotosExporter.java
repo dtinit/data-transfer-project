@@ -27,6 +27,7 @@ import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
+import org.datatransferproject.transfer.smugmug.SmugMugInterface;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbum;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumImageResponse;
 import org.datatransferproject.transfer.smugmug.photos.model.SmugMugAlbumsResponse;
