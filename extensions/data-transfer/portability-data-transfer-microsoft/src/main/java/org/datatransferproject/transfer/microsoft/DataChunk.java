@@ -14,12 +14,12 @@ public abstract class DataChunk {
   }
 
   /** Index-offset within the original java.io Stream at which {@link chunk} had started. */
-  public abstract int streamByteOffset();
+  public abstract long streamByteOffset();
 
   /**
    * Index-offset within the original java.io Stream at which the final byte of {@link chunk} lived.
    */
-  public int finalByteOffset() {
+  public long finalByteOffset() {
     return streamByteOffset() + size() - 1;
   }
 
@@ -31,7 +31,7 @@ public abstract class DataChunk {
   public abstract static class Builder {
     public abstract Builder setChunk(byte[] value);
 
-    public abstract Builder setStreamByteOffset(int value);
+    public abstract Builder setStreamByteOffset(long value);
 
     public abstract DataChunk build();
   }

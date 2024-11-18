@@ -392,13 +392,14 @@ public class MicrosoftMediaImporter
     if (chunkCode == 507 && chunkResponse.message().contains("Insufficient Storage")) {
       throw new DestinationMemoryFullException("Microsoft destination storage limit reached",
           new IOException(String.format(
-              "Got error code %d  with message: %s", chunkCode, chunkResponse.message())));
+              "Got error HTTP status %d  with message: %s", chunkCode, chunkResponse.message())));
     } else if (chunkCode < 200 || chunkCode > 299) {
-      throw new IOException("Got error code: " + chunkCode + " message: " + chunkResponse.message()
-          + " body: " + chunkResponse.body().string());
+      throw new IOException(String.format(
+          "Got error HTTP status: %d message: \"%s\" body: \"%s\"", chunkCode, chunkResponse.message(),
+          chunkResponse.body().string()));
     } else if (chunkCode == 200 || chunkCode == 201 || chunkCode == 202) {
       monitor.info(()
-                       -> String.format("Uploaded chunk %s-%s successfuly, code %d",
+                       -> String.format("Uploaded chunk %ls-%ls successfuly, HTTP status %d",
                            chunk.streamByteOffset(), chunk.finalByteOffset(), chunkCode));
     }
     return chunkResponse;
