@@ -399,7 +399,7 @@ public class MicrosoftMediaImporter
           chunkResponse.body().string()));
     } else if (chunkCode == 200 || chunkCode == 201 || chunkCode == 202) {
       monitor.info(()
-                       -> String.format("Uploaded chunk %ls-%ls successfuly, HTTP status %d",
+                       -> String.format("Uploaded chunk %d-%d successfuly, HTTP status %d",
                            chunk.streamByteOffset(), chunk.finalByteOffset(), chunkCode));
     }
     return chunkResponse;
