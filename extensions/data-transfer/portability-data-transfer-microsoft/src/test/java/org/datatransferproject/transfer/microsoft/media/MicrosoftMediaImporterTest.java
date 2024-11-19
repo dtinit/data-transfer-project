@@ -16,6 +16,7 @@
 
 package org.datatransferproject.transfer.microsoft.media;
 
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -33,6 +34,7 @@ import com.google.api.client.auth.oauth2.Credential;
 import com.google.common.collect.ImmutableList;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import okhttp3.Call;
@@ -44,6 +46,8 @@ import okhttp3.ResponseBody;
 import okio.Buffer;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.launcher.monitor.ConsoleMonitor;
+import org.datatransferproject.spi.api.transport.JobFileStream;
+import org.datatransferproject.spi.api.transport.RemoteFileStreamer;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
@@ -51,12 +55,15 @@ import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
+import org.datatransferproject.types.common.DownloadableFile;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.stubbing.Answer;
+import org.mockito.invocation.InvocationOnMock;
 
 /**
  * This tests the MicrosoftMediaImporter. As of now, it only tests the number of requests called.
@@ -77,6 +84,7 @@ public class MicrosoftMediaImporterTest {
   MicrosoftCredentialFactory credentialFactory;
   IdempotentImportExecutor executor;
   TokensAndUrlAuthData authData;
+  RemoteFileStreamer remoteFileStreamer;
 
   @Before
   public void setUp() throws IOException {
@@ -90,12 +98,14 @@ public class MicrosoftMediaImporterTest {
     monitor = new ConsoleMonitor(ConsoleMonitor.Level.INFO);
     credentialFactory = mock(MicrosoftCredentialFactory.class);
     credential = new Credential.Builder(BearerToken.authorizationHeaderAccessMethod()).build();
+    RemoteFileStreamer remoteFileStreamer = mock(RemoteFileStreamer.class);
     when(credentialFactory.createCredential(any())).thenReturn(credential);
     when(credentialFactory.refreshCredential(any())).thenReturn(credential);
     credential.setAccessToken("acc");
     credential.setExpirationTimeMilliseconds(null);
-    importer = new MicrosoftMediaImporter(
-        BASE_URL, client, objectMapper, jobStore, monitor, credentialFactory);
+    importer =
+        new MicrosoftMediaImporter(
+            BASE_URL, client, objectMapper, jobStore, monitor, credentialFactory, new JobFileStream(remoteFileStreamer));
   }
 
   @Test
@@ -170,19 +180,50 @@ public class MicrosoftMediaImporterTest {
     });
   }
 
+  private static <M extends DownloadableFile> M fakeJobstoreModel(
+      TemporaryPerJobDataStore jobStore,
+      M model,
+      byte[] contents) throws IOException {
+    checkState(
+        model.isInTempStore(),
+        "nonsensical fake: trying to fake a tempstore entry with isInTempStore() set to false");
+    when(jobStore.getStream(uuid, model.getFetchableUrl())) .thenAnswer(new Answer() {
+      public Object answer(InvocationOnMock invocation) {
+        return new InputStreamWrapper(new ByteArrayInputStream(contents));
+      }
+    });
+    return model;
+  }
+
   @Test
   public void testImportItemAllSuccess() throws Exception {
     List<MediaAlbum> albums =
         ImmutableList.of(new MediaAlbum("id1", "albumb1", "This is a fake albumb"));
 
-    List<PhotoModel> photos = ImmutableList.of(
-        new PhotoModel("Pic1", "http://fake.com/1.jpg", "A pic", "image/jpg", "p1", "id1", true),
-        new PhotoModel(
-            "Pic2", "https://fake.com/2.png", "fine art", "image/png", "p2", "id1", true));
-    when(jobStore.getStream(uuid, "http://fake.com/1.jpg"))
-        .thenReturn(new InputStreamWrapper(new ByteArrayInputStream(new byte[CHUNK_SIZE])));
-    when(jobStore.getStream(uuid, "https://fake.com/2.png"))
-        .thenReturn(new InputStreamWrapper(new ByteArrayInputStream(new byte[CHUNK_SIZE])));
+    Collection<PhotoModel> photos =
+        ImmutableList.of(
+            fakeJobstoreModel(
+                jobStore,
+                new PhotoModel(
+                  "Pic1",
+                  "http://fake.com/1.jpg",
+                  "A pic",
+                  "image/jpg",
+                  "p1", // dataId
+                  "id1", // albumdId
+                  true /*isInTempStore*/),
+                new byte[CHUNK_SIZE]),
+            fakeJobstoreModel(
+                jobStore,
+                new PhotoModel(
+                  "Pic2",
+                  "http://fake.com/2.png",
+                  "fine art",
+                  "image/png",
+                  "p2", // dataId
+                  "id1", // albumdId
+                  true /*isInTempStore*/),
+                new byte[CHUNK_SIZE]));
     MediaContainerResource data = new MediaContainerResource(albums, photos, null /*videos*/);
 
     Call call = mock(Call.class);

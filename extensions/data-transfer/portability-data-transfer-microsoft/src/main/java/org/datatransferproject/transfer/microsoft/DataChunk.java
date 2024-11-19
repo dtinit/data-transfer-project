@@ -1,70 +1,38 @@
 package org.datatransferproject.transfer.microsoft;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
+import com.google.auto.value.AutoValue;
 
-/**
-  This utility class allows us to break up an InputStream into multiple chunks
-  for part-by-part upload to a service, for example to be consumed in an upload session.
-*/
-public class DataChunk {
-  private static final int CHUNK_SIZE = 32000 * 1024; // 32000KiB
+/** Describe small buffers of bytes captured from a large java.io Stream. */
+@AutoValue
+public abstract class DataChunk {
+  /** Bytes being held in this buffer. */
+  public abstract byte[] chunk();
 
-  private final byte[] data;
-  private final int size;
-  private final int rangeStart;
-  public DataChunk(byte[] data, int size, int rangeStart) {
-    this.data = data;
-    this.size = size;
-    this.rangeStart = rangeStart;
+  /** Byte count of {@link chunk}. */
+  public int size() {
+    return chunk().length;
   }
 
-  public int getSize() {
-    return size;
+  /** Index-offset within the original java.io Stream at which {@link chunk} had started. */
+  public abstract long streamByteOffset();
+
+  /**
+   * Index-offset within the original java.io Stream at which the final byte of {@link chunk} lived.
+   */
+  public long finalByteOffset() {
+    return streamByteOffset() + size() - 1;
   }
 
-  public byte[] getData() {
-    return data;
+  public static Builder builder() {
+    return new org.datatransferproject.transfer.microsoft.AutoValue_DataChunk.Builder();
   }
 
-  public int getStart() {
-    return rangeStart;
+  @AutoValue.Builder
+  public abstract static class Builder {
+    public abstract Builder setChunk(byte[] value);
+
+    public abstract Builder setStreamByteOffset(long value);
+
+    public abstract DataChunk build();
   }
-
-  public int getEnd() {
-    return rangeStart + size - 1;
-  }
-
-  public static List<DataChunk> splitData(InputStream inputStream) throws IOException {
-    ArrayList<DataChunk> chunksToSend = new ArrayList();
-    byte[] data = new byte[CHUNK_SIZE];
-    int totalFileSize = 0;
-    int quantityToSend;
-    int roomLeft = CHUNK_SIZE;
-    int offset = 0;
-    int chunksRead = 0;
-
-    // start timing
-    while ((quantityToSend = inputStream.read(data, offset, roomLeft)) != -1) {
-      offset += quantityToSend;
-      roomLeft -= quantityToSend;
-      if (roomLeft == 0) {
-        chunksToSend.add(new DataChunk(data, CHUNK_SIZE, chunksRead * CHUNK_SIZE));
-        chunksRead++;
-        roomLeft = CHUNK_SIZE;
-        offset = 0;
-        totalFileSize += CHUNK_SIZE;
-        data = new byte[CHUNK_SIZE];
-      }
-    }
-    if (offset != 0) {
-      chunksToSend.add(new DataChunk(data, offset, chunksRead * CHUNK_SIZE));
-      totalFileSize += offset;
-      chunksRead++;
-    }
-    return chunksToSend;
-  }
-
 }
