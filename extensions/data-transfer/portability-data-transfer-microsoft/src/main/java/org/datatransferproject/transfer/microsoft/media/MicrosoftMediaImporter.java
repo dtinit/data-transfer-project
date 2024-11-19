@@ -15,6 +15,8 @@
  */
 package org.datatransferproject.transfer.microsoft.media;
 
+import static org.datatransferproject.spi.api.transport.DiscardingStreamCounter.discardForLength;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.common.base.Preconditions;
@@ -22,11 +24,11 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.net.URL;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -34,7 +36,11 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import org.apache.commons.lang3.tuple.Pair;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.api.transport.JobFileStream;
+import org.datatransferproject.spi.api.transport.RemoteFileStreamer;
+import org.datatransferproject.spi.api.transport.UrlGetStreamer;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
@@ -44,23 +50,25 @@ import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.transfer.microsoft.DataChunk;
 import org.datatransferproject.transfer.microsoft.MicrosoftTransmogrificationConfig;
+import org.datatransferproject.transfer.microsoft.StreamChunker;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
 import org.datatransferproject.types.common.DownloadableFile;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.apache.commons.lang3.tuple.Pair;
 
-/**
- * Imports albums with their photos and videos to OneDrive using the Microsoft Graph API.
- */
+/** Imports albums with their photos and videos to OneDrive using the Microsoft Graph API. */
 public class MicrosoftMediaImporter
     implements Importer<TokensAndUrlAuthData, MediaContainerResource> {
+  /** Max number of bytes to upload to Microsoft's APIs at a time. */
+  private static final int MICROSOFT_UPLOAD_CHUNK_BYTE_SIZE = 32000 * 1024; // 32000KiB
+
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
   private final TemporaryPerJobDataStore jobStore;
   private final Monitor monitor;
   private final MicrosoftCredentialFactory credentialFactory;
+  private final JobFileStream jobFileStream;
   private final MicrosoftTransmogrificationConfig transmogrificationConfig =
       new MicrosoftTransmogrificationConfig();
   private Credential credential;
@@ -73,7 +81,8 @@ public class MicrosoftMediaImporter
 
   public MicrosoftMediaImporter(String baseUrl, OkHttpClient client, ObjectMapper objectMapper,
       TemporaryPerJobDataStore jobStore, Monitor monitor,
-      MicrosoftCredentialFactory credentialFactory) {
+      MicrosoftCredentialFactory credentialFactory,
+      JobFileStream jobFileStream) {
 
     // NOTE: "special/photos" is a specific folder in One Drive that corresponds to items that
     // should appear in https://photos.onedrive.com/, for more information see:  
@@ -81,11 +90,10 @@ public class MicrosoftMediaImporter
     createFolderUrl = baseUrl + "/v1.0/me/drive/special/photos/children";
     albumlessMediaUrlTemplate =
         baseUrl + "/v1.0/me/drive/special/photos:/%s:/createUploadSession%s";
-      
+
     // first param is the folder id, second param is the file name
     // /me/drive/items/{parent-id}:/{filename}:/content;
     uploadMediaUrlTemplate = baseUrl + "/v1.0/me/drive/items/%s:/%s:/createUploadSession%s";
-    
 
     this.client = client;
     this.objectMapper = objectMapper;
@@ -93,6 +101,7 @@ public class MicrosoftMediaImporter
     this.monitor = monitor;
     this.credentialFactory = credentialFactory;
     this.credential = null;
+    this.jobFileStream = jobFileStream;
   }
 
   @Override
@@ -203,42 +212,49 @@ public class MicrosoftMediaImporter
   }
 
   private String importDownloadableItem(
-      DownloadableFile item, UUID jobId,
-      IdempotentImportExecutor idempotentImportExecutor) throws Exception {
-    BufferedInputStream inputStream = null;
-    if (item.isInTempStore()) {
-      inputStream =
-          new BufferedInputStream(jobStore.getStream(jobId, item.getFetchableUrl()).getStream());
-    } else if (item.getFetchableUrl() != null) {
-      inputStream = new BufferedInputStream(new URL(item.getFetchableUrl()).openStream());
-    } else {
-      throw new IllegalStateException("Don't know how to get the inputStream for " + item);
+      DownloadableFile item, UUID jobId, IdempotentImportExecutor idempotentImportExecutor)
+      throws Exception {
+    final long totalFileSize = discardForLength(jobFileStream.streamFile(item, jobId, jobStore));
+    if (totalFileSize <= 0) {
+      throw new IOException(String.format(
+          "jobid %s hit empty unexpectedly empty (bytes=%d) download for file %s",
+          jobId, totalFileSize, item.getFetchableUrl()));
     }
+    InputStream fileStream = jobFileStream.streamFile(item, jobId, jobStore);
 
     String itemUploadUrl = createUploadSession(item, idempotentImportExecutor);
 
-    // Arrange the data to be uploaded in chunks
-    List<DataChunk> chunksToSend = DataChunk.splitData(inputStream);
-    inputStream.close();
-    final int totalFileSize = chunksToSend.stream().map(DataChunk::getSize).reduce(0, Integer::sum);
-    Preconditions.checkState(
-        chunksToSend.size() != 0, "Data was split into zero chunks %s.", item.getName());
-
-    Response chunkResponse = null;
-    for (DataChunk chunk : chunksToSend) {
-      chunkResponse = uploadChunk(chunk, itemUploadUrl, totalFileSize, item.getMimeType());
-    }
-    if (chunkResponse.code() != 200 && chunkResponse.code() != 201) {
+    Response finalChunkResponse =
+        uploadStreamInChunks(totalFileSize, itemUploadUrl, item.getMimeType(), fileStream);
+    fileStream.close();
+    if (finalChunkResponse.code() != 200 && finalChunkResponse.code() != 201) {
       // Once we upload the last chunk, we should have either 200 or 201.
-      // This should change to a precondition check after we debug some more.
+      // TODO: This should change to a precondition check after we debug some more.
       monitor.debug(
-          () -> "Received a bad code on completion of uploading chunks", chunkResponse.code());
+          () -> "Received a bad code on completion of uploading chunks", finalChunkResponse.code());
     }
     // get complete file response
-    ResponseBody chunkResponseBody = chunkResponse.body();
+    ResponseBody finalChunkResponseBody = finalChunkResponse.body();
     Map<String, Object> chunkResponseData =
-        objectMapper.readValue(chunkResponseBody.bytes(), Map.class);
+        objectMapper.readValue(finalChunkResponseBody.bytes(), Map.class);
     return (String) chunkResponseData.get("id");
+  }
+
+  /** Depletes input stream, uploading a chunk of the stream at a time. */
+  private Response uploadStreamInChunks(
+      long totalFileSize, String itemUploadUrl, String itemMimeType, InputStream inputStream) throws IOException, DestinationMemoryFullException {
+    Response lastChunkResponse = null;
+    StreamChunker streamChunker = new StreamChunker(MICROSOFT_UPLOAD_CHUNK_BYTE_SIZE, inputStream);
+    Optional<DataChunk> nextChunk;
+    while (true) {
+      nextChunk = streamChunker.nextChunk();
+      if (nextChunk.isEmpty()) {
+        break;
+      }
+      lastChunkResponse =
+          uploadChunk(nextChunk.get(), itemUploadUrl, totalFileSize, itemMimeType);
+    }
+    return lastChunkResponse;
   }
 
   private Credential getOrCreateCredential(TokensAndUrlAuthData authData) {
@@ -344,21 +360,21 @@ public class MicrosoftMediaImporter
   // Content-Length: {chunk size in bytes}
   // Content-Range: bytes {begin}-{end}/{total size}
   // body={bytes}
-  private Response uploadChunk(DataChunk chunk, String photoUploadUrl, int totalFileSize,
+  private Response uploadChunk(DataChunk chunk, String photoUploadUrl, long totalFileSize,
       String mediaType) throws IOException, DestinationMemoryFullException {
     Request.Builder uploadRequestBuilder = new Request.Builder().url(photoUploadUrl);
     uploadRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
 
     // put chunk data in
     RequestBody uploadChunkBody =
-        RequestBody.create(MediaType.parse(mediaType), chunk.getData(), 0, chunk.getSize());
+        RequestBody.create(MediaType.parse(mediaType), chunk.chunk(), 0, chunk.size());
     uploadRequestBuilder.put(uploadChunkBody);
 
     // set chunk data headers, indicating size and chunk range
     final String contentRange =
-        String.format("bytes %d-%d/%d", chunk.getStart(), chunk.getEnd(), totalFileSize);
+        String.format("bytes %d-%d/%d", chunk.streamByteOffset(), chunk.finalByteOffset(), totalFileSize);
     uploadRequestBuilder.header("Content-Range", contentRange);
-    uploadRequestBuilder.header("Content-Length", String.format("%d", chunk.getSize()));
+    uploadRequestBuilder.header("Content-Length", String.format("%d", chunk.size()));
 
     // upload the chunk
     Response chunkResponse = client.newCall(uploadRequestBuilder.build()).execute();
@@ -376,14 +392,15 @@ public class MicrosoftMediaImporter
     if (chunkCode == 507 && chunkResponse.message().contains("Insufficient Storage")) {
       throw new DestinationMemoryFullException("Microsoft destination storage limit reached",
           new IOException(String.format(
-              "Got error code %d  with message: %s", chunkCode, chunkResponse.message())));
+              "Got error HTTP status %d  with message: %s", chunkCode, chunkResponse.message())));
     } else if (chunkCode < 200 || chunkCode > 299) {
-      throw new IOException("Got error code: " + chunkCode + " message: " + chunkResponse.message()
-          + " body: " + chunkResponse.body().string());
+      throw new IOException(String.format(
+          "Got error HTTP status: %d message: \"%s\" body: \"%s\"", chunkCode, chunkResponse.message(),
+          chunkResponse.body().string()));
     } else if (chunkCode == 200 || chunkCode == 201 || chunkCode == 202) {
       monitor.info(()
-                       -> String.format("Uploaded chunk %s-%s successfuly, code %d",
-                           chunk.getStart(), chunk.getEnd(), chunkCode));
+                       -> String.format("Uploaded chunk range %d-%d (of total bytesize: %d) successfuly, HTTP status %d",
+                           chunk.streamByteOffset(), chunk.finalByteOffset(), totalFileSize, chunkCode));
     }
     return chunkResponse;
   }
