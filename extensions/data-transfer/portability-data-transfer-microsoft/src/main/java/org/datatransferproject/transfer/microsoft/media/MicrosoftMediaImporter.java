@@ -19,13 +19,12 @@ import static org.datatransferproject.spi.api.transport.DiscardingStreamCounter.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.io.BufferedInputStream;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -39,9 +38,9 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.apache.commons.lang3.tuple.Pair;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.api.transport.UrlGetStreamer;
 import org.datatransferproject.spi.api.transport.JobFileStream;
 import org.datatransferproject.spi.api.transport.RemoteFileStreamer;
+import org.datatransferproject.spi.api.transport.UrlGetStreamer;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
@@ -50,8 +49,8 @@ import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.transfer.microsoft.DataChunk;
-import org.datatransferproject.transfer.microsoft.StreamChunker;
 import org.datatransferproject.transfer.microsoft.MicrosoftTransmogrificationConfig;
+import org.datatransferproject.transfer.microsoft.StreamChunker;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
 import org.datatransferproject.types.common.DownloadableFile;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
@@ -249,7 +248,9 @@ public class MicrosoftMediaImporter
     Optional<DataChunk> nextChunk;
     while (true) {
       nextChunk = streamChunker.nextChunk();
-      if (!nextChunk.isPresent()) break;
+      if (nextChunk.isEmpty()) {
+        break;
+      }
       lastChunkResponse =
           uploadChunk(nextChunk.get(), itemUploadUrl, totalFileSize, itemMimeType);
     }
@@ -391,14 +392,15 @@ public class MicrosoftMediaImporter
     if (chunkCode == 507 && chunkResponse.message().contains("Insufficient Storage")) {
       throw new DestinationMemoryFullException("Microsoft destination storage limit reached",
           new IOException(String.format(
-              "Got error code %d  with message: %s", chunkCode, chunkResponse.message())));
+              "Got error HTTP status %d  with message: %s", chunkCode, chunkResponse.message())));
     } else if (chunkCode < 200 || chunkCode > 299) {
-      throw new IOException("Got error code: " + chunkCode + " message: " + chunkResponse.message()
-          + " body: " + chunkResponse.body().string());
+      throw new IOException(String.format(
+          "Got error HTTP status: %d message: \"%s\" body: \"%s\"", chunkCode, chunkResponse.message(),
+          chunkResponse.body().string()));
     } else if (chunkCode == 200 || chunkCode == 201 || chunkCode == 202) {
       monitor.info(()
-                       -> String.format("Uploaded chunk %s-%s successfuly, code %d",
-                           chunk.streamByteOffset(), chunk.finalByteOffset(), chunkCode));
+                       -> String.format("Uploaded chunk range %d-%d (of total bytesize: %d) successfuly, HTTP status %d",
+                           chunk.streamByteOffset(), chunk.finalByteOffset(), totalFileSize, chunkCode));
     }
     return chunkResponse;
   }

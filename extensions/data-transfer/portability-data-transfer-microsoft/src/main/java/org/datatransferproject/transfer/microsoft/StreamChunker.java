@@ -13,7 +13,7 @@ public class StreamChunker {
   private final int chunkSizeBytes;
   private final InputStream inputStream;
 
-  private int streamByteOffset = 0;
+  private long streamByteOffset = 0;
 
   public StreamChunker(int chunkSizeBytes, InputStream inputStream) {
     this.inputStream = inputStream;
