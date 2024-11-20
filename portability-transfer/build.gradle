@@ -36,6 +36,7 @@ configurations {
 
 dependencies {
     compile project(':portability-api-launcher')
+    compile project(':portability-spi-api')
     compile project(':portability-spi-service')
     compile project(':portability-spi-cloud')
     compile project(':portability-spi-transfer')
