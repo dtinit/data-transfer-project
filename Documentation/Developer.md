@@ -4,20 +4,14 @@
 ## Communication
 
  * General questions and discussion: [dtp-discuss@googlegroups.com](mailto:dtp-discuss@googlegroups.com)
- * [Slack channel](https://portability.slack.com), email
-   [portability-maintainers@googlegroups.com](mailto:portability-maintainers@googlegroups.com) for invitation
- * Office Hours for anyone interested, developers, participants, etc.: 
-   * Times: Tuesday 2pm CST and Thursday 10am CST
-   
-   To attend:
-   1. Send email stating your desired topic to discuss to [dtp-discuss@googlegroups.com](mailto:dtp-discuss@googlegroups.com) 
-   1. You will receive a Google Hangout link (or let us know if you prefer another method of communication)
 
 ## Where to start
 
 ### Understanding the project
   * Read the [Technical Overview](Overview.md) page, particularly the architecture section
-  * Read the latest white papers at [datatransferproject.dev](https://datatransferproject.dev)
+  * Read the latest white papers at [DTI](https://dtinit.org) including [DTP overview](https://dtinit.org/docs/dtp-what-is-it)
+  * Understand if your organization is going to run DTP as a server, contribute an extension that adds support for your organization's
+  API, or contribute to generic extensions that use a common API supported by your organization's servers.
  
 ### Understanding the code
   * Read the README files in each top level directory
@@ -25,10 +19,6 @@
   
 ### Running the project
   * See the instructions below to run locally
-  
-### Start coding
-  * See the issues with label [good first issue](https://github.com/google/data-transfer-project/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
- 
 
 ## First Run/Setup
 
@@ -104,7 +94,7 @@ build images, similar to our local demo.
 ### AutoValue errors
 If you get an error `error: duplicate class... final class AutoValue_...` it is indicative of your IDE and gradle clashing.  To fix it you want to delete the referenced build/classes directory.
 
-## Misc updates
+## Demo server
 There is a rest version of the client and demo-server in progress. While it is not complete yet and lacks some of the
 features in the http based client, it is still runnable and works for all services that implement OAuth2.
 
