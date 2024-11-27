@@ -63,11 +63,11 @@ public class MediaSerializerTest extends GenericImportSerializerTestBase {
             + "  \"description\": \"Foo description\","
             + "  \"encodingFormat\": \"video/mp4\","
             + "  \"albumId\": \"album123\","
-            + "  \"uploadedTime\": 1732713392000,"
+            + "  \"uploadedTime\": \"2024-11-27T13:16:32.000+00:00\","
             + "  \"favoriteInfo\": {"
             + "    \"@type\": \"FavoriteInfo\","
             + "    \"favorite\": false,"
-            + "    \"lastUpdateTime\": 1732713392000"
+            + "    \"lastUpdateTime\": \"2024-11-27T13:16:32.000+00:00\""
             + "  }"
             + "}",
         res.get(1).getJsonData());
@@ -84,11 +84,11 @@ public class MediaSerializerTest extends GenericImportSerializerTestBase {
             + "  \"mediaType\": \"image/jpeg\","
             + "  \"albumId\": \"album123\","
             + "  \"sha1\": null,"
-            + "  \"uploadedTime\": 1732713392000,"
+            + "  \"uploadedTime\": \"2024-11-27T13:16:32.000+00:00\","
             + "  \"favoriteInfo\": {"
             + "    \"@type\": \"FavoriteInfo\","
             + "    \"favorite\": false,"
-            + "    \"lastUpdateTime\": 1732713392000"
+            + "    \"lastUpdateTime\": \"2024-11-27T13:16:32.000+00:00\""
             + "  }"
             + "}",
         res.get(2).getJsonData());

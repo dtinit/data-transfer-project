@@ -54,7 +54,7 @@ public class SocialPostsSerializerTest extends GenericImportSerializerTestBase {
             + "  \"activity\": {"
             + "    \"@type\": \"SocialActivityModel\","
             + "    \"id\": \"456\","
-            + "    \"published\": 1732713392,"
+            + "    \"published\": \"2024-11-27T13:16:32Z\","
             + "    \"type\": \"NOTE\","
             + "    \"attachments\": ["
             + "      {"

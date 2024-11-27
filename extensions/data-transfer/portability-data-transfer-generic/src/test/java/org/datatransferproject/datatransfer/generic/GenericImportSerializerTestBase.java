@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,6 +20,7 @@ class GenericImportSerializerTestBase {
   @BeforeClass
   public static void onlyOnce() {
     objectMapper.registerModule(new JavaTimeModule());
+    objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
     // TODO: this probably shouldn't live here
     objectMapper.addMixIn(VideoModel.class, MediaSkipFieldsMixin.class);
     objectMapper.addMixIn(PhotoModel.class, MediaSkipFieldsMixin.class);
