@@ -12,49 +12,11 @@ import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.types.common.DownloadableItem;
 import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.common.models.blob.BlobbyStorageContainerResource;
 import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.social.SocialActivityContainerResource;
-
-/**
- * Wrapper to adapt items known to be in temp storage (e.g. BLOB data) into {@link DownloadableItem}
- *
- * <p>It's useful to wrap such items so upstream code can consume either known temp store'd items or
- * items the Importer has to download itself (some MEDIA items) from the same interface.
- */
-class CachedDownloadableItem implements DownloadableItem {
-  private String cachedId;
-  private String name;
-
-  public CachedDownloadableItem(String cachedId, String name) {
-    this.cachedId = cachedId;
-    this.name = name;
-  }
-
-  @Override
-  public String getIdempotentId() {
-    return cachedId;
-  }
-
-  @Override
-  public String getFetchableUrl() {
-    // 'url' is ID when cached
-    return cachedId;
-  }
-
-  @Override
-  public boolean isInTempStore() {
-    return true;
-  }
-
-  @Override
-  public String getName() {
-    return name;
-  }
-}
 
 public class GenericTransferExtension implements TransferExtension {
 
