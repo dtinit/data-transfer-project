@@ -1,7 +1,10 @@
 package org.datatransferproject.datatransfer.generic;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
-import java.util.Date;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.datatransferproject.types.common.models.FavoriteInfo;
@@ -20,79 +23,86 @@ class MediaAlbumExportData extends MediaAlbum implements MediaSerializer.ExportD
   }
 }
 
-class VideoModelExportData extends VideoModel implements MediaSerializer.ExportData {
-  private VideoModelExportData(
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
+class MediaItemExportData implements MediaSerializer.ExportData {
+  private String name;
+  private String description;
+  private String albumId;
+  private ZonedDateTime uploadedTime;
+  // TODO: consider redeclaring FavouriteInfo with ZonedDateTime to fix the inconsistency with date
+  // serialization
+  private FavoriteInfo favoriteInfo;
+
+  public MediaItemExportData(
+      @JsonProperty String name,
+      @JsonProperty String description,
+      @JsonProperty String albumId,
+      @JsonProperty ZonedDateTime uploadedTime,
+      @JsonProperty FavoriteInfo favoriteInfo) {
+    this.name = name;
+    this.description = description;
+    this.albumId = albumId;
+    this.uploadedTime = uploadedTime;
+    this.favoriteInfo = favoriteInfo;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  public String getAlbumId() {
+    return albumId;
+  }
+
+  public ZonedDateTime getUploadedTime() {
+    return uploadedTime;
+  }
+
+  public FavoriteInfo getFavoriteInfo() {
+    return favoriteInfo;
+  }
+}
+
+class VideoModelExportData extends MediaItemExportData {
+  public VideoModelExportData(
       String name,
-      String contentUrl,
       String description,
-      String encodingFormat,
-      String dataId,
       String albumId,
-      boolean inTempStore,
-      Date uploadedTime,
+      ZonedDateTime uploadedTime,
       FavoriteInfo favoriteInfo) {
-    super(
-        name,
-        contentUrl,
-        description,
-        encodingFormat,
-        dataId,
-        albumId,
-        inTempStore,
-        uploadedTime,
-        favoriteInfo);
+    super(name, description, albumId, uploadedTime, favoriteInfo);
   }
 
   static VideoModelExportData fromModel(VideoModel model) {
     return new VideoModelExportData(
         model.getName(),
-        model.getContentUrl().toString(),
         model.getDescription(),
-        model.getEncodingFormat(),
-        model.getDataId(),
         model.getAlbumId(),
-        model.isInTempStore(),
-        model.getUploadedTime(),
+        ZonedDateTime.ofInstant(model.getUploadedTime().toInstant(), ZoneOffset.UTC),
         model.getFavoriteInfo());
   }
 }
 
-class PhotoModelExportData extends PhotoModel implements MediaSerializer.ExportData {
-  private PhotoModelExportData(
-      String title,
-      String fetchableUrl,
+class PhotoModelExportData extends MediaItemExportData {
+  public PhotoModelExportData(
+      String name,
       String description,
-      String mediaType,
-      String dataId,
       String albumId,
-      boolean inTempStore,
-      String sha1,
-      Date uploadedTime,
+      ZonedDateTime uploadedTime,
       FavoriteInfo favoriteInfo) {
-    super(
-        title,
-        fetchableUrl,
-        description,
-        mediaType,
-        dataId,
-        albumId,
-        inTempStore,
-        sha1,
-        uploadedTime,
-        favoriteInfo);
+    super(name, description, albumId, uploadedTime, favoriteInfo);
   }
 
   static PhotoModelExportData fromModel(PhotoModel model) {
     return new PhotoModelExportData(
-        model.getTitle(),
-        model.getFetchableUrl().toString(),
+        model.getName(),
         model.getDescription(),
-        model.getMediaType(),
-        model.getDataId(),
         model.getAlbumId(),
-        model.isInTempStore(),
-        model.getSha1(),
-        model.getUploadedTime(),
+        ZonedDateTime.ofInstant(model.getUploadedTime().toInstant(), ZoneOffset.UTC),
         model.getFavoriteInfo());
   }
 }
@@ -101,15 +111,13 @@ public class MediaSerializer {
   static final String SCHEMA_SOURCE_ALBUM =
       GenericTransferConstants.SCHEMA_SOURCE_BASE
           + "/portability-types-common/src/main/java/org/datatransferproject/types/common/models/media/MediaAlbum.java";
-  static final String SCHEMA_SOURCE_VIDEO =
+  static final String SCHEMA_SOURCE_MEDIA =
       GenericTransferConstants.SCHEMA_SOURCE_BASE
-          + "/portability-types-common/src/main/java/org/datatransferproject/types/common/models/videos/VideoModel.java";
-  static final String SCHEMA_SOURCE_PHOTO =
-      GenericTransferConstants.SCHEMA_SOURCE_BASE
-          + "/portability-types-common/src/main/java/org/datatransferproject/types/common/models/photos/PhotoModel.java";
+          + "/extensions/data-transfer/portability-data-transfer-generic/src/main/java/org/datatransferproject/datatransfer/generic/MediaSerializer.java";
 
   @JsonSubTypes({
     @JsonSubTypes.Type(value = MediaAlbumExportData.class, name = "MediaAlbum"),
+    // TODO: consider naming
     @JsonSubTypes.Type(value = VideoModelExportData.class, name = "VideoModel"),
     @JsonSubTypes.Type(value = PhotoModelExportData.class, name = "PhotoModel"),
   })
@@ -132,7 +140,7 @@ public class MediaSerializer {
                           return new ImportableFileData<>(
                               video,
                               new GenericPayload<ExportData>(
-                                  VideoModelExportData.fromModel(video), SCHEMA_SOURCE_VIDEO),
+                                  VideoModelExportData.fromModel(video), SCHEMA_SOURCE_MEDIA),
                               video.getIdempotentId(),
                               video.getName());
                         }),
@@ -142,7 +150,7 @@ public class MediaSerializer {
                           return new ImportableFileData<>(
                               photo,
                               new GenericPayload<ExportData>(
-                                  PhotoModelExportData.fromModel(photo), SCHEMA_SOURCE_PHOTO),
+                                  PhotoModelExportData.fromModel(photo), SCHEMA_SOURCE_MEDIA),
                               photo.getIdempotentId(),
                               photo.getName());
                         })))

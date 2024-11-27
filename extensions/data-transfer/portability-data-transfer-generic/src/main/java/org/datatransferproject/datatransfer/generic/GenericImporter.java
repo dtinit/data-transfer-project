@@ -2,8 +2,8 @@ package org.datatransferproject.datatransfer.generic;
 
 import static java.lang.String.format;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.IOException;
 import java.util.UUID;
@@ -18,24 +18,12 @@ import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.types.common.models.ContainerResource;
-import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 @FunctionalInterface
 interface ContainerMapper<C extends ContainerResource, R> {
   public Iterable<ImportableData<R>> apply(C containerResource);
 }
-
-@JsonIgnoreProperties({
-  "contentUrl",
-  "fetchableUrl",
-  "inTempStore",
-  "identifier",
-  "dataId",
-  "headline"
-})
-abstract class MediaSkipFieldsMixin {}
 
 public class GenericImporter<C extends ContainerResource, R>
     implements Importer<TokensAndUrlAuthData, C> {
@@ -50,9 +38,7 @@ public class GenericImporter<C extends ContainerResource, R>
     this.monitor = monitor;
     this.containerUnpacker = containerUnpacker;
     om.registerModule(new JavaTimeModule());
-    // TODO: this probably shouldn't live here
-    om.addMixIn(VideoModel.class, MediaSkipFieldsMixin.class);
-    om.addMixIn(PhotoModel.class, MediaSkipFieldsMixin.class);
+    om.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
   }
 
   @Override
