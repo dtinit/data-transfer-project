@@ -9,6 +9,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.junit.BeforeClass;
 
 class GenericImportSerializerTestBase {
@@ -17,6 +19,9 @@ class GenericImportSerializerTestBase {
   @BeforeClass
   public static void onlyOnce() {
     objectMapper.registerModule(new JavaTimeModule());
+    // TODO: this probably shouldn't live here
+    objectMapper.addMixIn(VideoModel.class, MediaSkipFieldsMixin.class);
+    objectMapper.addMixIn(PhotoModel.class, MediaSkipFieldsMixin.class);
   }
 
   void assertJsonEquals(String expectedPayload, JsonNode actualWrapperPayload) throws Exception {

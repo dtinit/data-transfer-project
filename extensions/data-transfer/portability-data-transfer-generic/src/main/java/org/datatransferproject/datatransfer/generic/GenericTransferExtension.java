@@ -7,8 +7,6 @@ import static org.datatransferproject.types.common.models.DataVertical.SOCIAL_PO
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
@@ -74,37 +72,7 @@ public class GenericTransferExtension implements TransferExtension {
     importerMap.put(
         MEDIA,
         new GenericFileImporter<MediaContainerResource>(
-            (container, om) ->
-                Stream.concat(
-                        container.getAlbums().stream()
-                            .map(
-                                album ->
-                                    new ImportableData(
-                                        om.valueToTree(album),
-                                        album.getIdempotentId(),
-                                        album.getName())),
-                        Stream.concat(
-                            container.getVideos().stream()
-                                .map(
-                                    (video) -> {
-                                      return new ImportableFileData(
-                                          video,
-                                          om.valueToTree(video),
-                                          video.getIdempotentId(),
-                                          video.getName());
-                                    }),
-                            container.getPhotos().stream()
-                                .map(
-                                    photo -> {
-                                      return new ImportableFileData(
-                                          photo,
-                                          om.valueToTree(photo),
-                                          photo.getIdempotentId(),
-                                          photo.getName());
-                                    })))
-                    .collect(Collectors.toList()),
-            jobStore,
-            context.getMonitor()));
+            MediaSerializer::serialize, jobStore, context.getMonitor()));
 
     importerMap.put(
         SOCIAL_POSTS,
