@@ -114,24 +114,7 @@ public class GenericTransferExtension implements TransferExtension {
     importerMap.put(
         CALENDAR,
         new GenericImporter<CalendarContainerResource>(
-            (container, om) ->
-                Stream.concat(
-                        container.getCalendars().stream()
-                            .map(
-                                calendar ->
-                                    new ImportableData(
-                                        om.valueToTree(calendar),
-                                        calendar.getId(),
-                                        calendar.getName())),
-                        container.getEvents().stream()
-                            .map(
-                                event ->
-                                    new ImportableData(
-                                        om.valueToTree(event),
-                                        String.valueOf(event.hashCode()),
-                                        event.getTitle())))
-                    .collect(Collectors.toList()),
-            context.getMonitor()));
+            CalendarSerializer::serialize, context.getMonitor()));
   }
 
   @Override
