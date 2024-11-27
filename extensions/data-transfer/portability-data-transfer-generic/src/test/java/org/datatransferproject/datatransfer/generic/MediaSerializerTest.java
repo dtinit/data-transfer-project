@@ -42,7 +42,8 @@ public class MediaSerializerTest extends GenericImportSerializerTestBase {
                     true,
                     Date.from(Instant.ofEpochSecond(1732713392)))));
 
-    List<ImportableData> res = iterableToList(MediaSerializer.serialize(container, objectMapper));
+    List<ImportableData<MediaSerializer.ExportData>> res =
+        iterableToList(MediaSerializer.serialize(container));
     assertEquals(3, res.size());
 
     assertJsonEquals(
@@ -72,8 +73,8 @@ public class MediaSerializerTest extends GenericImportSerializerTestBase {
             + "}",
         res.get(1).getJsonData());
     assertTrue(res.get(1) instanceof ImportableFileData);
-    assertTrue(((ImportableFileData) res.get(1)).getFile().isInTempStore());
-    assertEquals("cachedVal1", ((ImportableFileData) res.get(1)).getFile().getFetchableUrl());
+    assertTrue(((ImportableFileData<?>) res.get(1)).getFile().isInTempStore());
+    assertEquals("cachedVal1", ((ImportableFileData<?>) res.get(1)).getFile().getFetchableUrl());
 
     assertJsonEquals(
         ""
@@ -93,9 +94,9 @@ public class MediaSerializerTest extends GenericImportSerializerTestBase {
             + "}",
         res.get(2).getJsonData());
     assertTrue(res.get(2) instanceof ImportableFileData);
-    assertFalse(((ImportableFileData) res.get(2)).getFile().isInTempStore());
+    assertFalse(((ImportableFileData<?>) res.get(2)).getFile().isInTempStore());
     assertEquals(
         "https://example.com/bar.jpg",
-        ((ImportableFileData) res.get(2)).getFile().getFetchableUrl());
+        ((ImportableFileData<?>) res.get(2)).getFile().getFetchableUrl());
   }
 }

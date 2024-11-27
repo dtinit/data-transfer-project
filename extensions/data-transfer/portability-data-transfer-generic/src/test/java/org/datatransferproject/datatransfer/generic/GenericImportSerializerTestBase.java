@@ -1,9 +1,8 @@
 package org.datatransferproject.datatransfer.generic;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -26,15 +25,14 @@ class GenericImportSerializerTestBase {
     objectMapper.addMixIn(PhotoModel.class, MediaSkipFieldsMixin.class);
   }
 
-  void assertJsonEquals(String expectedPayload, JsonNode actualWrapperPayload) throws Exception {
-    assertEquals("GenericPayload", actualWrapperPayload.get("@type").asText());
-    assertFalse(actualWrapperPayload.get("apiVersion").isNull());
-    assertFalse(actualWrapperPayload.get("schemaSource").isNull());
+  <T> void assertJsonEquals(String expectedPayload, GenericPayload<T> actualWrapperPayload)
+      throws Exception {
+    assertNotNull(actualWrapperPayload.getApiVersion());
+    assertNotNull(actualWrapperPayload.getSchemaSource());
     assertEquals(
         objectMapper.readTree(expectedPayload),
         // Wrap/unwrap to compare just what gets serialized, which is the most important thing
-        objectMapper.readTree(
-            objectMapper.writeValueAsString(actualWrapperPayload.get("payload"))));
+        objectMapper.readTree(objectMapper.writeValueAsString(actualWrapperPayload.getPayload())));
   }
 
   static <T> List<T> iterableToList(Iterable<T> iterable) {

@@ -28,22 +28,22 @@ public class GenericTransferExtension implements TransferExtension {
 
     importerMap.put(
         BLOBS,
-        new GenericFileImporter<BlobbyStorageContainerResource>(
+        new GenericFileImporter<BlobbyStorageContainerResource, BlobbySerializer.ExportData>(
             BlobbySerializer::serialize, jobStore, context.getMonitor()));
 
     importerMap.put(
         MEDIA,
-        new GenericFileImporter<MediaContainerResource>(
+        new GenericFileImporter<MediaContainerResource, MediaSerializer.ExportData>(
             MediaSerializer::serialize, jobStore, context.getMonitor()));
 
     importerMap.put(
         SOCIAL_POSTS,
-        new GenericImporter<SocialActivityContainerResource>(
+        new GenericImporter<SocialActivityContainerResource, SocialPostsSerializer.ExportData>(
             SocialPostsSerializer::serialize, context.getMonitor()));
 
     importerMap.put(
         CALENDAR,
-        new GenericImporter<CalendarContainerResource>(
+        new GenericImporter<CalendarContainerResource, CalendarSerializer.ExportData>(
             CalendarSerializer::serialize, context.getMonitor()));
   }
 

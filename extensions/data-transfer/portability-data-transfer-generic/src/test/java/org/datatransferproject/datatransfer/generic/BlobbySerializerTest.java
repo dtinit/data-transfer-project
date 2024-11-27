@@ -26,7 +26,8 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
                 new BlobbyStorageContainerResource(
                     "foo", "foodir", new ArrayList<>(), new ArrayList<>())));
 
-    List<ImportableData> res = iterableToList(BlobbySerializer.serialize(container, objectMapper));
+    List<ImportableData<BlobbySerializer.ExportData>> res =
+        iterableToList(BlobbySerializer.serialize(container));
 
     assertEquals(2, res.size());
     assertEquals("rootdir", res.get(0).getIdempotentId());
@@ -61,7 +62,8 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
                     "bartxt")),
             new ArrayList<>());
 
-    List<ImportableData> res = iterableToList(BlobbySerializer.serialize(container, objectMapper));
+    List<ImportableData<BlobbySerializer.ExportData>> res =
+        iterableToList(BlobbySerializer.serialize(container));
 
     assertEquals(3, res.size());
 
@@ -87,8 +89,11 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
             + "}",
         res.get(1).getJsonData());
     assertTrue(res.get(1) instanceof ImportableFileData);
-    assertTrue(((ImportableFileData) res.get(1)).getFile().isInTempStore());
-    assertEquals("foomp4", ((ImportableFileData) res.get(1)).getFile().getFetchableUrl());
+    assertTrue(
+        ((ImportableFileData<BlobbySerializer.ExportData>) res.get(1)).getFile().isInTempStore());
+    assertEquals(
+        "foomp4",
+        ((ImportableFileData<BlobbySerializer.ExportData>) res.get(1)).getFile().getFetchableUrl());
 
     assertEquals("bartxt", res.get(2).getIdempotentId());
     assertEquals("bar.txt", res.get(2).getName());
@@ -106,8 +111,11 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
             + "}",
         res.get(2).getJsonData());
     assertTrue(res.get(2) instanceof ImportableFileData);
-    assertTrue(((ImportableFileData) res.get(2)).getFile().isInTempStore());
-    assertEquals("bartxt", ((ImportableFileData) res.get(2)).getFile().getFetchableUrl());
+    assertTrue(
+        ((ImportableFileData<BlobbySerializer.ExportData>) res.get(2)).getFile().isInTempStore());
+    assertEquals(
+        "bartxt",
+        ((ImportableFileData<BlobbySerializer.ExportData>) res.get(2)).getFile().getFetchableUrl());
   }
 
   @Test
@@ -132,7 +140,8 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
                             "bartxt")),
                     new ArrayList<>())));
 
-    List<ImportableData> res = iterableToList(BlobbySerializer.serialize(container, objectMapper));
+    List<ImportableData<BlobbySerializer.ExportData>> res =
+        iterableToList(BlobbySerializer.serialize(container));
 
     assertEquals(3, res.size());
 
@@ -162,7 +171,10 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
             + "}",
         res.get(2).getJsonData());
     assertTrue(res.get(2) instanceof ImportableFileData);
-    assertTrue(((ImportableFileData) res.get(2)).getFile().isInTempStore());
-    assertEquals("bartxt", ((ImportableFileData) res.get(2)).getFile().getFetchableUrl());
+    assertTrue(
+        ((ImportableFileData<BlobbySerializer.ExportData>) res.get(2)).getFile().isInTempStore());
+    assertEquals(
+        "bartxt",
+        ((ImportableFileData<BlobbySerializer.ExportData>) res.get(2)).getFile().getFetchableUrl());
   }
 }

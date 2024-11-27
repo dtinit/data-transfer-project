@@ -1,10 +1,8 @@
 package org.datatransferproject.datatransfer.generic;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
-public class ImportableData {
-  /** JSON data to POST */
-  private JsonNode jsonData;
+public class ImportableData<T> {
+  /** JSON serializable data to POST */
+  private GenericPayload<T> jsonData;
 
   /** Globally unique ID to avoid re-importing data */
   private String idempotentId;
@@ -12,13 +10,13 @@ public class ImportableData {
   /** Human-readable item name */
   private String name;
 
-  public ImportableData(JsonNode jsonData, String idempotentId, String name) {
+  public ImportableData(GenericPayload<T> jsonData, String idempotentId, String name) {
     this.jsonData = jsonData;
     this.idempotentId = idempotentId;
     this.name = name;
   }
 
-  public JsonNode getJsonData() {
+  public GenericPayload<T> getJsonData() {
     return jsonData;
   }
 

@@ -2,7 +2,6 @@ package org.datatransferproject.datatransfer.generic;
 
 import static java.lang.String.format;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
@@ -24,7 +23,7 @@ import org.datatransferproject.types.common.DownloadableItem;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-public class GenericFileImporter<C extends ContainerResource> extends GenericImporter<C> {
+public class GenericFileImporter<C extends ContainerResource, R> extends GenericImporter<C, R> {
   private TemporaryPerJobDataStore dataStore;
   private ConnectionProvider connectionProvider;
   private OkHttpClient client = new OkHttpClient();
@@ -33,7 +32,9 @@ public class GenericFileImporter<C extends ContainerResource> extends GenericImp
   static final MediaType OCTET_STREAM = MediaType.parse("application/octet-stream");
 
   public GenericFileImporter(
-      ContainerMapper<C> containerUnpacker, TemporaryPerJobDataStore dataStore, Monitor monitor) {
+      ContainerMapper<C, R> containerUnpacker,
+      TemporaryPerJobDataStore dataStore,
+      Monitor monitor) {
     super(containerUnpacker, monitor);
     this.dataStore = dataStore;
     this.connectionProvider = new ConnectionProvider(dataStore);
@@ -46,7 +47,7 @@ public class GenericFileImporter<C extends ContainerResource> extends GenericImp
       TokensAndUrlAuthData authData,
       C data)
       throws Exception {
-    for (ImportableData importableData : containerUnpacker.apply(data, om)) {
+    for (ImportableData<R> importableData : containerUnpacker.apply(data)) {
       idempotentExecutor.executeAndSwallowIOExceptions(
           importableData.getIdempotentId(),
           importableData.getName(),
@@ -55,14 +56,14 @@ public class GenericFileImporter<C extends ContainerResource> extends GenericImp
                   ? importSingleFileItem(
                       jobId,
                       importableData.getJsonData(),
-                      ((ImportableFileData) importableData).getFile())
+                      ((ImportableFileData<R>) importableData).getFile())
                   : importSingleItem(importableData.getJsonData()));
     }
     return new ImportResult(ResultType.OK);
   }
 
-  private boolean importSingleFileItem(UUID jobId, JsonNode metadata, DownloadableItem file)
-      throws IOException {
+  private <T> boolean importSingleFileItem(
+      UUID jobId, GenericPayload<R> metadata, DownloadableItem file) throws IOException {
     InputStreamWrapper wrapper = connectionProvider.getInputStreamForItem(jobId, file);
     File tempFile =
         dataStore.getTempFileFromInputStream(
