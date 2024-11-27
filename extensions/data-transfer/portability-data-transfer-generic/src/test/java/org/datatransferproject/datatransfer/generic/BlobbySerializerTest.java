@@ -1,38 +1,17 @@
 package org.datatransferproject.datatransfer.generic;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import org.datatransferproject.types.common.models.blob.BlobbyStorageContainerResource;
 import org.datatransferproject.types.common.models.blob.DigitalDocumentWrapper;
 import org.datatransferproject.types.common.models.blob.DtpDigitalDocument;
 import org.junit.Test;
-import org.junit.jupiter.api.BeforeAll;
 
-public class BlobbySerializerTest {
-  static ObjectMapper objectMapper = new ObjectMapper();
-
-  @BeforeAll
-  public void configureObjectMapper() {
-    objectMapper.registerModule(new JavaTimeModule());
-  }
-
-  void assertJsonEquals(String expectedPayload, JsonNode actualWrapperPayload) throws Exception {
-    assertEquals("GenericPayload", actualWrapperPayload.get("@type").asText());
-    assertFalse(actualWrapperPayload.get("apiVersion").isNull());
-    assertFalse(actualWrapperPayload.get("schemaSource").isNull());
-    assertEquals(objectMapper.readTree(expectedPayload), actualWrapperPayload.get("payload"));
-  }
-
+public class BlobbySerializerTest extends GenericImportSerializerTestBase {
   @Test
   public void testBlobbySerializerFolders() throws Exception {
     // Folder structure of
@@ -47,10 +26,7 @@ public class BlobbySerializerTest {
                 new BlobbyStorageContainerResource(
                     "foo", "foodir", new ArrayList<>(), new ArrayList<>())));
 
-    List<ImportableData> res =
-        StreamSupport.stream(
-                BlobbySerializer.serialize(container, objectMapper).spliterator(), false)
-            .collect(Collectors.toList());
+    List<ImportableData> res = iterableToList(BlobbySerializer.serialize(container, objectMapper));
 
     assertEquals(2, res.size());
     assertEquals("rootdir", res.get(0).getIdempotentId());
@@ -85,10 +61,7 @@ public class BlobbySerializerTest {
                     "bartxt")),
             new ArrayList<>());
 
-    List<ImportableData> res =
-        StreamSupport.stream(
-                BlobbySerializer.serialize(container, objectMapper).spliterator(), false)
-            .collect(Collectors.toList());
+    List<ImportableData> res = iterableToList(BlobbySerializer.serialize(container, objectMapper));
 
     assertEquals(3, res.size());
 
@@ -159,10 +132,7 @@ public class BlobbySerializerTest {
                             "bartxt")),
                     new ArrayList<>())));
 
-    List<ImportableData> res =
-        StreamSupport.stream(
-                BlobbySerializer.serialize(container, objectMapper).spliterator(), false)
-            .collect(Collectors.toList());
+    List<ImportableData> res = iterableToList(BlobbySerializer.serialize(container, objectMapper));
 
     assertEquals(3, res.size());
 

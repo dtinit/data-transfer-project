@@ -5,8 +5,6 @@ import static org.datatransferproject.types.common.models.DataVertical.CALENDAR;
 import static org.datatransferproject.types.common.models.DataVertical.MEDIA;
 import static org.datatransferproject.types.common.models.DataVertical.SOCIAL_POSTS;
 
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -111,27 +109,7 @@ public class GenericTransferExtension implements TransferExtension {
     importerMap.put(
         SOCIAL_POSTS,
         new GenericImporter<SocialActivityContainerResource>(
-            (container, om) ->
-                container.getActivities().stream()
-                    .map(
-                        activity -> {
-                          // "actor" is stored at the container level, but isn't repliacted
-                          // in the tree of activity, so we should merge it in a metadata field
-                          // TODO: Consider a POJO with JSON annotations for mapping this
-                          ObjectNode root = JsonNodeFactory.instance.objectNode();
-                          ObjectNode metadata = JsonNodeFactory.instance.objectNode();
-                          metadata.set(
-                              "@type", JsonNodeFactory.instance.textNode("SocialActivityMetadata"));
-                          metadata.set("actor", om.valueToTree(container.getActor()));
-                          root.set(
-                              "@type", JsonNodeFactory.instance.textNode("SocialActivityData"));
-                          root.set("metadata", metadata);
-                          root.set("activity", om.valueToTree(activity));
-                          return new ImportableData(
-                              root, activity.getIdempotentId(), activity.getName());
-                        })
-                    .collect(Collectors.toList()),
-            context.getMonitor()));
+            SocialPostsSerializer::serialize, context.getMonitor()));
 
     importerMap.put(
         CALENDAR,
