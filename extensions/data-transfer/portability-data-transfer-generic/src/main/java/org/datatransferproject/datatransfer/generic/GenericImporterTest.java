@@ -4,6 +4,8 @@ import static java.lang.String.format;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -44,6 +46,7 @@ import org.datatransferproject.types.common.models.social.SocialActivityType;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
+import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
 
 class TestJobStore implements JobStore {
 
@@ -153,6 +156,15 @@ class TestExtensionContext implements ExtensionContext {
     if (type.getName() == JobStore.class.getName()) {
       return (T) jobStore;
     }
+    if (type.getName() == TransferServiceConfig.class.getName()) {
+      InputStream inputStream =
+          this.getClass().getClassLoader().getResourceAsStream("config/test.yaml");
+      try {
+        return (T) TransferServiceConfig.create(inputStream);
+      } catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+    }
     throw new RuntimeException(format("Unexpected type %s", type.getName()));
   }
 
@@ -176,6 +188,7 @@ public class GenericImporterTest {
   // TODO: Make this in to an actual unit test
   public static void main(String args[]) throws Exception {
     ConsoleMonitor monitor = new ConsoleMonitor(Level.DEBUG);
+
     InMemoryIdempotentImportExecutor idempotentImporter =
         new InMemoryIdempotentImportExecutor(monitor);
     TestExtensionContext context = new TestExtensionContext(monitor);
@@ -183,6 +196,7 @@ public class GenericImporterTest {
     extension.initialize(context);
     UUID jobId = UUID.randomUUID();
     idempotentImporter.setJobId(jobId);
+    monitor.info(() -> format("Supports test: %s", extension.supportsService("test")));
 
     @SuppressWarnings("unchecked")
     Importer<TokensAndUrlAuthData, SocialActivityContainerResource> socialImporter =

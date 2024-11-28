@@ -28,6 +28,10 @@ public interface TransferExtension extends AbstractExtension {
   /** The key associated with this extension's service. */
   String getServiceId();
 
+  default boolean supportsService(String service) {
+    return this.getServiceId().toLowerCase().equals(service.toLowerCase());
+  }
+
   /** Returns initialized extension exporter.
    * @param transferDataType*/
   Exporter<?, ?> getExporter(DataVertical transferDataType);

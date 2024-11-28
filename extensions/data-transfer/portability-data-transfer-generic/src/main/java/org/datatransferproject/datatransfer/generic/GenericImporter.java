@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.IOException;
+import java.net.URL;
 import java.util.UUID;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -28,14 +29,16 @@ interface ContainerMapper<C extends ContainerResource, R> {
 public class GenericImporter<C extends ContainerResource, R>
     implements Importer<TokensAndUrlAuthData, C> {
   ContainerMapper<C, R> containerUnpacker;
+  URL endpoint;
   ObjectMapper om = new ObjectMapper();
   Monitor monitor;
   OkHttpClient client = new OkHttpClient();
 
   static final MediaType JSON = MediaType.parse("application/json");
 
-  public GenericImporter(ContainerMapper<C, R> containerUnpacker, Monitor monitor) {
+  public GenericImporter(ContainerMapper<C, R> containerUnpacker, URL endpoint, Monitor monitor) {
     this.monitor = monitor;
+    this.endpoint = endpoint;
     this.containerUnpacker = containerUnpacker;
     om.registerModule(new JavaTimeModule());
     om.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
@@ -60,7 +63,7 @@ public class GenericImporter<C extends ContainerResource, R>
   boolean importSingleItem(GenericPayload<?> dataItem) throws IOException {
     Request request =
         new Request.Builder()
-            .url("http://localhost:8080") // TODO
+            .url(endpoint)
             .post(RequestBody.create(JSON, om.writeValueAsBytes(dataItem)))
             .build();
 

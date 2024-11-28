@@ -4,6 +4,7 @@ import static java.lang.String.format;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.UUID;
 import okhttp3.Headers;
 import okhttp3.MediaType;
@@ -33,9 +34,10 @@ public class GenericFileImporter<C extends ContainerResource, R> extends Generic
 
   public GenericFileImporter(
       ContainerMapper<C, R> containerUnpacker,
+      URL endpoint,
       TemporaryPerJobDataStore dataStore,
       Monitor monitor) {
-    super(containerUnpacker, monitor);
+    super(containerUnpacker, endpoint, monitor);
     this.dataStore = dataStore;
     this.connectionProvider = new ConnectionProvider(dataStore);
   }
@@ -71,7 +73,7 @@ public class GenericFileImporter<C extends ContainerResource, R> extends Generic
     MediaType mimeType = OCTET_STREAM; // TODO set mimetype
     Request request =
         new Request.Builder()
-            .url("http://localhost:8080") // TODO make configurable
+            .url(endpoint)
             .post(
                 new MultipartBody.Builder()
                     .setType(MULTIPART_RELATED)
