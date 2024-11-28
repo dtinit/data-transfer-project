@@ -50,8 +50,8 @@ class CalendarEventExportData extends CalendarEventModel implements CalendarSeri
 public class CalendarSerializer {
 
   @JsonSubTypes({
-    @JsonSubTypes.Type(value = CalendarExportData.class, name = "CalendarModel"),
-    @JsonSubTypes.Type(value = CalendarEventExportData.class, name = "CalendarEventModel"),
+    @JsonSubTypes.Type(value = CalendarExportData.class, name = "Calendar"),
+    @JsonSubTypes.Type(value = CalendarEventExportData.class, name = "CalendarEvent"),
   })
   public interface ExportData {}
 

@@ -67,8 +67,8 @@ class MediaItemExportData implements MediaSerializer.ExportData {
   }
 }
 
-class VideoModelExportData extends MediaItemExportData {
-  public VideoModelExportData(
+class VideoExportData extends MediaItemExportData {
+  private VideoExportData(
       String name,
       String description,
       String albumId,
@@ -77,8 +77,8 @@ class VideoModelExportData extends MediaItemExportData {
     super(name, description, albumId, uploadedTime, favoriteInfo);
   }
 
-  static VideoModelExportData fromModel(VideoModel model) {
-    return new VideoModelExportData(
+  static VideoExportData fromModel(VideoModel model) {
+    return new VideoExportData(
         model.getName(),
         model.getDescription(),
         model.getAlbumId(),
@@ -87,8 +87,8 @@ class VideoModelExportData extends MediaItemExportData {
   }
 }
 
-class PhotoModelExportData extends MediaItemExportData {
-  public PhotoModelExportData(
+class PhotoExportData extends MediaItemExportData {
+  private PhotoExportData(
       String name,
       String description,
       String albumId,
@@ -97,8 +97,8 @@ class PhotoModelExportData extends MediaItemExportData {
     super(name, description, albumId, uploadedTime, favoriteInfo);
   }
 
-  static PhotoModelExportData fromModel(PhotoModel model) {
-    return new PhotoModelExportData(
+  static PhotoExportData fromModel(PhotoModel model) {
+    return new PhotoExportData(
         model.getName(),
         model.getDescription(),
         model.getAlbumId(),
@@ -116,10 +116,9 @@ public class MediaSerializer {
           + "/extensions/data-transfer/portability-data-transfer-generic/src/main/java/org/datatransferproject/datatransfer/generic/MediaSerializer.java";
 
   @JsonSubTypes({
-    @JsonSubTypes.Type(value = MediaAlbumExportData.class, name = "MediaAlbum"),
-    // TODO: consider naming
-    @JsonSubTypes.Type(value = VideoModelExportData.class, name = "VideoModel"),
-    @JsonSubTypes.Type(value = PhotoModelExportData.class, name = "PhotoModel"),
+    @JsonSubTypes.Type(value = MediaAlbumExportData.class, name = "Album"),
+    @JsonSubTypes.Type(value = VideoExportData.class, name = "Video"),
+    @JsonSubTypes.Type(value = PhotoExportData.class, name = "Photo"),
   })
   public interface ExportData {}
 
@@ -140,7 +139,7 @@ public class MediaSerializer {
                           return new ImportableFileData<>(
                               video,
                               new GenericPayload<ExportData>(
-                                  VideoModelExportData.fromModel(video), SCHEMA_SOURCE_MEDIA),
+                                  VideoExportData.fromModel(video), SCHEMA_SOURCE_MEDIA),
                               video.getIdempotentId(),
                               video.getName());
                         }),
@@ -150,7 +149,7 @@ public class MediaSerializer {
                           return new ImportableFileData<>(
                               photo,
                               new GenericPayload<ExportData>(
-                                  PhotoModelExportData.fromModel(photo), SCHEMA_SOURCE_MEDIA),
+                                  PhotoExportData.fromModel(photo), SCHEMA_SOURCE_MEDIA),
                               photo.getIdempotentId(),
                               photo.getName());
                         })))

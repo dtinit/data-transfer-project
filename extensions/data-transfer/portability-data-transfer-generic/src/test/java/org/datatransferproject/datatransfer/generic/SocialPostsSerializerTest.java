@@ -41,7 +41,7 @@ public class SocialPostsSerializerTest extends GenericImportSerializerTestBase {
     assertJsonEquals(
         ""
             + "{"
-            + "  \"@type\": \"SocialActivityData\","
+            + "  \"@type\": \"SocialActivity\","
             + "  \"metadata\": {"
             + "    \"@type\": \"SocialActivityMetadata\","
             + "    \"actor\": {"

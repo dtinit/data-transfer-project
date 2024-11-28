@@ -49,7 +49,7 @@ public class MediaSerializerTest extends GenericImportSerializerTestBase {
     assertJsonEquals(
         ""
             + "{"
-            + "  \"@type\": \"MediaAlbum\","
+            + "  \"@type\": \"Album\","
             + "  \"id\": \"album123\","
             + "  \"name\": \"Album 123\","
             + "  \"description\": \"Album description\""
@@ -59,7 +59,7 @@ public class MediaSerializerTest extends GenericImportSerializerTestBase {
     assertJsonEquals(
         ""
             + "{"
-            + "  \"@type\": \"VideoModel\","
+            + "  \"@type\": \"Video\","
             + "  \"name\": \"foo.mp4\","
             + "  \"description\": \"Foo description\","
             + "  \"albumId\": \"album123\","
@@ -78,7 +78,7 @@ public class MediaSerializerTest extends GenericImportSerializerTestBase {
     assertJsonEquals(
         ""
             + "{"
-            + "  \"@type\": \"PhotoModel\","
+            + "  \"@type\": \"Photo\","
             + "  \"name\": \"bar.jpeg\","
             + "  \"description\": \"Bar description\","
             + "  \"albumId\": \"album123\","

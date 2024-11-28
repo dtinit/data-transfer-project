@@ -88,8 +88,8 @@ class BlobbyFolder implements BlobbySerializer.ExportData {
 
 public class BlobbySerializer {
   @JsonSubTypes({
-    @JsonSubTypes.Type(value = BlobbyFolder.class),
-    @JsonSubTypes.Type(value = BlobbyFile.class),
+    @JsonSubTypes.Type(value = BlobbyFolder.class, name = "Folder"),
+    @JsonSubTypes.Type(value = BlobbyFile.class, name = "File"),
   })
   public interface ExportData {}
 

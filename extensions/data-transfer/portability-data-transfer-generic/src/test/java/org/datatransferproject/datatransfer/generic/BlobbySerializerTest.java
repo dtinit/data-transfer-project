@@ -32,13 +32,11 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
     assertEquals(2, res.size());
     assertEquals("rootdir", res.get(0).getIdempotentId());
     assertEquals("/root", res.get(0).getName());
-    assertJsonEquals(
-        "{\"@type\": \"BlobbyFolder\", \"path\": \"/root\"}", res.get(0).getJsonData());
+    assertJsonEquals("{\"@type\": \"Folder\", \"path\": \"/root\"}", res.get(0).getJsonData());
 
     assertEquals("foodir", res.get(1).getIdempotentId());
     assertEquals("/root/foo", res.get(1).getName());
-    assertJsonEquals(
-        "{\"@type\": \"BlobbyFolder\", \"path\": \"/root/foo\"}", res.get(1).getJsonData());
+    assertJsonEquals("{\"@type\": \"Folder\", \"path\": \"/root/foo\"}", res.get(1).getJsonData());
   }
 
   @Test
@@ -70,7 +68,7 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
     assertEquals("rootdir", res.get(0).getIdempotentId());
     assertEquals("/root", res.get(0).getName());
     assertJsonEquals(
-        "" + "{" + "  \"@type\": \"BlobbyFolder\"," + "  \"path\": \"/root\"" + "}",
+        "" + "{" + "  \"@type\": \"Folder\"," + "  \"path\": \"/root\"" + "}",
         res.get(0).getJsonData());
 
     assertEquals("foomp4", res.get(1).getIdempotentId());
@@ -78,7 +76,7 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
     assertJsonEquals(
         ""
             + "{"
-            + "  \"@type\": \"BlobbyFile\","
+            + "  \"@type\": \"File\","
             + "  \"folder\": \"/root\","
             + "  \"document\": {"
             + "    \"@type\": \"DtpDigitalDocument\","
@@ -100,7 +98,7 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
     assertJsonEquals(
         ""
             + "{"
-            + "  \"@type\": \"BlobbyFile\","
+            + "  \"@type\": \"File\","
             + "  \"folder\": \"/root\","
             + "  \"document\": {"
             + "    \"@type\": \"DtpDigitalDocument\","
@@ -147,20 +145,18 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
 
     assertEquals("rootdir", res.get(0).getIdempotentId());
     assertEquals("/root", res.get(0).getName());
-    assertJsonEquals(
-        "{\"@type\": \"BlobbyFolder\", \"path\": \"/root\"}", res.get(0).getJsonData());
+    assertJsonEquals("{\"@type\": \"Folder\", \"path\": \"/root\"}", res.get(0).getJsonData());
 
     assertEquals("foodir", res.get(1).getIdempotentId());
     assertEquals("/root/foo", res.get(1).getName());
-    assertJsonEquals(
-        "{\"@type\": \"BlobbyFolder\", \"path\": \"/root/foo\"}", res.get(1).getJsonData());
+    assertJsonEquals("{\"@type\": \"Folder\", \"path\": \"/root/foo\"}", res.get(1).getJsonData());
 
     assertEquals("bartxt", res.get(2).getIdempotentId());
     assertEquals("bar.txt", res.get(2).getName());
     assertJsonEquals(
         ""
             + "{"
-            + "  \"@type\": \"BlobbyFile\","
+            + "  \"@type\": \"File\","
             + "  \"folder\": \"/root/foo\","
             + "  \"document\": {"
             + "    \"@type\": \"DtpDigitalDocument\","

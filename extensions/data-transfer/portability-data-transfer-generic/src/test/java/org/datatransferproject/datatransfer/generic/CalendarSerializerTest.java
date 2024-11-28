@@ -45,7 +45,7 @@ public class CalendarSerializerTest extends GenericImportSerializerTestBase {
     assertJsonEquals(
         ""
             + "{"
-            + "  \"@type\": \"CalendarModel\","
+            + "  \"@type\": \"Calendar\","
             + "  \"id\": \"calendar123\","
             + "  \"name\": \"Calendar 123\","
             + "  \"description\": \"Calendar description\""
@@ -55,7 +55,7 @@ public class CalendarSerializerTest extends GenericImportSerializerTestBase {
     assertJsonEquals(
         ""
             + "{"
-            + "  \"@type\": \"CalendarEventModel\","
+            + "  \"@type\": \"CalendarEvent\","
             + "  \"calendarId\": \"calendar123\","
             + "  \"title\": \"Event 1\","
             + "  \"notes\": \"Event notes\","

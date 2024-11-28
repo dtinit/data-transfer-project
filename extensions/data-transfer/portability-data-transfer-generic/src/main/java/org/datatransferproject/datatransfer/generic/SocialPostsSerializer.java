@@ -24,11 +24,11 @@ class SocialActivityMetadata {
 }
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
-class SocialActivityData implements SocialPostsSerializer.ExportData {
+class SocialActivity implements SocialPostsSerializer.ExportData {
   private final SocialActivityMetadata metadata;
   private final SocialActivityModel activity;
 
-  public SocialActivityData(SocialActivityMetadata metadata, SocialActivityModel activity) {
+  public SocialActivity(SocialActivityMetadata metadata, SocialActivityModel activity) {
     this.metadata = metadata;
     this.activity = activity;
   }
@@ -45,7 +45,7 @@ class SocialActivityData implements SocialPostsSerializer.ExportData {
 public class SocialPostsSerializer {
 
   @JsonSubTypes({
-    @JsonSubTypes.Type(value = SocialActivityData.class),
+    @JsonSubTypes.Type(value = SocialActivity.class),
   })
   public interface ExportData {}
 
@@ -62,7 +62,7 @@ public class SocialPostsSerializer {
                     new GenericPayload<ExportData>(
                         // "actor" is stored at the container level, but isn't repliacted
                         // in the tree of activity, so merge it in a metadata field
-                        new SocialActivityData(
+                        new SocialActivity(
                             new SocialActivityMetadata(container.getActor()), activity),
                         SCHEMA_SOURCE),
                     activity.getIdempotentId(),
