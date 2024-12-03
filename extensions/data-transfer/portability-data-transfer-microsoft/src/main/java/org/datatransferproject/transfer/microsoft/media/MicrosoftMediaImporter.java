@@ -359,9 +359,13 @@ public class MicrosoftMediaImporter
   /**
    * Forms the URL to create an upload session.
    *
-   * <p>Creates an upload session path for one of two cases: - 1) POST to
-   * /me/drive/items/{folder_id}:/{file_name}:/createUploadSession - 2) GET {uploadurl} from
-   * /me/drive/items/root:/photos-video/{file_name}:/createUploadSession
+   * <p>Creates an upload session path for one of two cases:
+   *
+   * <ul>
+   *   <li>- 1) POST to /me/drive/items/{folder_id}:/{file_name}:/createUploadSession
+   *   <li>- 2) GET {uploadurl} from
+   *       /me/drive/items/root:/photos-video/{file_name}:/createUploadSession
+   * </ul>
    */
   private Request.Builder buildCreateUploadSessionPath(
       DownloadableFile item, IdempotentImportExecutor idempotentImportExecutor) {
