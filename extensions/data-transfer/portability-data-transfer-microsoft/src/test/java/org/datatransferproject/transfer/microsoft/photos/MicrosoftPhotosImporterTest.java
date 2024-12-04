@@ -61,9 +61,8 @@ import org.datatransferproject.types.common.models.photos.PhotosContainerResourc
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.stubbing.Answer;
 import org.mockito.invocation.InvocationOnMock;
-
+import org.mockito.stubbing.Answer;
 
 /**
  * This tests the MicrosoftPhotosImporter. As of now, it only tests the number of requests called.
@@ -72,8 +71,8 @@ import org.mockito.invocation.InvocationOnMock;
 public class MicrosoftPhotosImporterTest {
 
   private static final int CHUNK_SIZE = 32000 * 1024; // 32000KiB
-  private final static String BASE_URL = "https://www.baseurl.com";
-  private final static UUID uuid = UUID.randomUUID();
+  private static final String BASE_URL = "https://www.baseurl.com";
+  private static final UUID uuid = UUID.randomUUID();
 
   MicrosoftPhotosImporter importer;
   OkHttpClient client;
@@ -86,14 +85,13 @@ public class MicrosoftPhotosImporterTest {
   TokensAndUrlAuthData authData;
   JobFileStream jobFileStream;
 
-
   @Before
   public void setUp() throws IOException {
     executor = new FakeIdempotentImportExecutor();
     authData = mock(TokensAndUrlAuthData.class);
     client = mock(OkHttpClient.class);
-    objectMapper = new ObjectMapper()
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    objectMapper =
+        new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     // mocked on a per test basis
     jobStore = mock(TemporaryPerJobDataStore.class);
     monitor = new ConsoleMonitor(ConsoleMonitor.Level.INFO);
@@ -105,15 +103,9 @@ public class MicrosoftPhotosImporterTest {
     credential.setExpirationTimeMilliseconds(null);
     RemoteFileStreamer remoteFileStreamer = mock(RemoteFileStreamer.class);
     JobFileStream jobFileStream = new JobFileStream(remoteFileStreamer);
-    importer = new MicrosoftPhotosImporter(
-        BASE_URL,
-        client,
-        objectMapper,
-        jobStore,
-        monitor,
-        credentialFactory,
-        jobFileStream
-    );
+    importer =
+        new MicrosoftPhotosImporter(
+            BASE_URL, client, objectMapper, jobStore, monitor, credentialFactory, jobFileStream);
   }
 
   @Test
@@ -124,28 +116,34 @@ public class MicrosoftPhotosImporterTest {
     PhotosContainerResource data = new PhotosContainerResource(albums, null);
 
     Call call = mock(Call.class);
-    doReturn(call).when(client).newCall(argThat((Request r) -> {
-      String body = "";
+    doReturn(call)
+        .when(client)
+        .newCall(
+            argThat(
+                (Request r) -> {
+                  String body = "";
 
-      try {
-        final Buffer buffer = new Buffer();
-        r.body().writeTo(buffer);
-        body = buffer.readUtf8();
-      } catch (IOException e) {
-        return false;
-      }
+                  try {
+                    final Buffer buffer = new Buffer();
+                    r.body().writeTo(buffer);
+                    body = buffer.readUtf8();
+                  } catch (IOException e) {
+                    return false;
+                  }
 
-      return
-          r.url().toString().equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")
-              &&
-              body.contains("album1_");
-    }));
+                  return r.url()
+                          .toString()
+                          .equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")
+                      && body.contains("album1_");
+                }));
     Response response = mock(Response.class);
     ResponseBody body = mock(ResponseBody.class);
-    when(body.bytes()).thenReturn(
-        ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").bytes());
-    when(body.string()).thenReturn(
-        ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").string());
+    when(body.bytes())
+        .thenReturn(
+            ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").bytes());
+    when(body.string())
+        .thenReturn(
+            ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").string());
     when(response.code()).thenReturn(200);
     when(response.body()).thenReturn(body);
     when(call.execute()).thenReturn(response);
@@ -163,37 +161,46 @@ public class MicrosoftPhotosImporterTest {
     PhotosContainerResource data = new PhotosContainerResource(albums, null);
 
     Call call = mock(Call.class);
-    doReturn(call).when(client).newCall(argThat((Request r) ->
-        r.url().toString().equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")
-    ));
+    doReturn(call)
+        .when(client)
+        .newCall(
+            argThat(
+                (Request r) ->
+                    r.url()
+                        .toString()
+                        .equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
     Response response = mock(Response.class);
     ResponseBody body = mock(ResponseBody.class);
-    when(body.bytes()).thenReturn(
-        ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").bytes());
-    when(body.string()).thenReturn(
-        ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").string());
+    when(body.bytes())
+        .thenReturn(
+            ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").bytes());
+    when(body.string())
+        .thenReturn(
+            ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").string());
     when(response.code()).thenReturn(403);
     when(response.message()).thenReturn("Access Denied");
     when(response.body()).thenReturn(body);
     when(call.execute()).thenReturn(response);
 
-    assertThrows(PermissionDeniedException.class, () -> {
-      ImportResult result = importer.importItem(uuid, executor, authData, data);
-    });
+    assertThrows(
+        PermissionDeniedException.class,
+        () -> {
+          ImportResult result = importer.importItem(uuid, executor, authData, data);
+        });
   }
 
   private static <M extends DownloadableFile> M fakeJobstoreModel(
-      TemporaryPerJobDataStore jobStore,
-      M model,
-      byte[] contents) throws IOException {
+      TemporaryPerJobDataStore jobStore, M model, byte[] contents) throws IOException {
     checkState(
         model.isInTempStore(),
         "nonsensical fake: trying to fake a tempstore entry with isInTempStore() set to false");
-    when(jobStore.getStream(uuid, model.getFetchableUrl())) .thenAnswer(new Answer() {
-      public Object answer(InvocationOnMock invocation) {
-        return new InputStreamWrapper(new ByteArrayInputStream(contents));
-      }
-    });
+    when(jobStore.getStream(uuid, model.getFetchableUrl()))
+        .thenAnswer(
+            new Answer() {
+              public Object answer(InvocationOnMock invocation) {
+                return new InputStreamWrapper(new ByteArrayInputStream(contents));
+              }
+            });
     return model;
   }
 
@@ -207,65 +214,84 @@ public class MicrosoftPhotosImporterTest {
             fakeJobstoreModel(
                 jobStore,
                 new PhotoModel(
-                  "Pic1",
-                  "http://fake.com/1.jpg",
-                  "A pic",
-                  "image/jpg",
-                  "p1", // dataId
-                  "id1", // albumId
-                  true /*isInTempStore*/),
+                    "Pic1",
+                    "http://fake.com/1.jpg",
+                    "A pic",
+                    "image/jpg",
+                    "p1", // dataId
+                    "id1", // albumId
+                    true /*isInTempStore*/),
                 new byte[CHUNK_SIZE]),
             fakeJobstoreModel(
                 jobStore,
                 new PhotoModel(
-                  "Pic2",
-                  "https://fake.com/2.png",
-                  "fine art",
-                  "image/png",
-                  "p2", // dataId
-                  "id1", // albumId
-                  true /*isInTempStore*/),
+                    "Pic2",
+                    "https://fake.com/2.png",
+                    "fine art",
+                    "image/png",
+                    "p2", // dataId
+                    "id1", // albumId
+                    true /*isInTempStore*/),
                 new byte[CHUNK_SIZE]));
     PhotosContainerResource data = new PhotosContainerResource(albums, photos);
 
     Call call = mock(Call.class);
-    doReturn(call).when(client).newCall(argThat((Request r) ->
-        r.url().toString()
-            .equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
+    doReturn(call)
+        .when(client)
+        .newCall(
+            argThat(
+                (Request r) ->
+                    r.url()
+                        .toString()
+                        .equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
     Response response = mock(Response.class);
     ResponseBody body = mock(ResponseBody.class);
-    when(body.bytes()).thenReturn(
-        ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").bytes());
-    when(body.string()).thenReturn(
-        ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").string());
+    when(body.bytes())
+        .thenReturn(
+            ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").bytes());
+    when(body.string())
+        .thenReturn(
+            ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").string());
     when(response.code()).thenReturn(200);
     when(response.body()).thenReturn(body);
     when(call.execute()).thenReturn(response);
 
     Call call2 = mock(Call.class);
-    doReturn(call2).when(client).newCall(argThat((Request r) ->
-        r.url().toString().contains("createUploadSession")));
+    doReturn(call2)
+        .when(client)
+        .newCall(argThat((Request r) -> r.url().toString().contains("createUploadSession")));
     Response response2 = mock(Response.class);
     ResponseBody body2 = mock(ResponseBody.class);
-    when(body2.bytes()).thenReturn(ResponseBody
-        .create(MediaType.parse("application/json"), "{\"uploadUrl\": \"https://scalia.com/link\"}")
-        .bytes());
-    when(body2.string()).thenReturn(ResponseBody
-        .create(MediaType.parse("application/json"), "{\"uploadUrl\": \"https://scalia.com/link\"}")
-        .string());
+    when(body2.bytes())
+        .thenReturn(
+            ResponseBody.create(
+                    MediaType.parse("application/json"),
+                    "{\"uploadUrl\": \"https://scalia.com/link\"}")
+                .bytes());
+    when(body2.string())
+        .thenReturn(
+            ResponseBody.create(
+                    MediaType.parse("application/json"),
+                    "{\"uploadUrl\": \"https://scalia.com/link\"}")
+                .string());
     when(response2.code()).thenReturn(200);
     when(response2.body()).thenReturn(body2);
     when(call2.execute()).thenReturn(response2);
 
     Call call3 = mock(Call.class);
-    doReturn(call3).when(client).newCall(argThat((Request r) ->
-        r.url().toString().contains("scalia.com/link")));
+    doReturn(call3)
+        .when(client)
+        .newCall(argThat((Request r) -> r.url().toString().contains("scalia.com/link")));
     Response response3 = mock(Response.class);
     ResponseBody body3 = mock(ResponseBody.class);
-    when(body3.bytes()).thenReturn(
-        ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"rand1\"}").bytes());
-    when(body3.string()).thenReturn(
-        ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"rand1\"}").string());
+    when(body3.bytes())
+        .thenReturn(
+            ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"rand1\"}")
+                .bytes());
+    when(body3.string())
+        .thenReturn(
+            ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"rand1\"}")
+                .string());
     when(response3.code()).thenReturn(200);
     when(response3.body()).thenReturn(body3);
     when(call3.execute()).thenReturn(response3);

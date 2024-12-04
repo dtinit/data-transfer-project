@@ -22,7 +22,6 @@ import com.google.api.client.auth.oauth2.Credential;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -39,8 +38,6 @@ import okhttp3.ResponseBody;
 import org.apache.commons.lang3.tuple.Pair;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.api.transport.JobFileStream;
-import org.datatransferproject.spi.api.transport.RemoteFileStreamer;
-import org.datatransferproject.spi.api.transport.UrlGetStreamer;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
@@ -79,13 +76,17 @@ public class MicrosoftMediaImporter
 
   private static final String UPLOAD_PARAMS = "?@microsoft.graph.conflictBehavior=rename";
 
-  public MicrosoftMediaImporter(String baseUrl, OkHttpClient client, ObjectMapper objectMapper,
-      TemporaryPerJobDataStore jobStore, Monitor monitor,
+  public MicrosoftMediaImporter(
+      String baseUrl,
+      OkHttpClient client,
+      ObjectMapper objectMapper,
+      TemporaryPerJobDataStore jobStore,
+      Monitor monitor,
       MicrosoftCredentialFactory credentialFactory,
       JobFileStream jobFileStream) {
 
     // NOTE: "special/photos" is a specific folder in One Drive that corresponds to items that
-    // should appear in https://photos.onedrive.com/, for more information see:  
+    // should appear in https://photos.onedrive.com/, for more information see:
     // https://learn.microsoft.com/en-us/onedrive/developer/rest-api/api/drive_get_specialfolder?#special-folder-names
     createFolderUrl = baseUrl + "/v1.0/me/drive/special/photos/children";
     albumlessMediaUrlTemplate =
@@ -105,8 +106,12 @@ public class MicrosoftMediaImporter
   }
 
   @Override
-  public ImportResult importItem(UUID jobId, IdempotentImportExecutor idempotentImportExecutor,
-      TokensAndUrlAuthData authData, MediaContainerResource resource) throws Exception {
+  public ImportResult importItem(
+      UUID jobId,
+      IdempotentImportExecutor idempotentImportExecutor,
+      TokensAndUrlAuthData authData,
+      MediaContainerResource resource)
+      throws Exception {
     // Ensure credential is populated
     getOrCreateCredential(authData);
 
@@ -134,19 +139,17 @@ public class MicrosoftMediaImporter
    * Logs brief debugging message describing current state of job given `resource`.
    *
    * @param format a printf-style formatter that exactly one parameter: the string of the job's
-   *   current status.
+   *     current status.
    */
-  private void logDebugJobStatus(
-      String format,
-      UUID jobId,
-      MediaContainerResource resource) {
-    String statusMessage = String.format(
-        "%s: Importing %s albums, %s photos, and %s videos",
-        jobId,
-        resource.getAlbums().size(),
-        resource.getPhotos().size(),
-        resource.getVideos().size());
-    monitor.debug(() ->  String.format(format, statusMessage));
+  private void logDebugJobStatus(String format, UUID jobId, MediaContainerResource resource) {
+    String statusMessage =
+        String.format(
+            "%s: Importing %s albums, %s photos, and %s videos",
+            jobId,
+            resource.getAlbums().size(),
+            resource.getPhotos().size(),
+            resource.getVideos().size());
+    monitor.debug(() -> String.format(format, statusMessage));
   }
 
   @SuppressWarnings("unchecked")
@@ -165,8 +168,9 @@ public class MicrosoftMediaImporter
 
     Request.Builder requestBuilder = new Request.Builder().url(createFolderUrl);
     requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
-    requestBuilder.post(RequestBody.create(
-        MediaType.parse("application/json"), objectMapper.writeValueAsString(rawFolder)));
+    requestBuilder.post(
+        RequestBody.create(
+            MediaType.parse("application/json"), objectMapper.writeValueAsString(rawFolder)));
     try (Response response = client.newCall(requestBuilder.build()).execute()) {
       int code = response.code();
       ResponseBody body = response.body();
@@ -182,12 +186,18 @@ public class MicrosoftMediaImporter
       }
 
       if (code == 403 && response.message().contains("Access Denied")) {
-        throw new PermissionDeniedException("User access to microsoft onedrive was denied",
+        throw new PermissionDeniedException(
+            "User access to microsoft onedrive was denied",
             new IOException(
                 String.format("Got error code %d  with message: %s", code, response.message())));
       } else if (code < 200 || code > 299) {
-        throw new IOException("Got error code: " + code + " message: " + response.message()
-            + " body: " + response.body().string());
+        throw new IOException(
+            "Got error code: "
+                + code
+                + " message: "
+                + response.message()
+                + " body: "
+                + response.body().string());
       } else if (body == null) {
         throw new IOException("Got null body");
       }
@@ -203,10 +213,12 @@ public class MicrosoftMediaImporter
   private void executeIdempotentImport(
       UUID jobId,
       IdempotentImportExecutor idempotentImportExecutor,
-      Collection<? extends DownloadableFile> downloadableFiles) throws Exception {
+      Collection<? extends DownloadableFile> downloadableFiles)
+      throws Exception {
     for (DownloadableFile downloadableFile : downloadableFiles) {
       idempotentImportExecutor.executeAndSwallowIOExceptions(
-          downloadableFile.getIdempotentId(), downloadableFile.getName(),
+          downloadableFile.getIdempotentId(),
+          downloadableFile.getName(),
           () -> importDownloadableItem(downloadableFile, jobId, idempotentImportExecutor));
     }
   }
@@ -216,9 +228,10 @@ public class MicrosoftMediaImporter
       throws Exception {
     final long totalFileSize = discardForLength(jobFileStream.streamFile(item, jobId, jobStore));
     if (totalFileSize <= 0) {
-      throw new IOException(String.format(
-          "jobid %s hit empty unexpectedly empty (bytes=%d) download for file %s",
-          jobId, totalFileSize, item.getFetchableUrl()));
+      throw new IOException(
+          String.format(
+              "jobid %s hit empty unexpectedly empty (bytes=%d) download for file %s",
+              jobId, totalFileSize, item.getFetchableUrl()));
     }
     InputStream fileStream = jobFileStream.streamFile(item, jobId, jobStore);
 
@@ -242,7 +255,8 @@ public class MicrosoftMediaImporter
 
   /** Depletes input stream, uploading a chunk of the stream at a time. */
   private Response uploadStreamInChunks(
-      long totalFileSize, String itemUploadUrl, String itemMimeType, InputStream inputStream) throws IOException, DestinationMemoryFullException {
+      long totalFileSize, String itemUploadUrl, String itemMimeType, InputStream inputStream)
+      throws IOException, DestinationMemoryFullException {
     Response lastChunkResponse = null;
     StreamChunker streamChunker = new StreamChunker(MICROSOFT_UPLOAD_CHUNK_BYTE_SIZE, inputStream);
     Optional<DataChunk> nextChunk;
@@ -251,8 +265,7 @@ public class MicrosoftMediaImporter
       if (nextChunk.isEmpty()) {
         break;
       }
-      lastChunkResponse =
-          uploadChunk(nextChunk.get(), itemUploadUrl, totalFileSize, itemMimeType);
+      lastChunkResponse = uploadChunk(nextChunk.get(), itemUploadUrl, totalFileSize, itemMimeType);
     }
     return lastChunkResponse;
   }
@@ -286,37 +299,48 @@ public class MicrosoftMediaImporter
   private String createUploadSession(
       DownloadableFile item, IdempotentImportExecutor idempotentImportExecutor)
       throws IOException, CopyExceptionWithFailureReason {
-    Request.Builder createSessionRequestBuilder = buildCreateUploadSessionPath(item, idempotentImportExecutor);
+    Request.Builder createSessionRequestBuilder =
+        buildCreateUploadSessionPath(item, idempotentImportExecutor);
 
     // Auth headers
     createSessionRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
     createSessionRequestBuilder.header("Content-Type", "application/json");
 
     // Post request with empty body. If you don't include an empty body, you'll have problems
-    createSessionRequestBuilder.post(RequestBody.create(
-        MediaType.parse("application/json"), objectMapper.writeValueAsString(ImmutableMap.of())));
+    createSessionRequestBuilder.post(
+        RequestBody.create(
+            MediaType.parse("application/json"),
+            objectMapper.writeValueAsString(ImmutableMap.of())));
 
     // Make the call, we should get an upload url for item data in a 200 response
     Pair<Request, Response> reqResp = tryWithCreds(createSessionRequestBuilder);
     Response response = reqResp.getRight();
     int code = response.code();
     if (code == 403 && response.message().contains("Access Denied")) {
-      throw new PermissionDeniedException("User access to Microsoft One Drive was denied",
+      throw new PermissionDeniedException(
+          "User access to Microsoft One Drive was denied",
           new IOException(
               String.format("Got error code %d  with message: %s", code, response.message())));
     } else if (code == 507 && response.message().contains("Insufficient Storage")) {
-      throw new DestinationMemoryFullException("Microsoft destination storage limit reached",
+      throw new DestinationMemoryFullException(
+          "Microsoft destination storage limit reached",
           new IOException(
               String.format("Got error code %d  with message: %s", code, response.message())));
     } else if (code < 200 || code > 299) {
-      throw new IOException(String.format("Got error code: %s\n"
-              + "message: %s\n"
-              + "body: %s\n"
-              + "request url: %s\n"
-              + "bearer token: %s\n"
-              + " item: %s\n", // For debugging 404s on upload
-          code, response.message(), response.body().string(), reqResp.getLeft().url(),
-          credential.getAccessToken(), item));
+      throw new IOException(
+          String.format(
+              "Got error code: %s\n"
+                  + "message: %s\n"
+                  + "body: %s\n"
+                  + "request url: %s\n"
+                  + "bearer token: %s\n"
+                  + " item: %s\n", // For debugging 404s on upload
+              code,
+              response.message(),
+              response.body().string(),
+              reqResp.getLeft().url(),
+              credential.getAccessToken(),
+              item));
     } else if (code != 200) {
       monitor.info(() -> String.format("Got an unexpected non-200, non-error response code"));
     }
@@ -335,13 +359,16 @@ public class MicrosoftMediaImporter
   /**
    * Forms the URL to create an upload session.
    *
-   * Creates an upload session path for one of two cases:
-   * - 1) POST to /me/drive/items/{folder_id}:/{file_name}:/createUploadSession
-   * - 2) GET {uploadurl} from /me/drive/items/root:/photos-video/{file_name}:/createUploadSession
+   * <p>Creates an upload session path for one of two cases:
+   *
+   * <ul>
+   *   <li>- 1) POST to /me/drive/items/{folder_id}:/{file_name}:/createUploadSession
+   *   <li>- 2) GET {uploadurl} from
+   *       /me/drive/items/root:/photos-video/{file_name}:/createUploadSession
+   * </ul>
    */
   private Request.Builder buildCreateUploadSessionPath(
-      DownloadableFile item,
-      IdempotentImportExecutor idempotentImportExecutor) {
+      DownloadableFile item, IdempotentImportExecutor idempotentImportExecutor) {
     String createSessionUrl;
     if (Strings.isNullOrEmpty(item.getFolderId())) {
       createSessionUrl = String.format(albumlessMediaUrlTemplate, item.getName(), UPLOAD_PARAMS);
@@ -360,8 +387,9 @@ public class MicrosoftMediaImporter
   // Content-Length: {chunk size in bytes}
   // Content-Range: bytes {begin}-{end}/{total size}
   // body={bytes}
-  private Response uploadChunk(DataChunk chunk, String photoUploadUrl, long totalFileSize,
-      String mediaType) throws IOException, DestinationMemoryFullException {
+  private Response uploadChunk(
+      DataChunk chunk, String photoUploadUrl, long totalFileSize, String mediaType)
+      throws IOException, DestinationMemoryFullException {
     Request.Builder uploadRequestBuilder = new Request.Builder().url(photoUploadUrl);
     uploadRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
 
@@ -372,7 +400,8 @@ public class MicrosoftMediaImporter
 
     // set chunk data headers, indicating size and chunk range
     final String contentRange =
-        String.format("bytes %d-%d/%d", chunk.streamByteOffset(), chunk.finalByteOffset(), totalFileSize);
+        String.format(
+            "bytes %d-%d/%d", chunk.streamByteOffset(), chunk.finalByteOffset(), totalFileSize);
     uploadRequestBuilder.header("Content-Range", contentRange);
     uploadRequestBuilder.header("Content-Length", String.format("%d", chunk.size()));
 
@@ -390,17 +419,23 @@ public class MicrosoftMediaImporter
     }
     int chunkCode = chunkResponse.code();
     if (chunkCode == 507 && chunkResponse.message().contains("Insufficient Storage")) {
-      throw new DestinationMemoryFullException("Microsoft destination storage limit reached",
-          new IOException(String.format(
-              "Got error HTTP status %d  with message: %s", chunkCode, chunkResponse.message())));
+      throw new DestinationMemoryFullException(
+          "Microsoft destination storage limit reached",
+          new IOException(
+              String.format(
+                  "Got error HTTP status %d  with message: %s",
+                  chunkCode, chunkResponse.message())));
     } else if (chunkCode < 200 || chunkCode > 299) {
-      throw new IOException(String.format(
-          "Got error HTTP status: %d message: \"%s\" body: \"%s\"", chunkCode, chunkResponse.message(),
-          chunkResponse.body().string()));
+      throw new IOException(
+          String.format(
+              "Got error HTTP status: %d message: \"%s\" body: \"%s\"",
+              chunkCode, chunkResponse.message(), chunkResponse.body().string()));
     } else if (chunkCode == 200 || chunkCode == 201 || chunkCode == 202) {
-      monitor.info(()
-                       -> String.format("Uploaded chunk range %d-%d (of total bytesize: %d) successfuly, HTTP status %d",
-                           chunk.streamByteOffset(), chunk.finalByteOffset(), totalFileSize, chunkCode));
+      monitor.info(
+          () ->
+              String.format(
+                  "Uploaded chunk range %d-%d (of total bytesize: %d) successfuly, HTTP status %d",
+                  chunk.streamByteOffset(), chunk.finalByteOffset(), totalFileSize, chunkCode));
     }
     return chunkResponse;
   }
