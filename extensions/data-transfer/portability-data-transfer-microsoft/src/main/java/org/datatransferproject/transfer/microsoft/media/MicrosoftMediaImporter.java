@@ -211,12 +211,11 @@ public class MicrosoftMediaImporter
           "final chunk-upload response should have had an ID, but a non-OK response came back: %s",
           finalChunkResponse.toString());
 
-      ResponseBody finalChunkResponseBody =
-          checkResponseBody(
-              finalChunkResponse,
-              "last chunk-upload response should have had ID but got an empty  HTTP response-body");
+      ResponseBody body =
+          finalChunkResponse.checkResponseBody(
+              "final chunk-upload response should have had ID, but got empty HTTP response-body");
       // get complete file response
-      return getJsonField(finalChunkResponseBody, "id");
+      return getJsonField(body, "id");
     }
   }
 
@@ -453,14 +452,6 @@ public class MicrosoftMediaImporter
       Request.Builder requestBuilder, String jsonResponseKey, String causeMessage)
       throws IOException, DestinationMemoryFullException, PermissionDeniedException {
     final MicrosoftApiResponse resp = tryWithCredsOrFail(requestBuilder, causeMessage);
-    return getJsonField(checkResponseBody(resp, causeMessage), jsonResponseKey);
-  }
-
-  private ResponseBody checkResponseBody(MicrosoftApiResponse resp, String causeMessage) {
-    return resp.body()
-        .orElseThrow(
-            () ->
-                resp.toIoException(
-                    String.format("got an empty HTTP response-body: %s", causeMessage)));
+    return getJsonField(resp.checkResponseBody(causeMessage), jsonResponseKey);
   }
 }
