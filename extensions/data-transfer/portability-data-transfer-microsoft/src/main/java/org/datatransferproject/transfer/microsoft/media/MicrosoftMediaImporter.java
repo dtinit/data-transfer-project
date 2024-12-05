@@ -15,11 +15,12 @@
  */
 package org.datatransferproject.transfer.microsoft.media;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static org.datatransferproject.spi.api.transport.DiscardingStreamCounter.discardForLength;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
@@ -46,6 +47,7 @@ import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.transfer.microsoft.DataChunk;
+import org.datatransferproject.transfer.microsoft.MicrosoftApiResponse;
 import org.datatransferproject.transfer.microsoft.MicrosoftTransmogrificationConfig;
 import org.datatransferproject.transfer.microsoft.StreamChunker;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
@@ -204,7 +206,7 @@ public class MicrosoftMediaImporter
 
       Map<String, Object> responseData = objectMapper.readValue(body.bytes(), Map.class);
       String folderId = (String) responseData.get("id");
-      Preconditions.checkState(
+      checkState(
           !Strings.isNullOrEmpty(folderId), "Expected id value to be present in %s", responseData);
       return folderId;
     }
@@ -237,27 +239,36 @@ public class MicrosoftMediaImporter
 
     String itemUploadUrl = createUploadSession(item, idempotentImportExecutor);
 
-    Response finalChunkResponse =
+    MicrosoftApiResponse finalChunkResponse =
         uploadStreamInChunks(totalFileSize, itemUploadUrl, item.getMimeType(), fileStream);
     fileStream.close();
-    if (finalChunkResponse.code() != 200 && finalChunkResponse.code() != 201) {
-      // Once we upload the last chunk, we should have either 200 or 201.
-      // TODO: This should change to a precondition check after we debug some more.
-      monitor.debug(
-          () -> "Received a bad code on completion of uploading chunks", finalChunkResponse.code());
-    }
+    checkState(
+        finalChunkResponse.isOkay(),
+        "final chunk-upload response should have had an ID, but a non-OK response cam back: %s",
+        finalChunkResponse.toString());
+
+    ResponseBody finalChunkResponseBody =
+        finalChunkResponse
+            .body()
+            .orElseThrow(
+                () ->
+                    finalChunkResponse.toIoException(
+                        "last chunk-upload response should have had ID but got an empty  HTTP"
+                            + " response-body"));
     // get complete file response
-    ResponseBody finalChunkResponseBody = finalChunkResponse.body();
     Map<String, Object> chunkResponseData =
         objectMapper.readValue(finalChunkResponseBody.bytes(), Map.class);
     return (String) chunkResponseData.get("id");
   }
 
-  /** Depletes input stream, uploading a chunk of the stream at a time. */
-  private Response uploadStreamInChunks(
+  /**
+   * Depletes input stream, uploading a chunk of the stream at a time, throwing a DTP exception
+   * along the way if any unrecoverable errors are encountered.
+   */
+  private MicrosoftApiResponse uploadStreamInChunks(
       long totalFileSize, String itemUploadUrl, String itemMimeType, InputStream inputStream)
-      throws IOException, DestinationMemoryFullException {
-    Response lastChunkResponse = null;
+      throws IOException, DestinationMemoryFullException, PermissionDeniedException {
+    MicrosoftApiResponse lastChunkResponse = null;
     StreamChunker streamChunker = new StreamChunker(MICROSOFT_UPLOAD_CHUNK_BYTE_SIZE, inputStream);
     Optional<DataChunk> nextChunk;
     while (true) {
@@ -266,8 +277,19 @@ public class MicrosoftMediaImporter
         break;
       }
       lastChunkResponse = uploadChunk(nextChunk.get(), itemUploadUrl, totalFileSize, itemMimeType);
+      final DataChunk lastChunksent = nextChunk.get();
+      final int httpStatus = lastChunkResponse.httpStatus();
+      monitor.info(
+          () ->
+              String.format(
+                  "Uploaded chunk range %d-%d (of total bytesize: %d) successfuly, HTTP status %d",
+                  lastChunksent.streamByteOffset(),
+                  lastChunksent.finalByteOffset(),
+                  totalFileSize,
+                  httpStatus));
     }
-    return lastChunkResponse;
+    return checkNotNull(
+        lastChunkResponse, "bug: empty-stream already checked for yet stream empty now?");
   }
 
   private Credential getOrCreateCredential(TokensAndUrlAuthData authData) {
@@ -346,13 +368,12 @@ public class MicrosoftMediaImporter
     }
     ResponseBody responseBody = response.body();
     // make sure we have a non-null response body
-    Preconditions.checkState(
-        responseBody != null, "Got Null Body when creating item upload session %s", item);
+    checkState(responseBody != null, "Got Null Body when creating item upload session %s", item);
     // convert to a map
     final Map<String, Object> responseData =
         objectMapper.readValue(responseBody.bytes(), Map.class);
     // return the session's upload url
-    Preconditions.checkState(responseData.containsKey("uploadUrl"), "No uploadUrl :(");
+    checkState(responseData.containsKey("uploadUrl"), "No uploadUrl :(");
     return (String) responseData.get("uploadUrl");
   }
 
@@ -387,9 +408,9 @@ public class MicrosoftMediaImporter
   // Content-Length: {chunk size in bytes}
   // Content-Range: bytes {begin}-{end}/{total size}
   // body={bytes}
-  private Response uploadChunk(
+  private MicrosoftApiResponse uploadChunk(
       DataChunk chunk, String photoUploadUrl, long totalFileSize, String mediaType)
-      throws IOException, DestinationMemoryFullException {
+      throws IOException, DestinationMemoryFullException, PermissionDeniedException {
     Request.Builder uploadRequestBuilder = new Request.Builder().url(photoUploadUrl);
     uploadRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
 
@@ -406,37 +427,44 @@ public class MicrosoftMediaImporter
     uploadRequestBuilder.header("Content-Length", String.format("%d", chunk.size()));
 
     // upload the chunk
-    Response chunkResponse = client.newCall(uploadRequestBuilder.build()).execute();
-    Preconditions.checkNotNull(chunkResponse, "chunkResponse is null");
-    if (chunkResponse.code() == 401) {
-      // If there was an unauthorized error, then try refreshing the creds
-      credentialFactory.refreshCredential(credential);
-      monitor.info(() -> "Refreshed authorization token successfuly");
+    MicrosoftApiResponse chunkResponse =
+        MicrosoftApiResponse.ofResponse(
+            checkNotNull(client.newCall(uploadRequestBuilder.build()).execute(), "null response"));
+    Optional<MicrosoftApiResponse.RecoverableState> recovery = chunkResponse.recoverableState();
+    if (recovery.isPresent()) {
+      switch (recovery.get()) {
+        case RECOVERABLE_STATE_OKAY:
+          return chunkResponse;
+        case RECOVERABLE_STATE_NEEDS_TOKEN_REFRESH:
+          // If there was an unauthorized error, then try refreshing the creds
+          credentialFactory.refreshCredential(credential);
+          monitor.info(() -> "Refreshed authorization token successfuly");
 
-      // update auth info, reupload chunk
-      uploadRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
-      chunkResponse = client.newCall(uploadRequestBuilder.build()).execute();
+          // update auth info, reupload chunk
+          uploadRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
+          chunkResponse =
+              MicrosoftApiResponse.ofResponse(
+                  checkNotNull(
+                      client.newCall(uploadRequestBuilder.build()).execute(), "null response"));
+        default:
+          throw new AssertionError("exhaustive switch");
+      }
     }
-    int chunkCode = chunkResponse.code();
-    if (chunkCode == 507 && chunkResponse.message().contains("Insufficient Storage")) {
-      throw new DestinationMemoryFullException(
-          "Microsoft destination storage limit reached",
-          new IOException(
-              String.format(
-                  "Got error HTTP status %d  with message: %s",
-                  chunkCode, chunkResponse.message())));
-    } else if (chunkCode < 200 || chunkCode > 299) {
-      throw new IOException(
-          String.format(
-              "Got error HTTP status: %d message: \"%s\" body: \"%s\"",
-              chunkCode, chunkResponse.message(), chunkResponse.body().string()));
-    } else if (chunkCode == 200 || chunkCode == 201 || chunkCode == 202) {
-      monitor.info(
-          () ->
-              String.format(
-                  "Uploaded chunk range %d-%d (of total bytesize: %d) successfuly, HTTP status %d",
-                  chunk.streamByteOffset(), chunk.finalByteOffset(), totalFileSize, chunkCode));
+
+    // check chunkResponse's state AGAIN since we have a "one retry" codepath above
+    recovery = chunkResponse.recoverableState();
+    if (recovery.isPresent()) {
+      switch (recovery.get()) {
+        case RECOVERABLE_STATE_OKAY:
+          return chunkResponse;
+        case RECOVERABLE_STATE_NEEDS_TOKEN_REFRESH:
+          chunkResponse.toIoException(
+              "microsoft server needs token refresh immediately after refreshing token");
+        default:
+          throw new AssertionError("exhaustive switch");
+      }
     }
-    return chunkResponse;
+    chunkResponse.throwDtpException();
+    throw new AssertionError("unreachable: throwDtpException throws");
   }
 }
