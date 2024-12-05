@@ -3,6 +3,7 @@ package org.datatransferproject.datatransfer.generic;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.stream.Collectors;
@@ -13,32 +14,76 @@ import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.videos.VideoModel;
 
-class MediaAlbumExportData extends MediaAlbum implements MediaSerializer.ExportData {
-  private MediaAlbumExportData(String id, String name, String description) {
-    super(id, name, description);
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
+@JsonTypeName("Album")
+class AlbumExportData implements MediaSerializer.ExportData {
+  @JsonProperty private final String id;
+  @JsonProperty private final String name;
+  @JsonProperty private final String description;
+
+  private AlbumExportData(String id, String name, String description) {
+    this.id = id;
+    this.name = name;
+    this.description = description;
   }
 
-  static MediaAlbumExportData fromModel(MediaAlbum model) {
-    return new MediaAlbumExportData(model.getId(), model.getName(), model.getDescription());
+  static AlbumExportData fromModel(MediaAlbum model) {
+    return new AlbumExportData(model.getId(), model.getName(), model.getDescription());
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+}
+
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
+@JsonTypeName("FavoriteInfo")
+class FavoriteInfoExportData {
+  @JsonProperty private final boolean favorite;
+  @JsonProperty private final ZonedDateTime lastUpdateTime;
+
+  private FavoriteInfoExportData(boolean favorite, ZonedDateTime lastUpdateTime) {
+    this.favorite = favorite;
+    this.lastUpdateTime = lastUpdateTime;
+  }
+
+  public static FavoriteInfoExportData fromModel(FavoriteInfo model) {
+    return new FavoriteInfoExportData(
+        model.getFavorited(),
+        ZonedDateTime.ofInstant(model.getLastUpdateTime().toInstant(), ZoneOffset.UTC));
+  }
+
+  public boolean isFavorite() {
+    return favorite;
+  }
+
+  public ZonedDateTime getLastUpdateTime() {
+    return lastUpdateTime;
   }
 }
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
 class MediaItemExportData implements MediaSerializer.ExportData {
-  private String name;
-  private String description;
-  private String albumId;
-  private ZonedDateTime uploadedTime;
-  // TODO: consider redeclaring FavouriteInfo with ZonedDateTime to fix the inconsistency with date
-  // serialization
-  private FavoriteInfo favoriteInfo;
+  @JsonProperty private final String name;
+  @JsonProperty private final String description;
+  @JsonProperty private final String albumId;
+  @JsonProperty private final ZonedDateTime uploadedTime;
+  @JsonProperty private final FavoriteInfoExportData favoriteInfo;
 
   public MediaItemExportData(
-      @JsonProperty String name,
-      @JsonProperty String description,
-      @JsonProperty String albumId,
-      @JsonProperty ZonedDateTime uploadedTime,
-      @JsonProperty FavoriteInfo favoriteInfo) {
+      String name,
+      String description,
+      String albumId,
+      ZonedDateTime uploadedTime,
+      FavoriteInfoExportData favoriteInfo) {
     this.name = name;
     this.description = description;
     this.albumId = albumId;
@@ -62,18 +107,19 @@ class MediaItemExportData implements MediaSerializer.ExportData {
     return uploadedTime;
   }
 
-  public FavoriteInfo getFavoriteInfo() {
+  public FavoriteInfoExportData getFavoriteInfo() {
     return favoriteInfo;
   }
 }
 
+@JsonTypeName("Video")
 class VideoExportData extends MediaItemExportData {
   private VideoExportData(
       String name,
       String description,
       String albumId,
       ZonedDateTime uploadedTime,
-      FavoriteInfo favoriteInfo) {
+      FavoriteInfoExportData favoriteInfo) {
     super(name, description, albumId, uploadedTime, favoriteInfo);
   }
 
@@ -83,17 +129,18 @@ class VideoExportData extends MediaItemExportData {
         model.getDescription(),
         model.getAlbumId(),
         ZonedDateTime.ofInstant(model.getUploadedTime().toInstant(), ZoneOffset.UTC),
-        model.getFavoriteInfo());
+        FavoriteInfoExportData.fromModel(model.getFavoriteInfo()));
   }
 }
 
+@JsonTypeName("Photo")
 class PhotoExportData extends MediaItemExportData {
   private PhotoExportData(
       String name,
       String description,
       String albumId,
       ZonedDateTime uploadedTime,
-      FavoriteInfo favoriteInfo) {
+      FavoriteInfoExportData favoriteInfo) {
     super(name, description, albumId, uploadedTime, favoriteInfo);
   }
 
@@ -103,22 +150,19 @@ class PhotoExportData extends MediaItemExportData {
         model.getDescription(),
         model.getAlbumId(),
         ZonedDateTime.ofInstant(model.getUploadedTime().toInstant(), ZoneOffset.UTC),
-        model.getFavoriteInfo());
+        FavoriteInfoExportData.fromModel(model.getFavoriteInfo()));
   }
 }
 
 public class MediaSerializer {
-  static final String SCHEMA_SOURCE_ALBUM =
-      GenericTransferConstants.SCHEMA_SOURCE_BASE
-          + "/portability-types-common/src/main/java/org/datatransferproject/types/common/models/media/MediaAlbum.java";
-  static final String SCHEMA_SOURCE_MEDIA =
+  static final String SCHEMA_SOURCE =
       GenericTransferConstants.SCHEMA_SOURCE_BASE
           + "/extensions/data-transfer/portability-data-transfer-generic/src/main/java/org/datatransferproject/datatransfer/generic/MediaSerializer.java";
 
   @JsonSubTypes({
-    @JsonSubTypes.Type(value = MediaAlbumExportData.class, name = "Album"),
-    @JsonSubTypes.Type(value = VideoExportData.class, name = "Video"),
-    @JsonSubTypes.Type(value = PhotoExportData.class, name = "Photo"),
+    @JsonSubTypes.Type(AlbumExportData.class),
+    @JsonSubTypes.Type(VideoExportData.class),
+    @JsonSubTypes.Type(PhotoExportData.class),
   })
   public interface ExportData {}
 
@@ -129,7 +173,7 @@ public class MediaSerializer {
                     album ->
                         new ImportableData<>(
                             new GenericPayload<ExportData>(
-                                MediaAlbumExportData.fromModel(album), SCHEMA_SOURCE_ALBUM),
+                                AlbumExportData.fromModel(album), SCHEMA_SOURCE),
                             album.getIdempotentId(),
                             album.getName())),
             Stream.concat(
@@ -139,7 +183,7 @@ public class MediaSerializer {
                           return new ImportableFileData<>(
                               video,
                               new GenericPayload<ExportData>(
-                                  VideoExportData.fromModel(video), SCHEMA_SOURCE_MEDIA),
+                                  VideoExportData.fromModel(video), SCHEMA_SOURCE),
                               video.getIdempotentId(),
                               video.getName());
                         }),
@@ -149,7 +193,7 @@ public class MediaSerializer {
                           return new ImportableFileData<>(
                               photo,
                               new GenericPayload<ExportData>(
-                                  PhotoExportData.fromModel(photo), SCHEMA_SOURCE_MEDIA),
+                                  PhotoExportData.fromModel(photo), SCHEMA_SOURCE),
                               photo.getIdempotentId(),
                               photo.getName());
                         })))

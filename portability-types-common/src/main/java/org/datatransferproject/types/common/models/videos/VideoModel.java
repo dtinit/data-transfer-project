@@ -19,7 +19,6 @@ package org.datatransferproject.types.common.models.videos;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import java.util.Date;
@@ -30,7 +29,6 @@ import org.datatransferproject.types.common.models.MediaObject;
 import javax.annotation.Nonnull;
 
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
 public class VideoModel extends MediaObject implements DownloadableFile {
 
   private String dataId;

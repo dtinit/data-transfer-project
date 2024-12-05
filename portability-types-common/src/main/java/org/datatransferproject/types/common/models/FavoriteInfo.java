@@ -1,13 +1,10 @@
 package org.datatransferproject.types.common.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
 import java.io.Serializable;
 import java.util.Date;
 
 /** FavoriteInfo about a {@code MediaItem}. */
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
 public class FavoriteInfo implements Serializable {
 
   @JsonProperty("favorite")

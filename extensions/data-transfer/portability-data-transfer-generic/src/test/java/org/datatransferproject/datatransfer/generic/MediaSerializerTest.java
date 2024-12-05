@@ -66,8 +66,8 @@ public class MediaSerializerTest extends GenericImportSerializerTestBase {
             + "  \"uploadedTime\": \"2024-11-27T13:16:32Z\","
             + "  \"favoriteInfo\": {"
             + "    \"@type\": \"FavoriteInfo\","
-            + "    \"favorite\": false,"
-            + "    \"lastUpdateTime\": \"2024-11-27T13:16:32.000+00:00\""
+            + "    \"lastUpdateTime\": \"2024-11-27T13:16:32Z\","
+            + "    \"favorite\": false"
             + "  }"
             + "}",
         res.get(1).getJsonData());
@@ -85,8 +85,8 @@ public class MediaSerializerTest extends GenericImportSerializerTestBase {
             + "  \"uploadedTime\": \"2024-11-27T13:16:32Z\","
             + "  \"favoriteInfo\": {"
             + "    \"@type\": \"FavoriteInfo\","
-            + "    \"favorite\": false,"
-            + "    \"lastUpdateTime\": \"2024-11-27T13:16:32.000+00:00\""
+            + "    \"lastUpdateTime\": \"2024-11-27T13:16:32Z\","
+            + "    \"favorite\": false"
             + "  }"
             + "}",
         res.get(2).getJsonData());
