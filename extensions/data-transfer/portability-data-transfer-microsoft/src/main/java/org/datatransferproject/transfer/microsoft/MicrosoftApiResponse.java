@@ -45,9 +45,8 @@ import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
  *     default:
  *       throw new AssertionError("exhaustive switch");
  *   }
- * } else {
- *   resp.throwDtpException();
  * }
+ * resp.throwDtpException(); // or returnConvertDtpException might help
  * </pre>
  */
 @AutoValue
@@ -148,8 +147,7 @@ public abstract class MicrosoftApiResponse {
    *
    * <p>Throws IllegalStateException if {@link isFatal} is false.
    */
-  public void throwDtpException(String message)
-      throws IOException, DestinationMemoryFullException, PermissionDeniedException {
+  public void throwDtpException(String message) {
     switch (toFatalState()) {
       case FATAL_STATE_FATAL_PERMISSION_DENIED:
         throw new PermissionDeniedException(
@@ -163,6 +161,21 @@ public abstract class MicrosoftApiResponse {
       default:
         throw new AssertionError("exhaustive switch");
     }
+  }
+
+  /**
+   * Ergonomic wrapper for {@link throwDtpException} that gives you ability to use call this in a
+   * lexical scope that requires a return.
+   *
+   * <p>Never returns, always causes an exception. Return signature is so you can include this in a
+   * codepath that would otherwise excpect a `throw new` keyword to be present if you're missing a
+   * final return.
+   */
+  public MicrosoftApiResponse returnConvertDtpException(String message)
+      throws IOException, DestinationMemoryFullException, PermissionDeniedException {
+    throwDtpException(message);
+    // above always throws, but javac doesn't understand without a `throw new` directly visible
+    return this; // unreachable
   }
 
   private FatalState toFatalState() {
