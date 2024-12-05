@@ -175,7 +175,7 @@ public class MicrosoftMediaImporter
     requestBuilder.post(
         RequestBody.create(
             MediaType.parse("application/json"), objectMapper.writeValueAsString(rawFolder)));
-    return tryWithCredsOrFail(requestBuilder, "id", "creating empty folder");
+    return tryWithCredsOrFail(requestBuilder, "id" /*jsonResponseKey*/, "creating empty folder");
   }
 
   private void executeIdempotentImport(
@@ -201,28 +201,23 @@ public class MicrosoftMediaImporter
               "jobid %s hit empty unexpectedly empty (bytes=%d) download for file %s",
               jobId, totalFileSize, item.getFetchableUrl()));
     }
-    InputStream fileStream = jobFileStream.streamFile(item, jobId, jobStore);
+    try (InputStream fileStream = jobFileStream.streamFile(item, jobId, jobStore)) {
+      String itemUploadUrl = createUploadSession(item, idempotentImportExecutor);
 
-    String itemUploadUrl = createUploadSession(item, idempotentImportExecutor);
+      MicrosoftApiResponse finalChunkResponse =
+          uploadStreamInChunks(totalFileSize, itemUploadUrl, item.getMimeType(), fileStream);
+      checkState(
+          finalChunkResponse.isOkay(),
+          "final chunk-upload response should have had an ID, but a non-OK response came back: %s",
+          finalChunkResponse.toString());
 
-    MicrosoftApiResponse finalChunkResponse =
-        uploadStreamInChunks(totalFileSize, itemUploadUrl, item.getMimeType(), fileStream);
-    fileStream.close();
-    checkState(
-        finalChunkResponse.isOkay(),
-        "final chunk-upload response should have had an ID, but a non-OK response came back: %s",
-        finalChunkResponse.toString());
-
-    ResponseBody finalChunkResponseBody =
-        finalChunkResponse
-            .body()
-            .orElseThrow(
-                () ->
-                    finalChunkResponse.toIoException(
-                        "last chunk-upload response should have had ID but got an empty  HTTP"
-                            + " response-body"));
-    // get complete file response
-    return getJsonField(finalChunkResponseBody, "id");
+      ResponseBody finalChunkResponseBody =
+          checkResponseBody(
+              finalChunkResponse,
+              "last chunk-upload response should have had ID but got an empty  HTTP response-body");
+      // get complete file response
+      return getJsonField(finalChunkResponseBody, "id");
+    }
   }
 
   /**
@@ -278,7 +273,9 @@ public class MicrosoftMediaImporter
             objectMapper.writeValueAsString(ImmutableMap.of())));
 
     return tryWithCredsOrFail(
-        createSessionRequestBuilder, "uploadUrl", "creating initial upload session");
+        createSessionRequestBuilder,
+        "uploadUrl" /*jsonResponseKey*/,
+        "creating initial upload session");
   }
 
   /**
@@ -456,12 +453,14 @@ public class MicrosoftMediaImporter
       Request.Builder requestBuilder, String jsonResponseKey, String causeMessage)
       throws IOException, DestinationMemoryFullException, PermissionDeniedException {
     final MicrosoftApiResponse resp = tryWithCredsOrFail(requestBuilder, causeMessage);
-    ResponseBody body =
-        resp.body()
-            .orElseThrow(
-                () ->
-                    resp.toIoException(
-                        String.format("got an empty HTTP response-body: %s", causeMessage)));
-    return getJsonField(resp.body().get(), jsonResponseKey);
+    return getJsonField(checkResponseBody(resp, causeMessage), jsonResponseKey);
+  }
+
+  private ResponseBody checkResponseBody(MicrosoftApiResponse resp, String causeMessage) {
+    return resp.body()
+        .orElseThrow(
+            () ->
+                resp.toIoException(
+                    String.format("got an empty HTTP response-body: %s", causeMessage)));
   }
 }
