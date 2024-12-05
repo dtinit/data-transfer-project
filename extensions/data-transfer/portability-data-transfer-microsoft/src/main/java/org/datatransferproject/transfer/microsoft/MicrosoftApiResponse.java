@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.auto.value.AutoValue;
+import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
