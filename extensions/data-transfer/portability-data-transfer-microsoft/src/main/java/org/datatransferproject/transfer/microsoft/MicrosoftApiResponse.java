@@ -126,7 +126,7 @@ public abstract class MicrosoftApiResponse {
    * Whether the response health is neither OK nor outright error, but merely requires a token
    * refresh (then a retry).
    */
-  private boolean isTokenRefreshRequired() {
+  public boolean isTokenRefreshRequired() {
     return httpStatus() == 401;
   }
 
@@ -145,17 +145,18 @@ public abstract class MicrosoftApiResponse {
    *
    * <p>Throws IllegalStateException if {@link isFatal} is false.
    */
-  public void throwDtpException()
+  public void throwDtpException(String message)
       throws IOException, DestinationMemoryFullException, PermissionDeniedException {
     switch (toFatalState()) {
       case FATAL_STATE_FATAL_PERMISSION_DENIED:
         throw new PermissionDeniedException(
-            "User access to microsoft onedrive was denied", toIoException());
+            "User access to microsoft onedrive was denied", toIoException(message));
       case FATAL_STATE_FATAL_DESTINATION_FULL:
         throw new DestinationMemoryFullException(
-            "Microsoft destination storage limit reached", toIoException());
+            "Microsoft destination storage limit reached", toIoException(message));
       case FATAL_STATE_FATAL_UNSPECIFIED:
-        throw toIoException("unrecognized class of Microsoft API error");
+        throw toIoException(
+            String.format("unrecognized class of Microsoft API error: %s", message));
       default:
         throw new AssertionError("exhaustive switch");
     }
