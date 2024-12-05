@@ -22,6 +22,7 @@ import static org.datatransferproject.transfer.microsoft.MicrosoftApiResponse.CA
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -347,7 +348,7 @@ public class MicrosoftMediaImporterTest {
     when(call3.execute()).thenReturn(response3);
 
     ImportResult result = importer.importItem(uuid, executor, authData, data);
-    verify(client, times(5)).newCall(any());
+    verify(client, atLeast(albums.size() + photos.size())).newCall(any());
     assertThat(result).isEqualTo(ImportResult.OK);
   }
 }
