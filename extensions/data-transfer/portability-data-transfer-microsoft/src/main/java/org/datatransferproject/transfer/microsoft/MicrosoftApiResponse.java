@@ -34,7 +34,7 @@ import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
  * MicrosoftApiResponse resp = someServerCall();
  * Optional<RecoverableState> recovery = resp.recoverableState();
  * if (recovery.isPresent()) {
- *   switch (recovery) {
+ *   switch (recovery.get()) {
  *     case RECOVERABLE_STATE_OKAY:
  *       return; // no errors to handle! we're all set
  *     case RECOVERABLE_STATE_NEEDS_TOKEN_REFRESH:
@@ -43,7 +43,7 @@ import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
  *       throw new AssertionError("exhaustive switch");
  *   }
  * } else {
- *   throw resp.toDtpException();
+ *   resp.throwDtpException();
  * }
  * </pre>
  */
@@ -87,12 +87,12 @@ public abstract class MicrosoftApiResponse {
     return new org.datatransferproject.transfer.microsoft.AutoValue_MicrosoftApiResponse.Builder();
   }
 
-  private enum RecoverableState {
+  public enum RecoverableState {
     RECOVERABLE_STATE_OKAY,
     RECOVERABLE_STATE_NEEDS_TOKEN_REFRESH,
   }
 
-  private enum FatalState {
+  public enum FatalState {
     FATAL_STATE_FATAL_PERMISSION_DENIED,
     FATAL_STATE_FATAL_DESTINATION_FULL,
     FATAL_STATE_FATAL_UNSPECIFIED
@@ -100,7 +100,7 @@ public abstract class MicrosoftApiResponse {
 
   /**
    * Returns the recoverable state of this response, if there is one, otherwise call {@link
-   * toFatalState} or {@link toDtpException} should detail what's wrong.
+   * toFatalState} or {@link throwDtpException} should detail what's wrong.
    */
   public Optional<RecoverableState> recoverableState() {
     if (isOkay()) {
@@ -117,7 +117,7 @@ public abstract class MicrosoftApiResponse {
     return recoverableState().isPresent();
   }
 
-  /** Whether the response was OK, otherwise {@link toDtpException} should return something. */
+  /** Whether the response was OK, otherwise {@link throwDtpException} should return something. */
   public boolean isOkay() {
     return httpStatus() >= 200 && httpStatus() <= 299;
   }
@@ -130,7 +130,7 @@ public abstract class MicrosoftApiResponse {
     return httpStatus() == 401;
   }
 
-  /** Whether response is of an unrecoverable error, indicating {@link toDtpException} usage. */
+  /** Whether response is of an unrecoverable error, indicating {@link throwDtpException} usage. */
   private boolean isFatal() {
     return !hasRecovery();
   }
@@ -145,24 +145,24 @@ public abstract class MicrosoftApiResponse {
    *
    * <p>Throws IllegalStateException if {@link isFatal} is false.
    */
-  public Exception toDtpException() {
+  public void throwDtpException()
+      throws IOException, DestinationMemoryFullException, PermissionDeniedException {
     switch (toFatalState()) {
       case FATAL_STATE_FATAL_PERMISSION_DENIED:
-        return new PermissionDeniedException(
+        throw new PermissionDeniedException(
             "User access to microsoft onedrive was denied", toIoException());
       case FATAL_STATE_FATAL_DESTINATION_FULL:
-        return new DestinationMemoryFullException(
+        throw new DestinationMemoryFullException(
             "Microsoft destination storage limit reached", toIoException());
       case FATAL_STATE_FATAL_UNSPECIFIED:
-        return toIoException("unrecognized class of Microsoft API error");
+        throw toIoException("unrecognized class of Microsoft API error");
       default:
         throw new AssertionError("exhaustive switch");
     }
   }
 
   private FatalState toFatalState() {
-    checkState(
-        recoverableState().isEmpty(), "cannot explain fatal state when is apparently recoverable");
+    checkState(isFatal(), "cannot explain fatal state when is apparently recoverable");
     if (httpStatus() == 403 && httpMessage().contains("Access Denied")) {
       return FatalState.FATAL_STATE_FATAL_PERMISSION_DENIED;
     }
@@ -177,8 +177,7 @@ public abstract class MicrosoftApiResponse {
    * Translate this response body to DTP's base-level exception with a cause message that includes
    * all the details we have.
    */
-  private IOException toIoException() {
-    checkState(!hasRecovery(), "isOkay(), so no exception to construct");
+  public IOException toIoException() {
     return new IOException(toString()); // AutoValue toString() includes all fields' values
   }
 
@@ -186,8 +185,7 @@ public abstract class MicrosoftApiResponse {
    * @param message The cause-message one might expect with a {@link java.lang.Exception}
    *     construction.
    */
-  private IOException toIoException(String message) {
-    checkState(!hasRecovery(), "isOkay(), so no exception to construct");
+  public IOException toIoException(String message) {
     return new IOException(String.format("%s: %s", message, toString()));
   }
 }
