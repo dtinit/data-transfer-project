@@ -51,13 +51,11 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
             "rootdir",
             Arrays.asList(
                 new DigitalDocumentWrapper(
-                    new DtpDigitalDocument("foo.mp4", "2020-02-01", "video/mp4"),
+                    new DtpDigitalDocument("foo.mp4", "2020-02-01T01:02:03Z", "video/mp4"),
                     "video/mp4",
                     "foomp4"),
                 new DigitalDocumentWrapper(
-                    new DtpDigitalDocument("bar.txt", "2020-03-01", "text/plain"),
-                    "text/plain",
-                    "bartxt")),
+                    new DtpDigitalDocument("bar.txt", null, "text/plain"), "text/plain", "bartxt")),
             new ArrayList<>());
 
     List<ImportableData<BlobbySerializer.ExportData>> res =
@@ -79,10 +77,9 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
             + "  \"@type\": \"File\","
             + "  \"folder\": \"/root\","
             + "  \"document\": {"
-            + "    \"@type\": \"DtpDigitalDocument\","
+            + "    \"@type\": \"Document\","
             + "    \"name\": \"foo.mp4\","
-            + "    \"dateModified\": \"2020-02-01\","
-            + "    \"encodingFormat\": \"video/mp4\""
+            + "    \"dateModified\": \"2020-02-01T01:02:03Z\""
             + "  }"
             + "}",
         res.get(1).getJsonData());
@@ -101,10 +98,9 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
             + "  \"@type\": \"File\","
             + "  \"folder\": \"/root\","
             + "  \"document\": {"
-            + "    \"@type\": \"DtpDigitalDocument\","
+            + "    \"@type\": \"Document\","
             + "    \"name\": \"bar.txt\","
-            + "    \"dateModified\": \"2020-03-01\","
-            + "    \"encodingFormat\": \"text/plain\""
+            + "    \"dateModified\": null"
             + "  }"
             + "}",
         res.get(2).getJsonData());
@@ -133,7 +129,7 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
                     "foodir",
                     Arrays.asList(
                         new DigitalDocumentWrapper(
-                            new DtpDigitalDocument("bar.txt", "2020-03-01", "text/plain"),
+                            new DtpDigitalDocument("bar.txt", "2020-03-01T01:02:03Z", "text/plain"),
                             "text/plain",
                             "bartxt")),
                     new ArrayList<>())));
@@ -159,10 +155,9 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
             + "  \"@type\": \"File\","
             + "  \"folder\": \"/root/foo\","
             + "  \"document\": {"
-            + "    \"@type\": \"DtpDigitalDocument\","
+            + "    \"@type\": \"Document\","
             + "    \"name\": \"bar.txt\","
-            + "    \"dateModified\": \"2020-03-01\","
-            + "    \"encodingFormat\": \"text/plain\""
+            + "    \"dateModified\": \"2020-03-01T01:02:03Z\""
             + "  }"
             + "}",
         res.get(2).getJsonData());

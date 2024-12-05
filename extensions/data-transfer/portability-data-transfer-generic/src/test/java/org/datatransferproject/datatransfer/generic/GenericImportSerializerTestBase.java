@@ -4,8 +4,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -16,8 +14,7 @@ class GenericImportSerializerTestBase {
 
   @BeforeClass
   public static void onlyOnce() {
-    objectMapper.registerModule(new JavaTimeModule());
-    objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+    GenericImporter.configureObjectMapper(objectMapper);
   }
 
   <T> void assertJsonEquals(String expectedPayload, GenericPayload<T> actualWrapperPayload)

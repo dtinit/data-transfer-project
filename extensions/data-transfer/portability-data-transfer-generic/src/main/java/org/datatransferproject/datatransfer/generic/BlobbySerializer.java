@@ -6,9 +6,12 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import java.time.ZonedDateTime;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Queue;
 import org.datatransferproject.types.common.DownloadableItem;
 import org.datatransferproject.types.common.models.blob.BlobbyStorageContainerResource;
@@ -52,13 +55,41 @@ class CachedDownloadableItem implements DownloadableItem {
   }
 }
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY)
-class BlobbyFile implements BlobbySerializer.ExportData {
-  private final String folder;
-  private final DtpDigitalDocument document;
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
+@JsonTypeName("Document")
+class DocumentExportData implements BlobbySerializer.ExportData {
+  @JsonProperty private final String name;
+  @JsonProperty private final Optional<ZonedDateTime> dateModified;
 
-  @JsonCreator
-  public BlobbyFile(@JsonProperty String folder, @JsonProperty DtpDigitalDocument document) {
+  private DocumentExportData(String name, Optional<ZonedDateTime> dateModified) {
+    this.name = name;
+    this.dateModified = dateModified;
+  }
+
+  public static DocumentExportData fromModel(DtpDigitalDocument model) {
+    return new DocumentExportData(
+        model.getName(),
+        Optional.ofNullable(model.getDateModified())
+            .filter(string -> !string.isEmpty())
+            .map(dateString -> ZonedDateTime.parse(model.getDateModified())));
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public Optional<ZonedDateTime> getDateModified() {
+    return dateModified;
+  }
+}
+
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
+@JsonTypeName("File")
+class FileExportData implements BlobbySerializer.ExportData {
+  @JsonProperty private final String folder;
+  @JsonProperty private final DocumentExportData document;
+
+  public FileExportData(String folder, DocumentExportData document) {
     this.folder = folder;
     this.document = document;
   }
@@ -67,17 +98,18 @@ class BlobbyFile implements BlobbySerializer.ExportData {
     return folder;
   }
 
-  public DtpDigitalDocument getDocument() {
+  public DocumentExportData getDocument() {
     return document;
   }
 }
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY)
-class BlobbyFolder implements BlobbySerializer.ExportData {
-  private final String path;
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
+@JsonTypeName("Folder")
+class FolderExportData implements BlobbySerializer.ExportData {
+  @JsonProperty private final String path;
 
   @JsonCreator
-  public BlobbyFolder(@JsonProperty String path) {
+  public FolderExportData(@JsonProperty String path) {
     this.path = path;
   }
 
@@ -88,8 +120,8 @@ class BlobbyFolder implements BlobbySerializer.ExportData {
 
 public class BlobbySerializer {
   @JsonSubTypes({
-    @JsonSubTypes.Type(value = BlobbyFolder.class, name = "Folder"),
-    @JsonSubTypes.Type(value = BlobbyFile.class, name = "File"),
+    @JsonSubTypes.Type(FolderExportData.class),
+    @JsonSubTypes.Type(FileExportData.class),
   })
   public interface ExportData {}
 
@@ -128,7 +160,7 @@ public class BlobbySerializer {
       // Import the current folder
       results.add(
           new ImportableData<>(
-              new GenericPayload<>(new BlobbyFolder(path), SCHEMA_SOURCE),
+              new GenericPayload<>(new FolderExportData(path), SCHEMA_SOURCE),
               container.getId(),
               path));
 
@@ -145,7 +177,9 @@ public class BlobbySerializer {
                 new CachedDownloadableItem(
                     file.getCachedContentId(), file.getDtpDigitalDocument().getName()),
                 new GenericPayload<>(
-                    new BlobbyFile(path, file.getDtpDigitalDocument()), SCHEMA_SOURCE),
+                    new FileExportData(
+                        path, DocumentExportData.fromModel(file.getDtpDigitalDocument())),
+                    SCHEMA_SOURCE),
                 file.getCachedContentId(),
                 file.getDtpDigitalDocument().getName()));
       }

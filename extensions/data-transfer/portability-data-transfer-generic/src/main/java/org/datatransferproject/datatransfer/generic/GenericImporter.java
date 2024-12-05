@@ -9,7 +9,9 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -93,8 +95,17 @@ public class GenericImporter<C extends ContainerResource, R>
     this.appCredentials = appCredentials;
     this.endpoint = endpoint;
     this.containerUnpacker = containerUnpacker;
-    om.registerModule(new JavaTimeModule());
-    om.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+    configureObjectMapper(om);
+  }
+
+  @VisibleForTesting
+  static void configureObjectMapper(ObjectMapper objectMapper) {
+    // ZonedDateTime and friends
+    objectMapper.registerModule(new JavaTimeModule());
+    // Optional fields
+    objectMapper.registerModule(new Jdk8Module());
+    // ISO timestamps rather than unix epoch seconds
+    objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
   }
 
   @Override
