@@ -100,6 +100,7 @@ public abstract class MicrosoftApiResponse {
     return new IOException(String.format("%s: %s", message, toString()));
   }
 
+  // TODO(zacsh) fix this, it's currently the wrong string.
   private boolean isDestinationFull() {
     return httpStatus() == 507 && httpMessage().contains("Insufficient Storage");
   }
