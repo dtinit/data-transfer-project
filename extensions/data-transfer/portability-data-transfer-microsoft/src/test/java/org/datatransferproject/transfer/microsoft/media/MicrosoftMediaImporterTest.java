@@ -145,16 +145,10 @@ public class MicrosoftMediaImporterTest {
                       && body.contains("album1_");
                 }));
     Response response = mock(Response.class);
-    ResponseBody body = mock(ResponseBody.class);
-    when(body.bytes())
-        .thenReturn(
-            ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").bytes());
-    when(body.string())
-        .thenReturn(
-            ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").string());
     when(response.code()).thenReturn(200);
     when(response.message()).thenReturn("OK");
-    when(response.body()).thenReturn(body);
+    when(response.body())
+        .thenReturn(ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}"));
     when(call.execute()).thenReturn(response);
 
     ImportResult result = importer.importItem(uuid, executor, authData, data);
@@ -180,16 +174,10 @@ public class MicrosoftMediaImporterTest {
                         .toString()
                         .equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
     Response response = mock(Response.class);
-    ResponseBody body = mock(ResponseBody.class);
-    when(body.bytes())
-        .thenReturn(
-            ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").bytes());
-    when(body.string())
-        .thenReturn(
-            ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").string());
     when(response.code()).thenReturn(403);
     when(response.message()).thenReturn("Access Denied");
-    when(response.body()).thenReturn(body);
+    when(response.body())
+        .thenReturn(ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}"));
     when(call.execute()).thenReturn(response);
 
     assertThrows(
@@ -289,16 +277,10 @@ public class MicrosoftMediaImporterTest {
                         .toString()
                         .equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
     Response response = mock(Response.class);
-    ResponseBody body = mock(ResponseBody.class);
-    when(body.bytes())
-        .thenReturn(
-            ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").bytes());
-    when(body.string())
-        .thenReturn(
-            ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").string());
     when(response.code()).thenReturn(200);
     when(response.message()).thenReturn("OK");
-    when(response.body()).thenReturn(body);
+    when(response.body())
+        .thenReturn(ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}"));
     when(call.execute()).thenReturn(response);
 
     Call call2 = mock(Call.class);
@@ -306,22 +288,13 @@ public class MicrosoftMediaImporterTest {
         .when(client)
         .newCall(argThat((Request r) -> r.url().toString().contains("createUploadSession")));
     Response response2 = mock(Response.class);
-    ResponseBody body2 = mock(ResponseBody.class);
-    when(body2.bytes())
-        .thenReturn(
-            ResponseBody.create(
-                    MediaType.parse("application/json"),
-                    "{\"uploadUrl\": \"https://scalia.com/link\"}")
-                .bytes());
-    when(body2.string())
-        .thenReturn(
-            ResponseBody.create(
-                    MediaType.parse("application/json"),
-                    "{\"uploadUrl\": \"https://scalia.com/link\"}")
-                .string());
     when(response2.code()).thenReturn(200);
     when(response2.message()).thenReturn("OK");
-    when(response2.body()).thenReturn(body2);
+    when(response2.body())
+        .thenReturn(
+            ResponseBody.create(
+                MediaType.parse("application/json"),
+                "{\"uploadUrl\": \"https://scalia.com/link\"}"));
     when(call2.execute()).thenReturn(response2);
 
     Call call3 = mock(Call.class);
@@ -329,18 +302,11 @@ public class MicrosoftMediaImporterTest {
         .when(client)
         .newCall(argThat((Request r) -> r.url().toString().contains("scalia.com/link")));
     Response response3 = mock(Response.class);
-    ResponseBody body3 = mock(ResponseBody.class);
-    when(body3.bytes())
-        .thenReturn(
-            ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"rand1\"}")
-                .bytes());
-    when(body3.string())
-        .thenReturn(
-            ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"rand1\"}")
-                .string());
     when(response3.code()).thenReturn(200);
     when(response3.message()).thenReturn("OK");
-    when(response3.body()).thenReturn(body3);
+    when(response3.body())
+        .thenReturn(
+            ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"rand1\"}"));
     when(call3.execute()).thenReturn(response3);
 
     ImportResult result = importer.importItem(uuid, executor, authData, data);
