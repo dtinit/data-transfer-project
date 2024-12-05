@@ -18,6 +18,7 @@ package org.datatransferproject.transfer.microsoft.media;
 
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.truth.Truth.assertThat;
+import static org.datatransferproject.transfer.microsoft.MicrosoftApiResponse.CAUSE_PREFIX_UNRECOGNIZED_EXCEPTION;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.argThat;
@@ -219,6 +220,42 @@ public class MicrosoftMediaImporterTest {
         () -> {
           ImportResult result = importer.importItem(uuid, executor, authData, data);
         });
+  }
+
+  @Test
+  public void testImportUnrecognizedError() throws Exception {
+    List<MediaAlbum> albums =
+        ImmutableList.of(new MediaAlbum("id1", "album1.", "This is a fake albumb"));
+
+    MediaContainerResource data =
+        new MediaContainerResource(albums, null /*photos*/, null /*videos*/);
+
+    Call call = mock(Call.class);
+    doReturn(call)
+        .when(client)
+        .newCall(
+            argThat(
+                (Request r) ->
+                    r.url()
+                        .toString()
+                        .equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
+    Response response = mock(Response.class);
+    when(response.code()).thenReturn(507);
+    when(response.message()).thenReturn("");
+    when(response.body())
+        .thenReturn(
+            ResponseBody.create(
+                MediaType.parse("application/json"),
+                "{\"message\": \"Hippo is the best dog, not a real-world response\"}"));
+    when(call.execute()).thenReturn(response);
+
+    IOException thrown =
+        assertThrows(
+            IOException.class,
+            () -> {
+              ImportResult result = importer.importItem(uuid, executor, authData, data);
+            });
+    assertThat(thrown.getMessage()).contains(CAUSE_PREFIX_UNRECOGNIZED_EXCEPTION);
   }
 
   private static <M extends DownloadableFile> M fakeJobstoreModel(
