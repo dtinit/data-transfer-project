@@ -30,6 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nonnull;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -154,6 +155,7 @@ public class MicrosoftMediaImporter
     monitor.debug(() -> String.format(format, statusMessage));
   }
 
+  /** Returns a folder ID after asking Microsoft APIs to allocate one for the given album. */
   @SuppressWarnings("unchecked")
   private String createOneDriveFolder(MediaAlbum album)
       throws IOException, CopyExceptionWithFailureReason {
@@ -173,43 +175,7 @@ public class MicrosoftMediaImporter
     requestBuilder.post(
         RequestBody.create(
             MediaType.parse("application/json"), objectMapper.writeValueAsString(rawFolder)));
-    try (Response response = client.newCall(requestBuilder.build()).execute()) {
-      int code = response.code();
-      ResponseBody body = response.body();
-      if (code == 401) {
-        // If there was an unauthorized error, then try refreshing the creds
-        credentialFactory.refreshCredential(credential);
-        monitor.info(() -> "Refreshed authorization token successfuly");
-
-        requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
-        Response newResponse = client.newCall(requestBuilder.build()).execute();
-        code = newResponse.code();
-        body = newResponse.body();
-      }
-
-      if (code == 403 && response.message().contains("Access Denied")) {
-        throw new PermissionDeniedException(
-            "User access to microsoft onedrive was denied",
-            new IOException(
-                String.format("Got error code %d  with message: %s", code, response.message())));
-      } else if (code < 200 || code > 299) {
-        throw new IOException(
-            "Got error code: "
-                + code
-                + " message: "
-                + response.message()
-                + " body: "
-                + response.body().string());
-      } else if (body == null) {
-        throw new IOException("Got null body");
-      }
-
-      Map<String, Object> responseData = objectMapper.readValue(body.bytes(), Map.class);
-      String folderId = (String) responseData.get("id");
-      checkState(
-          !Strings.isNullOrEmpty(folderId), "Expected id value to be present in %s", responseData);
-      return folderId;
-    }
+    return tryWithCredsOrFail(requestBuilder, "id", "creating empty folder");
   }
 
   private void executeIdempotentImport(
@@ -244,7 +210,7 @@ public class MicrosoftMediaImporter
     fileStream.close();
     checkState(
         finalChunkResponse.isOkay(),
-        "final chunk-upload response should have had an ID, but a non-OK response cam back: %s",
+        "final chunk-upload response should have had an ID, but a non-OK response came back: %s",
         finalChunkResponse.toString());
 
     ResponseBody finalChunkResponseBody =
@@ -256,9 +222,7 @@ public class MicrosoftMediaImporter
                         "last chunk-upload response should have had ID but got an empty  HTTP"
                             + " response-body"));
     // get complete file response
-    Map<String, Object> chunkResponseData =
-        objectMapper.readValue(finalChunkResponseBody.bytes(), Map.class);
-    return (String) chunkResponseData.get("id");
+    return getJsonField(finalChunkResponseBody, "id");
   }
 
   /**
@@ -270,14 +234,17 @@ public class MicrosoftMediaImporter
       throws IOException, DestinationMemoryFullException, PermissionDeniedException {
     MicrosoftApiResponse lastChunkResponse = null;
     StreamChunker streamChunker = new StreamChunker(MICROSOFT_UPLOAD_CHUNK_BYTE_SIZE, inputStream);
-    Optional<DataChunk> nextChunk;
+    Optional<DataChunk> currentChunk;
     while (true) {
-      nextChunk = streamChunker.nextChunk();
-      if (nextChunk.isEmpty()) {
+      currentChunk = streamChunker.nextChunk();
+      if (currentChunk.isEmpty()) {
         break;
       }
-      lastChunkResponse = uploadChunk(nextChunk.get(), itemUploadUrl, totalFileSize, itemMimeType);
-      final DataChunk lastChunksent = nextChunk.get();
+      lastChunkResponse =
+          uploadChunk(currentChunk.get(), itemUploadUrl, totalFileSize, itemMimeType);
+
+      // Log our progress before continuing to the next chunk.
+      final DataChunk lastChunksent = currentChunk.get();
       final int httpStatus = lastChunkResponse.httpStatus();
       monitor.info(
           () ->
@@ -299,21 +266,107 @@ public class MicrosoftMediaImporter
     return this.credential;
   }
 
-  private Pair<Request, Response> tryWithCreds(Request.Builder requestBuilder) throws IOException {
-    Request request = requestBuilder.build();
-    Response response = client.newCall(request).execute();
-
-    // If there was an unauthorized error, then try refreshing the creds
-    if (response.code() != 401) {
-      return Pair.of(request, response);
+  /** Low-level API call used by other helpers: prefer {@link tryWithCreds} instead. */
+  private MicrosoftApiResponse sendMicrosoftRequest(Request.Builder requestBuilder)
+      throws IOException {
+    try (Response response = client.newCall(requestBuilder.build()).execute()) {
+      return MicrosoftApiResponse.ofResponse(
+          checkNotNull(
+              response, "null microsoft server response for %s", requestBuilder.build().url()));
     }
+  }
 
-    this.credentialFactory.refreshCredential(credential);
-    monitor.info(() -> "Refreshed authorization token successfuly");
+  /**
+   * Try request twice: once and if there's an unauthorized error, then just once more after
+   * refreshing creds.
+   *
+   * <p>Prefer {@link tryWithCredsOrFail} to avoid repetitive error-handling edge-cases (and thus
+   * possibly introducing new bugs).
+   */
+  private Pair<Request, MicrosoftApiResponse> tryWithCreds(Request.Builder requestBuilder)
+      throws IOException {
+    MicrosoftApiResponse response = sendMicrosoftRequest(requestBuilder);
+    if (response.isTokenRefreshRequired()) {
+      credentialFactory.refreshCredential(credential);
+      monitor.info(() -> "Refreshed Microsoft authorization token successfuly");
+      requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
+      response = sendMicrosoftRequest(requestBuilder);
+    }
+    return Pair.of(requestBuilder.build(), response);
+  }
 
-    requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
-    request = requestBuilder.build();
-    return Pair.of(request, client.newCall(request).execute());
+  /**
+   * Try a request to Microsoft servers or fail with a critical DTP exception, after considering
+   * standard token-refresh retry options.
+   *
+   * <p>Prefer {@link tryWithCredsOrFail(Request.Builder, String, String)} if you ultimately only
+   * care about a particular JSON key in the response body.
+   *
+   * <p>Example usage:
+   *
+   * <pre>
+   * MicrosoftApiResponse resp = tryWithCredsOrFail(request, "creating a folder");
+   * checkState(resp.isOkay(), "bug: tryWithCredsOrFail() should have returne healthy resp");
+   * // ...carry on as normal with business logic...
+   * </pre>
+   *
+   * @param causeMessage a contextual message to include as the root cause/context when throwing a
+   *     DTP excption.
+   * @return server response.
+   */
+  private MicrosoftApiResponse tryWithCredsOrFail(Request.Builder req, String causeMessage)
+      throws IOException, DestinationMemoryFullException, PermissionDeniedException {
+    Pair<Request, MicrosoftApiResponse> reqResp = tryWithCreds(req);
+    MicrosoftApiResponse response = reqResp.getRight();
+    Optional<MicrosoftApiResponse.RecoverableState> recovery = response.recoverableState();
+    if (recovery.isPresent()) {
+      switch (recovery.get()) {
+        case RECOVERABLE_STATE_OKAY:
+          return response;
+        case RECOVERABLE_STATE_NEEDS_TOKEN_REFRESH:
+          throw response.toIoException(
+              String.format(
+                  "bug! microsoft server needs token refresh immediately after a refreshing: %s",
+                  causeMessage));
+        default:
+          throw new AssertionError("exhaustive switch");
+      }
+    }
+    response.throwDtpException(
+        String.format(
+            "%s with " + "request url: %s\n" + "bearer token: %s\n",
+            causeMessage, reqResp.getLeft().url(), credential.getAccessToken()));
+    throw new AssertionError("unreachable: throwDtpException throws");
+  }
+
+  /**
+   * Try a request to Microsoft servers or fail with a critical DTP exception, after considering
+   * standard token-refresh retry options.
+   *
+   * <p>Example usage:
+   *
+   * <pre>
+   * @Nonnull String folderId = tryWithCredsOrFail(request, "folderId", "creating a folder");
+   * // ...carry on as normal with business logic...
+   * </pre>
+   *
+   * @param jsonResponseKey the top-level value to extract from the response body.
+   * @param causeMessage a contextual message to include as the root cause/context when throwing a
+   *     DTP excption.
+   * @return expected JSON value that api servers returned.
+   */
+  @Nonnull
+  private String tryWithCredsOrFail(
+      Request.Builder requestBuilder, String jsonResponseKey, String causeMessage)
+      throws IOException, DestinationMemoryFullException, PermissionDeniedException {
+    final MicrosoftApiResponse resp = tryWithCredsOrFail(requestBuilder, causeMessage);
+    ResponseBody body =
+        resp.body()
+            .orElseThrow(
+                () ->
+                    resp.toIoException(
+                        String.format("got an empty HTTP response-body: %s", causeMessage)));
+    return getJsonField(resp.body().get(), jsonResponseKey);
   }
 
   // Request an upload session to the OneDrive api so that we can upload chunks
@@ -334,47 +387,8 @@ public class MicrosoftMediaImporter
             MediaType.parse("application/json"),
             objectMapper.writeValueAsString(ImmutableMap.of())));
 
-    // Make the call, we should get an upload url for item data in a 200 response
-    Pair<Request, Response> reqResp = tryWithCreds(createSessionRequestBuilder);
-    Response response = reqResp.getRight();
-    int code = response.code();
-    if (code == 403 && response.message().contains("Access Denied")) {
-      throw new PermissionDeniedException(
-          "User access to Microsoft One Drive was denied",
-          new IOException(
-              String.format("Got error code %d  with message: %s", code, response.message())));
-    } else if (code == 507 && response.message().contains("Insufficient Storage")) {
-      throw new DestinationMemoryFullException(
-          "Microsoft destination storage limit reached",
-          new IOException(
-              String.format("Got error code %d  with message: %s", code, response.message())));
-    } else if (code < 200 || code > 299) {
-      throw new IOException(
-          String.format(
-              "Got error code: %s\n"
-                  + "message: %s\n"
-                  + "body: %s\n"
-                  + "request url: %s\n"
-                  + "bearer token: %s\n"
-                  + " item: %s\n", // For debugging 404s on upload
-              code,
-              response.message(),
-              response.body().string(),
-              reqResp.getLeft().url(),
-              credential.getAccessToken(),
-              item));
-    } else if (code != 200) {
-      monitor.info(() -> String.format("Got an unexpected non-200, non-error response code"));
-    }
-    ResponseBody responseBody = response.body();
-    // make sure we have a non-null response body
-    checkState(responseBody != null, "Got Null Body when creating item upload session %s", item);
-    // convert to a map
-    final Map<String, Object> responseData =
-        objectMapper.readValue(responseBody.bytes(), Map.class);
-    // return the session's upload url
-    checkState(responseData.containsKey("uploadUrl"), "No uploadUrl :(");
-    return (String) responseData.get("uploadUrl");
+    return tryWithCredsOrFail(
+        createSessionRequestBuilder, "uploadUrl", "creating initial upload session");
   }
 
   /**
@@ -426,45 +440,28 @@ public class MicrosoftMediaImporter
     uploadRequestBuilder.header("Content-Range", contentRange);
     uploadRequestBuilder.header("Content-Length", String.format("%d", chunk.size()));
 
-    // upload the chunk
-    MicrosoftApiResponse chunkResponse =
-        MicrosoftApiResponse.ofResponse(
-            checkNotNull(client.newCall(uploadRequestBuilder.build()).execute(), "null response"));
-    Optional<MicrosoftApiResponse.RecoverableState> recovery = chunkResponse.recoverableState();
-    if (recovery.isPresent()) {
-      switch (recovery.get()) {
-        case RECOVERABLE_STATE_OKAY:
-          return chunkResponse;
-        case RECOVERABLE_STATE_NEEDS_TOKEN_REFRESH:
-          // If there was an unauthorized error, then try refreshing the creds
-          credentialFactory.refreshCredential(credential);
-          monitor.info(() -> "Refreshed authorization token successfuly");
+    return tryWithCredsOrFail(
+        uploadRequestBuilder,
+        String.format(
+            "uploading one chunk (%s) mediaType=%s amid %d total bytes",
+            contentRange, mediaType, totalFileSize));
+  }
 
-          // update auth info, reupload chunk
-          uploadRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
-          chunkResponse =
-              MicrosoftApiResponse.ofResponse(
-                  checkNotNull(
-                      client.newCall(uploadRequestBuilder.build()).execute(), "null response"));
-        default:
-          throw new AssertionError("exhaustive switch");
-      }
-    }
-
-    // check chunkResponse's state AGAIN since we have a "one retry" codepath above
-    recovery = chunkResponse.recoverableState();
-    if (recovery.isPresent()) {
-      switch (recovery.get()) {
-        case RECOVERABLE_STATE_OKAY:
-          return chunkResponse;
-        case RECOVERABLE_STATE_NEEDS_TOKEN_REFRESH:
-          chunkResponse.toIoException(
-              "microsoft server needs token refresh immediately after refreshing token");
-        default:
-          throw new AssertionError("exhaustive switch");
-      }
-    }
-    chunkResponse.throwDtpException();
-    throw new AssertionError("unreachable: throwDtpException throws");
+  /** Extracts a top-level JSON value, at key `jsonFieldKey`, from an HTTP Response body. */
+  private String getJsonField(@Nonnull ResponseBody responseBody, String jsonFieldKey)
+      throws IOException {
+    // convert to a map
+    final Map<String, Object> json = objectMapper.readValue(responseBody.bytes(), Map.class);
+    checkState(
+        json.containsKey(jsonFieldKey),
+        "response body missing top-level JSON field \"%s\"",
+        jsonFieldKey);
+    final String jsonValue = (String) json.get(jsonFieldKey);
+    checkState(
+        !Strings.isNullOrEmpty(jsonValue),
+        "Expected JSON value for key \"%s\" to be present in in JSON body: %s",
+        jsonFieldKey,
+        json);
+    return jsonValue;
   }
 }
