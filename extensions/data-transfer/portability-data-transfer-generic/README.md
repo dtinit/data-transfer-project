@@ -24,6 +24,7 @@ Host: localhost:8080
 Connection: Keep-Alive
 Accept-Encoding: gzip
 User-Agent: okhttp/3.9.1
+Authorization: Bearer accessToken
 
 {
   "@type": "SocialActivityData",
@@ -77,6 +78,7 @@ Host: localhost:8080
 Connection: Keep-Alive
 Accept-Encoding: gzip
 User-Agent: okhttp/3.9.1
+Authorization: Bearer accessToken
 
 --1581c5eb-05d0-42fe-bfb3-472151f366cd
 Content-Type: application/json
@@ -100,5 +102,52 @@ Content-Length: 524288000
 ```json
 {
     "TODO": "schema"
+}
+```
+
+## Authentication and Authorization
+
+Generic Importers support the OAuth v2 Authorization Code Flow; exporters will direct users to your OAuth authorization page, requesting an authorization code with OAuth scopes defined by your importer configuration, which will then be used to claim an access token.
+The access token will be sent as a Bearer token in the HTTP Authorization header sent with all import requests.
+
+### Token Refresh
+
+If your configuration specifies a token refresh endpoint and a refresh token is provided alongside the access token, the transfer worker will attempt to refresh the access token in the event your service endpoint returns a HTTP 401 (Unauthorized) error with a JSON payload containing an `invalid_token` error message.
+
+```http
+HTTP/1.1 401 Unauthorized
+Content-Type: application/json
+
+{
+  "error": "invalid_token",
+  "error_description": "The access token expired"
+}
+```
+
+The worker will request a token refresh through the standard OAuth refresh token flow, sending a JSON-encoded POST request to the configured refresh endpoint.
+
+```http
+POST /oauth/refresh HTTP/1.1
+Accept: application/json
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 92
+Host: localhost:8080
+Connection: Keep-Alive
+Accept-Encoding: gzip
+User-Agent: okhttp/3.9.1
+
+refresh_token=refreshToken&client_id=appKey&client_secret=appSecret&grant_type=refresh_token
+```
+
+The token refresh endpoint should return a response containing the access token. If a new refresh_token is provided it will be used for future token refreshes.
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+    "access_token": "newAccessToken",
+    "refresh_token": "newRefreshToken", // optional
+    "token_type": "Bearer"
 }
 ```

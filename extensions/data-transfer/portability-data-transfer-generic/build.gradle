@@ -25,6 +25,7 @@ dependencies {
     compile project(':portability-types-common')
     compile("com.squareup.okhttp3:okhttp:${okHttpVersion}")
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
+    testCompile group: 'com.squareup.okhttp3', name: 'mockwebserver', version: "${okHttpVersion}"
 }
 
 configurePublication(project)

@@ -20,6 +20,7 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.api.launcher.TypeManager;
 import org.datatransferproject.launcher.monitor.ConsoleMonitor;
 import org.datatransferproject.launcher.monitor.ConsoleMonitor.Level;
+import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.spi.cloud.types.PortabilityJob.State;
@@ -44,6 +45,7 @@ import org.datatransferproject.types.common.models.social.SocialActivityLocation
 import org.datatransferproject.types.common.models.social.SocialActivityModel;
 import org.datatransferproject.types.common.models.social.SocialActivityType;
 import org.datatransferproject.types.common.models.videos.VideoModel;
+import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
@@ -132,6 +134,13 @@ class TestJobStore implements JobStore {
   }
 }
 
+class TestAppCredentialStore implements AppCredentialStore {
+  @Override
+  public AppCredentials getAppCredentials(String keyName, String secretName) throws IOException {
+    return new AppCredentials("appKey", "appSecret");
+  }
+}
+
 class TestExtensionContext implements ExtensionContext {
   private Monitor monitor;
   private JobStore jobStore = new TestJobStore();
@@ -164,6 +173,9 @@ class TestExtensionContext implements ExtensionContext {
       } catch (IOException e) {
         throw new UncheckedIOException(e);
       }
+    }
+    if (type.getName() == AppCredentialStore.class.getName()) {
+      return (T) new TestAppCredentialStore();
     }
     throw new RuntimeException(format("Unexpected type %s", type.getName()));
   }

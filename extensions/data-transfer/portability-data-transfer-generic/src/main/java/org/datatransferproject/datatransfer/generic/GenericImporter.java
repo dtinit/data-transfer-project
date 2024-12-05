@@ -2,23 +2,36 @@ package org.datatransferproject.datatransfer.generic;
 
 import static java.lang.String.format;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.datatransfer.generic.auth.OAuthTokenManager;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.types.common.models.ContainerResource;
+import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 @FunctionalInterface
@@ -28,16 +41,56 @@ interface ContainerMapper<C extends ContainerResource, R> {
 
 public class GenericImporter<C extends ContainerResource, R>
     implements Importer<TokensAndUrlAuthData, C> {
+
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  static class ErrorResponse {
+    private final String error;
+    private final Optional<String> errorDescription;
+
+    @JsonCreator
+    public ErrorResponse(
+        @JsonProperty(value = "error", required = true) String error,
+        @Nullable @JsonProperty("error_description") String errorDescription) {
+      this.error = error;
+      this.errorDescription = Optional.ofNullable(errorDescription);
+    }
+
+    public String getError() {
+      return error;
+    }
+
+    public Optional<String> getErrorDescription() {
+      return errorDescription;
+    }
+
+    public String toString() {
+      StringBuilder builder = new StringBuilder();
+      builder.append(error);
+      if (errorDescription.isPresent()) {
+        builder.append(" - ");
+        builder.append(errorDescription.get());
+      }
+      return builder.toString();
+    }
+  }
+
   ContainerMapper<C, R> containerUnpacker;
   URL endpoint;
-  ObjectMapper om = new ObjectMapper();
   Monitor monitor;
+  AppCredentials appCredentials;
   OkHttpClient client = new OkHttpClient();
+  ObjectMapper om = new ObjectMapper();
+  Map<UUID, OAuthTokenManager> jobTokenManagerMap = new HashMap<>();
 
   static final MediaType JSON = MediaType.parse("application/json");
 
-  public GenericImporter(ContainerMapper<C, R> containerUnpacker, URL endpoint, Monitor monitor) {
+  public GenericImporter(
+      ContainerMapper<C, R> containerUnpacker,
+      AppCredentials appCredentials,
+      URL endpoint,
+      Monitor monitor) {
     this.monitor = monitor;
+    this.appCredentials = appCredentials;
     this.endpoint = endpoint;
     this.containerUnpacker = containerUnpacker;
     om.registerModule(new JavaTimeModule());
@@ -48,30 +101,58 @@ public class GenericImporter<C extends ContainerResource, R>
   public ImportResult importItem(
       UUID jobId,
       IdempotentImportExecutor idempotentExecutor,
-      TokensAndUrlAuthData authData,
+      TokensAndUrlAuthData initialAuthData,
       C data)
       throws Exception {
+    OAuthTokenManager tokenManager =
+        jobTokenManagerMap.computeIfAbsent(
+            jobId,
+            ignored -> new OAuthTokenManager(initialAuthData, appCredentials, client, monitor));
     for (ImportableData<?> importableData : containerUnpacker.apply(data)) {
       idempotentExecutor.executeAndSwallowIOExceptions(
           importableData.getIdempotentId(),
           importableData.getName(),
-          () -> importSingleItem(importableData.getJsonData()));
+          () ->
+              tokenManager.withAuthData(
+                  authData -> importSingleItem(authData, importableData.getJsonData())));
     }
     return new ImportResult(ResultType.OK);
   }
 
-  boolean importSingleItem(GenericPayload<?> dataItem) throws IOException {
+  boolean parseResponse(Response response) throws IOException, InvalidTokenException {
+    if (response.code() >= 400) {
+      byte[] body = response.body().bytes();
+      ErrorResponse error;
+      try {
+        error = om.readValue(body, ErrorResponse.class);
+      } catch (JsonParseException | JsonMappingException e) {
+        throw new IOException(
+            format("Unexpected response - %s", new String(body, StandardCharsets.UTF_8)), e);
+      }
+
+      if (response.code() == 401 && error.getError().equals("invalid_token")) {
+        throw new InvalidTokenException(error.toString(), null);
+      } else {
+        throw new IOException(format("Error (%d) %s", response.code(), error.toString()));
+      }
+    }
+    if (response.code() < 200 | response.code() >= 300) {
+      throw new IOException(format("Unexpected response code (%d)", response.code()));
+    }
+    return true;
+  }
+
+  boolean importSingleItem(TokensAndUrlAuthData authData, GenericPayload<?> dataItem)
+      throws IOException, InvalidTokenException {
     Request request =
         new Request.Builder()
             .url(endpoint)
+            .addHeader("Authorization", format("Bearer %s", authData.getToken()))
             .post(RequestBody.create(JSON, om.writeValueAsBytes(dataItem)))
             .build();
 
     try (Response response = client.newCall(request).execute()) {
-      if (response.code() >= 400) {
-        throw new IOException(format("Error %s", response.code()));
-      }
-      return true;
+      return parseResponse(response);
     }
   }
 }

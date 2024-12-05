@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.datatransferproject.api.launcher.ExtensionContext;
+import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -30,6 +31,7 @@ import org.datatransferproject.types.common.models.blob.BlobbyStorageContainerRe
 import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.social.SocialActivityContainerResource;
+import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
 
 class GenericTransferServiceVerticalConfig {
@@ -75,7 +77,7 @@ class GenericTransferServiceConfig {
 
   public boolean supportsVertical(DataVertical vertical) {
     for (GenericTransferServiceVerticalConfig verticalConfig : verticals) {
-      if (verticalConfig.getVertical() == vertical) {
+      if (verticalConfig.getVertical().equals(vertical)) {
         return true;
       }
     }
@@ -116,11 +118,27 @@ public class GenericTransferExtension implements TransferExtension {
       throw new RuntimeException("Invalid service configuration", e);
     }
 
+    AppCredentialStore appCredentialStore = context.getService(AppCredentialStore.class);
+    String serviceNameUpper = serviceConfig.getServiceId().toUpperCase();
+    AppCredentials appCredentials;
+    try {
+      appCredentials =
+          appCredentialStore.getAppCredentials(
+              format("%s_KEY", serviceNameUpper), format("%s_SECRET", serviceNameUpper));
+    } catch (IOException e) {
+      throw new RuntimeException(
+          format(
+              "Failed to get application credentials for %s (%s)",
+              serviceNameUpper, serviceConfig.getServiceId()),
+          e);
+    }
+
     if (serviceConfig.supportsVertical(BLOBS)) {
       importerMap.put(
           BLOBS,
           new GenericFileImporter<BlobbyStorageContainerResource, BlobbySerializer.ExportData>(
               BlobbySerializer::serialize,
+              appCredentials,
               urlAppend(serviceConfig.getEndpoint(), "blobs"),
               jobStore,
               context.getMonitor()));
@@ -134,6 +152,7 @@ public class GenericTransferExtension implements TransferExtension {
           MEDIA,
           new GenericFileImporter<MediaContainerResource, MediaSerializer.ExportData>(
               MediaSerializer::serialize,
+              appCredentials,
               urlAppend(serviceConfig.getEndpoint(), "media"),
               jobStore,
               context.getMonitor()));
@@ -144,6 +163,7 @@ public class GenericTransferExtension implements TransferExtension {
           SOCIAL_POSTS,
           new GenericImporter<SocialActivityContainerResource, SocialPostsSerializer.ExportData>(
               SocialPostsSerializer::serialize,
+              appCredentials,
               urlAppend(serviceConfig.getEndpoint(), "social-posts"),
               context.getMonitor()));
     }
@@ -153,6 +173,7 @@ public class GenericTransferExtension implements TransferExtension {
           CALENDAR,
           new GenericImporter<CalendarContainerResource, CalendarSerializer.ExportData>(
               CalendarSerializer::serialize,
+              appCredentials,
               urlAppend(serviceConfig.getEndpoint(), "calendar"),
               context.getMonitor()));
     }

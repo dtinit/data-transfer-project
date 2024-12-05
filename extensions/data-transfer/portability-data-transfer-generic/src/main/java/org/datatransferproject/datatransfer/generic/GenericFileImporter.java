@@ -14,14 +14,18 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.datatransfer.generic.auth.OAuthTokenManager;
 import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
+import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.types.common.DownloadableItem;
 import org.datatransferproject.types.common.models.ContainerResource;
+import org.datatransferproject.types.transfer.auth.AppCredentials;
+import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 public class GenericFileImporter<C extends ContainerResource, R> extends GenericImporter<C, R> {
@@ -34,10 +38,11 @@ public class GenericFileImporter<C extends ContainerResource, R> extends Generic
 
   public GenericFileImporter(
       ContainerMapper<C, R> containerUnpacker,
+      AppCredentials appCredentials,
       URL endpoint,
       TemporaryPerJobDataStore dataStore,
       Monitor monitor) {
-    super(containerUnpacker, endpoint, monitor);
+    super(containerUnpacker, appCredentials, endpoint, monitor);
     this.dataStore = dataStore;
     this.connectionProvider = new ConnectionProvider(dataStore);
   }
@@ -46,26 +51,35 @@ public class GenericFileImporter<C extends ContainerResource, R> extends Generic
   public ImportResult importItem(
       UUID jobId,
       IdempotentImportExecutor idempotentExecutor,
-      TokensAndUrlAuthData authData,
+      TokensAndUrlAuthData initialAuthData,
       C data)
       throws Exception {
+    // TODO: deduplicate
+    OAuthTokenManager tokenManager =
+        jobTokenManagerMap.computeIfAbsent(
+            jobId,
+            ignored -> new OAuthTokenManager(initialAuthData, appCredentials, client, monitor));
     for (ImportableData<R> importableData : containerUnpacker.apply(data)) {
       idempotentExecutor.executeAndSwallowIOExceptions(
           importableData.getIdempotentId(),
           importableData.getName(),
           () ->
-              importableData instanceof ImportableFileData
-                  ? importSingleFileItem(
-                      jobId,
-                      importableData.getJsonData(),
-                      ((ImportableFileData<R>) importableData).getFile())
-                  : importSingleItem(importableData.getJsonData()));
+              tokenManager.withAuthData(
+                  authData ->
+                      importableData instanceof ImportableFileData
+                          ? importSingleFileItem(
+                              jobId,
+                              authData,
+                              importableData.getJsonData(),
+                              ((ImportableFileData<R>) importableData).getFile())
+                          : importSingleItem(authData, importableData.getJsonData())));
     }
     return new ImportResult(ResultType.OK);
   }
 
   private <T> boolean importSingleFileItem(
-      UUID jobId, GenericPayload<R> metadata, DownloadableItem file) throws IOException {
+      UUID jobId, AuthData authData, GenericPayload<R> metadata, DownloadableItem file)
+      throws IOException, InvalidTokenException {
     InputStreamWrapper wrapper = connectionProvider.getInputStreamForItem(jobId, file);
     File tempFile =
         dataStore.getTempFileFromInputStream(
@@ -74,6 +88,7 @@ public class GenericFileImporter<C extends ContainerResource, R> extends Generic
     Request request =
         new Request.Builder()
             .url(endpoint)
+            .addHeader("Authorization", format("Bearer %s", authData.getToken()))
             .post(
                 new MultipartBody.Builder()
                     .setType(MULTIPART_RELATED)
@@ -86,10 +101,7 @@ public class GenericFileImporter<C extends ContainerResource, R> extends Generic
             .build();
 
     try (Response response = client.newCall(request).execute()) {
-      if (response.code() >= 400) {
-        throw new IOException(format("Error %s", response.code()));
-      }
-      return true;
+      return parseResponse(response);
     } finally {
       tempFile.delete();
     }
