@@ -17,8 +17,10 @@ package org.datatransferproject.transfer.microsoft;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.auto.value.AutoValue;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
@@ -190,8 +192,27 @@ public abstract class MicrosoftApiResponse {
     return new IOException(String.format("%s: %s", message, toString()));
   }
 
+  /** Extracts a top-level JSON value, at key `jsonTopKey`, from current response body. */
+  public String getJsonValue(ObjectMapper objectMapper, String jsonTopKey, String causeMessage)
+      throws IOException {
+    ResponseBody responseBody = checkResponseBody(causeMessage);
+    // convert to a map
+    final Map<String, Object> json = objectMapper.readValue(responseBody.bytes(), Map.class);
+    checkState(
+        json.containsKey(jsonTopKey),
+        "response body missing top-level JSON field \"%s\"",
+        jsonTopKey);
+    final String jsonValue = (String) json.get(jsonTopKey);
+    checkState(
+        !Strings.isNullOrEmpty(jsonValue),
+        "Expected JSON value for key \"%s\" to be present in in JSON body: %s",
+        jsonTopKey,
+        json);
+    return jsonValue;
+  }
+
   /** Returns response body or throws DTP base exception with `causeMessage`. */
-  public ResponseBody checkResponseBody(String causeMessage) throws IOException {
+  private ResponseBody checkResponseBody(String causeMessage) throws IOException {
     return body()
         .orElseThrow(
             () ->
