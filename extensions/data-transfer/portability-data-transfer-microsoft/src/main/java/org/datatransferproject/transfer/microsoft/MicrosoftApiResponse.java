@@ -189,4 +189,14 @@ public abstract class MicrosoftApiResponse {
   public IOException toIoException(String message) {
     return new IOException(String.format("%s: %s", message, toString()));
   }
+
+  /** Returns response body or throws DTP base exception with `causeMessage`. */
+  public ResponseBody checkResponseBody(MicrosoftApiResponse resp, String causeMessage)
+      throws IOException {
+    return resp.body()
+        .orElseThrow(
+            () ->
+                resp.toIoException(
+                    String.format("got an empty HTTP response-body: %s", causeMessage)));
+  }
 }
