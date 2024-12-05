@@ -52,6 +52,7 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
+import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
@@ -193,6 +194,40 @@ public class MicrosoftMediaImporterTest {
 
     assertThrows(
         PermissionDeniedException.class,
+        () -> {
+          ImportResult result = importer.importItem(uuid, executor, authData, data);
+        });
+  }
+
+  @Test
+  public void testImportInsufficientStorage() throws Exception {
+    List<MediaAlbum> albums =
+        ImmutableList.of(new MediaAlbum("id1", "album1.", "This is a fake albumb"));
+
+    MediaContainerResource data =
+        new MediaContainerResource(albums, null /*photos*/, null /*videos*/);
+
+    Call call = mock(Call.class);
+    doReturn(call)
+        .when(client)
+        .newCall(
+            argThat(
+                (Request r) ->
+                    r.url()
+                        .toString()
+                        .equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
+    Response response = mock(Response.class);
+    when(response.code()).thenReturn(507);
+    when(response.message()).thenReturn("");
+    when(response.body())
+        .thenReturn(
+            ResponseBody.create(
+                MediaType.parse("application/json"),
+                "{\"message\": \"Insufficient Space Available\"}"));
+    when(call.execute()).thenReturn(response);
+
+    assertThrows(
+        DestinationMemoryFullException.class,
         () -> {
           ImportResult result = importer.importItem(uuid, executor, authData, data);
         });

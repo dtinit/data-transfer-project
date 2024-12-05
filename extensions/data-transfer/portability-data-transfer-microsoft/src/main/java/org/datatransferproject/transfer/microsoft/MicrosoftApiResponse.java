@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Strings;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.Map;
 import java.util.Optional;
 import okhttp3.Response;
@@ -172,9 +173,7 @@ public abstract class MicrosoftApiResponse {
     }
     // Nit: we _could_ just parse the body into json properly and make sure the JSON body "message"
     // field has this string. This seems fine for now.
-    if (httpStatus() == 507
-        && body().isPresent()
-        && body().get().contains("Insufficient Space Available")) {
+    if (httpStatus() == 507 && bodyContains("Insufficient Space Available")) {
       return FatalState.FATAL_STATE_FATAL_DESTINATION_FULL;
     }
     return FatalState.FATAL_STATE_FATAL_UNSPECIFIED;
@@ -200,7 +199,7 @@ public abstract class MicrosoftApiResponse {
   public String getJsonValue(ObjectMapper objectMapper, String jsonTopKey, String causeMessage)
       throws IOException {
     ResponseBody responseBody = checkResponseBody(causeMessage);
-    // convert to a map
+    // convert to a map, by reading entire body into memory
     final Map<String, Object> json = objectMapper.readValue(responseBody.bytes(), Map.class);
     checkState(
         json.containsKey(jsonTopKey),
@@ -222,5 +221,44 @@ public abstract class MicrosoftApiResponse {
             () ->
                 toIoException(
                     String.format("HTTP response-body unexpectedly empty: %s", causeMessage)));
+  }
+
+  private boolean bodyContains(String needle) {
+    if (body().isEmpty()) {
+      return false;
+    }
+
+    try (Reader bodyReader = body().get().charStream()) {
+      return readerContains(bodyReader, needle);
+    } catch (IOException e) {
+      return false;
+    }
+  }
+
+  private static boolean readerContains(Reader haystack, String needle) {
+    checkState(!Strings.isNullOrEmpty(needle), "cannot search for empty substring");
+
+    int compareIndex = 0;
+    try {
+      int actualChar = -1;
+      while ((actualChar = haystack.read()) != -1 /*end of stream*/) {
+        if (actualChar != needle.charAt(compareIndex)) {
+          compareIndex = 0;
+          if (actualChar != needle.charAt(compareIndex)) {
+            // leave index at zero, start over on the next stream input
+            continue;
+          }
+        }
+
+        compareIndex++;
+        if (compareIndex == needle.length()) {
+          return true;
+        }
+      }
+    } catch (IOException e) {
+      return false;
+    }
+
+    return false;
   }
 }
