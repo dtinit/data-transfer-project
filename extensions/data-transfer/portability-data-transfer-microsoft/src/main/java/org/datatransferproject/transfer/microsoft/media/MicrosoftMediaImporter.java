@@ -36,7 +36,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
 import org.apache.commons.lang3.tuple.Pair;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.api.transport.JobFileStream;
@@ -211,11 +210,11 @@ public class MicrosoftMediaImporter
           "final chunk-upload response should have had an ID, but a non-OK response came back: %s",
           finalChunkResponse.toString());
 
-      ResponseBody body =
-          finalChunkResponse.checkResponseBody(
-              "final chunk-upload response should have had ID, but got empty HTTP response-body");
       // get complete file response
-      return getJsonField(body, "id");
+      return finalChunkResponse.getJsonValue(
+          objectMapper,
+          "id",
+          "final chunk-upload response should have had ID, but got empty HTTP response-body");
     }
   }
 
@@ -333,24 +332,6 @@ public class MicrosoftMediaImporter
             contentRange, mediaType, totalFileSize));
   }
 
-  /** Extracts a top-level JSON value, at key `jsonFieldKey`, from an HTTP Response body. */
-  private String getJsonField(@Nonnull ResponseBody responseBody, String jsonFieldKey)
-      throws IOException {
-    // convert to a map
-    final Map<String, Object> json = objectMapper.readValue(responseBody.bytes(), Map.class);
-    checkState(
-        json.containsKey(jsonFieldKey),
-        "response body missing top-level JSON field \"%s\"",
-        jsonFieldKey);
-    final String jsonValue = (String) json.get(jsonFieldKey);
-    checkState(
-        !Strings.isNullOrEmpty(jsonValue),
-        "Expected JSON value for key \"%s\" to be present in in JSON body: %s",
-        jsonFieldKey,
-        json);
-    return jsonValue;
-  }
-
   private Credential getOrCreateCredential(TokensAndUrlAuthData authData) {
     if (this.credential == null) {
       this.credential = this.credentialFactory.createCredential(authData);
@@ -452,6 +433,6 @@ public class MicrosoftMediaImporter
       Request.Builder requestBuilder, String jsonResponseKey, String causeMessage)
       throws IOException, DestinationMemoryFullException, PermissionDeniedException {
     final MicrosoftApiResponse resp = tryWithCredsOrFail(requestBuilder, causeMessage);
-    return getJsonField(resp.checkResponseBody(causeMessage), jsonResponseKey);
+    return resp.getJsonValue(objectMapper, jsonResponseKey, causeMessage);
   }
 }
