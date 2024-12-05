@@ -152,6 +152,7 @@ public class MicrosoftMediaImporterTest {
         .thenReturn(
             ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").string());
     when(response.code()).thenReturn(200);
+    when(response.message()).thenReturn("OK");
     when(response.body()).thenReturn(body);
     when(call.execute()).thenReturn(response);
 
