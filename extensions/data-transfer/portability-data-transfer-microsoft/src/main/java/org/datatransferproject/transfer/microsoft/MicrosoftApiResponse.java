@@ -167,8 +167,11 @@ public abstract class MicrosoftApiResponse {
     if (httpStatus() == 403 && httpMessage().contains("Access Denied")) {
       return FatalState.FATAL_STATE_FATAL_PERMISSION_DENIED;
     }
-    // TODO(zacsh) fix destination full check, it's currently the wrong string.
-    if (httpStatus() == 507 && httpMessage().contains("Insufficient Storage")) {
+    // Nit: we _could_ just parse the body into json properly and make sure the JSON body "message"
+    // field has this string. This seems fine for now.
+    if (httpStatus() == 507
+        && body().isPresent()
+        && body().get().contains("Insufficient Space Available")) {
       return FatalState.FATAL_STATE_FATAL_DESTINATION_FULL;
     }
     return FatalState.FATAL_STATE_FATAL_UNSPECIFIED;
