@@ -259,6 +259,102 @@ public class MicrosoftMediaImporter
         lastChunkResponse, "bug: empty-stream already checked for yet stream empty now?");
   }
 
+  // Request an upload session to the OneDrive api so that we can upload chunks
+  // to the returned URL
+  private String createUploadSession(
+      DownloadableFile item, IdempotentImportExecutor idempotentImportExecutor)
+      throws IOException, CopyExceptionWithFailureReason {
+    Request.Builder createSessionRequestBuilder =
+        buildCreateUploadSessionPath(item, idempotentImportExecutor);
+
+    // Auth headers
+    createSessionRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
+    createSessionRequestBuilder.header("Content-Type", "application/json");
+
+    // Post request with empty body. If you don't include an empty body, you'll have problems
+    createSessionRequestBuilder.post(
+        RequestBody.create(
+            MediaType.parse("application/json"),
+            objectMapper.writeValueAsString(ImmutableMap.of())));
+
+    return tryWithCredsOrFail(
+        createSessionRequestBuilder, "uploadUrl", "creating initial upload session");
+  }
+
+  /**
+   * Forms the URL to create an upload session.
+   *
+   * <p>Creates an upload session path for one of two cases:
+   *
+   * <ul>
+   *   <li>- 1) POST to /me/drive/items/{folder_id}:/{file_name}:/createUploadSession
+   *   <li>- 2) GET {uploadurl} from
+   *       /me/drive/items/root:/photos-video/{file_name}:/createUploadSession
+   * </ul>
+   */
+  private Request.Builder buildCreateUploadSessionPath(
+      DownloadableFile item, IdempotentImportExecutor idempotentImportExecutor) {
+    String createSessionUrl;
+    if (Strings.isNullOrEmpty(item.getFolderId())) {
+      createSessionUrl = String.format(albumlessMediaUrlTemplate, item.getName(), UPLOAD_PARAMS);
+    } else {
+      String oneDriveFolderId = idempotentImportExecutor.getCachedValue(item.getFolderId());
+      createSessionUrl =
+          String.format(uploadMediaUrlTemplate, oneDriveFolderId, item.getName(), UPLOAD_PARAMS);
+    }
+
+    return new Request.Builder().url(createSessionUrl);
+  }
+
+  // Uploads a single DataChunk to an upload URL
+  // PUT to {photoUploadUrl}
+  // HEADERS
+  // Content-Length: {chunk size in bytes}
+  // Content-Range: bytes {begin}-{end}/{total size}
+  // body={bytes}
+  private MicrosoftApiResponse uploadChunk(
+      DataChunk chunk, String photoUploadUrl, long totalFileSize, String mediaType)
+      throws IOException, DestinationMemoryFullException, PermissionDeniedException {
+    Request.Builder uploadRequestBuilder = new Request.Builder().url(photoUploadUrl);
+    uploadRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
+
+    // put chunk data in
+    RequestBody uploadChunkBody =
+        RequestBody.create(MediaType.parse(mediaType), chunk.chunk(), 0, chunk.size());
+    uploadRequestBuilder.put(uploadChunkBody);
+
+    // set chunk data headers, indicating size and chunk range
+    final String contentRange =
+        String.format(
+            "bytes %d-%d/%d", chunk.streamByteOffset(), chunk.finalByteOffset(), totalFileSize);
+    uploadRequestBuilder.header("Content-Range", contentRange);
+    uploadRequestBuilder.header("Content-Length", String.format("%d", chunk.size()));
+
+    return tryWithCredsOrFail(
+        uploadRequestBuilder,
+        String.format(
+            "uploading one chunk (%s) mediaType=%s amid %d total bytes",
+            contentRange, mediaType, totalFileSize));
+  }
+
+  /** Extracts a top-level JSON value, at key `jsonFieldKey`, from an HTTP Response body. */
+  private String getJsonField(@Nonnull ResponseBody responseBody, String jsonFieldKey)
+      throws IOException {
+    // convert to a map
+    final Map<String, Object> json = objectMapper.readValue(responseBody.bytes(), Map.class);
+    checkState(
+        json.containsKey(jsonFieldKey),
+        "response body missing top-level JSON field \"%s\"",
+        jsonFieldKey);
+    final String jsonValue = (String) json.get(jsonFieldKey);
+    checkState(
+        !Strings.isNullOrEmpty(jsonValue),
+        "Expected JSON value for key \"%s\" to be present in in JSON body: %s",
+        jsonFieldKey,
+        json);
+    return jsonValue;
+  }
+
   private Credential getOrCreateCredential(TokensAndUrlAuthData authData) {
     if (this.credential == null) {
       this.credential = this.credentialFactory.createCredential(authData);
@@ -367,101 +463,5 @@ public class MicrosoftMediaImporter
                     resp.toIoException(
                         String.format("got an empty HTTP response-body: %s", causeMessage)));
     return getJsonField(resp.body().get(), jsonResponseKey);
-  }
-
-  // Request an upload session to the OneDrive api so that we can upload chunks
-  // to the returned URL
-  private String createUploadSession(
-      DownloadableFile item, IdempotentImportExecutor idempotentImportExecutor)
-      throws IOException, CopyExceptionWithFailureReason {
-    Request.Builder createSessionRequestBuilder =
-        buildCreateUploadSessionPath(item, idempotentImportExecutor);
-
-    // Auth headers
-    createSessionRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
-    createSessionRequestBuilder.header("Content-Type", "application/json");
-
-    // Post request with empty body. If you don't include an empty body, you'll have problems
-    createSessionRequestBuilder.post(
-        RequestBody.create(
-            MediaType.parse("application/json"),
-            objectMapper.writeValueAsString(ImmutableMap.of())));
-
-    return tryWithCredsOrFail(
-        createSessionRequestBuilder, "uploadUrl", "creating initial upload session");
-  }
-
-  /**
-   * Forms the URL to create an upload session.
-   *
-   * <p>Creates an upload session path for one of two cases:
-   *
-   * <ul>
-   *   <li>- 1) POST to /me/drive/items/{folder_id}:/{file_name}:/createUploadSession
-   *   <li>- 2) GET {uploadurl} from
-   *       /me/drive/items/root:/photos-video/{file_name}:/createUploadSession
-   * </ul>
-   */
-  private Request.Builder buildCreateUploadSessionPath(
-      DownloadableFile item, IdempotentImportExecutor idempotentImportExecutor) {
-    String createSessionUrl;
-    if (Strings.isNullOrEmpty(item.getFolderId())) {
-      createSessionUrl = String.format(albumlessMediaUrlTemplate, item.getName(), UPLOAD_PARAMS);
-    } else {
-      String oneDriveFolderId = idempotentImportExecutor.getCachedValue(item.getFolderId());
-      createSessionUrl =
-          String.format(uploadMediaUrlTemplate, oneDriveFolderId, item.getName(), UPLOAD_PARAMS);
-    }
-
-    return new Request.Builder().url(createSessionUrl);
-  }
-
-  // Uploads a single DataChunk to an upload URL
-  // PUT to {photoUploadUrl}
-  // HEADERS
-  // Content-Length: {chunk size in bytes}
-  // Content-Range: bytes {begin}-{end}/{total size}
-  // body={bytes}
-  private MicrosoftApiResponse uploadChunk(
-      DataChunk chunk, String photoUploadUrl, long totalFileSize, String mediaType)
-      throws IOException, DestinationMemoryFullException, PermissionDeniedException {
-    Request.Builder uploadRequestBuilder = new Request.Builder().url(photoUploadUrl);
-    uploadRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
-
-    // put chunk data in
-    RequestBody uploadChunkBody =
-        RequestBody.create(MediaType.parse(mediaType), chunk.chunk(), 0, chunk.size());
-    uploadRequestBuilder.put(uploadChunkBody);
-
-    // set chunk data headers, indicating size and chunk range
-    final String contentRange =
-        String.format(
-            "bytes %d-%d/%d", chunk.streamByteOffset(), chunk.finalByteOffset(), totalFileSize);
-    uploadRequestBuilder.header("Content-Range", contentRange);
-    uploadRequestBuilder.header("Content-Length", String.format("%d", chunk.size()));
-
-    return tryWithCredsOrFail(
-        uploadRequestBuilder,
-        String.format(
-            "uploading one chunk (%s) mediaType=%s amid %d total bytes",
-            contentRange, mediaType, totalFileSize));
-  }
-
-  /** Extracts a top-level JSON value, at key `jsonFieldKey`, from an HTTP Response body. */
-  private String getJsonField(@Nonnull ResponseBody responseBody, String jsonFieldKey)
-      throws IOException {
-    // convert to a map
-    final Map<String, Object> json = objectMapper.readValue(responseBody.bytes(), Map.class);
-    checkState(
-        json.containsKey(jsonFieldKey),
-        "response body missing top-level JSON field \"%s\"",
-        jsonFieldKey);
-    final String jsonValue = (String) json.get(jsonFieldKey);
-    checkState(
-        !Strings.isNullOrEmpty(jsonValue),
-        "Expected JSON value for key \"%s\" to be present in in JSON body: %s",
-        jsonFieldKey,
-        json);
-    return jsonValue;
   }
 }
