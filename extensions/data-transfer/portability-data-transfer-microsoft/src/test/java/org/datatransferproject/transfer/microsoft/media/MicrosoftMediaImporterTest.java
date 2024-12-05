@@ -261,6 +261,7 @@ public class MicrosoftMediaImporterTest {
         .thenReturn(
             ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}").string());
     when(response.code()).thenReturn(200);
+    when(response.message()).thenReturn("OK");
     when(response.body()).thenReturn(body);
     when(call.execute()).thenReturn(response);
 
@@ -283,6 +284,7 @@ public class MicrosoftMediaImporterTest {
                     "{\"uploadUrl\": \"https://scalia.com/link\"}")
                 .string());
     when(response2.code()).thenReturn(200);
+    when(response2.message()).thenReturn("OK");
     when(response2.body()).thenReturn(body2);
     when(call2.execute()).thenReturn(response2);
 
@@ -301,6 +303,7 @@ public class MicrosoftMediaImporterTest {
             ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"rand1\"}")
                 .string());
     when(response3.code()).thenReturn(200);
+    when(response3.message()).thenReturn("OK");
     when(response3.body()).thenReturn(body3);
     when(call3.execute()).thenReturn(response3);
 
