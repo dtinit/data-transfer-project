@@ -164,8 +164,9 @@ public abstract class MicrosoftApiResponse {
   }
 
   /**
-   * Ergonomic wrapper for {@link throwDtpException} that gives you ability to use call this in a
-   * lexical scope that requires a return.
+   * "Return" that always throws an exception; just an ergonomic wrapper for {@link
+   * throwDtpException} that gives you ability to use call this in a lexical scope that requires a
+   * return.
    *
    * <p>Never returns, always causes an exception. Return signature is so you can include this in a
    * codepath that would otherwise excpect a `throw new` keyword to be present if you're missing a
@@ -175,6 +176,9 @@ public abstract class MicrosoftApiResponse {
       throws IOException, DestinationMemoryFullException, PermissionDeniedException {
     throwDtpException(message);
     // above always throws, but javac doesn't understand without a `throw new` directly visible
+    throw new AssertionError(
+        String.format(
+            "bug: throwDtpException should have thrown for failed response state: %s", message));
     return this; // unreachable
   }
 
