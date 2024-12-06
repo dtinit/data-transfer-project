@@ -99,11 +99,492 @@ Content-Length: 524288000
 
 ## Schemas
 
+Below are the [JSON schemas](https://json-schema.org/specification) for each supported vertical.
+
+### MEDIA
+
+The MEDIA vertical describes a user's photos and videos, and the albums that contain them.
+
+Albums are guaranteed to be imported before the photos and videos contained in them.
+
+#### Basic Data Types
+
+The only basic data type exposed for MEDIA data is `Album`, which contains metadata about an album.
+
 ```json
 {
-    "TODO": "schema"
+  "$schema" : "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "description": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "@type": {
+      "const": "Album"
+    }
+  },
+  "required": [
+    "@type",
+    "id",
+    "name"
+  ]
 }
 ```
+
+#### File-based Data Types
+
+The `Photo` and `Video` data types are sent as file-based data containing metadata described below in the JSON part of the payload.
+
+```json
+{
+  "$schema" : "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "FavoriteInfo": {
+      "type": "object",
+      "properties": {
+        "favorite": {
+          "type": "boolean"
+        },
+        "lastUpdateTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "@type": {
+          "const": "FavoriteInfo"
+        }
+      },
+      "required": [
+        "@type",
+        "favourite",
+        "lastUpdateTime"
+      ]
+    }
+  },
+  "anyOf": [
+    {
+      "type": "object",
+      "properties": {
+        "albumId": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "favoriteInfo": {
+          "$ref": "#/$defs/FavoriteInfo"
+        },
+        "name": {
+          "type": "string"
+        },
+        "uploadedTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "@type": {
+          "const": "Video"
+        }
+      },
+      "required": [
+        "@type",
+        "albumId",
+        "name"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "albumId": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "favoriteInfo": {
+          "$ref": "#/$defs/FavoriteInfo"
+        },
+        "name": {
+          "type": "string"
+        },
+        "uploadedTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "@type": {
+          "const": "Photo"
+        }
+      },
+      "required": [
+        "@type",
+        "albumId",
+        "name"
+      ]
+    }
+  ]
+}
+```
+
+#### PHOTOS and VIDEOS
+
+The PHOTOS and VIDEOS verticals are implemented as a subset of the MEDIA data type. If your importer is configured to support only PHOTOS, for example, photo data will be imported using the MEDIA schemas, but containing only `Album` and `Photo` payloads.
+
+### BLOBS
+
+The BLOBS vertical represents arbitrary file data and folder structures.
+
+Folders are guaranteed to be imported before any of their containing data, which may include folders and/or files.
+
+#### Basic Data Types
+
+The only basic data type exposed for BLOBS data is `Folder`, which describes a folder containing other folders and/or files.
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "path": {
+      "type": "string",
+      "description": "Full path of the folder to be created"
+    },
+    "@type": {
+      "const": "Folder"
+    }
+  },
+  "required": [
+    "@type",
+    "path"
+  ]
+}
+```
+
+#### File-based Data Types
+
+The only file-based data type exposed for BLOBS data is `File`, which describes an arbitrary file in a folder. The file's metadata will be describes in the JSON part of the payload, with the below schema.
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "dateModified": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "folder": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "@type": {
+      "const": "File"
+    }
+  },
+  "required": [
+    "@type",
+    "name",
+    "folder"
+  ]
+}
+```
+
+### CALENDAR
+
+The CALENDAR vertical describes calendars and events on those calendars.
+
+Calendars are guaranteed to be created before the events associated with them.
+
+All data exposed by the CALENDER vertical is encoded as a basic data type.
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "CalendarEventTime": {
+      "type": "object",
+      "properties": {
+        "dateOnly": {
+          "type": "boolean"
+        },
+        "dateTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "@type": {
+          "const": "CalendarEventModel$CalendarEventTime"
+        }
+      },
+      "required": [
+        "@type",
+        "dateTime"
+      ]
+    }
+  },
+  "anyOf": [
+    {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "@type": {
+          "const": "Calendar"
+        }
+      },
+      "required": [
+        "@type",
+        "name",
+        "id"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "attendees": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "displayName": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "optional": {
+                "type": "boolean"
+              },
+              "@type": {
+                "const": "CalendarAttendeeModel"
+              }
+            },
+            "required": [
+              "@type"
+            ]
+          }
+        },
+        "calendarId": {
+          "type": "string"
+        },
+        "endTime": {
+          "$ref": "#/$defs/CalendarEventTime"
+        },
+        "location": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "recurrenceRule": {
+          "type": "object",
+          "properties": {
+            "exDate": {
+              "type": "object"
+            }
+          }
+        },
+        "startTime": {
+          "$ref": "#/$defs/CalendarEventTime"
+        },
+        "title": {
+          "type": "string"
+        },
+        "@type": {
+          "const": "CalendarEvent"
+        }
+      },
+      "required": [
+        "@type",
+        "calendarId",
+        "title"
+      ]
+    }
+  ]
+}
+```
+
+### SOCIAL-POSTS
+
+The SOCIAL-POSTS vertical represents posts made by the user on a social media platform.
+
+Only the SocialActivity data type is exposed by the SOCIAL-POSTS vertical, which is a basic data type.
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "activity": {
+      "type": "object",
+      "properties": {
+        "attachments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "content": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "LINK",
+                  "IMAGE",
+                  "VIDEO"
+                ]
+              },
+              "url": {
+                "type": "string"
+              },
+              "@type": {
+                "const": "SocialActivityAttachment"
+              }
+            },
+            "required": [
+              "@type",
+              "name"
+            ]
+          }
+        },
+        "content": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "location": {
+          "type": "object",
+          "properties": {
+            "latitude": {
+              "type": "number"
+            },
+            "longitude": {
+              "type": "number"
+            },
+            "name": {
+              "type": "string"
+            },
+            "@type": {
+              "const": "SocialActivityLocation"
+            }
+          },
+          "required": [
+            "@type",
+            "latitude",
+            "longitude"
+          ]
+        },
+        "published": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "CHECKIN",
+            "POST",
+            "NOTE"
+          ]
+        },
+        "url": {
+          "type": "string"
+        },
+        "@type": {
+          "const": "SocialActivityModel"
+        }
+      },
+      "required": [
+        "@type",
+        "id",
+        "content"
+      ]
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "actor": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            },
+            "@type": {
+              "const": "SocialActivityActor"
+            }
+          },
+          "required": [
+            "@type",
+            "id"
+          ]
+        },
+        "@type": {
+          "const": "SocialActivityMetadata"
+        }
+      },
+      "required": [
+        "@type"
+      ]
+    },
+    "@type": {
+      "const": "SocialActivity"
+    }
+  },
+  "required": [
+    "@type",
+    "activity"
+  ]
+}
+```
+
+### Endpoint Errors
+
+If there is an error importing an item on any endpoint, the relevant HTTP response code (40x, 50x) should be set, and a JSON encoded response body with the following schema should be sent.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "error": {
+      "type": "string"
+    },
+    "error_description": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "error"
+  ]
+}
+```
+
+The combination of the HTTP response code and `error` field can be used to encode for specific failure modes; see [Token Refresh](#token-refresh) below.
 
 ## Authentication and Authorization
 
