@@ -605,7 +605,7 @@ Content-Type: application/json
 }
 ```
 
-The worker will request a token refresh through the standard OAuth refresh token flow, sending a JSON-encoded POST request to the configured refresh endpoint.
+The worker will request a token refresh through the standard OAuth refresh token flow, sending a form-encoded POST request to the configured refresh endpoint.
 
 ```http
 POST /oauth/refresh HTTP/1.1
