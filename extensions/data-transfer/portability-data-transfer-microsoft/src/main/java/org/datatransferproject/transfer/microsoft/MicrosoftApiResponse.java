@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Strings;
 import java.io.IOException;
-import java.io.Reader;
 import java.util.Map;
 import java.util.Optional;
 import okhttp3.Response;
@@ -246,39 +245,6 @@ public abstract class MicrosoftApiResponse {
       return false;
     }
 
-    try (Reader bodyReader = body().get().charStream()) {
-      return readerContains(bodyReader, needle);
-    } catch (IOException e) {
-      return false;
-    }
-  }
-
-  private static boolean readerContains(Reader haystack, String needle) {
-    checkState(!Strings.isNullOrEmpty(needle), "cannot search for empty substring");
-
-    int compareIndex = 0;
-    try {
-      int actualChar = -1;
-      while ((actualChar = haystack.read()) != -1 /*end of stream*/) {
-        if (actualChar != needle.charAt(compareIndex)) {
-          compareIndex = 0;
-          if (actualChar != needle.charAt(compareIndex)) {
-            // leave index at zero, start over on the next stream input
-            continue;
-          }
-        }
-
-        compareIndex++;
-        if (compareIndex == needle.length()) {
-          return true;
-        }
-      }
-    } catch (IOException e) {
-      return false;
-    }
-
-    return false;
-=======
     try {
       return body().get().string().contains(needle);
     } catch (IOException e) {
@@ -291,6 +257,5 @@ public abstract class MicrosoftApiResponse {
               toString()),
           e);
     }
->>>>>>> master
   }
 }
