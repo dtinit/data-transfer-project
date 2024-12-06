@@ -1,8 +1,0 @@
-serviceConfig:
-  serviceId: "Test"
-  endpoint: "http://localhost:8080/dtp/"
-  verticals:
-    - vertical: SOCIAL-POSTS
-    - vertical: BLOBS
-    - vertical: MEDIA
-    - vertical: CALENDAR
