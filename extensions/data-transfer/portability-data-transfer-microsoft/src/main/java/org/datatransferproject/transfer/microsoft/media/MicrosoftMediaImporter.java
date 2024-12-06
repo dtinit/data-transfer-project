@@ -155,7 +155,6 @@ public class MicrosoftMediaImporter
   }
 
   /** Returns a folder ID after asking Microsoft APIs to allocate one for the given album. */
-  @SuppressWarnings("unchecked")
   private String createOneDriveFolder(MediaAlbum album)
       throws IOException, CopyExceptionWithFailureReason {
     Map<String, Object> rawFolder = new LinkedHashMap<>();
@@ -377,11 +376,11 @@ public class MicrosoftMediaImporter
    *
    * <p>Example usage:
    *
-   * <pre>
+   * <pre>{@code
    * MicrosoftApiResponse resp = tryWithCredsOrFail(request, "creating a folder");
    * checkState(resp.isOkay(), "bug: tryWithCredsOrFail() should have returne healthy resp");
    * // ...carry on as normal with business logic...
-   * </pre>
+   * }</pre>
    *
    * @param causeMessage a contextual message to include as the root cause/context when throwing a
    *     DTP excption.
@@ -401,9 +400,8 @@ public class MicrosoftMediaImporter
               String.format(
                   "bug! microsoft server needs token refresh immediately after a refreshing: %s",
                   causeMessage));
-        default:
-          throw new AssertionError("exhaustive switch");
       }
+      throw new AssertionError("exhaustive switch");
     }
     return response.returnConvertDtpException(
         String.format(
@@ -417,10 +415,10 @@ public class MicrosoftMediaImporter
    *
    * <p>Example usage:
    *
-   * <pre>
+   * <pre>{@code
    * @Nonnull String folderId = tryWithCredsOrFail(request, "folderId", "creating a folder");
    * // ...carry on as normal with business logic...
-   * </pre>
+   * }</pre>
    *
    * @param jsonResponseKey the top-level value to extract from the response body.
    * @param causeMessage a contextual message to include as the root cause/context when throwing a

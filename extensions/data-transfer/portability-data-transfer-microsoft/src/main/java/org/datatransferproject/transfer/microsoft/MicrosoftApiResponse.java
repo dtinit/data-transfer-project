@@ -34,7 +34,7 @@ import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
  *
  * <p>Example usage error handling workflow:
  *
- * <pre>
+ * <pre>{@code
  * MicrosoftApiResponse resp = someServerCall();
  * Optional<RecoverableState> recovery = resp.recoverableState();
  * if (recovery.isPresent()) {
@@ -48,7 +48,7 @@ import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
  *   }
  * }
  * resp.throwDtpException(); // or returnConvertDtpException might help
- * </pre>
+ * }</pre>
  */
 @AutoValue
 public abstract class MicrosoftApiResponse {
@@ -163,9 +163,8 @@ public abstract class MicrosoftApiResponse {
             "Microsoft destination storage limit reached", toIoException(message));
       case FATAL_STATE_FATAL_UNSPECIFIED:
         throw toIoException(String.format("%s: %s", CAUSE_PREFIX_UNRECOGNIZED_EXCEPTION, message));
-      default:
-        throw new AssertionError("exhaustive switch");
     }
+    throw new AssertionError("exhaustive switch");
   }
 
   /**
@@ -208,6 +207,8 @@ public abstract class MicrosoftApiResponse {
   }
 
   /**
+   * Produce {@link toIoException} with a message used to construct the exception's cause.
+   *
    * @param message The cause-message one might expect with a {@link java.lang.Exception}
    *     construction.
    */
