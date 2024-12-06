@@ -19,7 +19,7 @@ For example, below is a full request of a SOCIAL_POST item (JSON formatted for r
 ```http
 POST /import/social-posts HTTP/1.1
 Content-Type: application/json
-Content-Length: 510
+Content-Length: 660
 Host: localhost:8080
 Connection: Keep-Alive
 Accept-Encoding: gzip
@@ -27,39 +27,44 @@ User-Agent: okhttp/3.9.1
 Authorization: Bearer accessToken
 
 {
-  "@type": "SocialActivityData",
-  "metadata": {
-    "@type": "SocialActivityMetadata",
-    "actor": {
-      "@type": "SocialActivityActor",
-      "id": "321",
-      "name": "Steve",
+  "@type": "GenericPayload",
+  "schemaSource": ".../SocialPostsSerializer.java",
+  "apiVersion": "0.1.0",
+  "payload": {
+    "@type": "SocialActivityData",
+    "metadata": {
+      "@type": "SocialActivityMetadata",
+      "actor": {
+        "@type": "SocialActivityActor",
+        "id": "321",
+        "name": "Steve",
+        "url": null
+      }
+    },
+    "activity": {
+      "@type": "SocialActivityModel",
+      "id": "456",
+      "published": 1731604863.845677,
+      "type": "NOTE",
+      "attachments": [
+        {
+          "@type": "SocialActivityAttachment",
+          "type": "IMAGE",
+          "url": "foo.com",
+          "name": "Foo",
+          "content": null
+        }
+      ],
+      "location": {
+        "@type": "SocialActivityLocation",
+        "name": "foo",
+        "longitude": 10.0,
+        "latitude": 10.0
+      },
+      "title": "Hello world!",
+      "content": "Hi there",
       "url": null
     }
-  },
-  "activity": {
-    "@type": "SocialActivityModel",
-    "id": "456",
-    "published": 1731604863.845677,
-    "type": "NOTE",
-    "attachments": [
-      {
-        "@type": "SocialActivityAttachment",
-        "type": "IMAGE",
-        "url": "foo.com",
-        "name": "Foo",
-        "content": null
-      }
-    ],
-    "location": {
-      "@type": "SocialActivityLocation",
-      "name": "foo",
-      "longitude": 10.0,
-      "latitude": 10.0
-    },
-    "title": "Hello world!",
-    "content": "Hi there",
-    "url": null
   }
 }
 ```
@@ -82,9 +87,9 @@ Authorization: Bearer accessToken
 
 --1581c5eb-05d0-42fe-bfb3-472151f366cd
 Content-Type: application/json
-Content-Length: 130
+Content-Length: 236
 
-{"@type":"BlobbyFileData","folder":"/root/foo","document":{"name":"bar.mp4","dateModified":"2020-02-01","encodingFormat":"video/mp4"}}
+{"@type":"GenericPayload","schemaSource":".../BlobbySerializer.java","apiVersion": "0.1.0","payload":{"@type":"BlobbyFileData","folder":"/root/foo","document":{"name":"bar.mp4","dateModified":"2020-02-01","encodingFormat":"video/mp4"}}}
 --1581c5eb-05d0-42fe-bfb3-472151f366cd
 Content-Type: video/mp4
 Content-Length: 524288000
@@ -116,6 +121,37 @@ serviceConfig:
 ## Schemas
 
 Below are the [JSON schemas](https://json-schema.org/specification) for each supported vertical.
+
+All POST requests containing data to be imported are wrapped in a top-level `GenericPayload` wrapper.
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "apiVersion": {
+      "type": "string"
+    },
+    "payload": {
+      "type": "object",
+      "description": "The inner payload, which contains data from one of the described data verticals"
+    },
+    "schemaSource": {
+      "type": "string",
+      "description": "The source file containing the schema definition"
+    },
+    "@type": {
+      "const": "GenericPayload"
+    }
+  },
+  "required": [
+    "@type",
+    "schemaSource",
+    "apiVersion",
+    "payload"
+  ]
+}
+```
 
 ### MEDIA
 
