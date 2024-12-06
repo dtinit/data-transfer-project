@@ -97,11 +97,29 @@ Content-Length: 524288000
 > Endpoints supporting file-based data-types may also receive basic data-types, for example the `/blobs` endpoint should
 > support receiving folders encoded as `application/json` POST data.
 
+### Configuration
+
+To configure an importer, create a YAML configuration file in the `extensions/data-transfer/portability-data-transfer-generic/src/main/resources/config/` directory of this repository.
+
+```yaml
+# example.yaml
+serviceConfig:
+  serviceId: "Example"
+  endpoint: "https://example.com/dtp/"
+  verticals:
+    - vertical: SOCIAL-POSTS
+    - vertical: BLOBS
+    - vertical: MEDIA
+    - vertical: CALENDAR
+```
+
 ## Schemas
 
 Below are the [JSON schemas](https://json-schema.org/specification) for each supported vertical.
 
 ### MEDIA
+
+Endpoint: `/media`
 
 The MEDIA vertical describes a user's photos and videos, and the albums that contain them.
 
@@ -235,6 +253,8 @@ The PHOTOS and VIDEOS verticals are implemented as a subset of the MEDIA data ty
 
 ### BLOBS
 
+Endpoint: `/blobs`
+
 The BLOBS vertical represents arbitrary file data and folder structures.
 
 Folders are guaranteed to be imported before any of their containing data, which may include folders and/or files.
@@ -298,6 +318,8 @@ The only file-based data type exposed for BLOBS data is `File`, which describes 
 ```
 
 ### CALENDAR
+
+Endpoint: `/calendar`
 
 The CALENDAR vertical describes calendars and events on those calendars.
 
@@ -419,6 +441,8 @@ All data exposed by the CALENDER vertical is encoded as a basic data type.
 ```
 
 ### SOCIAL-POSTS
+
+Endpoint: `/social-posts`
 
 The SOCIAL-POSTS vertical represents posts made by the user on a social media platform.
 
