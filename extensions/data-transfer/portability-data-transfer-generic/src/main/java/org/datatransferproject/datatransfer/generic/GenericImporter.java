@@ -119,13 +119,13 @@ public class GenericImporter<C extends ContainerResource, R>
         jobTokenManagerMap.computeIfAbsent(
             jobId,
             ignored -> new OAuthTokenManager(initialAuthData, appCredentials, client, monitor));
-    for (ImportableData<?> importableData : containerUnpacker.apply(data)) {
+    for (ImportableData<R> importableData : containerUnpacker.apply(data)) {
       idempotentExecutor.executeAndSwallowIOExceptions(
           importableData.getIdempotentId(),
           importableData.getName(),
           () ->
               tokenManager.withAuthData(
-                  authData -> importSingleItem(authData, importableData.getJsonData())));
+                  authData -> importSingleItem(jobId, authData, importableData)));
     }
     return new ImportResult(ResultType.OK);
   }
@@ -156,13 +156,13 @@ public class GenericImporter<C extends ContainerResource, R>
     return true;
   }
 
-  boolean importSingleItem(TokensAndUrlAuthData authData, GenericPayload<?> dataItem)
+  boolean importSingleItem(UUID jobId, TokensAndUrlAuthData authData, ImportableData<R> dataItem)
       throws IOException, InvalidTokenException {
     Request request =
         new Request.Builder()
             .url(endpoint)
             .addHeader("Authorization", format("Bearer %s", authData.getToken()))
-            .post(RequestBody.create(JSON, om.writeValueAsBytes(dataItem)))
+            .post(RequestBody.create(JSON, om.writeValueAsBytes(dataItem.getJsonData())))
             .build();
 
     try (Response response = client.newCall(request).execute()) {
