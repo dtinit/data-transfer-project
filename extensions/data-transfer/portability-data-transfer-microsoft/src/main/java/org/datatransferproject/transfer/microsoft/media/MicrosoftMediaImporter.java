@@ -405,11 +405,10 @@ public class MicrosoftMediaImporter
           throw new AssertionError("exhaustive switch");
       }
     }
-    response.throwDtpException(
+    return response.returnConvertDtpException(
         String.format(
-            "%s with " + "request url: %s\n" + "bearer token: %s\n",
+            "%s: for request url \"%s\" and bearer token \"%s\"\n",
             causeMessage, reqResp.getLeft().url(), credential.getAccessToken()));
-    throw new AssertionError("unreachable: throwDtpException throws");
   }
 
   /**
