@@ -65,6 +65,7 @@ public class FakeIdempotentImportExecutor implements IdempotentImportExecutor {
 
   @Override
   public void setJobId(UUID jobId) {
-    // We deliberately do nothing here as this class is Fake and not behaviour which needs to be faked
+    // We deliberately do nothing here as this class is Fake and not behaviour which needs to be
+    // faked
   }
 }

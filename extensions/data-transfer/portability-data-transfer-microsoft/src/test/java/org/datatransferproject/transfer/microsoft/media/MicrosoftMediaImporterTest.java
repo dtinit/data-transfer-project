@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import okhttp3.Call;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -53,10 +54,10 @@ import org.datatransferproject.spi.api.transport.RemoteFileStreamer;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.InMemoryIdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
-import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
 import org.datatransferproject.types.common.DownloadableFile;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
@@ -91,7 +92,6 @@ public class MicrosoftMediaImporterTest {
 
   @Before
   public void setUp() throws IOException {
-    executor = new FakeIdempotentImportExecutor();
     authData = mock(TokensAndUrlAuthData.class);
     client = mock(OkHttpClient.class);
     objectMapper =
@@ -99,6 +99,7 @@ public class MicrosoftMediaImporterTest {
     // mocked on a per test basis
     jobStore = mock(TemporaryPerJobDataStore.class);
     monitor = new ConsoleMonitor(ConsoleMonitor.Level.INFO);
+    executor = new InMemoryIdempotentImportExecutor(monitor);
     credentialFactory = mock(MicrosoftCredentialFactory.class);
     credential = new Credential.Builder(BearerToken.authorizationHeaderAccessMethod()).build();
     RemoteFileStreamer remoteFileStreamer = mock(RemoteFileStreamer.class);
@@ -241,7 +242,7 @@ public class MicrosoftMediaImporterTest {
                         .toString()
                         .equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
     Response response = mock(Response.class);
-    when(response.code()).thenReturn(507);
+    when(response.code()).thenReturn(500);
     when(response.message()).thenReturn("");
     when(response.body())
         .thenReturn(
@@ -250,13 +251,11 @@ public class MicrosoftMediaImporterTest {
                 "{\"message\": \"Hippo is the best dog, not a real-world response\"}"));
     when(call.execute()).thenReturn(response);
 
-    IOException thrown =
-        assertThrows(
-            IOException.class,
-            () -> {
-              ImportResult result = importer.importItem(uuid, executor, authData, data);
-            });
-    assertThat(thrown.getMessage()).contains(CAUSE_PREFIX_UNRECOGNIZED_EXCEPTION);
+    ImportResult result = importer.importItem(uuid, executor, authData, data);
+    assertThat(executor.getErrors().size()).isEqualTo(1);
+    String exception =
+        executor.getErrors().stream().map(e -> e.exception()).collect(Collectors.toList()).get(0);
+    assertThat(exception).contains(CAUSE_PREFIX_UNRECOGNIZED_EXCEPTION);
   }
 
   private static <M extends DownloadableFile> M fakeJobstoreModel(
