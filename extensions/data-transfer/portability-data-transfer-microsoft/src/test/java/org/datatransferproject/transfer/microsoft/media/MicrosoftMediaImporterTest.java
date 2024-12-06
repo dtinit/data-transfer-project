@@ -18,6 +18,7 @@ package org.datatransferproject.transfer.microsoft.media;
 
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.truth.Truth.assertThat;
+import static org.datatransferproject.transfer.microsoft.MicrosoftApiResponse.CAUSE_PREFIX_UNRECOGNIZED_EXCEPTION;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.argThat;
@@ -38,6 +39,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import okhttp3.Call;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -52,10 +54,10 @@ import org.datatransferproject.spi.api.transport.RemoteFileStreamer;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.InMemoryIdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
-import org.datatransferproject.test.types.FakeIdempotentImportExecutor;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
 import org.datatransferproject.types.common.DownloadableFile;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
@@ -90,7 +92,6 @@ public class MicrosoftMediaImporterTest {
 
   @Before
   public void setUp() throws IOException {
-    executor = new FakeIdempotentImportExecutor();
     authData = mock(TokensAndUrlAuthData.class);
     client = mock(OkHttpClient.class);
     objectMapper =
@@ -98,6 +99,7 @@ public class MicrosoftMediaImporterTest {
     // mocked on a per test basis
     jobStore = mock(TemporaryPerJobDataStore.class);
     monitor = new ConsoleMonitor(ConsoleMonitor.Level.INFO);
+    executor = new InMemoryIdempotentImportExecutor(monitor);
     credentialFactory = mock(MicrosoftCredentialFactory.class);
     credential = new Credential.Builder(BearerToken.authorizationHeaderAccessMethod()).build();
     RemoteFileStreamer remoteFileStreamer = mock(RemoteFileStreamer.class);
@@ -220,6 +222,40 @@ public class MicrosoftMediaImporterTest {
         () -> {
           ImportResult result = importer.importItem(uuid, executor, authData, data);
         });
+  }
+
+  @Test
+  public void testImportUnrecognizedError() throws Exception {
+    List<MediaAlbum> albums =
+        ImmutableList.of(new MediaAlbum("id1", "album1.", "This is a fake albumb"));
+
+    MediaContainerResource data =
+        new MediaContainerResource(albums, null /*photos*/, null /*videos*/);
+
+    Call call = mock(Call.class);
+    doReturn(call)
+        .when(client)
+        .newCall(
+            argThat(
+                (Request r) ->
+                    r.url()
+                        .toString()
+                        .equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
+    Response response = mock(Response.class);
+    when(response.code()).thenReturn(500);
+    when(response.message()).thenReturn("");
+    when(response.body())
+        .thenReturn(
+            ResponseBody.create(
+                MediaType.parse("application/json"),
+                "{\"message\": \"Hippo is the best dog, not a real-world response\"}"));
+    when(call.execute()).thenReturn(response);
+
+    ImportResult result = importer.importItem(uuid, executor, authData, data);
+    assertThat(executor.getErrors().size()).isEqualTo(1);
+    String exception =
+        executor.getErrors().stream().map(e -> e.exception()).collect(Collectors.toList()).get(0);
+    assertThat(exception).contains(CAUSE_PREFIX_UNRECOGNIZED_EXCEPTION);
   }
 
   private static <M extends DownloadableFile> M fakeJobstoreModel(

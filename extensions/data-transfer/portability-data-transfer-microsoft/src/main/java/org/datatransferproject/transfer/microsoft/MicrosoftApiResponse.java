@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.auto.value.AutoValue;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.Map;
@@ -51,6 +52,10 @@ import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
  */
 @AutoValue
 public abstract class MicrosoftApiResponse {
+  @VisibleForTesting
+  public static final String CAUSE_PREFIX_UNRECOGNIZED_EXCEPTION =
+      "unrecognized class of Microsoft API error";
+
   /** HTTP status code. */
   public abstract int httpStatus();
 
@@ -157,8 +162,7 @@ public abstract class MicrosoftApiResponse {
         throw new DestinationMemoryFullException(
             "Microsoft destination storage limit reached", toIoException(message));
       case FATAL_STATE_FATAL_UNSPECIFIED:
-        throw toIoException(
-            String.format("unrecognized class of Microsoft API error: %s", message));
+        throw toIoException(String.format("%s: %s", CAUSE_PREFIX_UNRECOGNIZED_EXCEPTION, message));
       default:
         throw new AssertionError("exhaustive switch");
     }
