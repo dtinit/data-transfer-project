@@ -76,11 +76,8 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
             + "{"
             + "  \"@type\": \"File\","
             + "  \"folder\": \"/root\","
-            + "  \"document\": {"
-            + "    \"@type\": \"Document\","
-            + "    \"name\": \"foo.mp4\","
-            + "    \"dateModified\": \"2020-02-01T01:02:03Z\""
-            + "  }"
+            + "  \"name\": \"foo.mp4\","
+            + "  \"dateModified\": \"2020-02-01T01:02:03Z\""
             + "}",
         res.get(1).getJsonData());
     assertTrue(res.get(1) instanceof ImportableFileData);
@@ -97,11 +94,8 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
             + "{"
             + "  \"@type\": \"File\","
             + "  \"folder\": \"/root\","
-            + "  \"document\": {"
-            + "    \"@type\": \"Document\","
-            + "    \"name\": \"bar.txt\","
-            + "    \"dateModified\": null"
-            + "  }"
+            + "  \"name\": \"bar.txt\","
+            + "  \"dateModified\": null"
             + "}",
         res.get(2).getJsonData());
     assertTrue(res.get(2) instanceof ImportableFileData);
@@ -154,10 +148,8 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
             + "{"
             + "  \"@type\": \"File\","
             + "  \"folder\": \"/root/foo\","
-            + "  \"document\": {"
-            + "    \"@type\": \"Document\","
-            + "    \"name\": \"bar.txt\","
-            + "    \"dateModified\": \"2020-03-01T01:02:03Z\""
+            + "  \"name\": \"bar.txt\","
+            + "  \"dateModified\": \"2020-03-01T01:02:03Z\""
             + "  }"
             + "}",
         res.get(2).getJsonData());

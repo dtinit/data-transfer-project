@@ -56,22 +56,20 @@ class CachedDownloadableItem implements DownloadableItem {
 }
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
-@JsonTypeName("Document")
-class DocumentExportData implements BlobbySerializer.ExportData {
+@JsonTypeName("File")
+class FileExportData implements BlobbySerializer.ExportData {
+  @JsonProperty private final String folder;
   @JsonProperty private final String name;
   @JsonProperty private final Optional<ZonedDateTime> dateModified;
 
-  private DocumentExportData(String name, Optional<ZonedDateTime> dateModified) {
+  private FileExportData(String folder, String name, Optional<ZonedDateTime> dateModified) {
+    this.folder = folder;
     this.name = name;
     this.dateModified = dateModified;
   }
 
-  public static DocumentExportData fromModel(DtpDigitalDocument model) {
-    return new DocumentExportData(
-        model.getName(),
-        Optional.ofNullable(model.getDateModified())
-            .filter(string -> !string.isEmpty())
-            .map(dateString -> ZonedDateTime.parse(model.getDateModified())));
+  public String getFolder() {
+    return folder;
   }
 
   public String getName() {
@@ -81,25 +79,14 @@ class DocumentExportData implements BlobbySerializer.ExportData {
   public Optional<ZonedDateTime> getDateModified() {
     return dateModified;
   }
-}
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
-@JsonTypeName("File")
-class FileExportData implements BlobbySerializer.ExportData {
-  @JsonProperty private final String folder;
-  @JsonProperty private final DocumentExportData document;
-
-  public FileExportData(String folder, DocumentExportData document) {
-    this.folder = folder;
-    this.document = document;
-  }
-
-  public String getFolder() {
-    return folder;
-  }
-
-  public DocumentExportData getDocument() {
-    return document;
+  public static FileExportData fromDtpDigitalDocument(String path, DtpDigitalDocument model) {
+    return new FileExportData(
+        path,
+        model.getName(),
+        Optional.ofNullable(model.getDateModified())
+            .filter(string -> !string.isEmpty())
+            .map(dateString -> ZonedDateTime.parse(model.getDateModified())));
   }
 }
 
@@ -178,8 +165,7 @@ public class BlobbySerializer {
                     file.getCachedContentId(), file.getDtpDigitalDocument().getName()),
                 file.getDtpDigitalDocument().getEncodingFormat(),
                 new GenericPayload<>(
-                    new FileExportData(
-                        path, DocumentExportData.fromModel(file.getDtpDigitalDocument())),
+                    FileExportData.fromDtpDigitalDocument(path, file.getDtpDigitalDocument()),
                     SCHEMA_SOURCE),
                 file.getCachedContentId(),
                 file.getDtpDigitalDocument().getName()));
