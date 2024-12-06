@@ -31,17 +31,3 @@ dependencies {
 }
 
 configurePublication(project)
-
-// TODO: delete this
-jar {
-    manifest {
-        attributes(
-                'Main-Class': 'org.datatransferproject.datatransfer.generic.GenericImporterTest'
-        )
-    }
-    from {
-        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-    }
- }
-
-mainClassName = 'org.datatransferproject.datatransfer.generic.GenericImporterTest'
