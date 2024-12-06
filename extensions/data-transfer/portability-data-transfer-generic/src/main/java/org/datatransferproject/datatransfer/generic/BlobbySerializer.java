@@ -176,6 +176,7 @@ public class BlobbySerializer {
             new ImportableFileData<>(
                 new CachedDownloadableItem(
                     file.getCachedContentId(), file.getDtpDigitalDocument().getName()),
+                file.getDtpDigitalDocument().getEncodingFormat(),
                 new GenericPayload<>(
                     new FileExportData(
                         path, DocumentExportData.fromModel(file.getDtpDigitalDocument())),

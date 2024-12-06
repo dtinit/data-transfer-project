@@ -182,6 +182,7 @@ public class MediaSerializer {
                         (video) -> {
                           return new ImportableFileData<>(
                               video,
+                              video.getMimeType(),
                               new GenericPayload<ExportData>(
                                   VideoExportData.fromModel(video), SCHEMA_SOURCE),
                               video.getIdempotentId(),
@@ -192,6 +193,7 @@ public class MediaSerializer {
                         photo -> {
                           return new ImportableFileData<>(
                               photo,
+                              photo.getMimeType(),
                               new GenericPayload<ExportData>(
                                   PhotoExportData.fromModel(photo), SCHEMA_SOURCE),
                               photo.getIdempotentId(),

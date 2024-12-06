@@ -88,6 +88,7 @@ public class GenericFileImporterTest {
                 Arrays.asList(
                     new ImportableFileData<>(
                         new CachedDownloadableItem(container.getId(), container.getId()),
+                        "video/mp4",
                         new GenericPayload<>(container.getId(), "schemasource"),
                         container.getId(),
                         container.getId())),
@@ -117,7 +118,7 @@ public class GenericFileImporterTest {
         readPartBody(stream));
 
     assertTrue("Missing file part", stream.readBoundary());
-    assertEquals("application/octet-stream", readPartHeaders(stream).get("Content-Type"));
+    assertEquals("video/mp4", readPartHeaders(stream).get("Content-Type"));
     assertEquals("Hello world", readPartBody(stream));
 
     assertFalse("Unexpected extra data", stream.readBoundary());
@@ -131,6 +132,7 @@ public class GenericFileImporterTest {
                 Arrays.asList(
                     new ImportableFileData<>(
                         new CachedDownloadableItem("file", "file"),
+                        "invalid_mimetype",
                         new GenericPayload<>("file", "schemasource"),
                         "file",
                         "file"),

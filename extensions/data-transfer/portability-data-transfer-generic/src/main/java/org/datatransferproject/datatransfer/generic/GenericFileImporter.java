@@ -5,6 +5,7 @@ import static java.lang.String.format;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Optional;
 import java.util.UUID;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -55,11 +56,9 @@ public class GenericFileImporter<C extends ContainerResource, R> extends Generic
       throws IOException, InvalidTokenException {
     InputStreamWrapper wrapper = connectionProvider.getInputStreamForItem(jobId, data.getFile());
     File tempFile =
-        dataStore.getTempFileFromInputStream(
-            wrapper.getStream(),
-            data.getFile().getName(), /* TODO set extension from mimetype */
-            null);
-    MediaType mimeType = OCTET_STREAM; // TODO set mimetype
+        dataStore.getTempFileFromInputStream(wrapper.getStream(), data.getFile().getName(), null);
+    MediaType mimeType =
+        Optional.ofNullable(MediaType.parse(data.getFileMimeType())).orElse(OCTET_STREAM);
     Request request =
         new Request.Builder()
             .url(endpoint)
