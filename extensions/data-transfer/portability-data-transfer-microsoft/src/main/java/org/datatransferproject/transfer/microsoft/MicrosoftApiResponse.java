@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Strings;
 import java.io.IOException;
-import java.io.Reader;
 import java.util.Map;
 import java.util.Optional;
 import okhttp3.Response;
@@ -223,42 +222,23 @@ public abstract class MicrosoftApiResponse {
                     String.format("HTTP response-body unexpectedly empty: %s", causeMessage)));
   }
 
+  /** Reads body into memory and checks for needle. */
   private boolean bodyContains(String needle) {
     if (body().isEmpty()) {
       return false;
     }
 
-    try (Reader bodyReader = body().get().charStream()) {
-      return readerContains(bodyReader, needle);
-    } catch (IOException e) {
-      return false;
-    }
-  }
-
-  private static boolean readerContains(Reader haystack, String needle) {
-    checkState(!Strings.isNullOrEmpty(needle), "cannot search for empty substring");
-
-    int compareIndex = 0;
     try {
-      int actualChar = -1;
-      while ((actualChar = haystack.read()) != -1 /*end of stream*/) {
-        if (actualChar != needle.charAt(compareIndex)) {
-          compareIndex = 0;
-          if (actualChar != needle.charAt(compareIndex)) {
-            // leave index at zero, start over on the next stream input
-            continue;
-          }
-        }
-
-        compareIndex++;
-        if (compareIndex == needle.length()) {
-          return true;
-        }
-      }
+      return body().get().string().contains(needle);
     } catch (IOException e) {
-      return false;
+      // IOException is possible in the event we have a particularly interesting response. This
+      // should never happen for the closed-connection cases this class is designed around.
+      throw new IllegalStateException(
+          String.format(
+              "bug? class being used for streaming/open request/response patterns? IOException"
+                  + " should not happen: %s",
+              toString()),
+          e);
     }
-
-    return false;
   }
 }
