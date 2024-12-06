@@ -61,5 +61,10 @@ Thumbs.db
 
 app_data/
 
+# Ignore JDK 11 bug's stray files: https://bugs.openjdk.org/browse/JDK-8214300
+# (fixed in JDK 12).
+# TODO remove this gitignore when this codebase uses JDK 12+
+**/.attach_pid*
+
 **/**/.out
 **/**/**/protogen
