@@ -240,6 +240,7 @@ public abstract class MicrosoftApiResponse {
                     String.format("HTTP response-body unexpectedly empty: %s", causeMessage)));
   }
 
+  /** Reads body into memory and checks for needle. */
   private boolean bodyContains(String needle) {
     if (body().isEmpty()) {
       return false;
@@ -277,5 +278,19 @@ public abstract class MicrosoftApiResponse {
     }
 
     return false;
+=======
+    try {
+      return body().get().string().contains(needle);
+    } catch (IOException e) {
+      // IOException is possible in the event we have a particularly interesting response. This
+      // should never happen for the closed-connection cases this class is designed around.
+      throw new IllegalStateException(
+          String.format(
+              "bug? class being used for streaming/open request/response patterns? IOException"
+                  + " should not happen: %s",
+              toString()),
+          e);
+    }
+>>>>>>> master
   }
 }
