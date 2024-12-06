@@ -27,6 +27,7 @@ dependencies {
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${jacksonVersion}"
     testCompile "com.squareup.okhttp3:mockwebserver:${okHttpVersion}"
+    testCompile "commons-fileupload:commons-fileupload:1.5"
 }
 
 configurePublication(project)

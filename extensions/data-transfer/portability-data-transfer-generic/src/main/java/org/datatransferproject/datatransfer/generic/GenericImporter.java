@@ -138,7 +138,10 @@ public class GenericImporter<C extends ContainerResource, R>
         error = om.readValue(body, ErrorResponse.class);
       } catch (JsonParseException | JsonMappingException e) {
         throw new IOException(
-            format("Unexpected response - %s", new String(body, StandardCharsets.UTF_8)), e);
+            format(
+                "Unexpected response (%d) '%s'",
+                response.code(), new String(body, StandardCharsets.UTF_8)),
+            e);
       }
 
       if (response.code() == 401 && error.getError().equals("invalid_token")) {
@@ -147,7 +150,7 @@ public class GenericImporter<C extends ContainerResource, R>
         throw new IOException(format("Error (%d) %s", response.code(), error.toString()));
       }
     }
-    if (response.code() < 200 | response.code() >= 300) {
+    if (response.code() < 200 || response.code() >= 300) {
       throw new IOException(format("Unexpected response code (%d)", response.code()));
     }
     return true;
