@@ -170,8 +170,9 @@ public abstract class MicrosoftApiResponse {
     if (httpStatus() == 403 && httpMessage().contains("Access Denied")) {
       return FatalState.FATAL_STATE_FATAL_PERMISSION_DENIED;
     }
-    // TODO(zacsh) fix destination full check, it's currently the wrong string.
-    if (httpStatus() == 507 && httpMessage().contains("Insufficient Storage")) {
+    // Nit: we _could_ just parse the body into json properly and make sure the JSON body "message"
+    // field has this string. This seems fine for now.
+    if (httpStatus() == 507 && bodyContains("Insufficient Space Available")) {
       return FatalState.FATAL_STATE_FATAL_DESTINATION_FULL;
     }
     return FatalState.FATAL_STATE_FATAL_UNSPECIFIED;
@@ -197,7 +198,7 @@ public abstract class MicrosoftApiResponse {
   public String getJsonValue(ObjectMapper objectMapper, String jsonTopKey, String causeMessage)
       throws IOException {
     ResponseBody responseBody = checkResponseBody(causeMessage);
-    // convert to a map
+    // convert to a map, by reading entire body into memory
     final Map<String, Object> json = objectMapper.readValue(responseBody.bytes(), Map.class);
     checkState(
         json.containsKey(jsonTopKey),
@@ -219,5 +220,25 @@ public abstract class MicrosoftApiResponse {
             () ->
                 toIoException(
                     String.format("HTTP response-body unexpectedly empty: %s", causeMessage)));
+  }
+
+  /** Reads body into memory and checks for needle. */
+  private boolean bodyContains(String needle) {
+    if (body().isEmpty()) {
+      return false;
+    }
+
+    try {
+      return body().get().string().contains(needle);
+    } catch (IOException e) {
+      // IOException is possible in the event we have a particularly interesting response. This
+      // should never happen for the closed-connection cases this class is designed around.
+      throw new IllegalStateException(
+          String.format(
+              "bug? class being used for streaming/open request/response patterns? IOException"
+                  + " should not happen: %s",
+              toString()),
+          e);
+    }
   }
 }
