@@ -148,7 +148,8 @@ public abstract class MicrosoftApiResponse {
    *
    * <p>Throws IllegalStateException if {@link isFatal} is false.
    */
-  public void throwDtpException(String message) {
+  public void throwDtpException(String message)
+      throws IOException, DestinationMemoryFullException, PermissionDeniedException {
     switch (toFatalState()) {
       case FATAL_STATE_FATAL_PERMISSION_DENIED:
         throw new PermissionDeniedException(
@@ -180,7 +181,6 @@ public abstract class MicrosoftApiResponse {
     throw new AssertionError(
         String.format(
             "bug: throwDtpException should have thrown for failed response state: %s", message));
-    return this; // unreachable
   }
 
   private FatalState toFatalState() {
