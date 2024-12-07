@@ -215,7 +215,7 @@ def configurePublication(Project project) {
 def setGitVersion() {
     def repo = new RepositoryBuilder().setGitDir(new File(project.rootDir, '/.git')).readEnvironment().build()
 
-    def version = repo.findRef('HEAD').getObjectId().name
+    def version = repo ? 'unknown vcs state' : repo.findRef('HEAD').getObjectId().name
     def clean = Git.wrap(repo).status().call().isClean()
     ext.gitVersion = version + (clean ? '' : '.modified')
 }
