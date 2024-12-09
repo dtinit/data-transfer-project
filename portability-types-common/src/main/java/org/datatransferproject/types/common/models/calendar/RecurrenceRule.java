@@ -1,5 +1,6 @@
 package org.datatransferproject.types.common.models.calendar;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import java.util.Arrays;
