@@ -35,7 +35,6 @@ import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
-import okhttp3.Response;
 import org.apache.commons.lang3.tuple.Pair;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.api.transport.JobFileStream;
@@ -341,11 +340,11 @@ public class MicrosoftMediaImporter
   /** Low-level API call used by other helpers: prefer {@link tryWithCreds} instead. */
   private MicrosoftApiResponse sendMicrosoftRequest(Request.Builder requestBuilder)
       throws IOException {
-    try (Response response = client.newCall(requestBuilder.build()).execute()) {
-      return MicrosoftApiResponse.ofResponse(
-          checkNotNull(
-              response, "null microsoft server response for %s", requestBuilder.build().url()));
-    }
+    return MicrosoftApiResponse.ofResponse(
+        checkNotNull(
+            client.newCall(requestBuilder.build()).execute(),
+            "null microsoft server response for %s",
+            requestBuilder.build().url()));
   }
 
   /**

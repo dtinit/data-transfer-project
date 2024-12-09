@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import okhttp3.Response;
-import okhttp3.ResponseBody;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 
@@ -63,17 +62,35 @@ public abstract class MicrosoftApiResponse {
   public abstract String httpMessage();
 
   /** HTTP body of the response if any was present. */
-  public abstract Optional<ResponseBody> body();
+  public abstract Optional<String> body();
 
-  /** Builds from key fields within an HTTP response. */
-  public static MicrosoftApiResponse ofResponse(Response response) {
+  /**
+   * Builds from key fields within an HTTP response, closing said response
+   *
+   * <p>Warning: this loads the entire response body to memory, as we assume all Microsoft API
+   * responses we're dealing with are (at the most complex end) just JSON responses intended to be
+   * parsed (as opposed to say, streams of an arbitrarily-large file's bytes).
+   */
+  public static MicrosoftApiResponse ofResponse(Response response) throws IOException {
     Builder builder =
         MicrosoftApiResponse.builder()
             .setHttpMessage(response.message())
             .setHttpStatus(response.code());
 
     if (response.body() != null) {
-      builder.setBody(response.body());
+      final String body;
+      try {
+        body = response.body().string();
+      } catch (IOException e) {
+        throw builder
+            .build()
+            .toIoException("bug? loading body from response shouldn't hit IOException, but did", e);
+      }
+
+      if (!Strings.isNullOrEmpty(body)) {
+        builder.setBody(body);
+      }
+      response.close(); // only close if we _had_ a body field to read
     }
 
     return builder.build();
@@ -85,7 +102,7 @@ public abstract class MicrosoftApiResponse {
 
     public abstract Builder setHttpMessage(String httpMessage);
 
-    public abstract Builder setBody(ResponseBody body);
+    public abstract Builder setBody(String body);
 
     public abstract MicrosoftApiResponse build();
   }
@@ -216,12 +233,21 @@ public abstract class MicrosoftApiResponse {
     return new IOException(String.format("%s: %s", message, toString()));
   }
 
+  private IOException toIoException(String message, Exception e) {
+    return new IOException(String.format("%s: %s", message, toString()), e);
+  }
+
   /** Extracts a top-level JSON value, at key `jsonTopKey`, from current response body. */
   public String getJsonValue(ObjectMapper objectMapper, String jsonTopKey, String causeMessage)
       throws IOException {
-    ResponseBody responseBody = checkResponseBody(causeMessage);
-    // convert to a map, by reading entire body into memory
-    final Map<String, Object> json = objectMapper.readValue(responseBody.bytes(), Map.class);
+    String responseBody = checkResponseBody(causeMessage);
+    final Map<String, Object> json;
+    try {
+      // convert to a map, by reading entire body into memory
+      json = objectMapper.readValue(responseBody, Map.class);
+    } catch (IOException e) {
+      throw toIoException(causeMessage, e);
+    }
     checkState(
         json.containsKey(jsonTopKey),
         "response body missing top-level JSON field \"%s\"",
@@ -236,7 +262,7 @@ public abstract class MicrosoftApiResponse {
   }
 
   /** Returns response body or throws DTP base exception with `causeMessage`. */
-  private ResponseBody checkResponseBody(String causeMessage) throws IOException {
+  private String checkResponseBody(String causeMessage) throws IOException {
     return body()
         .orElseThrow(
             () ->
@@ -246,21 +272,6 @@ public abstract class MicrosoftApiResponse {
 
   /** Reads body into memory and checks for needle. */
   private boolean bodyContains(String needle) {
-    if (body().isEmpty()) {
-      return false;
-    }
-
-    try {
-      return body().get().string().contains(needle);
-    } catch (IOException e) {
-      // IOException is possible in the event we have a particularly interesting response. This
-      // should never happen for the closed-connection cases this class is designed around.
-      throw new IllegalStateException(
-          String.format(
-              "bug? class being used for streaming/open request/response patterns? IOException"
-                  + " should not happen: %s",
-              toString()),
-          e);
-    }
+    return body().isPresent() && body().get().contains(needle);
   }
 }
