@@ -119,8 +119,8 @@ public class AppleMusicImporterTest {
 
     @Test
     public void importPlaylists() throws Exception {
-
         List<MusicPlaylist> musicPlaylists = createTestMusicPlaylists();
+        assertThat(musicPlaylists).isNotEmpty(); // ensure this test actually runs
         setUpImportPlaylistsBatchResponse(musicPlaylists.stream().collect(
                 Collectors.toMap(MusicPlaylist::getId, playlist -> SC_OK)));
 
@@ -186,6 +186,7 @@ public class AppleMusicImporterTest {
     @Test
     public void testImportPlaylistTracks() throws Exception {
         List<MusicPlaylistItem> musicPlaylistItems = createTestPlaylistItems(randomString());
+        assertThat(musicPlaylistItems).isNotEmpty(); // ensure this test actually runs
         setUpImportPlaylistTracksBatchResponse(musicPlaylistItems.stream().collect(
                 Collectors.toMap(item -> item.getTrack().getIsrcCode(), item -> SC_OK)));
 
@@ -269,7 +270,7 @@ public class AppleMusicImporterTest {
     }
 
     private List<MusicPlaylist> createTestMusicPlaylists() {
-        int numMusicPlaylist = RandomUtils.nextInt(0, 100);
+        int numMusicPlaylist = RandomUtils.nextInt(1 /*inclusive*/, 100 /*exclusive*/);
         List<MusicPlaylist> musicPlaylists = new ArrayList<>();
 
         for (int i = 0; i < numMusicPlaylist; i++) {
@@ -290,7 +291,7 @@ public class AppleMusicImporterTest {
     }
 
     private List<MusicPlaylistItem> createTestPlaylistItems(String playlistId) {
-        int numMusicPlaylistItem = RandomUtils.nextInt(0, 100);
+        int numMusicPlaylistItem = RandomUtils.nextInt(1 /*inclusive*/, 100 /*exclusive*/);
         List<MusicPlaylistItem> musicPlaylistItems = new ArrayList<>();
 
         for (int i = 0; i < numMusicPlaylistItem; i++) {
