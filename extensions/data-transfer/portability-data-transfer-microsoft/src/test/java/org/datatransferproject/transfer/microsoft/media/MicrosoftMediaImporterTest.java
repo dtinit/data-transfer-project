@@ -18,6 +18,7 @@ package org.datatransferproject.transfer.microsoft.media;
 
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.truth.Truth.assertThat;
+import static okhttp3.Protocol.HTTP_2;
 import static org.datatransferproject.transfer.microsoft.MicrosoftApiResponse.CAUSE_PREFIX_UNRECOGNIZED_EXCEPTION;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -147,11 +148,7 @@ public class MicrosoftMediaImporterTest {
                           .equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")
                       && body.contains("album1_");
                 }));
-    Response response = mock(Response.class);
-    when(response.code()).thenReturn(200);
-    when(response.message()).thenReturn("OK");
-    when(response.body())
-        .thenReturn(ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}"));
+    Response response = fakeResponse(200, "OK", "{\"id\": \"id1\"}").build();
     when(call.execute()).thenReturn(response);
 
     ImportResult result = importer.importItem(uuid, executor, authData, data);
@@ -176,11 +173,7 @@ public class MicrosoftMediaImporterTest {
                     r.url()
                         .toString()
                         .equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
-    Response response = mock(Response.class);
-    when(response.code()).thenReturn(403);
-    when(response.message()).thenReturn("Access Denied");
-    when(response.body())
-        .thenReturn(ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}"));
+    Response response = fakeResponse(403, "Access Denied", "{\"id\": \"id1\"}").build();
     when(call.execute()).thenReturn(response);
 
     assertThrows(
@@ -207,14 +200,9 @@ public class MicrosoftMediaImporterTest {
                     r.url()
                         .toString()
                         .equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
-    Response response = mock(Response.class);
-    when(response.code()).thenReturn(507);
-    when(response.message()).thenReturn("");
-    when(response.body())
-        .thenReturn(
-            ResponseBody.create(
-                MediaType.parse("application/json"),
-                "{\"message\": \"Insufficient Space Available\"}"));
+    Response response =
+        fakeResponse(507, "" /*httpMessage*/, "{\"message\": \"Insufficient Space Available\"}")
+            .build();
     when(call.execute()).thenReturn(response);
 
     assertThrows(
@@ -241,14 +229,12 @@ public class MicrosoftMediaImporterTest {
                     r.url()
                         .toString()
                         .equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
-    Response response = mock(Response.class);
-    when(response.code()).thenReturn(500);
-    when(response.message()).thenReturn("");
-    when(response.body())
-        .thenReturn(
-            ResponseBody.create(
-                MediaType.parse("application/json"),
-                "{\"message\": \"Hippo is the best dog, not a real-world response\"}"));
+    Response response =
+        fakeResponse(
+                500,
+                "" /*httpMessage*/,
+                "{\"message\": \"Hippo is the best dog, not a real-world response\"}")
+            .build();
     when(call.execute()).thenReturn(response);
 
     ImportResult result = importer.importItem(uuid, executor, authData, data);
@@ -313,41 +299,42 @@ public class MicrosoftMediaImporterTest {
                     r.url()
                         .toString()
                         .equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
-    Response response = mock(Response.class);
-    when(response.code()).thenReturn(200);
-    when(response.message()).thenReturn("OK");
-    when(response.body())
-        .thenReturn(ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"id1\"}"));
+    Response response = fakeResponse(200, "OK", "{\"id\": \"id1\"}").build();
     when(call.execute()).thenReturn(response);
 
     Call call2 = mock(Call.class);
     doReturn(call2)
         .when(client)
         .newCall(argThat((Request r) -> r.url().toString().contains("createUploadSession")));
-    Response response2 = mock(Response.class);
-    when(response2.code()).thenReturn(200);
-    when(response2.message()).thenReturn("OK");
-    when(response2.body())
-        .thenReturn(
-            ResponseBody.create(
-                MediaType.parse("application/json"),
-                "{\"uploadUrl\": \"https://scalia.com/link\"}"));
+    Response response2 =
+        fakeResponse(200, "OK", "{\"uploadUrl\": \"https://scalia.com/link\"}").build();
     when(call2.execute()).thenReturn(response2);
 
     Call call3 = mock(Call.class);
     doReturn(call3)
         .when(client)
         .newCall(argThat((Request r) -> r.url().toString().contains("scalia.com/link")));
-    Response response3 = mock(Response.class);
-    when(response3.code()).thenReturn(200);
-    when(response3.message()).thenReturn("OK");
-    when(response3.body())
-        .thenReturn(
-            ResponseBody.create(MediaType.parse("application/json"), "{\"id\": \"rand1\"}"));
+    Response response3 = fakeResponse(200, "OK", "{\"id\": \"rand1\"}").build();
     when(call3.execute()).thenReturn(response3);
 
     ImportResult result = importer.importItem(uuid, executor, authData, data);
     verify(client, atLeast(albums.size() + photos.size())).newCall(any());
     assertThat(result).isEqualTo(ImportResult.OK);
+  }
+
+  private static Response.Builder fakeResponse(
+      int statusCode, String httpMessage, String jsonBody) {
+    Response.Builder builder = fakeResponse(statusCode, httpMessage);
+    builder.body(ResponseBody.create(MediaType.parse("application/json"), jsonBody));
+    return builder;
+  }
+
+  private static Response.Builder fakeResponse(int statusCode, String httpMessage) {
+    Request fakeRequest = new Request.Builder().url("https://some/mock/url").build();
+    return new Response.Builder()
+        .request(fakeRequest)
+        .protocol(HTTP_2)
+        .code(statusCode)
+        .message(httpMessage);
   }
 }
