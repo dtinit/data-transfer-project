@@ -3,6 +3,7 @@ package org.datatransferproject.transfer.microsoft;
 import static com.google.common.truth.Truth.assertThat;
 import static okhttp3.Protocol.HTTP_2;
 import static org.datatransferproject.transfer.microsoft.MicrosoftApiResponse.CAUSE_PREFIX_UNRECOGNIZED_EXCEPTION;
+import static org.datatransferproject.transfer.microsoft.MicrosoftApiResponse.RecoverableState;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -51,7 +52,7 @@ public class MicrosoftApiResponseTest {
   @Test
   public void testDestinationFull() throws IOException {
     Response networkResponse =
-        fakeResponse(507, "", "{\"message\": \"Insufficient Space Available\"}").build();
+        fakeErrorResponse(507, "", "{ \"message\": \"Insufficient Space Available\" }").build();
 
     MicrosoftApiResponse response = MicrosoftApiResponse.ofResponse(networkResponse);
 
@@ -66,7 +67,8 @@ public class MicrosoftApiResponseTest {
   @Test
   public void testErrorUnknown() throws IOException {
     Response networkResponse =
-        fakeResponse(507, "", "{\"message\": \"Hippo is the best dog, not a real-world response\"}")
+        fakeErrorResponse(
+                507, "", "{ \"message\": \"Hippo is the best dog, not a real-world response\" }")
             .build();
 
     MicrosoftApiResponse response = MicrosoftApiResponse.ofResponse(networkResponse);
@@ -81,8 +83,8 @@ public class MicrosoftApiResponseTest {
     assertThat(thrown.getMessage()).contains(CAUSE_PREFIX_UNRECOGNIZED_EXCEPTION);
   }
 
-  @Test // regression coverage for originating OKHTTP response being closed after constructing our
-  // class
+  /* Regression coverage for originating OKHTTP response being closed after constructing our class. */
+  @Test
   public void testBytesOnClosedResponse() throws Exception {
     // It appears OKHTTP is sometimes constructing a response with a strange "body" state for which
     // bytes() throws an illegal state exception. Reproducing the exact exception hasn't been done
@@ -101,6 +103,43 @@ public class MicrosoftApiResponseTest {
           response.getJsonValue(
               objectMapper, "mykey", "trying to read bytes from a closed response body");
         });
+  }
+
+  @Test
+  public void testInvalidTokenDetection() throws Exception {
+    Response networkResponse =
+        fakeErrorResponse(401, "" /*httpMessage*/, "{ \"code\": \"InvalidAuthenticationToken\" }")
+            .build();
+    MicrosoftApiResponse response = MicrosoftApiResponse.ofResponse(networkResponse);
+
+    assertThat(response.isOkay()).isFalse();
+    assertThat(response.isTokenRefreshRequired()).isTrue();
+
+    assertThat(response.recoverableState().isPresent()).isTrue();
+    assertThat(response.recoverableState().get())
+        .isEqualTo(RecoverableState.RECOVERABLE_STATE_NEEDS_TOKEN_REFRESH);
+  }
+
+  /** regression coverage: all 401s were being incorrectly detected as invalid token. */
+  @Test
+  public void testUnrecognized401() throws Exception {
+    Response networkResponse = fakeResponse(401, "" /*httpMessage*/).build();
+    MicrosoftApiResponse response = MicrosoftApiResponse.ofResponse(networkResponse);
+
+    assertThat(response.isOkay()).isFalse();
+    assertThat(response.isTokenRefreshRequired()).isFalse();
+    IOException thrown =
+        assertThrows(
+            IOException.class,
+            () -> {
+              response.throwDtpException("unit testing");
+            });
+    assertThat(thrown.getMessage()).contains(CAUSE_PREFIX_UNRECOGNIZED_EXCEPTION);
+  }
+
+  private static Response.Builder fakeErrorResponse(
+      int statusCode, String httpMessage, String jsonErrorValue) {
+    return fakeResponse(statusCode, httpMessage, String.format("{ \"error\": %s ", jsonErrorValue));
   }
 
   private static Response.Builder fakeResponse(

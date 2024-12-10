@@ -150,8 +150,12 @@ public abstract class MicrosoftApiResponse {
    * Whether the response health is neither OK nor outright error, but merely requires a token
    * refresh (then a retry).
    */
+  // See
+  // https://learn.microsoft.com/en-us/graph/resolve-auth-errors#401-unauthorized-error-is-your-token-valid
+  // And Microsoft's Java SDK to interact with these APIs:
+  // https://github.com/AzureAD/microsoft-authentication-library-for-java
   public boolean isTokenRefreshRequired() {
-    return httpStatus() == 401;
+    return httpStatus() == 401 && bodyContains("InvalidAuthenticationToken");
   }
 
   /** Whether response is of an unrecoverable error, indicating {@link throwDtpException} usage. */

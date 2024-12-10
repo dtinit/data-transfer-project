@@ -173,7 +173,7 @@ public class MicrosoftMediaImporterTest {
                     r.url()
                         .toString()
                         .equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
-    Response response = fakeResponse(403, "Access Denied", "{\"id\": \"id1\"}").build();
+    Response response = fakeErrorResponse(403, "Access Denied", "{\"id\": \"id1\"}").build();
     when(call.execute()).thenReturn(response);
 
     assertThrows(
@@ -201,7 +201,8 @@ public class MicrosoftMediaImporterTest {
                         .toString()
                         .equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
     Response response =
-        fakeResponse(507, "" /*httpMessage*/, "{\"message\": \"Insufficient Space Available\"}")
+        fakeErrorResponse(
+                507, "" /*httpMessage*/, "{\"message\": \"Insufficient Space Available\"}")
             .build();
     when(call.execute()).thenReturn(response);
 
@@ -230,7 +231,7 @@ public class MicrosoftMediaImporterTest {
                         .toString()
                         .equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
     Response response =
-        fakeResponse(
+        fakeErrorResponse(
                 500,
                 "" /*httpMessage*/,
                 "{\"message\": \"Hippo is the best dog, not a real-world response\"}")
@@ -320,6 +321,11 @@ public class MicrosoftMediaImporterTest {
     ImportResult result = importer.importItem(uuid, executor, authData, data);
     verify(client, atLeast(albums.size() + photos.size())).newCall(any());
     assertThat(result).isEqualTo(ImportResult.OK);
+  }
+
+  private static Response.Builder fakeErrorResponse(
+      int statusCode, String httpMessage, String jsonErrorValue) {
+    return fakeResponse(statusCode, httpMessage, String.format("{ \"error\": %s ", jsonErrorValue));
   }
 
   private static Response.Builder fakeResponse(
