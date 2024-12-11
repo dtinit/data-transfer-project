@@ -37,7 +37,7 @@ import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 @FunctionalInterface
-interface ContainerMapper<C extends ContainerResource, R> {
+interface ContainerSerializer<C extends ContainerResource, R> {
   public Iterable<ImportableData<R>> apply(C containerResource);
 }
 
@@ -76,7 +76,7 @@ public class GenericImporter<C extends ContainerResource, R>
     }
   }
 
-  ContainerMapper<C, R> containerUnpacker;
+  ContainerSerializer<C, R> containerSerializer;
   URL endpoint;
   Monitor monitor;
   AppCredentials appCredentials;
@@ -87,14 +87,14 @@ public class GenericImporter<C extends ContainerResource, R>
   static final MediaType JSON = MediaType.parse("application/json");
 
   public GenericImporter(
-      ContainerMapper<C, R> containerUnpacker,
+      ContainerSerializer<C, R> containerSerializer,
       AppCredentials appCredentials,
       URL endpoint,
       Monitor monitor) {
     this.monitor = monitor;
     this.appCredentials = appCredentials;
     this.endpoint = endpoint;
-    this.containerUnpacker = containerUnpacker;
+    this.containerSerializer = containerSerializer;
     configureObjectMapper(om);
   }
 
@@ -119,7 +119,7 @@ public class GenericImporter<C extends ContainerResource, R>
         jobTokenManagerMap.computeIfAbsent(
             jobId,
             ignored -> new OAuthTokenManager(initialAuthData, appCredentials, client, monitor));
-    for (ImportableData<R> importableData : containerUnpacker.apply(data)) {
+    for (ImportableData<R> importableData : containerSerializer.apply(data)) {
       idempotentExecutor.executeAndSwallowIOExceptions(
           importableData.getIdempotentId(),
           importableData.getName(),

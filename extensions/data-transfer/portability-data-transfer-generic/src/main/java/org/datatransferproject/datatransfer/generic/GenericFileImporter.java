@@ -30,12 +30,12 @@ public class GenericFileImporter<C extends ContainerResource, R> extends Generic
   static final MediaType OCTET_STREAM = MediaType.parse("application/octet-stream");
 
   public GenericFileImporter(
-      ContainerMapper<C, R> containerUnpacker,
+      ContainerSerializer<C, R> containerSerializer,
       AppCredentials appCredentials,
       URL endpoint,
       TemporaryPerJobDataStore dataStore,
       Monitor monitor) {
-    super(containerUnpacker, appCredentials, endpoint, monitor);
+    super(containerSerializer, appCredentials, endpoint, monitor);
     this.dataStore = dataStore;
     this.connectionProvider = new ConnectionProvider(dataStore);
   }

@@ -58,17 +58,17 @@ public class GenericImporterTest {
   }
 
   <C> GenericImporter<IdOnlyContainerResource, C> getImporter(
-      String cls, ContainerMapper<IdOnlyContainerResource, C> containerMapper) {
+      String cls, ContainerSerializer<IdOnlyContainerResource, C> containerSerializer) {
     if (cls.equals(GenericFileImporter.class.getName())) {
       return new GenericFileImporter<>(
-          containerMapper,
+          containerSerializer,
           new AppCredentials("key", "secret"),
           webServer.url("/id").url(),
           dataStore,
           monitor);
     } else {
       return new GenericImporter<>(
-          containerMapper,
+          containerSerializer,
           new AppCredentials("key", "secret"),
           webServer.url("/id").url(),
           monitor);
