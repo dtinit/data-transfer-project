@@ -97,7 +97,7 @@ final class WorkerModule extends FlagBindingModule {
     try {
       return transferExtensions
           .stream()
-          .filter(ext -> ext.getServiceId().toLowerCase().equals(service.toLowerCase()))
+          .filter(ext -> ext.supportsService(service))
           .collect(onlyElement());
     } catch (IllegalArgumentException e) {
       throw new IllegalStateException(
@@ -283,21 +283,10 @@ final class WorkerModule extends FlagBindingModule {
   }
 
   private TransferServiceConfig getTransferServiceConfig(TransferExtension ext) {
-    String configFileName = "config/" + ext.getServiceId().toLowerCase() + ".yaml";
-    InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(configFileName);
-    getMonitor()
-        .info(
-            () ->
-                format(
-                    "Service %s has a config file: %s", ext.getServiceId(), (inputStream != null)));
-    if (inputStream == null) {
-      return TransferServiceConfig.getDefaultInstance();
-    } else {
-      try {
-        return TransferServiceConfig.create(inputStream);
-      } catch (IOException e) {
-        throw new RuntimeException("Couldn't create config for " + ext.getServiceId(), e);
-      }
+    try {
+      return TransferServiceConfig.getForService(ext.getServiceId());
+    } catch (IOException e) {
+      throw new RuntimeException("Couldn't create config for " + ext.getServiceId(), e);
     }
   }
 
