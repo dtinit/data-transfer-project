@@ -16,10 +16,12 @@
 
 package org.datatransferproject.spi.transfer.provider;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.auto.value.AutoValue;
 import org.datatransferproject.spi.transfer.types.signals.JobLifeCycle;
 
 @AutoValue
+@JsonDeserialize(builder = SignalRequest.Builder.class)
 public abstract class SignalRequest {
   public abstract String jobId();
   public abstract String dataType();
