@@ -280,7 +280,7 @@ The `Photo` and `Video` data types are sent as file-based data containing metada
       },
       "required": [
         "@type",
-        "favourite",
+        "favorite",
         "lastUpdateTime"
       ]
     }
