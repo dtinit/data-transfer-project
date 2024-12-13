@@ -18,8 +18,11 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
@@ -46,12 +49,17 @@ class GenericTransferServiceVerticalConfig {
   public DataVertical getVertical() {
     return vertical;
   }
+
+  @Override
+  public int hashCode() {
+    return this.vertical.hashCode();
+  }
 }
 
 class GenericTransferServiceConfig {
   private final String serviceId;
   private final URL endpoint;
-  private final List<GenericTransferServiceVerticalConfig> verticals;
+  private final Set<GenericTransferServiceVerticalConfig> verticals;
 
   public GenericTransferServiceConfig(
       @JsonProperty(value = "serviceId", required = true) String serviceId,
@@ -60,7 +68,7 @@ class GenericTransferServiceConfig {
           List<GenericTransferServiceVerticalConfig> verticals) {
     this.serviceId = serviceId;
     this.endpoint = endpoint;
-    this.verticals = verticals;
+    this.verticals = new HashSet<>(verticals);
   }
 
   public String getServiceId() {
@@ -71,17 +79,15 @@ class GenericTransferServiceConfig {
     return endpoint;
   }
 
-  public List<GenericTransferServiceVerticalConfig> getVerticals() {
+  public Set<GenericTransferServiceVerticalConfig> getVerticals() {
     return verticals;
   }
 
   public boolean supportsVertical(DataVertical vertical) {
-    for (GenericTransferServiceVerticalConfig verticalConfig : verticals) {
-      if (verticalConfig.getVertical().equals(vertical)) {
-        return true;
-      }
-    }
-    return false;
+    return verticals.stream()
+        .map(verticalConfig -> verticalConfig.getVertical())
+        .collect(Collectors.toSet())
+        .contains(vertical);
   }
 }
 
