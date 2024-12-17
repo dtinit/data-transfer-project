@@ -116,7 +116,8 @@ public class MicrosoftMediaImporterTest {
             jobStore,
             monitor,
             credentialFactory,
-            new JobFileStream(remoteFileStreamer));
+            new JobFileStream(remoteFileStreamer),
+            1.0 /*maxWritesPerSecond*/);
   }
 
   @Test
