@@ -97,6 +97,7 @@ public class MicrosoftTransferExtension implements TransferExtension {
     // times.
     if (initialized) return;
 
+    final double maxWritesPerSecond =  context.getSetting("msoftMaxWritesPerSecond", 1.0);
     TemporaryPerJobDataStore jobStore = context.getService(TemporaryPerJobDataStore.class);
     HttpTransport httpTransport = context.getService(HttpTransport.class);
     JsonFactory jsonFactory = context.getService(JsonFactory.class);
@@ -136,7 +137,7 @@ public class MicrosoftTransferExtension implements TransferExtension {
         PHOTOS, new MicrosoftPhotosImporter(BASE_GRAPH_URL, client, mapper, jobStore, monitor,
           credentialFactory, jobFileStream));
     importBuilder.put(MEDIA, new MicrosoftMediaImporter(BASE_GRAPH_URL, client, mapper, jobStore, monitor,
-          credentialFactory, jobFileStream));
+          credentialFactory, jobFileStream, maxWritesPerSecond));
     importerMap = importBuilder.build();
 
     ImmutableMap.Builder<DataVertical, Exporter> exporterBuilder = ImmutableMap.builder();

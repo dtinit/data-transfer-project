@@ -36,6 +36,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import org.apache.commons.lang3.tuple.Pair;
+import com.google.common.util.concurrent.RateLimiter;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.api.transport.JobFileStream;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
@@ -67,6 +68,8 @@ public class MicrosoftMediaImporter
   private final Monitor monitor;
   private final MicrosoftCredentialFactory credentialFactory;
   private final JobFileStream jobFileStream;
+  private final RateLimiter writeRateLimiter;
+
   private final MicrosoftTransmogrificationConfig transmogrificationConfig =
       new MicrosoftTransmogrificationConfig();
   private Credential credential;
@@ -84,8 +87,8 @@ public class MicrosoftMediaImporter
       TemporaryPerJobDataStore jobStore,
       Monitor monitor,
       MicrosoftCredentialFactory credentialFactory,
-      JobFileStream jobFileStream) {
-
+      JobFileStream jobFileStream,
+      double maxWritesPerSecond) {
     // NOTE: "special/photos" is a specific folder in One Drive that corresponds to items that
     // should appear in https://photos.onedrive.com/, for more information see:
     // https://learn.microsoft.com/en-us/onedrive/developer/rest-api/api/drive_get_specialfolder?#special-folder-names
@@ -104,6 +107,7 @@ public class MicrosoftMediaImporter
     this.credentialFactory = credentialFactory;
     this.credential = null;
     this.jobFileStream = jobFileStream;
+    this.writeRateLimiter = RateLimiter.create(maxWritesPerSecond);
   }
 
   @Override
@@ -340,6 +344,9 @@ public class MicrosoftMediaImporter
   /** Low-level API call used by other helpers: prefer {@link tryWithCreds} instead. */
   private MicrosoftApiResponse sendMicrosoftRequest(Request.Builder requestBuilder)
       throws IOException {
+    // Wait for write permit before making request
+    writeRateLimiter.acquire();
+
     return MicrosoftApiResponse.ofResponse(
         checkNotNull(
             client.newCall(requestBuilder.build()).execute(),
