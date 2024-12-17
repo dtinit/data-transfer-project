@@ -70,6 +70,15 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
 
 public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, MediaContainerResource> {
+  /**
+   * Upper limit of writes per second for Google Photos Interface (not used by
+   * this class).
+   *
+   * <p>Exporters don't write to their service, they read from their services.
+   * We need this because the {@link GooglePhotosInterface} is capable of both
+   * reads and writes (even if we only call its read APIs).
+   */
+  private static final double MAX_WRITES_PER_SECOND = 1.0;
 
   static final String ALBUM_TOKEN_PREFIX = "album:";
   static final String MEDIA_TOKEN_PREFIX = "media:";
@@ -622,6 +631,6 @@ public class GoogleMediaExporter implements Exporter<TokensAndUrlAuthData, Media
   private synchronized GooglePhotosInterface makePhotosInterface(TokensAndUrlAuthData authData) {
     Credential credential = credentialFactory.createCredential(authData);
     return new GooglePhotosInterface(
-        credentialFactory, credential, jsonFactory, monitor, /* arbitrary writesPerSecond */ 1.0);
+        credentialFactory, credential, jsonFactory, monitor, MAX_WRITES_PER_SECOND);
   }
 }
