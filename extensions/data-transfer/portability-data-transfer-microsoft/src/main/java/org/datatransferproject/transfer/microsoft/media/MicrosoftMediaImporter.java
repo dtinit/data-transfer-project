@@ -321,6 +321,9 @@ public class MicrosoftMediaImporter
    * <ul>
    * <li>https://learn.microsoft.com/en-us/graph/api/driveitem-createuploadsession?view=graph-rest-1.0#upload-bytes-to-the-upload-session
    * </ul>
+   *
+   * Returns a response, which is only expected to have a response-body in the
+   * event that this is the final chunk.
    */
   private MicrosoftApiResponse uploadChunk(
       DataChunk chunk, String photoUploadUrl, long totalFileSize, String mediaType)
@@ -390,7 +393,10 @@ public class MicrosoftMediaImporter
    * standard token-refresh retry options.
    *
    * <p>Prefer {@link tryWithCredsOrFail(Request.Builder, String, String)} if you ultimately only
-   * care about a particular JSON key in the response body.
+   * care about a particular JSON key in the response body. If you don't
+   * need/expect a response body (or don't know yet) then this is the right
+   * method to call instead (and then call {@link
+   * MicrosoftApiResponse#getJsonValue} yourself later).
    *
    * <p>Example usage:
    *
