@@ -303,17 +303,29 @@ public class MicrosoftMediaImporter
     return new Request.Builder().url(createSessionUrl);
   }
 
-  // Uploads a single DataChunk to an upload URL
-  // PUT to {photoUploadUrl}
-  // HEADERS
-  // Content-Length: {chunk size in bytes}
-  // Content-Range: bytes {begin}-{end}/{total size}
-  // body={bytes}
+  /**
+   * Uploads a single DataChunk to an upload URL {@code photoUploadUrl} via PUT
+   * request with this composition:
+   * <pre>{@code
+   *  HEADERS
+   *  Content-Length: $CHUNK_SIZE_IN_BYTES
+   *  Content-Range: bytes $BEGIN_INDEX-$END_INDEX/$TOTAL_SIZE
+   *  body=$BYTES
+   * }</pre>
+   *
+   * <p>NOTE: an access token is purposely not incluced per Microsoft SDK's own instructions:
+   * https://learn.microsoft.com/en-us/graph/api/driveitem-createuploadsession?view=graph-rest-1.0#remarks
+   *
+   *
+   * <p>See also:
+   * <ul>
+   * <li>https://learn.microsoft.com/en-us/graph/api/driveitem-createuploadsession?view=graph-rest-1.0#upload-bytes-to-the-upload-session
+   * </ul>
+   */
   private MicrosoftApiResponse uploadChunk(
       DataChunk chunk, String photoUploadUrl, long totalFileSize, String mediaType)
       throws IOException, DestinationMemoryFullException, PermissionDeniedException {
     Request.Builder uploadRequestBuilder = new Request.Builder().url(photoUploadUrl);
-    uploadRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
 
     // put chunk data in
     RequestBody uploadChunkBody =

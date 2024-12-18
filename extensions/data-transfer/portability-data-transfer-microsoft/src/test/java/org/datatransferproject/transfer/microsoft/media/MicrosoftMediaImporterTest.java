@@ -79,6 +79,7 @@ public class MicrosoftMediaImporterTest {
   private static final int CHUNK_SIZE = 32000 * 1024; // 32000KiB
   private static final String BASE_URL = "https://www.baseurl.com";
   private static final UUID uuid = UUID.randomUUID();
+  private static final String FAKE_ACCESS_TOKEN = "fake-acc-token-"+UUID.randomUUID();
 
   MicrosoftMediaImporter importer;
   OkHttpClient client;
@@ -106,7 +107,7 @@ public class MicrosoftMediaImporterTest {
     RemoteFileStreamer remoteFileStreamer = mock(RemoteFileStreamer.class);
     when(credentialFactory.createCredential(any())).thenReturn(credential);
     when(credentialFactory.refreshCredential(any())).thenReturn(credential);
-    credential.setAccessToken("acc");
+    credential.setAccessToken(FAKE_ACCESS_TOKEN);
     credential.setExpirationTimeMilliseconds(null);
     importer =
         new MicrosoftMediaImporter(
@@ -307,7 +308,12 @@ public class MicrosoftMediaImporterTest {
     Call call2 = mock(Call.class);
     doReturn(call2)
         .when(client)
-        .newCall(argThat((Request r) -> r.url().toString().contains("createUploadSession")));
+        .newCall(argThat((Request r) -> {
+          return r.url().toString().contains("createUploadSession")
+              && r.header("Authorization") != null
+              && r.header("Authorization").contains("Bearer")
+              && r.header("Authorization").contains(FAKE_ACCESS_TOKEN);
+        }));
     Response response2 =
         fakeResponse(200, "OK", "{\"uploadUrl\": \"https://scalia.com/link\"}").build();
     when(call2.execute()).thenReturn(response2);
@@ -315,7 +321,12 @@ public class MicrosoftMediaImporterTest {
     Call call3 = mock(Call.class);
     doReturn(call3)
         .when(client)
-        .newCall(argThat((Request r) -> r.url().toString().contains("scalia.com/link")));
+        .newCall(argThat((Request r) -> {
+          return r.url().toString().contains("scalia.com/link")
+              // Regression coverage: we _don't_ want a token sent for every chunk.
+              // https://github.com/dtinit/data-transfer-project/pull/1416
+              && r.header("Authorization") == null;
+        }));
     Response response3 = fakeResponse(200, "OK", "{\"id\": \"rand1\"}").build();
     when(call3.execute()).thenReturn(response3);
 
