@@ -15,6 +15,7 @@ import com.google.common.collect.ImmutableMap;
 import okhttp3.OkHttpClient;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.api.transport.JobFileStream;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.types.common.models.DataVertical;
@@ -96,6 +97,7 @@ public class MicrosoftTransferExtension implements TransferExtension {
     // times.
     if (initialized) return;
 
+    final double maxWritesPerSecond =  context.getSetting("msoftMaxWritesPerSecond", 1.0);
     TemporaryPerJobDataStore jobStore = context.getService(TemporaryPerJobDataStore.class);
     HttpTransport httpTransport = context.getService(HttpTransport.class);
     JsonFactory jsonFactory = context.getService(JsonFactory.class);
@@ -120,6 +122,7 @@ public class MicrosoftTransferExtension implements TransferExtension {
     // Create the MicrosoftCredentialFactory with the given {@link AppCredentials}.
     MicrosoftCredentialFactory credentialFactory =
         new MicrosoftCredentialFactory(httpTransport, jsonFactory, appCredentials);
+    JobFileStream jobFileStream = new JobFileStream();
 
     Monitor monitor = context.getMonitor();
 
@@ -132,9 +135,9 @@ public class MicrosoftTransferExtension implements TransferExtension {
         new MicrosoftCalendarImporter(BASE_GRAPH_URL, client, mapper, transformerService));
     importBuilder.put(
         PHOTOS, new MicrosoftPhotosImporter(BASE_GRAPH_URL, client, mapper, jobStore, monitor,
-          credentialFactory));
+          credentialFactory, jobFileStream));
     importBuilder.put(MEDIA, new MicrosoftMediaImporter(BASE_GRAPH_URL, client, mapper, jobStore, monitor,
-          credentialFactory));
+          credentialFactory, jobFileStream, maxWritesPerSecond));
     importerMap = importBuilder.build();
 
     ImmutableMap.Builder<DataVertical, Exporter> exporterBuilder = ImmutableMap.builder();

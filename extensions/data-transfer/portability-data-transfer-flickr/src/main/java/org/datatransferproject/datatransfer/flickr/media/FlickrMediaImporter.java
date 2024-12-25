@@ -318,6 +318,8 @@ public class FlickrMediaImporter implements Importer<AuthData, MediaContainerRes
         return Strings.isNullOrEmpty(string) ? "" : string;
     }
 
+    // TODO migrate this testability-surface to newly shared JobFileStreamer and RemoteFileStreamer
+    // of org.datatransferproject.spi.api.transport package.
     @VisibleForTesting
     class ImageStreamProvider {
 

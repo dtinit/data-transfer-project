@@ -1,5 +1,6 @@
 package org.datatransferproject.spi.cloud.storage;
 
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -70,6 +71,13 @@ public interface TemporaryPerJobDataStore {
       return stream;
     }
 
+    /**
+     * Size of the stream as a byte-count, or zero if yet unknown.
+     *
+     * <p>See also {@link org.datatransferproject.transfer.CallableSizeCalculator} and {@
+     * com.google.common.io.CountingInputStream} for some brute-force options when the return is
+     * zero.
+     */
     public Long getBytes() {
       return bytes;
     }

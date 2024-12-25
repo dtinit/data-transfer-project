@@ -102,10 +102,10 @@ public class GooglePhotosInterface {
       JsonFactory jsonFactory,
       Monitor monitor,
       double writesPerSecond) {
+    this.credentialFactory = credentialFactory;
     this.credential = credential;
     this.jsonFactory = jsonFactory;
     this.monitor = monitor;
-    this.credentialFactory = credentialFactory;
     writeRateLimiter = RateLimiter.create(writesPerSecond);
   }
 

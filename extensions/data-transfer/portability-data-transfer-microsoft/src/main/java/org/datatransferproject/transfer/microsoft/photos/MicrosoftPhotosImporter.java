@@ -15,17 +15,18 @@
  */
 package org.datatransferproject.transfer.microsoft.photos;
 
+import static org.datatransferproject.spi.api.transport.DiscardingStreamCounter.discardForLength;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.net.URL;
+import java.io.InputStream;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -34,6 +35,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.api.transport.JobFileStream;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
@@ -43,23 +45,28 @@ import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.transfer.microsoft.DataChunk;
 import org.datatransferproject.transfer.microsoft.MicrosoftTransmogrificationConfig;
+import org.datatransferproject.transfer.microsoft.StreamChunker;
 import org.datatransferproject.transfer.microsoft.common.MicrosoftCredentialFactory;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-/**
- * Imports albums and photos to OneDrive using the Microsoft Graph API.
- */
+/** Imports albums and photos to OneDrive using the Microsoft Graph API. */
+// TODO de-dupe Microsoft{Media,Photos}Importer classes. They MediaImporter class is a direct fork
+// of this one (when we thought we might delete this class). The Media fork forunately has more
+// generic model-agnostic internals, so it should be easier to call its factored-out code from this
+// class.
 public class MicrosoftPhotosImporter
     implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
+  private static final int MICROSOFT_UPLOAD_CHUNK_BYTE_SIZE = 32000 * 1024; // 32000KiB
 
   private final OkHttpClient client;
   private final ObjectMapper objectMapper;
   private final TemporaryPerJobDataStore jobStore;
   private final Monitor monitor;
   private final MicrosoftCredentialFactory credentialFactory;
+  private final JobFileStream jobFileStream;
   private final MicrosoftTransmogrificationConfig transmogrificationConfig =
       new MicrosoftTransmogrificationConfig();
   private Credential credential;
@@ -71,12 +78,13 @@ public class MicrosoftPhotosImporter
   private static final String UPLOAD_PARAMS = "?@microsoft.graph.conflictBehavior=rename";
 
   public MicrosoftPhotosImporter(
-    String baseUrl,
-    OkHttpClient client,
-    ObjectMapper objectMapper,
-    TemporaryPerJobDataStore jobStore,
-    Monitor monitor,
-    MicrosoftCredentialFactory credentialFactory) {
+      String baseUrl,
+      OkHttpClient client,
+      ObjectMapper objectMapper,
+      TemporaryPerJobDataStore jobStore,
+      Monitor monitor,
+      MicrosoftCredentialFactory credentialFactory,
+      JobFileStream jobFileStream) {
     createFolderUrl = baseUrl + "/v1.0/me/drive/special/photos/children";
     // first param is the folder id, second param is the file name
     // /me/drive/items/{parent-id}:/{filename}:/content;
@@ -90,48 +98,51 @@ public class MicrosoftPhotosImporter
     this.monitor = monitor;
     this.credentialFactory = credentialFactory;
     this.credential = null;
+    this.jobFileStream = jobFileStream;
   }
 
   @Override
   public ImportResult importItem(
-    UUID jobId,
-    IdempotentImportExecutor idempotentImportExecutor,
-    TokensAndUrlAuthData authData,
-    PhotosContainerResource resource)
-  throws Exception {
+      UUID jobId,
+      IdempotentImportExecutor idempotentImportExecutor,
+      TokensAndUrlAuthData authData,
+      PhotosContainerResource resource)
+      throws Exception {
     // Ensure credential is populated
     getOrCreateCredential(authData);
 
     monitor.debug(
-      () -> String
-      .format("%s: Importing %s albums and %s photos before transmogrification", jobId,
-              resource.getAlbums().size(), resource.getPhotos().size()));
-
+        () ->
+            String.format(
+                "%s: Importing %s albums and %s photos before transmogrification",
+                jobId, resource.getAlbums().size(), resource.getPhotos().size()));
 
     // Make the data onedrive compatible
     resource.transmogrify(transmogrificationConfig);
     monitor.debug(
-      () -> String.format("%s: Importing %s albums and %s photos after transmogrification", jobId,
-                          resource.getAlbums().size(), resource.getPhotos().size()));
-
+        () ->
+            String.format(
+                "%s: Importing %s albums and %s photos after transmogrification",
+                jobId, resource.getAlbums().size(), resource.getPhotos().size()));
 
     for (PhotoAlbum album : resource.getAlbums()) {
       // Create a OneDrive folder and then save the id with the mapping data
       idempotentImportExecutor.executeAndSwallowIOExceptions(
-        album.getId(), album.getName(), () -> createOneDriveFolder(album));
+          album.getId(), album.getName(), () -> createOneDriveFolder(album));
     }
 
     for (PhotoModel photoModel : resource.getPhotos()) {
       idempotentImportExecutor.executeAndSwallowIOExceptions(
           photoModel.getIdempotentId(),
-        photoModel.getTitle(),
-        () -> importSinglePhoto(photoModel, jobId, idempotentImportExecutor));
+          photoModel.getTitle(),
+          () -> importSinglePhoto(photoModel, jobId, idempotentImportExecutor));
     }
     return ImportResult.OK;
   }
 
   @SuppressWarnings("unchecked")
-  private String createOneDriveFolder(PhotoAlbum album) throws IOException, CopyExceptionWithFailureReason {
+  private String createOneDriveFolder(PhotoAlbum album)
+      throws IOException, CopyExceptionWithFailureReason {
 
     Map<String, Object> rawFolder = new LinkedHashMap<>();
     // clean up album name for microsoft specifically
@@ -147,8 +158,8 @@ public class MicrosoftPhotosImporter
     Request.Builder requestBuilder = new Request.Builder().url(createFolderUrl);
     requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
     requestBuilder.post(
-      RequestBody.create(
-        MediaType.parse("application/json"), objectMapper.writeValueAsString(rawFolder)));
+        RequestBody.create(
+            MediaType.parse("application/json"), objectMapper.writeValueAsString(rawFolder)));
     try (Response response = client.newCall(requestBuilder.build()).execute()) {
       int code = response.code();
       ResponseBody body = response.body();
@@ -182,48 +193,49 @@ public class MicrosoftPhotosImporter
 
       Map<String, Object> responseData = objectMapper.readValue(body.bytes(), Map.class);
       String folderId = (String) responseData.get("id");
-      Preconditions.checkState(!Strings.isNullOrEmpty(folderId),
-                 "Expected id value to be present in %s", responseData);
+      Preconditions.checkState(
+          !Strings.isNullOrEmpty(folderId), "Expected id value to be present in %s", responseData);
       return folderId;
     }
   }
 
   private String importSinglePhoto(
-    PhotoModel photo,
-    UUID jobId,
-    IdempotentImportExecutor idempotentImportExecutor) throws Exception {
-    BufferedInputStream inputStream = null;
-    if (photo.isInTempStore()) {
-      inputStream = new BufferedInputStream(jobStore.getStream(jobId, photo.getFetchableUrl()).getStream());
-    } else if (photo.getFetchableUrl() != null) {
-      inputStream = new BufferedInputStream(new URL(photo.getFetchableUrl()).openStream());
-    } else {
-      throw new IllegalStateException("Don't know how to get the inputStream for " + photo);
-    }
+      PhotoModel item, UUID jobId, IdempotentImportExecutor idempotentImportExecutor)
+      throws Exception {
+    final long totalFileSize = discardForLength(jobFileStream.streamFile(item, jobId, jobStore));
+    InputStream fileStream = jobFileStream.streamFile(item, jobId, jobStore);
 
-    String photoUploadUrl = createUploadSession(photo, idempotentImportExecutor);
+    String itemUploadUrl = createUploadSession(item, idempotentImportExecutor);
 
-    // Arrange the data to be uploaded in chunks
-    List<DataChunk> chunksToSend = DataChunk.splitData(inputStream);
-    inputStream.close();
-    final int totalFileSize = chunksToSend.stream().map(DataChunk::getSize).reduce(0, Integer::sum);
-    Preconditions.checkState(
-        chunksToSend.size() != 0, "Data was split into zero chunks %s.", photo.getTitle());
-
-    Response chunkResponse = null;
-    for (DataChunk chunk : chunksToSend) {
-      chunkResponse = uploadChunk(chunk, photoUploadUrl, totalFileSize, photo.getMediaType());
-    }
-    if (chunkResponse.code() != 200 && chunkResponse.code() != 201) {
+    Response finalChunkResponse =
+        uploadStreamInChunks(totalFileSize, itemUploadUrl, item.getMimeType(), fileStream);
+    fileStream.close();
+    if (finalChunkResponse.code() != 200 && finalChunkResponse.code() != 201) {
       // Once we upload the last chunk, we should have either 200 or 201.
-      // This should change to a precondition check after we debug some more.
+      // TODO: This should change to a precondition check after we debug some more.
       monitor.debug(
-          () -> "Received a bad code on completion of uploading chunks", chunkResponse.code());
+          () -> "Received a bad code on completion of uploading chunks", finalChunkResponse.code());
     }
     // get complete file response
-    ResponseBody chunkResponseBody = chunkResponse.body();
-    Map<String, Object> chunkResponseData = objectMapper.readValue(chunkResponseBody.bytes(), Map.class);
+    ResponseBody finalChunkResponseBody = finalChunkResponse.body();
+    Map<String, Object> chunkResponseData =
+        objectMapper.readValue(finalChunkResponseBody.bytes(), Map.class);
     return (String) chunkResponseData.get("id");
+  }
+
+  /** Depletes input stream, uploading a chunk of the stream at a time. */
+  private Response uploadStreamInChunks(
+      long totalFileSize, String itemUploadUrl, String itemMimeType, InputStream inputStream)
+      throws IOException, DestinationMemoryFullException {
+    Response lastChunkResponse = null;
+    StreamChunker streamChunker = new StreamChunker(MICROSOFT_UPLOAD_CHUNK_BYTE_SIZE, inputStream);
+    Optional<DataChunk> nextChunk;
+    while (true) {
+      nextChunk = streamChunker.nextChunk();
+      if (!nextChunk.isPresent()) break;
+      lastChunkResponse = uploadChunk(nextChunk.get(), itemUploadUrl, totalFileSize, itemMimeType);
+    }
+    return lastChunkResponse;
   }
 
   private Credential getOrCreateCredential(TokensAndUrlAuthData authData) {
@@ -235,8 +247,9 @@ public class MicrosoftPhotosImporter
 
   // Request an upload session to the OneDrive api so that we can upload chunks
   // to the returned URL
-  private String createUploadSession(PhotoModel photo, IdempotentImportExecutor idempotentImportExecutor) throws
-          IOException, CopyExceptionWithFailureReason {
+  private String createUploadSession(
+      PhotoModel photo, IdempotentImportExecutor idempotentImportExecutor)
+      throws IOException, CopyExceptionWithFailureReason {
 
     // Forming the URL to create an upload session
     String createSessionUrl;
@@ -246,12 +259,12 @@ public class MicrosoftPhotosImporter
     } else {
       String oneDriveFolderId = idempotentImportExecutor.getCachedValue(photo.getAlbumId());
       createSessionUrl =
-        String.format(
-          uploadPhotoUrlTemplate, oneDriveFolderId, photo.getTitle(), UPLOAD_PARAMS);
+          String.format(uploadPhotoUrlTemplate, oneDriveFolderId, photo.getTitle(), UPLOAD_PARAMS);
     }
 
     // create upload session
-    // POST to /me/drive/items/{folder_id}:/{file_name}:/createUploadSession OR /me/drive/items/root:/Photos/{file_name}:/createUploadSession
+    // POST to /me/drive/items/{folder_id}:/{file_name}:/createUploadSession OR
+    // /me/drive/items/root:/Photos/{file_name}:/createUploadSession
     // get {uploadurl} from response
     Request.Builder createSessionRequestBuilder = new Request.Builder().url(createSessionUrl);
 
@@ -261,8 +274,9 @@ public class MicrosoftPhotosImporter
 
     // Post request with empty body. If you don't include an empty body, you'll have problems
     createSessionRequestBuilder.post(
-      RequestBody.create(
-        MediaType.parse("application/json"), objectMapper.writeValueAsString(ImmutableMap.of())));
+        RequestBody.create(
+            MediaType.parse("application/json"),
+            objectMapper.writeValueAsString(ImmutableMap.of())));
 
     // Make the call, we should get an upload url for photo data in a 200 response
     Response response = client.newCall(createSessionRequestBuilder.build()).execute();
@@ -312,7 +326,8 @@ public class MicrosoftPhotosImporter
     Preconditions.checkState(
         responseBody != null, "Got Null Body when creating photo upload session %s", photo);
     // convert to a map
-    final Map<String, Object> responseData = objectMapper.readValue(responseBody.bytes(), Map.class);
+    final Map<String, Object> responseData =
+        objectMapper.readValue(responseBody.bytes(), Map.class);
     // return the session's upload url
     Preconditions.checkState(responseData.containsKey("uploadUrl"), "No uploadUrl :(");
     return (String) responseData.get("uploadUrl");
@@ -324,21 +339,24 @@ public class MicrosoftPhotosImporter
   // Content-Length: {chunk size in bytes}
   // Content-Range: bytes {begin}-{end}/{total size}
   // body={bytes}
-  private Response uploadChunk(DataChunk chunk, String photoUploadUrl, int totalFileSize, String mediaType)
-          throws IOException, DestinationMemoryFullException {
+  private Response uploadChunk(
+      DataChunk chunk, String photoUploadUrl, long totalFileSize, String mediaType)
+      throws IOException, DestinationMemoryFullException {
 
     Request.Builder uploadRequestBuilder = new Request.Builder().url(photoUploadUrl);
     uploadRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
 
     // put chunk data in
-    RequestBody uploadChunkBody = RequestBody.create(MediaType.parse(mediaType), chunk.getData(), 0, chunk.getSize());
+    RequestBody uploadChunkBody =
+        RequestBody.create(MediaType.parse(mediaType), chunk.chunk(), 0, chunk.size());
     uploadRequestBuilder.put(uploadChunkBody);
 
     // set chunk data headers, indicating size and chunk range
     final String contentRange =
-        String.format("bytes %d-%d/%d", chunk.getStart(), chunk.getEnd(), totalFileSize);
+        String.format(
+            "bytes %d-%d/%d", chunk.streamByteOffset(), chunk.finalByteOffset(), totalFileSize);
     uploadRequestBuilder.header("Content-Range", contentRange);
-    uploadRequestBuilder.header("Content-Length", String.format("%d", chunk.getSize()));
+    uploadRequestBuilder.header("Content-Length", String.format("%d", chunk.size()));
 
     // upload the chunk
     Response chunkResponse = client.newCall(uploadRequestBuilder.build()).execute();
@@ -372,7 +390,7 @@ public class MicrosoftPhotosImporter
           () ->
               String.format(
                   "Uploaded chunk %s-%s successfuly, code %d",
-                  chunk.getStart(), chunk.getEnd(), chunkCode));
+                  chunk.streamByteOffset(), chunk.finalByteOffset(), chunkCode));
     }
     return chunkResponse;
   }
