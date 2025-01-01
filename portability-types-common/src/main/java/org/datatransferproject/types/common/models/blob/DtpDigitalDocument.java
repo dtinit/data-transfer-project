@@ -2,6 +2,7 @@ package org.datatransferproject.types.common.models.blob;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 /**
  * This is intended to by a sub set of schema.org's DigitalDocumentWrapper
@@ -10,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 // N.B. if this class gets more complex we can just use: https://github.com/google/schemaorg-java
 // but right now that probably add more complexity in terms of extra cognitive load.
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
 public class DtpDigitalDocument {
 
   private final String name;

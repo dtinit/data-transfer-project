@@ -19,11 +19,14 @@ package org.datatransferproject.types.common.models.social;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import org.datatransferproject.types.common.ImportableItem;
 
 import javax.annotation.Nonnull;
 import java.util.Objects;
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
 public class SocialActivityActor implements ImportableItem {
   private final String url;
   private final String name;
