@@ -64,9 +64,6 @@ include ':extensions:data-transfer:portability-data-transfer-rememberthemilk'
 // SmugMug
 include ':extensions:auth:portability-auth-smugmug'
 include ':extensions:data-transfer:portability-data-transfer-smugmug'
-// Solid
-//include ':extensions:auth:portability-auth-solid'
-include ':extensions:data-transfer:portability-data-transfer-solid'
 // Spotify
 include ':extensions:auth:portability-auth-spotify'
 include ':extensions:data-transfer:portability-data-transfer-spotify'
