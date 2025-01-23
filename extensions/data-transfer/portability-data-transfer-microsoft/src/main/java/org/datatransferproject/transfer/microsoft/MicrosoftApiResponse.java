@@ -218,7 +218,7 @@ public abstract class MicrosoftApiResponse {
 
   private FatalState toFatalState() {
     checkState(isFatal(), "cannot explain fatal state when is apparently recoverable");
-    if (httpStatus() == 403 && httpMessage().contains("Access Denied")) {
+    if (httpStatus() == 403 && (bodyContains("accessDenied") || bodyContains("notAllowed"))) {
       return FatalState.FATAL_STATE_FATAL_PERMISSION_DENIED;
     }
     // Nit: we _could_ just parse the body into json properly and make sure the JSON body "message"
