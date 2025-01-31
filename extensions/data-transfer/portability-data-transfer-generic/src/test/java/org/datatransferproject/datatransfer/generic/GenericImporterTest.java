@@ -1,13 +1,13 @@
 package org.datatransferproject.datatransfer.generic;
 
 import static java.lang.String.format;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -16,6 +16,7 @@ import okhttp3.mockwebserver.RecordedRequest;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.InMemoryIdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.types.common.models.IdOnlyContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
@@ -30,16 +31,20 @@ import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class GenericImporterTest {
+  @Parameter public String importerClass;
   private MockWebServer webServer;
-  private Monitor monitor = new Monitor() {};
-  private TemporaryPerJobDataStore dataStore = new TemporaryPerJobDataStore() {};
+  private final Monitor monitor = new Monitor() {};
+  private final TemporaryPerJobDataStore dataStore = new TemporaryPerJobDataStore() {};
 
   @Parameters(name = "{0}")
   public static Collection<String> strings() {
     return Arrays.asList(GenericImporter.class.getName(), GenericFileImporter.class.getName());
   }
 
-  @Parameter public String importerClass;
+  static void assertContains(String expected, String actual) {
+    assertTrue(
+        format("Missing substring [%s] from [%s]", expected, actual), actual.contains(expected));
+  }
 
   @Before
   public void setup() throws IOException {
@@ -50,11 +55,6 @@ public class GenericImporterTest {
   @After
   public void teardown() throws IOException {
     webServer.shutdown();
-  }
-
-  static void assertContains(String expected, String actual) {
-    assertTrue(
-        format("Missing substring [%s] from [%s]", expected, actual), actual.contains(expected));
   }
 
   <C> GenericImporter<IdOnlyContainerResource, C> getImporter(
@@ -98,17 +98,18 @@ public class GenericImporterTest {
     };
   }
 
+  @Test
   public void testGenericImporter() throws Exception {
     InMemoryIdempotentImportExecutor executor = new InMemoryIdempotentImportExecutor(monitor);
     GenericImporter<IdOnlyContainerResource, String> importer =
         getImporter(
             importerClass,
             container ->
-                Arrays.asList(
-                    new ImportableData<>(
-                        new GenericPayload<>(container.getId(), "schemasource"),
-                        container.getId(),
-                        container.getId())));
+                    List.of(
+                            new ImportableData<>(
+                                    new GenericPayload<>(container.getId(), "schemasource"),
+                                    container.getId(),
+                                    container.getId())));
     webServer.setDispatcher(getDispatcher());
 
     importer.importItem(
@@ -196,11 +197,11 @@ public class GenericImporterTest {
         getImporter(
             importerClass,
             container ->
-                Arrays.asList(
-                    new ImportableData<>(
-                        new GenericPayload<>(container.getId(), "schemasource"),
-                        container.getId(),
-                        container.getId())));
+                    List.of(
+                            new ImportableData<>(
+                                    new GenericPayload<>(container.getId(), "schemasource"),
+                                    container.getId(),
+                                    container.getId())));
     webServer.setDispatcher(getDispatcher());
 
     importer.importItem(
@@ -240,11 +241,11 @@ public class GenericImporterTest {
         getImporter(
             importerClass,
             container ->
-                Arrays.asList(
-                    new ImportableData<>(
-                        new GenericPayload<>(container.getId(), "schemasource"),
-                        container.getId(),
-                        container.getId())));
+                    List.of(
+                            new ImportableData<>(
+                                    new GenericPayload<>(container.getId(), "schemasource"),
+                                    container.getId(),
+                                    container.getId())));
     webServer.enqueue(
         new MockResponse().setResponseCode(400).setBody("{\"error\":\"bad_request\"}"));
 
@@ -269,11 +270,11 @@ public class GenericImporterTest {
         getImporter(
             importerClass,
             container ->
-                Arrays.asList(
-                    new ImportableData<>(
-                        new GenericPayload<>(container.getId(), "schemasource"),
-                        container.getId(),
-                        container.getId())));
+                    List.of(
+                            new ImportableData<>(
+                                    new GenericPayload<>(container.getId(), "schemasource"),
+                                    container.getId(),
+                                    container.getId())));
     webServer.enqueue(new MockResponse().setResponseCode(400).setBody("notjson"));
 
     importer.importItem(
@@ -297,11 +298,11 @@ public class GenericImporterTest {
         getImporter(
             importerClass,
             container ->
-                Arrays.asList(
-                    new ImportableData<>(
-                        new GenericPayload<>(container.getId(), "schemasource"),
-                        container.getId(),
-                        container.getId())));
+                    List.of(
+                            new ImportableData<>(
+                                    new GenericPayload<>(container.getId(), "schemasource"),
+                                    container.getId(),
+                                    container.getId())));
     webServer.enqueue(new MockResponse().setResponseCode(111));
 
     importer.importItem(
@@ -316,5 +317,36 @@ public class GenericImporterTest {
     ErrorDetail error = errors.iterator().next();
     assertEquals("itemId", error.title());
     assertContains("Unexpected response code (111)", error.exception());
+  }
+
+  @Test
+  public void testGenericImporterDestinationFull() throws Exception {
+    InMemoryIdempotentImportExecutor executor = new InMemoryIdempotentImportExecutor(monitor);
+    GenericImporter<IdOnlyContainerResource, String> importer =
+            getImporter(
+                    importerClass,
+                    container ->
+                            List.of(
+                                    new ImportableData<>(
+                                            new GenericPayload<>(container.getId(), "schemasource"),
+                                            container.getId(),
+                                            container.getId())));
+    webServer.enqueue(new MockResponse().setResponseCode(413).setBody("{\"error\":\"destination_full\"}"));
+
+    assertThrows(DestinationMemoryFullException.class, () -> {
+      importer.importItem(
+              UUID.randomUUID(),
+              executor,
+              new TokensAndUrlAuthData(
+                      "accessToken", "refreshToken", webServer.url("/refresh").toString()),
+              new IdOnlyContainerResource("itemId"));
+    });
+
+
+    Collection<ErrorDetail> errors = executor.getErrors();
+    assertEquals(1, errors.size());
+    ErrorDetail error = errors.iterator().next();
+    assertEquals("itemId", error.title());
+    assertContains("Generic importer failed with code (413)", error.exception());
   }
 }

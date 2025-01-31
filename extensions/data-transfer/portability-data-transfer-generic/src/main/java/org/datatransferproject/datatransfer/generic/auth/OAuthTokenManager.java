@@ -20,6 +20,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
+import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
@@ -66,8 +68,8 @@ class RefreshTokenResponse {
  */
 public class OAuthTokenManager {
   @FunctionalInterface
-  public interface FunctionRequiringAuthData<T> {
-    public T execute(TokensAndUrlAuthData authData) throws IOException, InvalidTokenException;
+  public interface FunctionRequiringAuthData<T, Ex extends Exception> {
+    public T execute(TokensAndUrlAuthData authData) throws Ex, InvalidTokenException;
   }
 
   AppCredentials appCredentials;
@@ -151,8 +153,8 @@ public class OAuthTokenManager {
    * @throws InvalidTokenException if {@code f} throws an {@link InvalidTokenException} after the
    *     access token has been refreshed
    */
-  public <T> T withAuthData(FunctionRequiringAuthData<T> f)
-      throws IOException, InvalidTokenException {
+  public <T, Ex extends Exception> T withAuthData(FunctionRequiringAuthData<T, Ex> f)
+      throws Ex, InvalidTokenException, IOException {
     try {
       return f.execute(authData);
     } catch (InvalidTokenException e) {
