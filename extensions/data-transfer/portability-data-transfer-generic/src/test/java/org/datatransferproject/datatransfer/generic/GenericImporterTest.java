@@ -1,7 +1,9 @@
 package org.datatransferproject.datatransfer.generic;
 
 import static java.lang.String.format;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -31,10 +33,10 @@ import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class GenericImporterTest {
-  @Parameter public String importerClass;
-  private MockWebServer webServer;
   private final Monitor monitor = new Monitor() {};
   private final TemporaryPerJobDataStore dataStore = new TemporaryPerJobDataStore() {};
+  @Parameter public String importerClass;
+  private MockWebServer webServer;
 
   @Parameters(name = "{0}")
   public static Collection<String> strings() {

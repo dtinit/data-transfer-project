@@ -709,7 +709,7 @@ If there is an error importing an item on any endpoint, the relevant HTTP respon
 }
 ```
 
-The combination of the HTTP response code and `error` field can be used to encode for specific failure modes; see [Token Refresh](#token-refresh) below.
+The combination of the HTTP response code and `error` field can be used to encode for specific failure modes; see [Token Refresh](#token-refresh) & [Destination Full](#destination-full) below.
 
 ## Authentication and Authorization
 

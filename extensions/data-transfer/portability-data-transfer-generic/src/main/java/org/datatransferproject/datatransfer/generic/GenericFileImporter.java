@@ -3,7 +3,6 @@ package org.datatransferproject.datatransfer.generic;
 import static java.lang.String.format;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Optional;
