@@ -709,7 +709,7 @@ If there is an error importing an item on any endpoint, the relevant HTTP respon
 }
 ```
 
-The combination of the HTTP response code and `error` field can be used to encode for specific failure modes; see [Token Refresh](#token-refresh) below.
+The combination of the HTTP response code and `error` field can be used to encode for specific failure modes; see [Token Refresh](#token-refresh) & [Destination Full](#destination-full) below.
 
 ## Authentication and Authorization
 
@@ -734,3 +734,23 @@ Content-Type: application/json
 ```
 
 The worker will request a token refresh through the standard OAuth refresh token flow.
+
+### Destination Full
+
+If the destination is unable to accept additional data for user due to capacity constrain or other limitations,
+the POST APIs should throw `413 Payload Too Large` error to avoid unnecessary data transfer attempts.
+
+`error` field should strictly be set to `destination_full` to indicate that the destination storage is full.
+
+Example error response:
+
+```
+HTTP/1.1 413 Payload Too Large
+Content-Type: application/json
+{
+  "error": "destination_full",
+  "error_description": "The destination storage is full"
+}
+```
+The worker will pause the job and won't retry in such scenario.
+Some exporters also support the ability to retry transfers after user frees up space in the destination.

@@ -31,6 +31,7 @@ import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportE
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
@@ -115,6 +116,7 @@ public class GenericImporter<C extends ContainerResource, R>
       TokensAndUrlAuthData initialAuthData,
       C data)
       throws Exception {
+
     OAuthTokenManager tokenManager =
         jobTokenManagerMap.computeIfAbsent(
             jobId,
@@ -130,7 +132,7 @@ public class GenericImporter<C extends ContainerResource, R>
     return new ImportResult(ResultType.OK);
   }
 
-  boolean parseResponse(Response response) throws IOException, InvalidTokenException {
+  boolean parseResponse(Response response) throws IOException, InvalidTokenException, DestinationMemoryFullException {
     if (response.code() >= 400) {
       byte[] body = response.body().bytes();
       ErrorResponse error;
@@ -146,6 +148,10 @@ public class GenericImporter<C extends ContainerResource, R>
 
       if (response.code() == 401 && error.getError().equals("invalid_token")) {
         throw new InvalidTokenException(error.toString(), null);
+      } if (response.code() == 413 && error.getError().equals("destination_full")) {
+        throw new DestinationMemoryFullException(
+            String.format("Generic importer failed with code (%s)", response.code()),
+            new RuntimeException("destination_full"));
       } else {
         throw new IOException(format("Error (%d) %s", response.code(), error.toString()));
       }
@@ -157,7 +163,7 @@ public class GenericImporter<C extends ContainerResource, R>
   }
 
   boolean importSingleItem(UUID jobId, TokensAndUrlAuthData authData, ImportableData<R> dataItem)
-      throws IOException, InvalidTokenException {
+      throws IOException, InvalidTokenException, DestinationMemoryFullException {
     Request request =
         new Request.Builder()
             .url(endpoint)
