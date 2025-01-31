@@ -753,3 +753,4 @@ Content-Type: application/json
 }
 ```
 The worker will pause the job and won't retry in such scenario.
+Some exporters also support the ability to retry transfers after user frees up space in the destination.
