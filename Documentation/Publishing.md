@@ -18,6 +18,8 @@ Commitizen is a tool that supports automatically incrementing SemVer version num
 
 ### Automated Publishing
 
+The `bump_version` job uses the Commitizen action to generate a changelog and bump version files by pushing and tagging a new commit on the main branch. To push to the repo requires a token with more privileges than the default Github Actions runner is given access to because of our branch protection rules, so we have a Github App called 'DTP Release Bot' that this job is configured to run as.
+
 Using the `maven` and `signing` gradle plugins adds the `sign` and `uploadArchives` targets, which together automate the process of publishing to Maven Central based on our configuration in `build.gradle`. \
 The `release` job in the Github action runs these targets, using environment variables to inject secret values like GPG keys and the OSSRH User Token required for publishing.
 

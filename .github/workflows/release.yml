@@ -19,15 +19,23 @@ jobs:
     outputs:
       version: ${{ steps.cz.outputs.version }}
     steps:
+      # To push to the repo an bypass the PR requirement, we need
+      # to use an App since the default github actions-provided token
+      # can't be configured to bypass requirements.
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Fetch tags, which are required to calculate the new version
-          token: "${{ secrets.GITHUB_TOKEN }}"
+          token: ${{ steps.app-token.outputs.token }}
       - id: cz
         name: "Generate Changelog and Tag"
         uses: commitizen-tools/commitizen-action@master
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ steps.app-token.outputs.token }}
   release:
     needs: bump_version
     runs-on: ubuntu-latest
