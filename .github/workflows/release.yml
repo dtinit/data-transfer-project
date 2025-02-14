@@ -17,17 +17,22 @@ jobs:
     runs-on: ubuntu-latest
     name: "Bump version"
     outputs:
-      version: ${{ steps.cz.outputs.version }}
+      version: ${{ steps.tag.outputs.version }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Fetch tags, which are required to calculate the new version
           token: "${{ secrets.GITHUB_TOKEN }}"
-      - id: cz
-        name: "Generate Changelog and Tag"
-        uses: commitizen-tools/commitizen-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Install commitizen"
+        run: pip install --user -U commitizen
+      - id: tag
+        name: "Tag release"
+        run: |
+          VERSION=$(cz bump --get-next)
+          TAG="v${VERSION}"
+          git tag "${TAG}"
+          git push origin "${TAG}" --tags
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
   release:
     needs: bump_version
     runs-on: ubuntu-latest
@@ -35,7 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.bump_version.outputs.version }}
+          ref: "v${{ needs.bump_version.outputs.version }}"
       - name: "Set up JDK"
         uses: actions/setup-java@v4
         with:
@@ -48,5 +53,6 @@ jobs:
           GRADLE_SIGNING_PASSWORD: "${{ secrets.GRADLE_SIGNING_PASSWORD }}"
           OSSRH_USERNAME: "${{ secrets.OSSRH_USERNAME }}"
           OSSRH_PASSWORD: "${{ secrets.OSSRH_PASSWORD }}"
+          RELEASE_VERSION: "${{ needs.bump_version.outputs.version }}"
         # Exclude client-rest as it's not part of the java release
         run: ./gradlew clean build sign uploadArchives --exclude-task :client-rest:uploadArchives

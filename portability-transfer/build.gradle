@@ -21,7 +21,7 @@ plugins {
 }
 
 group = "${projectGroup}"
-version = "${projectVersion}"
+version = System.getenv("RELEASE_VERSION")
 
 description = """Portability Worker"""
 
