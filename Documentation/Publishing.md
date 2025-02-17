@@ -14,7 +14,7 @@ The action contains two jobs; one to bump the version number of the DTP packages
 
 DTP uses [Semantic Versioning](https://semver.org/) for published packages. We also enforce [Conventional Commits](https://conventionalcommits.org/) on the `master` branch through the `.github/workflows/commitlint.yml` Github action, which lets us automatically calculate version numbers.
 
-Commitizen is a tool that supports automatically incrementing SemVer version numbers based on git commit history. Our usage of Commitizen is configured in `.cz.toml`, and is used in a Github action to automatically tag the new version in git.
+Commitizen is a tool that supports automatically incrementing SemVer version numbers based on git commit history. Our usage of Commitizen is configured in `.cz.toml`, and is used in a Github action to automatically tag the new version in git and publish to maven (per "automated publishing" section of this doc).
 
 ### Automated Publishing
 
