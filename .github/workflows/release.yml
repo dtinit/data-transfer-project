@@ -34,7 +34,7 @@ jobs:
           TAG="v${NEW_VERSION}"
           git tag "${TAG}" &&
             git push origin "${TAG}" --tags &&
-            echo "version=${NEW_VERSION}" | tee "$GITHUB_OUTPUT"
+            echo "version=${NEW_VERSION}" | tee -a "$GITHUB_OUTPUT"
   release:
     needs: bump_version
     runs-on: ubuntu-latest
