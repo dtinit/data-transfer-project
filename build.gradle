@@ -115,6 +115,23 @@ def addCloudExtensionDependency(proj) {
     proj.dependencies { compile project(":extensions:cloud:portability-cloud-${proj.rootProject.ext.cloudType}") }
 }
 
+def configureSigning(Project project) {
+    if (project.hasProperty("signing.keyId")) {
+        project.signing {
+            sign project.configurations.archives
+        }
+    } else if (System.getenv("GRADLE_SIGNING_KEY")) {
+        // For use in CI
+        project.signing {
+            def signingKey = System.getenv('GRADLE_SIGNING_KEY')
+            def signingPassword = System.getenv('GRADLE_SIGNING_PASSWORD')
+            useInMemoryPgpKeys(signingKey, signingPassword)
+            sign project.configurations.archives
+        }
+    }
+}
+configureSigning(project)
+
 /**
  * Configures the project to publish Maven artifacts to Maven Central.
  */
@@ -123,6 +140,7 @@ def configurePublication(Project project) {
         archives project.javadocJar, project.sourcesJar
     }
 
+    configureSigning(project)
 
     // Configure artifact publication
     project.uploadArchives {
@@ -173,20 +191,6 @@ def configurePublication(Project project) {
                     }
                 }
             }
-        }
-    }
-
-    if (project.hasProperty("signing.keyId")) {
-        project.signing {
-            sign project.configurations.archives
-        }
-    } else if (System.getenv("GRADLE_SIGNING_KEY")) {
-        // For use in CI
-        project.signing {
-            def signingKey = System.getenv('GRADLE_SIGNING_KEY')
-            def signingPassword = System.getenv('GRADLE_SIGNING_PASSWORD')
-            useInMemoryPgpKeys(signingKey, signingPassword)
-            sign project.configurations.archives
         }
     }
 }
