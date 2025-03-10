@@ -82,7 +82,8 @@ public class MicrosoftMediaImporterTest {
   private static final String FAKE_ACCESS_TOKEN = "fake-acc-token-"+UUID.randomUUID();
 
   MicrosoftMediaImporter importer;
-  OkHttpClient client;
+  OkHttpClient client = mock(OkHttpClient.class);
+  OkHttpClient.Builder clientBuilder;
   ObjectMapper objectMapper;
   TemporaryPerJobDataStore jobStore;
   Monitor monitor;
@@ -95,7 +96,8 @@ public class MicrosoftMediaImporterTest {
   @Before
   public void setUp() throws IOException {
     authData = mock(TokensAndUrlAuthData.class);
-    client = mock(OkHttpClient.class);
+    clientBuilder = mock(OkHttpClient.Builder.class);
+    doReturn(client).when(clientBuilder).build();
     objectMapper =
         new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     // mocked on a per test basis
@@ -112,7 +114,7 @@ public class MicrosoftMediaImporterTest {
     importer =
         new MicrosoftMediaImporter(
             BASE_URL,
-            client,
+            clientBuilder,
             objectMapper,
             jobStore,
             monitor,
