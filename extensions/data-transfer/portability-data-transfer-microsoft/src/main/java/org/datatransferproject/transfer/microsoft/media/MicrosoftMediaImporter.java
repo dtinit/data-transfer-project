@@ -62,7 +62,9 @@ public class MicrosoftMediaImporter
   /** Max number of bytes to upload to Microsoft's APIs at a time. */
   private static final int MICROSOFT_UPLOAD_CHUNK_BYTE_SIZE = 32000 * 1024; // 32000KiB
 
-  private final OkHttpClient client;
+  private final OkHttpClient.Builder httpClientBuilder;
+  private OkHttpClient client;
+
   private final ObjectMapper objectMapper;
   private final TemporaryPerJobDataStore jobStore;
   private final Monitor monitor;
@@ -82,7 +84,7 @@ public class MicrosoftMediaImporter
 
   public MicrosoftMediaImporter(
       String baseUrl,
-      OkHttpClient client,
+      OkHttpClient.Builder httpClientBuilder,
       ObjectMapper objectMapper,
       TemporaryPerJobDataStore jobStore,
       Monitor monitor,
@@ -100,7 +102,8 @@ public class MicrosoftMediaImporter
     // /me/drive/items/{parent-id}:/{filename}:/content;
     uploadMediaUrlTemplate = baseUrl + "/v1.0/me/drive/items/%s:/%s:/createUploadSession%s";
 
-    this.client = client;
+    this.httpClientBuilder = httpClientBuilder;
+    this.client = httpClientBuilder.build();
     this.objectMapper = objectMapper;
     this.jobStore = jobStore;
     this.monitor = monitor;
@@ -381,6 +384,8 @@ public class MicrosoftMediaImporter
     MicrosoftApiResponse response = sendMicrosoftRequest(requestBuilder);
     if (response.isTokenRefreshRequired()) {
       credentialFactory.refreshCredential(credential);
+      client = httpClientBuilder.build(); // reset any old pool of maybe-keepalive connections
+
       monitor.info(() -> "Refreshed Microsoft authorization token successfuly");
       requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
       response = sendMicrosoftRequest(requestBuilder);

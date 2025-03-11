@@ -100,10 +100,16 @@ public class MicrosoftTransferExtension implements TransferExtension {
     final double maxWritesPerSecond =  context.getSetting("msoftMaxWritesPerSecond", 1.0);
     TemporaryPerJobDataStore jobStore = context.getService(TemporaryPerJobDataStore.class);
     HttpTransport httpTransport = context.getService(HttpTransport.class);
+
     JsonFactory jsonFactory = context.getService(JsonFactory.class);
     TransformerService transformerService = new TransformerServiceImpl();
-    OkHttpClient client = new OkHttpClient.Builder().build();
+    OkHttpClient.Builder httpClientBuilder = new OkHttpClient.Builder();
     ObjectMapper mapper = new ObjectMapper();
+
+    // TODO(jzacsh) does anyone really want this across importer/exporters of
+    // this adapter? we can probably delete this and pass a fresh .build() to
+    // every constructor below, right?
+    final OkHttpClient sharedHttpClient = httpClientBuilder.build();
 
     AppCredentials appCredentials;
     try {
@@ -129,28 +135,30 @@ public class MicrosoftTransferExtension implements TransferExtension {
     ImmutableMap.Builder<DataVertical, Importer> importBuilder = ImmutableMap.builder();
     importBuilder.put(
         CONTACTS,
-        new MicrosoftContactsImporter(BASE_GRAPH_URL, client, mapper, transformerService));
+        new MicrosoftContactsImporter(BASE_GRAPH_URL, sharedHttpClient, mapper, transformerService));
     importBuilder.put(
         CALENDAR,
-        new MicrosoftCalendarImporter(BASE_GRAPH_URL, client, mapper, transformerService));
+        new MicrosoftCalendarImporter(BASE_GRAPH_URL, sharedHttpClient, mapper, transformerService));
+    // WARNING: do not use this importer; it will be deleted soon by jzacsh@ in favor of the actually maintained Media variant.
     importBuilder.put(
-        PHOTOS, new MicrosoftPhotosImporter(BASE_GRAPH_URL, client, mapper, jobStore, monitor,
+        PHOTOS, new MicrosoftPhotosImporter(BASE_GRAPH_URL, sharedHttpClient, mapper, jobStore, monitor,
           credentialFactory, jobFileStream));
-    importBuilder.put(MEDIA, new MicrosoftMediaImporter(BASE_GRAPH_URL, client, mapper, jobStore, monitor,
+    importBuilder.put(MEDIA, new MicrosoftMediaImporter(BASE_GRAPH_URL, httpClientBuilder, mapper, jobStore, monitor,
           credentialFactory, jobFileStream, maxWritesPerSecond));
     importerMap = importBuilder.build();
 
     ImmutableMap.Builder<DataVertical, Exporter> exporterBuilder = ImmutableMap.builder();
     exporterBuilder.put(
         CONTACTS,
-        new MicrosoftContactsExporter(BASE_GRAPH_URL, client, mapper, transformerService));
+        new MicrosoftContactsExporter(BASE_GRAPH_URL, sharedHttpClient, mapper, transformerService));
     exporterBuilder.put(
         CALENDAR,
-        new MicrosoftCalendarExporter(BASE_GRAPH_URL, client, mapper, transformerService));
+        new MicrosoftCalendarExporter(BASE_GRAPH_URL, sharedHttpClient, mapper, transformerService));
+    // WARNING: do not use this importer; it will be deleted soon by jzacsh@ in favor of the actually maintained Media variant.
     exporterBuilder.put(PHOTOS, new MicrosoftPhotosExporter(credentialFactory, jsonFactory, monitor));
     exporterBuilder.put(MEDIA, new MicrosoftMediaExporter(credentialFactory, jsonFactory, monitor));
     exporterBuilder.put(
-        OFFLINE_DATA, new MicrosoftOfflineDataExporter(BASE_GRAPH_URL, client, mapper));
+        OFFLINE_DATA, new MicrosoftOfflineDataExporter(BASE_GRAPH_URL, sharedHttpClient, mapper));
 
     exporterMap = exporterBuilder.build();
 
