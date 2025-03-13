@@ -37,11 +37,6 @@ import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
-@FunctionalInterface
-interface ContainerSerializer<C extends ContainerResource, R> {
-  public Iterable<ImportableData<R>> apply(C containerResource);
-}
-
 public class GenericImporter<C extends ContainerResource, R>
     implements Importer<TokensAndUrlAuthData, C> {
 
