@@ -117,7 +117,7 @@ public class ConsoleMonitor implements Monitor {
 
     // Write to standard error, as these are debug logs for which any buffering
     // won't help us at all.
-    System.err.format(builder.toString());
+    System.err.println(builder.toString());
   }
 
   /**
