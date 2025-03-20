@@ -279,11 +279,11 @@ public class GooglePhotosInterface {
     final int statusCode = e.getStatusCode();
 
     if (statusCode == 401) {
-      monitor.info(() -> "Attempting to refresh authorization token");
+      monitor.info(() -> String.format("GooglePhotosInterface: Attempting to refresh authorization token due to HTTP response code=%s, %s\n", statusCode, e));
       // if the credential refresh failed, let the error bubble up via the IOException that gets
       // thrown
       credential = credentialFactory.refreshCredential(credential);
-      monitor.info(() -> "Refreshed authorization token successfully");
+      monitor.info(() -> "GooglePhotosInterface: Refreshed authorization token successfully");
 
       // if the second attempt throws an error, then something else is wrong, and we bubble up the
       // response errors
