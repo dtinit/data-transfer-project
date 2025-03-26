@@ -223,7 +223,7 @@ public abstract class MicrosoftApiResponse {
     }
     // Nit: we _could_ just parse the body into json properly and make sure the JSON body "message"
     // field has this string. This seems fine for now.
-    if (httpStatus() == 507 && bodyContains("Insufficient Space Available")) {
+    if (httpStatus() == 507 && (bodyContains("Insufficient Space Available") || bodyContains("quotaLimitReached"))) {
       return FatalState.FATAL_STATE_FATAL_DESTINATION_FULL;
     }
     return FatalState.FATAL_STATE_FATAL_UNSPECIFIED;
