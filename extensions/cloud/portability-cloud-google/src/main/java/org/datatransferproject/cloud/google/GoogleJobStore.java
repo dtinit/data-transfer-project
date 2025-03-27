@@ -83,35 +83,39 @@ public final class GoogleJobStore extends JobStoreWithValidator {
     return String.format("%s-%s", jobId, key);
   }
 
+  private static Object getPropertyValue(Entity entity, String property)
+          throws IOException, ClassNotFoundException {
+    Object value = entity.getValue(property);
+    if (value instanceof StringValue) {
+      return entity.getString(property);
+    } else if (value instanceof LongValue) {
+      return entity.getLong(property);
+    } else if (value instanceof DoubleValue) {
+      return entity.getDouble(property);
+    } else if (value instanceof BooleanValue) {
+      return entity.getBoolean(property);
+    } else if (value instanceof TimestampValue) {
+      return entity.getTimestamp(property);
+    } else {
+      Blob blob = entity.getBlob(property);
+      try (ObjectInputStream in = new ObjectInputStream(blob.asInputStream())) {
+        return in.readObject();
+      }
+      catch(IllegalArgumentException e) {
+        throw new IllegalArgumentException(e + "Unsupported property type for property: " + property);
+      }
+    }
+  }
   private static Map<String, Object> getProperties(Entity entity)
-      throws IOException, ClassNotFoundException {
+          throws IOException, ClassNotFoundException {
     if (entity == null) {
       return null;
     }
     ImmutableMap.Builder<String, Object> builder = new ImmutableMap.Builder<>();
     for (String property : entity.getNames()) {
-      // builder.put(property, entity.getValue(property));
-      if (entity.getValue(property) instanceof StringValue) {
-        builder.put(property, (String) entity.getString(property));
-      } else if (entity.getValue(property) instanceof LongValue) {
-        // This conversion is safe because of integer to long conversion above
-        builder.put(property, new Long(entity.getLong(property)).intValue());
-      } else if (entity.getValue(property) instanceof DoubleValue) {
-        builder.put(property, (Double) entity.getDouble(property));
-      } else if (entity.getValue(property) instanceof BooleanValue) {
-        builder.put(property, (Boolean) entity.getBoolean(property));
-      } else if (entity.getValue(property) instanceof TimestampValue) {
-        builder.put(property, (Timestamp) entity.getTimestamp(property));
-      } else {
-        Blob blob = entity.getBlob(property);
-        Object obj = null;
-        try (ObjectInputStream in = new ObjectInputStream(blob.asInputStream())) {
-          obj = in.readObject();
-        }
-        builder.put(property, obj); // BlobValue
-      }
+      Object value = getPropertyValue(entity, property);
+      builder.put(property, value);
     }
-
     return builder.build();
   }
 

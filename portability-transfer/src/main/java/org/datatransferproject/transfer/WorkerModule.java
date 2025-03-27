@@ -260,16 +260,18 @@ final class WorkerModule extends FlagBindingModule {
         0, interval, TimeUnit.MILLISECONDS);
   }
 
+
   @Provides
   @Singleton
   @Annotations.CancelScheduler
   Scheduler getCancelCheckingScheduler() {
     // TODO: parse a Duration from the settings
-    long interval = context.getSetting("cancelCheckPollInterval", 60000); // Default: poll every 1m
+    long defaultPollIntervalMillis = 60_000; // Default: poll every 1 minute
+    long initialDelayMillis = 0; // Start immediately
+    long pollInterval = context.getSetting("cancelCheckPollInterval", defaultPollIntervalMillis);
     return AbstractScheduledService.Scheduler.newFixedDelaySchedule(
-        0, interval, TimeUnit.MILLISECONDS);
+            initialDelayMillis, pollInterval, TimeUnit.MILLISECONDS);
   }
-
   @Provides
   @Singleton
   Monitor getMonitor() {

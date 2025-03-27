@@ -27,6 +27,8 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import java.io.IOException;
+
+import com.google.api.services.blogger.Blogger;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
@@ -57,7 +59,12 @@ public class GoogleCredentialFactory {
   public HttpTransport getHttpTransport() {
     return httpTransport;
   }
-
+  public Blogger createBloggerClient(TokensAndUrlAuthData authData) {
+    Credential credential = createCredential(authData);
+    return new Blogger.Builder(httpTransport, jsonFactory, credential)
+            .setApplicationName(GoogleStaticObjects.APP_NAME)
+            .build();
+  }
   public JsonFactory getJsonFactory() {
     return jsonFactory;
   }

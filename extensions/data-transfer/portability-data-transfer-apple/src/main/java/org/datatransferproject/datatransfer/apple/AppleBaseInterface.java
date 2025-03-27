@@ -58,7 +58,7 @@ public interface AppleBaseInterface {
       throw new NotImplementedException("sendPostRequest is not implemented !! ");
     }
 
-    default TokensAndUrlAuthData refreshTokens(final TokensAndUrlAuthData authData, final AppCredentials appCredentials, Monitor monitor)
+    static TokensAndUrlAuthData refreshTokens(final TokensAndUrlAuthData authData, final AppCredentials appCredentials, Monitor monitor)
         throws CopyExceptionWithFailureReason {
 
         final String refreshToken = authData.getRefreshToken();
