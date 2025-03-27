@@ -13,7 +13,54 @@ public class GoogleCloudUtils {
 
   private GoogleCloudUtils() {
   }
+  public interface ValueSetter {
+    void setValue(Entity.Builder builder, String key, Object value) throws IOException;
+  }
 
+  class StringValueSetter implements ValueSetter {
+    @Override
+    public void setValue(Entity.Builder builder, String key, Object value) {
+      builder.set(key, (String) value);
+    }
+  }
+
+  class IntegerValueSetter implements ValueSetter {
+    @Override
+    public void setValue(Entity.Builder builder, String key, Object value) {
+      builder.set(key, (Integer) value);
+    }
+  }
+
+  class DoubleValueSetter implements ValueSetter {
+    @Override
+    public void setValue(Entity.Builder builder, String key, Object value) {
+      builder.set(key, (Double) value);
+    }
+  }
+
+  class BooleanValueSetter implements ValueSetter {
+    @Override
+    public void setValue(Entity.Builder builder, String key, Object value) {
+      builder.set(key, (Boolean) value);
+    }
+  }
+
+  class TimestampValueSetter implements ValueSetter {
+    @Override
+    public void setValue(Entity.Builder builder, String key, Object value) {
+      builder.set(key, (Timestamp) value);
+    }
+  }
+  class DefaultValueSetter implements ValueSetter {
+    @Override
+    public void setValue(Entity.Builder builder, String key, Object value) throws IOException {
+      ByteArrayOutputStream bos = new ByteArrayOutputStream();
+      try (ObjectOutputStream out = new ObjectOutputStream(bos)) {
+        out.writeObject(value);
+      }
+      builder.set(key, Blob.copyFrom(bos.toByteArray()));
+    }
+  }
   // Environment variable where GCP project ID is stored. The value is set in
   // config/k8s/api-deployment.yaml.
   private static final String GCP_PROJECT_ID_ENV_VAR = "GOOGLE_PROJECT_ID";
