@@ -95,6 +95,29 @@ public class MicrosoftApiResponseTest {
         });
   }
 
+  // Alternative way Microsoft APIs respond with destination-full errors.
+  @Test
+  public void testDestinationFull_quotaLimitReached() throws IOException {
+    Response networkResponse = fakeResponse(507, "",
+        "{" +
+            "\"error\": {" +
+                "\"code\":\"quotaLimitReached\"," +
+                "\"message\":\"Quota limit reached\"," +
+                "\"innerError\": {\"date\":\"2024-12-12T13:30:20\",\"request-id\":\"fake-request-id\",\"client-request-id\":\"fake-client-request-id\"}" +
+            "}" +
+        "}"
+        ).build();
+
+    MicrosoftApiResponse response = MicrosoftApiResponse.ofResponse(networkResponse);
+
+    assertThat(response.isOkay()).isFalse();
+    assertThrows(
+        DestinationMemoryFullException.class,
+        () -> {
+          response.throwDtpException("unit testing");
+        });
+  }
+
   @Test
   public void testErrorUnknown() throws IOException {
     Response networkResponse =
