@@ -151,22 +151,7 @@ class JobProcessor {
       success = true;
     } catch (CopyExceptionWithFailureReason e) {
       String failureReason = e.getFailureReason();
-      if (failureReason.contains(FailureReasons.DESTINATION_FULL.toString())) {
-        monitor.info(() -> "The remaining storage in the user's account is not enough to perform this operation.", e);
-      } else if (failureReason.contains(FailureReasons.INVALID_TOKEN.toString())  ||
-              failureReason.contains(FailureReasons.SESSION_INVALIDATED.toString())  ||
-              failureReason.contains(FailureReasons.UNCONFIRMED_USER.toString())  ||
-              failureReason.contains(FailureReasons.USER_CHECKPOINTED.toString())) {
-        monitor.info(() -> "Got token error", e);
-      } else {
-        monitor.severe(
-                () ->
-                        format(
-                                "Error with failure code '%s' while processing jobId: %s",
-                                failureReason, jobId),
-                e,
-                EventCode.WORKER_JOB_ERRORED);
-      }
+      logCopyException(failureReason, jobId, e);
       addFailureReasonToJob(jobId, failureReason);
     } catch (IOException | CopyException | RuntimeException e) {
       monitor.severe(() -> "Error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
@@ -194,7 +179,33 @@ class JobProcessor {
       JobMetadata.reset();
     }
   }
+  // New methods
+  private void logCopyException(String failureReason, UUID jobId, CopyExceptionWithFailureReason e) {
+    if (isDestinationFull(failureReason)) {
+      monitor.info(() -> "The remaining storage in the user's account is not enough to perform this operation.", e);
+    } else if (isTokenRelatedError(failureReason)) {
+      monitor.info(() -> "Got token error", e);
+    } else {
+      logSevereFailure(failureReason, jobId, e);
+    }
+  }
+  private boolean isDestinationFull(String failureReason) {
+    return failureReason.contains(FailureReasons.DESTINATION_FULL.toString());
+  }
 
+  private boolean isTokenRelatedError(String failureReason) {
+    return failureReason.contains(FailureReasons.INVALID_TOKEN.toString()) ||
+            failureReason.contains(FailureReasons.SESSION_INVALIDATED.toString()) ||
+            failureReason.contains(FailureReasons.UNCONFIRMED_USER.toString()) ||
+            failureReason.contains(FailureReasons.USER_CHECKPOINTED.toString());
+  }
+
+  private void logSevereFailure(String failureReason, UUID jobId, CopyExceptionWithFailureReason e) {
+    monitor.severe(
+            () -> format("Error with failure code '%s' while processing jobId: %s", failureReason, jobId),
+            e,
+            EventCode.WORKER_JOB_ERRORED);
+  }
   private static JobLifeCycle deriveFinalJobStatus(boolean success) {
     return JobLifeCycle.builder()
       .setState(JobLifeCycle.State.ENDED)
