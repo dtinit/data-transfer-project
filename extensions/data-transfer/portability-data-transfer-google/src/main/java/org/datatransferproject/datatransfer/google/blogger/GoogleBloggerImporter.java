@@ -214,16 +214,10 @@ public class GoogleBloggerImporter
   }
 
   private Blogger getOrCreateBloggerService(TokensAndUrlAuthData authData) {
-    return blogger == null ? makeBloggerService(authData) : blogger;
+    return blogger == null ? credentialFactory.createBloggerClient(authData) : blogger;
   }
 
-  private synchronized Blogger makeBloggerService(TokensAndUrlAuthData authData) {
-    Credential credential = credentialFactory.createCredential(authData);
-    return new Blogger.Builder(
-            credentialFactory.getHttpTransport(), credentialFactory.getJsonFactory(), credential)
-        .setApplicationName(GoogleStaticObjects.APP_NAME)
-        .build();
-  }
+  // Removed makeBloggerService method
 
   private synchronized Drive getOrCreateDriveService(TokensAndUrlAuthData authData) {
     return driveInterface == null ? (driveInterface = makeDriveService(authData)) : driveInterface;
