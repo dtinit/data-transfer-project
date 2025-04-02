@@ -94,7 +94,8 @@ public class OAuthTokenManagerTest {
                     + "{"
                     + "  \"access_token\": \"newAccessToken\","
                     + "  \"refresh_token\": \"newRefreshToken\","
-                    + "  \"token_type\": \"Bearer\""
+                    + "  \"token_type\": \"Bearer\","
+                    + "  \"some_random_field\": \"some_random_value\""
                     + "}"));
 
     TokensAndUrlAuthData usedAuthData =
