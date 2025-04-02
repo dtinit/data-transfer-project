@@ -159,7 +159,8 @@ public class OAuthTokenManager {
       return f.execute(authData);
     } catch (InvalidTokenException e) {
       if (authData.getRefreshToken() == null || authData.getRefreshToken().isEmpty()) {
-        throw new InvalidTokenException("Refresh token not present", e.getCause());
+        monitor.severe(() -> "Refresh token not present with auth data");
+        throw e;
       }
 
       this.authData = refreshToken();
