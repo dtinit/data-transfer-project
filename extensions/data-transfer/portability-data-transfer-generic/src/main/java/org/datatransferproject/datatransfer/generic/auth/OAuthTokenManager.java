@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
@@ -97,6 +98,7 @@ public class OAuthTokenManager {
     this.client = client;
     this.monitor = monitor;
     this.om.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+    this.om.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   }
 
   private TokensAndUrlAuthData refreshToken() throws IOException {
@@ -157,7 +159,7 @@ public class OAuthTokenManager {
       return f.execute(authData);
     } catch (InvalidTokenException e) {
       if (authData.getRefreshToken() == null || authData.getRefreshToken().isEmpty()) {
-        throw e;
+        throw new InvalidTokenException("Refresh token not present", e.getCause());
       }
 
       this.authData = refreshToken();
