@@ -41,7 +41,7 @@ public class TransferCompatibilityProvider {
         break;
     }
     if (exporter == null) {
-      return extension.getExporter(jobType); // preserve original exception
+      return extension.getExporter(jobType); // re-execute just for the potential exception
     }
     return exporter;
   }
@@ -64,25 +64,25 @@ public class TransferCompatibilityProvider {
         break;
     }
     if (importer == null) {
-      return extension.getImporter(jobType);
+      return extension.getImporter(jobType); // re-execute just for the potential exception
     }
     return importer;
   }
 
   private Importer<?, ?> getVideosImporter(TransferExtension extension) {
-    Importer media = getImporterOrNull(extension, MEDIA);
-    if (media == null) {
+    Importer mediaImporter = getImporterOrNull(extension, MEDIA);
+    if (mediaImporter == null) {
       return null;
     }
-    return new AnyToAnyImporter<>(media, MediaContainerResource::videoToMedia);
+    return new AnyToAnyImporter<>(mediaImporter, MediaContainerResource::videoToMedia);
   }
 
   private Importer<?, ?> getPhotosImporter(TransferExtension extension) {
-    Importer media = getImporterOrNull(extension, MEDIA);
-    if (media == null) {
+    Importer mediaImporter = getImporterOrNull(extension, MEDIA);
+    if (mediaImporter == null) {
       return null;
     }
-    return new AnyToAnyImporter<>(media, MediaContainerResource::photoToMedia);
+    return new AnyToAnyImporter<>(mediaImporter, MediaContainerResource::photoToMedia);
   }
 
   private Importer<?, ?> getMediaImporter(TransferExtension extension) {
