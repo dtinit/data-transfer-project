@@ -9,16 +9,12 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import java.io.IOException;
 import java.time.ZonedDateTime;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
-import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
-import org.datatransferproject.spi.transfer.hooks.JobHooks;
 import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.common.DownloadableItem;
 import org.datatransferproject.types.common.models.blob.BlobbyStorageContainerResource;
@@ -177,7 +173,7 @@ public class BlobbySerializer {
 
     String currentFolderPath = getFromStore(root.getId());
     if (currentFolderPath == null) {
-      currentFolderPath = root.getName();
+      currentFolderPath = "/" + root.getName();
     }
 
     // Import the current folder

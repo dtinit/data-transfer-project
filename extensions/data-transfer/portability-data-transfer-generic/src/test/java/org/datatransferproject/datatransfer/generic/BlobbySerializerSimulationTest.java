@@ -93,45 +93,45 @@ public class BlobbySerializerSimulationTest {
 
     List<ImportableData<ExportData>> data = Lists.newArrayList(blobbySerializer.serialize(rootPre));
     assertEquals(1, data.size());
-    assertEquals("Test Root", data.get(0).getName());
+    assertEquals("/Test Root", data.get(0).getName());
 
     data = Lists.newArrayList(blobbySerializer.serialize(root));
     assertEquals(3, data.size());
-    assertEquals("Test Root", data.get(0).getName());
-    assertEquals("Test Root/Folder 1.1", data.get(1).getName());
-    assertEquals("Test Root/Folder 1.2", data.get(2).getName());
+    assertEquals("/Test Root", data.get(0).getName());
+    assertEquals("/Test Root/Folder 1.1", data.get(1).getName());
+    assertEquals("/Test Root/Folder 1.2", data.get(2).getName());
 
     data = Lists.newArrayList(blobbySerializer.serialize(folder1_1));
     assertEquals(3, data.size());
-    assertEquals("Test Root/Folder 1.1", data.get(0).getName());
-    assertEquals("Test Root/Folder 1.1/Folder 1.1.1", data.get(1).getName());
-    assertEquals("Test Root/Folder 1.1/Folder 1.1.2", data.get(2).getName());
+    assertEquals("/Test Root/Folder 1.1", data.get(0).getName());
+    assertEquals("/Test Root/Folder 1.1/Folder 1.1.1", data.get(1).getName());
+    assertEquals("/Test Root/Folder 1.1/Folder 1.1.2", data.get(2).getName());
 
     data = Lists.newArrayList(blobbySerializer.serialize(folder1_1_1));
     assertEquals(2, data.size());
-    assertEquals("Test Root/Folder 1.1/Folder 1.1.1", data.get(0).getName());
+    assertEquals("/Test Root/Folder 1.1/Folder 1.1.1", data.get(0).getName());
     assertEquals("bar.txt", data.get(1).getName());
     ImportableFileData fileExportData = (ImportableFileData) data.get(1);
     assertEquals(
         ((FileExportData) fileExportData.getJsonData().getPayload()).getFolder(),
-        "Test Root/Folder 1.1/Folder 1.1.1");
+        "/Test Root/Folder 1.1/Folder 1.1.1");
 
     data = Lists.newArrayList(blobbySerializer.serialize(folder1_1_2));
     assertEquals(2, data.size());
-    assertEquals("Test Root/Folder 1.1/Folder 1.1.2", data.get(0).getName());
+    assertEquals("/Test Root/Folder 1.1/Folder 1.1.2", data.get(0).getName());
     assertEquals("bar.txt", data.get(1).getName());
     fileExportData = (ImportableFileData) data.get(1);
     assertEquals(
         ((FileExportData) fileExportData.getJsonData().getPayload()).getFolder(),
-        "Test Root/Folder 1.1/Folder 1.1.2");
+        "/Test Root/Folder 1.1/Folder 1.1.2");
 
     data = Lists.newArrayList(blobbySerializer.serialize(folder1_2));
     assertEquals(2, data.size());
-    assertEquals("Test Root/Folder 1.2", data.get(0).getName());
+    assertEquals("/Test Root/Folder 1.2", data.get(0).getName());
     assertEquals("bar.txt", data.get(1).getName());
     fileExportData = (ImportableFileData) data.get(1);
     assertEquals(
         ((FileExportData) fileExportData.getJsonData().getPayload()).getFolder(),
-        "Test Root/Folder 1.2");
+        "/Test Root/Folder 1.2");
   }
 }
