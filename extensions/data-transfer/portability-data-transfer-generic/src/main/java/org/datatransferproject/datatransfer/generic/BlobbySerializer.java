@@ -164,9 +164,10 @@ public class BlobbySerializer {
   /**
    * Serializes a BlobbyStorageContainerResource into an iterable of ImportableData objects.
    *
-   * This method only serializes the tree up to a single depth, assuming that the exporter will send separate
-   * BlobbyStorageContainerResource objects for subfolders. It also stores an ID-to-path mapping for folders,
-   * which can be used to establish parent-child relationships in separate iterations.
+   * <p>This method only serializes the tree up to a single depth, assuming that the exporter will
+   * send separate BlobbyStorageContainerResource objects for subfolders. It also stores an
+   * ID-to-path mapping for folders, which can be used to establish parent-child relationships in
+   * separate iterations.
    *
    * @param root The BloppyStorageContainerResource to serialize.
    * @return An iterable of ImportableData objects representing the serialized data.

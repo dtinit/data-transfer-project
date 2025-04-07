@@ -32,20 +32,11 @@ public class BlobbySerializerSimulationTest {
   @Test
   public void simpleImportTest() throws Exception {
 
-    /** Test Root
-     *    Folder 1.1
-     *      Folder 1.1.1
-     *        bar.txt
-     *      Folder 1.1.2
-     *        bar.txt
-     *    Folder 1.2
-     *    bar.txt
-     *    */
+    /** Test Root Folder 1.1 Folder 1.1.1 bar.txt Folder 1.1.2 bar.txt Folder 1.2 bar.txt */
     try (var mockedStatic = Mockito.mockStatic(JobMetadata.class)) {
       mockedStatic.when(JobMetadata::getJobId).thenReturn(UUID.randomUUID());
       runEndToEndTest();
     }
-
   }
 
   private void runEndToEndTest() {

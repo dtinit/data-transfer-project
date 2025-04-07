@@ -18,9 +18,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class BlobbySerializerTest extends GenericImportSerializerTestBase {
-  @Mock
-  JobStore jobStore;
+  @Mock JobStore jobStore;
   BlobbySerializer blobbySerializer = new BlobbySerializer(jobStore, new Monitor() {});
+
   @Test
   public void testBlobbySerializerFolders() throws Exception {
     // Folder structure of
@@ -31,7 +31,7 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
             "root",
             "rootdir",
             new ArrayList<>(),
-            Arrays.asList(
+            List.of(
                 new BlobbyStorageContainerResource(
                     "foo", "foodir", new ArrayList<>(), new ArrayList<>())));
 
@@ -75,14 +75,12 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
     assertEquals("rootdir", res.get(0).getIdempotentId());
     assertEquals("/root", res.get(0).getName());
     assertJsonEquals(
-        "" + "{" + "  \"@type\": \"Folder\"," + "  \"path\": \"/root\"" + "}",
-        res.get(0).getJsonData());
+        "{" + "  \"@type\": \"Folder\"," + "  \"path\": \"/root\"" + "}", res.get(0).getJsonData());
 
     assertEquals("foomp4", res.get(1).getIdempotentId());
     assertEquals("foo.mp4", res.get(1).getName());
     assertJsonEquals(
-        ""
-            + "{"
+        "{"
             + "  \"@type\": \"File\","
             + "  \"folder\": \"/root\","
             + "  \"name\": \"foo.mp4\","
@@ -99,8 +97,7 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
     assertEquals("bartxt", res.get(2).getIdempotentId());
     assertEquals("bar.txt", res.get(2).getName());
     assertJsonEquals(
-        ""
-            + "{"
+        "{"
             + "  \"@type\": \"File\","
             + "  \"folder\": \"/root\","
             + "  \"name\": \"bar.txt\","
@@ -126,11 +123,11 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
             "root",
             "rootdir",
             new ArrayList<>(),
-            Arrays.asList(
+            List.of(
                 new BlobbyStorageContainerResource(
                     "foo",
                     "foodir",
-                    Arrays.asList(
+                    List.of(
                         new DigitalDocumentWrapper(
                             new DtpDigitalDocument("bar.txt", "2020-03-01T01:02:03Z", "text/plain"),
                             "text/plain",
@@ -153,8 +150,7 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
     assertEquals("bartxt", res.get(2).getIdempotentId());
     assertEquals("bar.txt", res.get(2).getName());
     assertJsonEquals(
-        ""
-            + "{"
+        "{"
             + "  \"@type\": \"File\","
             + "  \"folder\": \"/root/foo\","
             + "  \"name\": \"bar.txt\","
