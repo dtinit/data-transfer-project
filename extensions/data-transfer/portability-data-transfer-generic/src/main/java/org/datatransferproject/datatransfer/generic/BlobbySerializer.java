@@ -1,6 +1,7 @@
 package org.datatransferproject.datatransfer.generic;
 
 import static java.lang.String.format;
+import static org.datatransferproject.launcher.monitor.MonitorLoader.monitor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.UUID;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.hooks.JobHooks;
@@ -118,10 +120,12 @@ public class BlobbySerializer {
           + "/extensions/data-transfer/portability-data-transfer-generic/src/main/java/org/datatransferproject/datatransfer/generic/BlobbySerializer.java";
   private static final String BLOB_ID_TO_NAME_KEY = "blobIdToNameKey";
   private final JobStore jobStore;
+  private final Monitor monitor;
   private BlobIdToName blobIdToName;
 
-  public BlobbySerializer(JobStore jobStore) {
+  public BlobbySerializer(JobStore jobStore, Monitor monitor) {
     this.jobStore = jobStore;
+    this.monitor = monitor;
   }
 
   private void addToJobStore(String id, String name) {
@@ -134,7 +138,7 @@ public class BlobbySerializer {
     try {
       jobStore.create(JobMetadata.getJobId(), BLOB_ID_TO_NAME_KEY, blobIdToName);
     } catch (IOException e) {
-      // TODO handle exception
+      monitor.severe(() -> "Unable to save blobIdToName map to JobStore", e);
       throw new RuntimeException(e);
     }
   }
@@ -149,56 +153,66 @@ public class BlobbySerializer {
       try {
         blobIdToName = jobStore.findData(jobId, BLOB_ID_TO_NAME_KEY, BlobIdToName.class);
       } catch (IOException e) {
-        // TODO handle exception
+        monitor.severe(() -> "Not able to find blobIdToNameKey map from JobStore", e);
         throw new RuntimeException(e);
       }
-      if(blobIdToName == null) {
+      if (blobIdToName == null) {
         blobIdToName = new BlobIdToName();
       }
     }
   }
 
+  /**
+   * Serializes a BlobbyStorageContainerResource into an iterable of ImportableData objects.
+   *
+   * This method only serializes the tree up to a single depth, assuming that the exporter will send separate
+   * BlobbyStorageContainerResource objects for subfolders. It also stores an ID-to-path mapping for folders,
+   * which can be used to establish parent-child relationships in separate iterations.
+   *
+   * @param root The BloppyStorageContainerResource to serialize.
+   * @return An iterable of ImportableData objects representing the serialized data.
+   */
   public Iterable<ImportableData<ExportData>> serialize(BlobbyStorageContainerResource root) {
     List<ImportableData<ExportData>> results = new ArrayList<>();
 
-      String currentFolderPath = getFromStore(root.getId());
-      if(currentFolderPath == null) {
-        currentFolderPath = root.getName();
-      }
+    String currentFolderPath = getFromStore(root.getId());
+    if (currentFolderPath == null) {
+      currentFolderPath = root.getName();
+    }
 
-      // Import the current folder
+    // Import the current folder
+    results.add(
+        new ImportableData<>(
+            new GenericPayload<>(new FolderExportData(currentFolderPath), SCHEMA_SOURCE),
+            root.getId(),
+            currentFolderPath));
+
+    // Import all sub folders, not recursively
+    for (BlobbyStorageContainerResource childFolder : root.getFolders()) {
+      String path = format("%s/%s", currentFolderPath, childFolder.getName());
       results.add(
           new ImportableData<>(
-              new GenericPayload<>(new FolderExportData(currentFolderPath), SCHEMA_SOURCE),
-              root.getId(),
-              currentFolderPath));
+              new GenericPayload<>(new FolderExportData(path), SCHEMA_SOURCE),
+              childFolder.getId(),
+              path));
+      addToJobStore(childFolder.getId(), path);
+    }
 
-      // Add all sub-folders to the search tree
-      for(BlobbyStorageContainerResource childFolder : root.getFolders()) {
-        // TODO add comment to fix this
-        String path = format("%s/%s", currentFolderPath, childFolder.getName());
-        results.add(
-            new ImportableData<>(
-                new GenericPayload<>(new FolderExportData(path), SCHEMA_SOURCE),
-                childFolder.getId(),
-                path));
-        addToJobStore(childFolder.getId(), path);
-      }
-
-      // Import all files in the current folder
-      // Intentionally done after importing the current folder
-      for (DigitalDocumentWrapper file : root.getFiles()) {
-        results.add(
-            new ImportableFileData<>(
-                new CachedDownloadableItem(
-                    file.getCachedContentId(), file.getDtpDigitalDocument().getName()),
-                file.getDtpDigitalDocument().getEncodingFormat(),
-                new GenericPayload<>(
-                    FileExportData.fromDtpDigitalDocument(currentFolderPath, file.getDtpDigitalDocument()),
-                    SCHEMA_SOURCE),
-                file.getCachedContentId(),
-                file.getDtpDigitalDocument().getName()));
-      }
+    // Import all files in the current folder
+    // Intentionally done after importing the current folder
+    for (DigitalDocumentWrapper file : root.getFiles()) {
+      results.add(
+          new ImportableFileData<>(
+              new CachedDownloadableItem(
+                  file.getCachedContentId(), file.getDtpDigitalDocument().getName()),
+              file.getDtpDigitalDocument().getEncodingFormat(),
+              new GenericPayload<>(
+                  FileExportData.fromDtpDigitalDocument(
+                      currentFolderPath, file.getDtpDigitalDocument()),
+                  SCHEMA_SOURCE),
+              file.getCachedContentId(),
+              file.getDtpDigitalDocument().getName()));
+    }
 
     saveStateToStore();
     return results;

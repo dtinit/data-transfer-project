@@ -48,7 +48,7 @@ public final class JobMetadata {
         && stopWatch != null);
   }
 
-  public static void init(
+  static void init(
       UUID initJobId,
       byte[] initEncodedPrivateKey,
       DataVertical initDataType,

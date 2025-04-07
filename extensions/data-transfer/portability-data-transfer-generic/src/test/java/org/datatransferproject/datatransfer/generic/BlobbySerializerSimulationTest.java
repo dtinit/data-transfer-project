@@ -2,7 +2,6 @@ package org.datatransferproject.datatransfer.generic;
 
 import static org.junit.Assert.assertEquals;
 
-import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.util.Collections;
@@ -12,28 +11,22 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.cloud.local.LocalJobStore;
 import org.datatransferproject.datatransfer.generic.BlobbySerializer.ExportData;
 import org.datatransferproject.transfer.JobMetadata;
-import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.common.models.blob.BlobbyStorageContainerResource;
 import org.datatransferproject.types.common.models.blob.DigitalDocumentWrapper;
 import org.datatransferproject.types.common.models.blob.DtpDigitalDocument;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class BlobbySerializerSimulationTest {
 
   private final Monitor monitor = new Monitor() {};
   LocalJobStore jobStore = new LocalJobStore(monitor);
-  BlobbySerializer blobbySerializer = new BlobbySerializer(jobStore);
+  BlobbySerializer blobbySerializer;
 
   @Before
   public void setup() throws IOException {
-    JobMetadata.init(
-        UUID.randomUUID(),
-        new byte[1],
-        DataVertical.OFFLINE_DATA,
-        "",
-        "",
-        Stopwatch.createStarted());
+    blobbySerializer = new BlobbySerializer(jobStore, monitor);
   }
 
   @Test
@@ -48,6 +41,14 @@ public class BlobbySerializerSimulationTest {
      *    Folder 1.2
      *    bar.txt
      *    */
+    try (var mockedStatic = Mockito.mockStatic(JobMetadata.class)) {
+      mockedStatic.when(JobMetadata::getJobId).thenReturn(UUID.randomUUID());
+      runEndToEndTest();
+    }
+
+  }
+
+  private void runEndToEndTest() {
     DigitalDocumentWrapper wrapper =
         new DigitalDocumentWrapper(
             new DtpDigitalDocument("bar.txt", null, "text/plain"), "text/plain", "bartxt");

@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.types.common.models.blob.BlobbyStorageContainerResource;
 import org.datatransferproject.types.common.models.blob.DigitalDocumentWrapper;
@@ -19,7 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class BlobbySerializerTest extends GenericImportSerializerTestBase {
   @Mock
   JobStore jobStore;
-  BlobbySerializer blobbySerializer = new BlobbySerializer(jobStore);
+  BlobbySerializer blobbySerializer = new BlobbySerializer(jobStore, new Monitor() {});
   @Test
   public void testBlobbySerializerFolders() throws Exception {
     // Folder structure of

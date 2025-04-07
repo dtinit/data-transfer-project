@@ -140,7 +140,7 @@ public class GenericTransferExtension implements TransferExtension {
     }
 
     if (serviceConfig.supportsVertical(BLOBS)) {
-      BlobbySerializer serializer = new BlobbySerializer(jobStore);
+      BlobbySerializer serializer = new BlobbySerializer(jobStore, context.getMonitor());
       importerMap.put(
           BLOBS,
           new GenericFileImporter<BlobbyStorageContainerResource, BlobbySerializer.ExportData>(
