@@ -156,7 +156,7 @@ public class GenericImporter<C extends ContainerResource, R>
     return true;
   }
 
-  String importSingleItem(UUID jobId, TokensAndUrlAuthData authData, ImportableData<R> dataItem)
+  boolean importSingleItem(UUID jobId, TokensAndUrlAuthData authData, ImportableData<R> dataItem)
       throws IOException, InvalidTokenException, DestinationMemoryFullException {
 
     Request request =
@@ -167,8 +167,7 @@ public class GenericImporter<C extends ContainerResource, R>
             .build();
 
     try (Response response = client.newCall(request).execute()) {
-      parseResponse(response);
-      return dataItem.getName();
+      return parseResponse(response);
     }
   }
 }
