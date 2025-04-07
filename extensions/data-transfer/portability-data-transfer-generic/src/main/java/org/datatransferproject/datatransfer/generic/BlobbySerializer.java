@@ -1,7 +1,6 @@
 package org.datatransferproject.datatransfer.generic;
 
 import static java.lang.String.format;
-import static org.datatransferproject.launcher.monitor.MonitorLoader.monitor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
