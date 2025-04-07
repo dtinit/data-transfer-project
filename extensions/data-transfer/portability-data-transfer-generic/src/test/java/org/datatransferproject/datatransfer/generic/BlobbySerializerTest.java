@@ -6,12 +6,20 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.types.common.models.blob.BlobbyStorageContainerResource;
 import org.datatransferproject.types.common.models.blob.DigitalDocumentWrapper;
 import org.datatransferproject.types.common.models.blob.DtpDigitalDocument;
 import org.junit.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public class BlobbySerializerTest extends GenericImportSerializerTestBase {
+  @Mock
+  JobStore jobStore;
+  BlobbySerializer blobbySerializer = new BlobbySerializer(jobStore);
   @Test
   public void testBlobbySerializerFolders() throws Exception {
     // Folder structure of
@@ -27,7 +35,7 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
                     "foo", "foodir", new ArrayList<>(), new ArrayList<>())));
 
     List<ImportableData<BlobbySerializer.ExportData>> res =
-        iterableToList(BlobbySerializer.serialize(container));
+        iterableToList(blobbySerializer.serialize(container));
 
     assertEquals(2, res.size());
     assertEquals("rootdir", res.get(0).getIdempotentId());
@@ -59,7 +67,7 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
             new ArrayList<>());
 
     List<ImportableData<BlobbySerializer.ExportData>> res =
-        iterableToList(BlobbySerializer.serialize(container));
+        iterableToList(blobbySerializer.serialize(container));
 
     assertEquals(3, res.size());
 
@@ -129,7 +137,7 @@ public class BlobbySerializerTest extends GenericImportSerializerTestBase {
                     new ArrayList<>())));
 
     List<ImportableData<BlobbySerializer.ExportData>> res =
-        iterableToList(BlobbySerializer.serialize(container));
+        iterableToList(blobbySerializer.serialize(container));
 
     assertEquals(3, res.size());
 
