@@ -13,8 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.common.DownloadableItem;
 import org.datatransferproject.types.common.models.blob.BlobbyStorageContainerResource;
@@ -114,43 +113,34 @@ public class BlobbySerializer {
       GenericTransferConstants.SCHEMA_SOURCE_BASE
           + "/extensions/data-transfer/portability-data-transfer-generic/src/main/java/org/datatransferproject/datatransfer/generic/BlobbySerializer.java";
   private static final String BLOB_ID_TO_NAME_KEY = "blobIdToNameKey";
-  private final JobStore jobStore;
-  private final Monitor monitor;
+  private final TemporaryPerJobDataStore jobStore;
   private BlobIdToName blobIdToName;
 
-  public BlobbySerializer(JobStore jobStore, Monitor monitor) {
+  public BlobbySerializer(TemporaryPerJobDataStore jobStore) {
     this.jobStore = jobStore;
-    this.monitor = monitor;
   }
 
-  private void addToJobStore(String id, String name) {
+  private void addToJobStore(String id, String name) throws IOException {
     initialiseBlobIdToNameIfNot(JobMetadata.getJobId());
     blobIdToName.add(id, name);
   }
 
-  private void saveStateToStore() {
+  private void saveStateToStore() throws IOException {
     initialiseBlobIdToNameIfNot(JobMetadata.getJobId());
-    try {
-      jobStore.create(JobMetadata.getJobId(), BLOB_ID_TO_NAME_KEY, blobIdToName);
-    } catch (IOException e) {
-      monitor.severe(() -> "Unable to save blobIdToName map to JobStore", e);
-      throw new RuntimeException(e);
-    }
+
+    jobStore.create(JobMetadata.getJobId(), BLOB_ID_TO_NAME_KEY, blobIdToName);
   }
 
-  private String getFromStore(String id) {
+  private String getFromStore(String id) throws IOException {
     initialiseBlobIdToNameIfNot(JobMetadata.getJobId());
     return blobIdToName.get(id);
   }
 
-  private void initialiseBlobIdToNameIfNot(UUID jobId) {
+  private void initialiseBlobIdToNameIfNot(UUID jobId) throws IOException {
     if (blobIdToName == null) {
-      try {
-        blobIdToName = jobStore.findData(jobId, BLOB_ID_TO_NAME_KEY, BlobIdToName.class);
-      } catch (IOException e) {
-        monitor.severe(() -> "Not able to find blobIdToNameKey map from JobStore", e);
-        throw new RuntimeException(e);
-      }
+
+      blobIdToName = jobStore.findData(jobId, BLOB_ID_TO_NAME_KEY, BlobIdToName.class);
+
       if (blobIdToName == null) {
         blobIdToName = new BlobIdToName();
       }
@@ -168,7 +158,8 @@ public class BlobbySerializer {
    * @param root The BloppyStorageContainerResource to serialize.
    * @return An iterable of ImportableData objects representing the serialized data.
    */
-  public Iterable<ImportableData<ExportData>> serialize(BlobbyStorageContainerResource root) {
+  public Iterable<ImportableData<ExportData>> serialize(BlobbyStorageContainerResource root)
+      throws IOException {
     List<ImportableData<ExportData>> results = new ArrayList<>();
 
     String currentFolderPath = getFromStore(root.getId());

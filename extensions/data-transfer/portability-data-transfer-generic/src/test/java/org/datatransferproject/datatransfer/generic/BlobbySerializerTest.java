@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.cloud.local.LocalJobStore;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.common.models.blob.BlobbyStorageContainerResource;
 import org.datatransferproject.types.common.models.blob.DigitalDocumentWrapper;
@@ -22,8 +23,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class BlobbySerializerTest extends GenericImportSerializerTestBase {
-  JobStore jobStore = new LocalJobStore();
-  BlobbySerializer blobbySerializer = new BlobbySerializer(jobStore, new Monitor() {});
+  TemporaryPerJobDataStore jobStore = new LocalJobStore();
+  BlobbySerializer blobbySerializer = new BlobbySerializer(jobStore);
 
   @Test
   public void testBlobbySerializerFolders() throws Exception {

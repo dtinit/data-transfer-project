@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.cloud.local.LocalJobStore;
 import org.datatransferproject.datatransfer.generic.BlobbySerializer.ExportData;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.common.models.blob.BlobbyStorageContainerResource;
 import org.datatransferproject.types.common.models.blob.DigitalDocumentWrapper;
@@ -21,12 +22,12 @@ import org.mockito.Mockito;
 public class BlobbySerializerSimulationTest {
 
   private final Monitor monitor = new Monitor() {};
-  LocalJobStore jobStore = new LocalJobStore(monitor);
+  TemporaryPerJobDataStore jobStore = new LocalJobStore(monitor);
   BlobbySerializer blobbySerializer;
 
   @Before
   public void setup() throws IOException {
-    blobbySerializer = new BlobbySerializer(jobStore, monitor);
+    blobbySerializer = new BlobbySerializer(jobStore);
   }
 
   @Test
@@ -48,7 +49,7 @@ public class BlobbySerializerSimulationTest {
     }
   }
 
-  private void runEndToEndTest() {
+  private void runEndToEndTest() throws IOException {
     DigitalDocumentWrapper wrapper =
         new DigitalDocumentWrapper(
             new DtpDigitalDocument("bar.txt", null, "text/plain"), "text/plain", "bartxt");
