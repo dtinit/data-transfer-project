@@ -10,6 +10,7 @@ import java.util.List;
 import org.datatransferproject.types.common.models.calendar.CalendarAttendeeModel;
 import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
 import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
+import org.datatransferproject.types.common.models.calendar.CalendarEventModel.CalendarEventTime;
 import org.datatransferproject.types.common.models.calendar.CalendarModel;
 import org.junit.Test;
 
@@ -18,8 +19,8 @@ public class CalendarSerializerTest extends GenericImportSerializerTestBase {
   public void testCalendarSerializer() throws Exception {
     CalendarContainerResource container =
         new CalendarContainerResource(
-            Arrays.asList(new CalendarModel("calendar123", "Calendar 123", "Calendar description")),
-            Arrays.asList(
+            List.of(new CalendarModel("calendar123", "Calendar 123", "Calendar description")),
+            List.of(
                 new CalendarEventModel(
                     "calendar123",
                     "Event 1",
@@ -28,10 +29,10 @@ public class CalendarSerializerTest extends GenericImportSerializerTestBase {
                         new CalendarAttendeeModel("attendee1", "attendee1@example.com", false),
                         new CalendarAttendeeModel("attendee2", "attendee2@example.com", true)),
                     "Event Place",
-                    new CalendarEventModel.CalendarEventTime(
+                    new CalendarEventTime(
                         OffsetDateTime.ofInstant(Instant.ofEpochSecond(1732713392), ZoneOffset.UTC),
                         false),
-                    new CalendarEventModel.CalendarEventTime(
+                    new CalendarEventTime(
                         OffsetDateTime.ofInstant(
                             Instant.ofEpochSecond(1732713392 + 60 * 60 * 2), ZoneOffset.UTC),
                         false),
@@ -43,8 +44,7 @@ public class CalendarSerializerTest extends GenericImportSerializerTestBase {
     assertEquals(2, res.size());
 
     assertJsonEquals(
-        ""
-            + "{"
+        "{"
             + "  \"@type\": \"Calendar\","
             + "  \"id\": \"calendar123\","
             + "  \"name\": \"Calendar 123\","
@@ -53,8 +53,7 @@ public class CalendarSerializerTest extends GenericImportSerializerTestBase {
         res.get(0).getJsonData());
 
     assertJsonEquals(
-        ""
-            + "{"
+        "{"
             + "  \"@type\": \"CalendarEvent\","
             + "  \"calendarId\": \"calendar123\","
             + "  \"title\": \"Event 1\","

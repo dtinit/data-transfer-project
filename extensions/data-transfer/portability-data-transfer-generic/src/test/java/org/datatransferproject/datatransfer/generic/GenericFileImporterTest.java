@@ -50,7 +50,7 @@ public class GenericFileImporterTest {
     webServer.shutdown();
   }
 
-  MultipartStream getMultipartStream(RecordedRequest request) {
+  public static MultipartStream getMultipartStream(RecordedRequest request) {
     assertTrue(
         format("Invalid Content-Type '%s'", request.getHeader("Content-Type")),
         request.getHeader("Content-Type").startsWith("multipart/related"));
@@ -74,7 +74,7 @@ public class GenericFileImporterTest {
     return builder.build();
   }
 
-  String readPartBody(MultipartStream stream) throws MalformedStreamException, IOException {
+  public static String readPartBody(MultipartStream stream) throws MalformedStreamException, IOException {
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     stream.readBodyData(os);
     return new String(os.toByteArray(), StandardCharsets.UTF_8);

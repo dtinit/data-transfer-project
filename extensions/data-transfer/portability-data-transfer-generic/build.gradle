@@ -21,11 +21,14 @@ plugins {
 
 dependencies {
     compile project(':portability-spi-transfer')
+    compile project(':portability-transfer')
     compile project(':portability-spi-cloud')
     compile project(':portability-types-common')
     compile "com.squareup.okhttp3:okhttp:${okHttpVersion}"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${jacksonVersion}"
+    testCompile project(':portability-transfer').sourceSets.test.output
+    testCompile project(':extensions:cloud:portability-cloud-local')
     testCompile "com.squareup.okhttp3:mockwebserver:${okHttpVersion}"
     testCompile "commons-fileupload:commons-fileupload:1.5"
 }
