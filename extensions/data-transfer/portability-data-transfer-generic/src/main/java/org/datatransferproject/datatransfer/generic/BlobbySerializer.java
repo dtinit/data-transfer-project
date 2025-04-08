@@ -7,12 +7,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import java.io.IOException;
 import java.time.ZonedDateTime;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Queue;
+import java.util.UUID;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.common.DownloadableItem;
 import org.datatransferproject.types.common.models.blob.BlobbyStorageContainerResource;
 import org.datatransferproject.types.common.models.blob.DigitalDocumentWrapper;
@@ -25,8 +27,8 @@ import org.datatransferproject.types.common.models.blob.DtpDigitalDocument;
  * items the Importer has to download itself (some MEDIA items) from the same interface.
  */
 class CachedDownloadableItem implements DownloadableItem {
-  private String cachedId;
-  private String name;
+  private final String cachedId;
+  private final String name;
 
   public CachedDownloadableItem(String cachedId, String name) {
     this.cachedId = cachedId;
@@ -68,6 +70,15 @@ class FileExportData implements BlobbySerializer.ExportData {
     this.dateModified = dateModified;
   }
 
+  public static FileExportData fromDtpDigitalDocument(String path, DtpDigitalDocument model) {
+    return new FileExportData(
+        path,
+        model.getName(),
+        Optional.ofNullable(model.getDateModified())
+            .filter(string -> !string.isEmpty())
+            .map(dateString -> ZonedDateTime.parse(model.getDateModified())));
+  }
+
   public String getFolder() {
     return folder;
   }
@@ -78,15 +89,6 @@ class FileExportData implements BlobbySerializer.ExportData {
 
   public Optional<ZonedDateTime> getDateModified() {
     return dateModified;
-  }
-
-  public static FileExportData fromDtpDigitalDocument(String path, DtpDigitalDocument model) {
-    return new FileExportData(
-        path,
-        model.getName(),
-        Optional.ofNullable(model.getDateModified())
-            .filter(string -> !string.isEmpty())
-            .map(dateString -> ZonedDateTime.parse(model.getDateModified())));
   }
 }
 
@@ -106,72 +108,106 @@ class FolderExportData implements BlobbySerializer.ExportData {
 }
 
 public class BlobbySerializer {
+
+  static final String SCHEMA_SOURCE =
+      GenericTransferConstants.SCHEMA_SOURCE_BASE
+          + "/extensions/data-transfer/portability-data-transfer-generic/src/main/java/org/datatransferproject/datatransfer/generic/BlobbySerializer.java";
+  private static final String BLOB_ID_TO_NAME_KEY = "blobIdToNameKey";
+  private final TemporaryPerJobDataStore jobStore;
+  private BlobIdToName blobIdToName;
+
+  public BlobbySerializer(TemporaryPerJobDataStore jobStore) {
+    this.jobStore = jobStore;
+  }
+
+  private void addToJobStore(String id, String name) throws IOException {
+    initialiseBlobIdToNameIfNot(JobMetadata.getJobId());
+    blobIdToName.add(id, name);
+  }
+
+  private void saveStateToStore() throws IOException {
+    initialiseBlobIdToNameIfNot(JobMetadata.getJobId());
+
+    jobStore.create(JobMetadata.getJobId(), BLOB_ID_TO_NAME_KEY, blobIdToName);
+  }
+
+  private String getFromStore(String id) throws IOException {
+    initialiseBlobIdToNameIfNot(JobMetadata.getJobId());
+    return blobIdToName.get(id);
+  }
+
+  private void initialiseBlobIdToNameIfNot(UUID jobId) throws IOException {
+    if (blobIdToName == null) {
+
+      blobIdToName = jobStore.findData(jobId, BLOB_ID_TO_NAME_KEY, BlobIdToName.class);
+
+      if (blobIdToName == null) {
+        blobIdToName = new BlobIdToName();
+      }
+    }
+  }
+
+  /**
+   * Serializes a BlobbyStorageContainerResource into an iterable of ImportableData objects.
+   *
+   * <p>This method only serializes the tree up to a single depth, assuming that the exporter will
+   * send separate BlobbyStorageContainerResource objects for subfolders. It also stores an
+   * ID-to-path mapping for folders, which can be used to establish parent-child relationships in
+   * separate iterations.
+   *
+   * @param root The BloppyStorageContainerResource to serialize.
+   * @return An iterable of ImportableData objects representing the serialized data.
+   */
+  public Iterable<ImportableData<ExportData>> serialize(BlobbyStorageContainerResource root)
+      throws IOException {
+    List<ImportableData<ExportData>> results = new ArrayList<>();
+
+    String currentFolderPath = getFromStore(root.getId());
+    if (currentFolderPath == null) {
+      currentFolderPath = "/" + root.getName();
+    }
+
+    // Import the current folder
+    results.add(
+        new ImportableData<>(
+            new GenericPayload<>(new FolderExportData(currentFolderPath), SCHEMA_SOURCE),
+            root.getId(),
+            currentFolderPath));
+
+    // Import all sub folders, not recursively
+    for (BlobbyStorageContainerResource childFolder : root.getFolders()) {
+      String path = format("%s/%s", currentFolderPath, childFolder.getName());
+      results.add(
+          new ImportableData<>(
+              new GenericPayload<>(new FolderExportData(path), SCHEMA_SOURCE),
+              childFolder.getId(),
+              path));
+      addToJobStore(childFolder.getId(), path);
+    }
+
+    // Import all files in the current folder
+    // Intentionally done after importing the current folder
+    for (DigitalDocumentWrapper file : root.getFiles()) {
+      results.add(
+          new ImportableFileData<>(
+              new CachedDownloadableItem(
+                  file.getCachedContentId(), file.getDtpDigitalDocument().getName()),
+              file.getDtpDigitalDocument().getEncodingFormat(),
+              new GenericPayload<>(
+                  FileExportData.fromDtpDigitalDocument(
+                      currentFolderPath, file.getDtpDigitalDocument()),
+                  SCHEMA_SOURCE),
+              file.getCachedContentId(),
+              file.getDtpDigitalDocument().getName()));
+    }
+
+    saveStateToStore();
+    return results;
+  }
+
   @JsonSubTypes({
     @JsonSubTypes.Type(FolderExportData.class),
     @JsonSubTypes.Type(FileExportData.class),
   })
   public interface ExportData {}
-
-  static class BlobbyContainerPath {
-    private BlobbyStorageContainerResource container;
-    private String path;
-
-    public BlobbyContainerPath(BlobbyStorageContainerResource container, String path) {
-      this.container = container;
-      this.path = path;
-    }
-
-    public BlobbyStorageContainerResource getContainer() {
-      return container;
-    }
-
-    public String getPath() {
-      return path;
-    }
-  }
-
-  static final String SCHEMA_SOURCE =
-      GenericTransferConstants.SCHEMA_SOURCE_BASE
-          + "/extensions/data-transfer/portability-data-transfer-generic/src/main/java/org/datatransferproject/datatransfer/generic/BlobbySerializer.java";
-
-  public static Iterable<ImportableData<ExportData>> serialize(
-      BlobbyStorageContainerResource root) {
-    List<ImportableData<ExportData>> results = new ArrayList<>();
-    // Search whole tree of container resource
-    Queue<BlobbyContainerPath> horizon = new ArrayDeque<>();
-    BlobbyContainerPath containerAndPath = new BlobbyContainerPath(root, "");
-    do {
-      BlobbyStorageContainerResource container = containerAndPath.getContainer();
-      String parentPath = containerAndPath.getPath();
-      String path = format("%s/%s", parentPath, container.getName());
-      // Import the current folder
-      results.add(
-          new ImportableData<>(
-              new GenericPayload<>(new FolderExportData(path), SCHEMA_SOURCE),
-              container.getId(),
-              path));
-
-      // Add all sub-folders to the search tree
-      for (BlobbyStorageContainerResource child : container.getFolders()) {
-        horizon.add(new BlobbyContainerPath(child, path));
-      }
-
-      // Import all files in the current folder
-      // Intentionally done after importing the current folder
-      for (DigitalDocumentWrapper file : container.getFiles()) {
-        results.add(
-            new ImportableFileData<>(
-                new CachedDownloadableItem(
-                    file.getCachedContentId(), file.getDtpDigitalDocument().getName()),
-                file.getDtpDigitalDocument().getEncodingFormat(),
-                new GenericPayload<>(
-                    FileExportData.fromDtpDigitalDocument(path, file.getDtpDigitalDocument()),
-                    SCHEMA_SOURCE),
-                file.getCachedContentId(),
-                file.getDtpDigitalDocument().getName()));
-      }
-    } while ((containerAndPath = horizon.poll()) != null);
-
-    return results;
-  }
 }

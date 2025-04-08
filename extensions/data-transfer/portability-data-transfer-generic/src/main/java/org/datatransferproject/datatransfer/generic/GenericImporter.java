@@ -111,7 +111,6 @@ public class GenericImporter<C extends ContainerResource, R>
       TokensAndUrlAuthData initialAuthData,
       C data)
       throws Exception {
-
     OAuthTokenManager tokenManager =
         jobTokenManagerMap.computeIfAbsent(
             jobId,
@@ -159,6 +158,7 @@ public class GenericImporter<C extends ContainerResource, R>
 
   boolean importSingleItem(UUID jobId, TokensAndUrlAuthData authData, ImportableData<R> dataItem)
       throws IOException, InvalidTokenException, DestinationMemoryFullException {
+
     Request request =
         new Request.Builder()
             .url(endpoint)
