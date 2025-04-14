@@ -82,6 +82,7 @@ dependencies {
     compile project(':extensions:auth:portability-auth-twitter')
     compile project(':extensions:auth:portability-auth-imgur')
     compile project(':extensions:auth:portability-auth-koofr')
+    compile project(':extensions:auth:portability-auth-synology')
 
     compile project(':extensions:data-transfer:portability-data-transfer-apple')
     compile project(':extensions:data-transfer:portability-data-transfer-daybook')
