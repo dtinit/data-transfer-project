@@ -20,4 +20,5 @@ package org.datatransferproject.datatransfer.synology.constant;
 /** Defines constants for Synology data transfer. */
 public interface SynologyConstant {
   public static final String C2_BASE_URL = "https://sa.dtp.us.c2.synology.com";
+  public static final String ALBUM_ITEM_ID_FORMAT = "%s-%s";
 }
