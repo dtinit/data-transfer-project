@@ -42,7 +42,7 @@ public class JWEKeyGenerator implements TransferKeyGenerator {
       monitor.severe(() -> "NoSuchAlgorithmException for: " + ALGORITHM, e);
       throw new RuntimeException("NoSuchAlgorithmException generating key", e);
     }
-    kpg.initialize(1024);
+    kpg.initialize(2048);
     KeyPair keyPair = kpg.genKeyPair();
     monitor.debug(() -> "JWEKeyGenerator generated WorkerKeyPair");
     return new WorkerKeyPair() {
