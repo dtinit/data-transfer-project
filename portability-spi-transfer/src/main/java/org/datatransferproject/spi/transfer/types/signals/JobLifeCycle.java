@@ -1,8 +1,12 @@
 package org.datatransferproject.spi.transfer.types.signals;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import javax.annotation.Nullable;
+
+import org.datatransferproject.spi.transfer.provider.SignalRequest;
 import org.datatransferproject.spi.transfer.types.FailureReasons;
 
 /**
@@ -11,22 +15,28 @@ import org.datatransferproject.spi.transfer.types.FailureReasons;
  * granular states + reasons.
  */
 @AutoValue
+@JsonDeserialize(builder = JobLifeCycle.Builder.class)
 public abstract class JobLifeCycle {
   public static Builder builder() {
     return new org.datatransferproject.spi.transfer.types.signals.AutoValue_JobLifeCycle.Builder()
-      .setState(State.UNKNOWN_STATE);
+        .setState(State.UNKNOWN_STATE);
   }
 
+  @JsonProperty("state")
   public abstract State state();
+
   @Nullable
+  @JsonProperty("failureReason")
   public abstract FailureReasons failureReason();
+
   @Nullable
+  @JsonProperty("endReason")
   public abstract EndReason endReason();
 
   public static JobLifeCycle JOB_STARTED() {
     return JobLifeCycle.builder()
-      .setState(JobLifeCycle.State.STARTED)
-      .build();
+        .setState(JobLifeCycle.State.STARTED)
+        .build();
   }
 
   @AutoValue.Builder
