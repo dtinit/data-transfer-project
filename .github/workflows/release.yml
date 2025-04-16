@@ -1,0 +1,60 @@
+name: Release
+
+permissions:
+  # The commitizen action pushes a new commit to the main
+  # branch to generate the changelog + tag, so needs write
+  # permission
+  contents: write
+
+on:
+  push:
+    branches:
+      - 'master'
+
+jobs:
+  bump_version:
+    if: "!startsWith(github.event.head_commit.message, 'bump:')"
+    runs-on: ubuntu-latest
+    name: "Bump version"
+    outputs:
+      version: ${{ steps.tag.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch tags, which are required to calculate the new version
+          token: "${{ secrets.GITHUB_TOKEN }}"
+      - name: "Install commitizen"
+        run: |
+          pip install --user -U commitizen &&
+            cz version --verbose
+      - id: tag
+        name: "Release: Publish new semver Git Tag"
+        run: |
+          NEW_VERSION=$(cz bump --get-next) || exit 1
+          TAG="v${NEW_VERSION}"
+          git tag "${TAG}" &&
+            git push origin "${TAG}" --tags &&
+            echo "version=${NEW_VERSION}" | tee -a "$GITHUB_OUTPUT"
+  release:
+    needs: bump_version
+    runs-on: ubuntu-latest
+    name: "Release"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: "v${{ needs.bump_version.outputs.version }}"
+      - name: "Set up JDK"
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+          cache: gradle
+      - name: "Sign and Release"
+        env:
+          GRADLE_SIGNING_KEY: "${{ secrets.GRADLE_SIGNING_KEY }}"
+          GRADLE_SIGNING_PASSWORD: "${{ secrets.GRADLE_SIGNING_PASSWORD }}"
+          OSSRH_USERNAME: "${{ secrets.OSSRH_USERNAME }}"
+          OSSRH_PASSWORD: "${{ secrets.OSSRH_PASSWORD }}"
+          RELEASE_VERSION: "${{ needs.bump_version.outputs.version }}"
+        # Exclude client-rest as it's not part of the java release
+        run: ./gradlew clean build sign uploadArchives --exclude-task :client-rest:uploadArchives

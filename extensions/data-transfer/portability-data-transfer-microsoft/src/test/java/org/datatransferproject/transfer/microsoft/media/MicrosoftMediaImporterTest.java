@@ -79,9 +79,11 @@ public class MicrosoftMediaImporterTest {
   private static final int CHUNK_SIZE = 32000 * 1024; // 32000KiB
   private static final String BASE_URL = "https://www.baseurl.com";
   private static final UUID uuid = UUID.randomUUID();
+  private static final String FAKE_ACCESS_TOKEN = "fake-acc-token-"+UUID.randomUUID();
 
   MicrosoftMediaImporter importer;
-  OkHttpClient client;
+  OkHttpClient client = mock(OkHttpClient.class);
+  OkHttpClient.Builder clientBuilder;
   ObjectMapper objectMapper;
   TemporaryPerJobDataStore jobStore;
   Monitor monitor;
@@ -94,7 +96,8 @@ public class MicrosoftMediaImporterTest {
   @Before
   public void setUp() throws IOException {
     authData = mock(TokensAndUrlAuthData.class);
-    client = mock(OkHttpClient.class);
+    clientBuilder = mock(OkHttpClient.Builder.class);
+    doReturn(client).when(clientBuilder).build();
     objectMapper =
         new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     // mocked on a per test basis
@@ -106,17 +109,18 @@ public class MicrosoftMediaImporterTest {
     RemoteFileStreamer remoteFileStreamer = mock(RemoteFileStreamer.class);
     when(credentialFactory.createCredential(any())).thenReturn(credential);
     when(credentialFactory.refreshCredential(any())).thenReturn(credential);
-    credential.setAccessToken("acc");
+    credential.setAccessToken(FAKE_ACCESS_TOKEN);
     credential.setExpirationTimeMilliseconds(null);
     importer =
         new MicrosoftMediaImporter(
             BASE_URL,
-            client,
+            clientBuilder,
             objectMapper,
             jobStore,
             monitor,
             credentialFactory,
-            new JobFileStream(remoteFileStreamer));
+            new JobFileStream(remoteFileStreamer),
+            1.0 /*maxWritesPerSecond*/);
   }
 
   @Test
@@ -173,7 +177,16 @@ public class MicrosoftMediaImporterTest {
                     r.url()
                         .toString()
                         .equals("https://www.baseurl.com/v1.0/me/drive/special/photos/children")));
-    Response response = fakeErrorResponse(403, "Access Denied", "{\"id\": \"id1\"}").build();
+    Response response = fakeResponse(403, "",
+        "{" +
+            "\"error\": {" +
+                "\"code\":\"accessDenied\"," +
+                "\"message\":\"Access Denied\"," +
+                "\"localizedMessage\":\"アイテムが削除されているか、期限切れになっているか、またはこのアイテムへのアクセス許可がない可能性があります。詳細については、このアイテムの所有者に問い合わせてください。\"," +
+                "\"innerError\": {\"date\":\"2024-12-24T01:03:02\",\"request-id\":\"fake-request-id\",\"client-request-id\":\"fake-client-request-id\"}" +
+            "}" +
+        "}"
+        ).build();
     when(call.execute()).thenReturn(response);
 
     assertThrows(
@@ -306,7 +319,12 @@ public class MicrosoftMediaImporterTest {
     Call call2 = mock(Call.class);
     doReturn(call2)
         .when(client)
-        .newCall(argThat((Request r) -> r.url().toString().contains("createUploadSession")));
+        .newCall(argThat((Request r) -> {
+          return r.url().toString().contains("createUploadSession")
+              && r.header("Authorization") != null
+              && r.header("Authorization").contains("Bearer")
+              && r.header("Authorization").contains(FAKE_ACCESS_TOKEN);
+        }));
     Response response2 =
         fakeResponse(200, "OK", "{\"uploadUrl\": \"https://scalia.com/link\"}").build();
     when(call2.execute()).thenReturn(response2);
@@ -314,7 +332,12 @@ public class MicrosoftMediaImporterTest {
     Call call3 = mock(Call.class);
     doReturn(call3)
         .when(client)
-        .newCall(argThat((Request r) -> r.url().toString().contains("scalia.com/link")));
+        .newCall(argThat((Request r) -> {
+          return r.url().toString().contains("scalia.com/link")
+              // Regression coverage: we _don't_ want a token sent for every chunk.
+              // https://github.com/dtinit/data-transfer-project/pull/1416
+              && r.header("Authorization") == null;
+        }));
     Response response3 = fakeResponse(200, "OK", "{\"id\": \"rand1\"}").build();
     when(call3.execute()).thenReturn(response3);
 

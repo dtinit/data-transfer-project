@@ -75,7 +75,7 @@ configure(sourceProjects()) {
     apply plugin: 'idea'
 
     group = "${projectGroup}"
-    version = "${projectVersion}"
+    version = System.getenv('RELEASE_VERSION')
 
     sourceCompatibility = 11
 
@@ -111,43 +111,26 @@ configure(sourceProjects()) {
     }
 }
 
-task bumpPatchVersion {
-    doLast {
-        println "Current version: ${projectVersion}"
-        def (major, minor, patch) = projectVersion.tokenize(['.-'])
-        setSnapshotVersion(major, minor, patch.toInteger() + 1)
-    }
-}
-
-task bumpMinorVersion {
-    doLast {
-        println "Current version: ${projectVersion}"
-        def (major, minor, patch) = projectVersion.tokenize(['.-'])
-        setSnapshotVersion(major, minor.toInteger() + 1, patch)
-    }
-}
-
-task bumpMajorVersion {
-    doLast {
-        println "Current version: ${projectVersion}"
-        def (major, minor, patch) = projectVersion.tokenize(['.-'])
-        setSnapshotVersion(major.toInteger() + 1, minor, patch)
-    }
-}
-
-def setSnapshotVersion(major, minor, patch) {
-    def newVersion = "$major.$minor.$patch-SNAPSHOT"
-
-    println "New version: ${newVersion}"
-    ant.propertyfile(
-            file: "gradle.properties") {
-        entry(key: "projectVersion", value: newVersion)
-    }
-}
-
 def addCloudExtensionDependency(proj) {
     proj.dependencies { compile project(":extensions:cloud:portability-cloud-${proj.rootProject.ext.cloudType}") }
 }
+
+def configureSigning(Project project) {
+    if (project.hasProperty("signing.keyId")) {
+        project.signing {
+            sign project.configurations.archives
+        }
+    } else if (System.getenv("GRADLE_SIGNING_KEY")) {
+        // For use in CI
+        project.signing {
+            def signingKey = System.getenv('GRADLE_SIGNING_KEY')
+            def signingPassword = System.getenv('GRADLE_SIGNING_PASSWORD')
+            useInMemoryPgpKeys(signingKey, signingPassword)
+            sign project.configurations.archives
+        }
+    }
+}
+configureSigning(project)
 
 /**
  * Configures the project to publish Maven artifacts to Maven Central.
@@ -157,6 +140,7 @@ def configurePublication(Project project) {
         archives project.javadocJar, project.sourcesJar
     }
 
+    configureSigning(project)
 
     // Configure artifact publication
     project.uploadArchives {
@@ -165,11 +149,17 @@ def configurePublication(Project project) {
                 beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
                 repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2") {
-                    authentication(userName: project.hasProperty('ossrhUsername') ? ossrhUsername : '', password: project.hasProperty('ossrhPassword') ? ossrhPassword : '')
+                    authentication(
+                      userName: project.hasProperty('ossrhUsername') ? ossrhUsername : System.getenv('OSSRH_USERNAME'),
+                      password: project.hasProperty('ossrhPassword') ? ossrhPassword : System.getenv('OSSRH_PASSWORD')
+                    )
                 }
 
                 snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots") {
-                    authentication(userName: project.hasProperty('ossrhUsername') ? ossrhUsername : '', password: project.hasProperty('ossrhPassword') ? ossrhPassword : '')
+                    authentication(
+                      userName: project.hasProperty('ossrhUsername') ? ossrhUsername : System.getenv('OSSRH_USERNAME'),
+                      password: project.hasProperty('ossrhPassword') ? ossrhPassword : System.getenv('OSSRH_PASSWORD')
+                    )
                 }
 
                 pom.project {
@@ -201,12 +191,6 @@ def configurePublication(Project project) {
                     }
                 }
             }
-        }
-    }
-
-    if (project.hasProperty("signing.keyId")) {
-        project.signing {
-            sign project.configurations.archives
         }
     }
 }

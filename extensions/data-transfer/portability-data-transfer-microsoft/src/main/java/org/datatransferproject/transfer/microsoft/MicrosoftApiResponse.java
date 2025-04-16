@@ -64,8 +64,18 @@ public abstract class MicrosoftApiResponse {
   /** HTTP body of the response if any was present. */
   public abstract Optional<String> body();
 
+  /** Exception that occurred when trying to read the HTTP body of the response. */
+  public abstract Optional<IOException> bodyException();
+
   /**
    * Builds from key fields within an HTTP response, closing said response
+   *
+   * <p>If the body is a requirement and you need to fail-fast for bad response-bodies, then make
+   * sure you're calling an introspective method that tries to actually utiilze the body, eg: {@link
+   * getJsonValue} (or add a new one). By default, because bodies are not always provided or needed,
+   * this construction method tries to save the response-body but stores an error in {@link
+   * bodyException} (which will be included in the usual exception output via {@link
+   * throwDtpException} and co).
    *
    * <p>Warning: this loads the entire response body to memory, as we assume all Microsoft API
    * responses we're dealing with are (at the most complex end) just JSON responses intended to be
@@ -81,15 +91,13 @@ public abstract class MicrosoftApiResponse {
       final String body;
       try {
         body = response.body().string();
+        if (!Strings.isNullOrEmpty(body)) {
+          builder.setBody(body);
+        }
       } catch (IOException e) {
-        throw builder
-            .build()
-            .toIoException("bug? loading body from response shouldn't hit IOException, but did", e);
+        builder.setBodyException(e);
       }
 
-      if (!Strings.isNullOrEmpty(body)) {
-        builder.setBody(body);
-      }
       response.close(); // only close if we _had_ a body field to read
     }
 
@@ -103,6 +111,8 @@ public abstract class MicrosoftApiResponse {
     public abstract Builder setHttpMessage(String httpMessage);
 
     public abstract Builder setBody(String body);
+
+    public abstract Builder setBodyException(IOException bodyException);
 
     public abstract MicrosoftApiResponse build();
   }
@@ -208,12 +218,12 @@ public abstract class MicrosoftApiResponse {
 
   private FatalState toFatalState() {
     checkState(isFatal(), "cannot explain fatal state when is apparently recoverable");
-    if (httpStatus() == 403 && httpMessage().contains("Access Denied")) {
+    if (httpStatus() == 403 && (bodyContains("accessDenied") || bodyContains("notAllowed"))) {
       return FatalState.FATAL_STATE_FATAL_PERMISSION_DENIED;
     }
     // Nit: we _could_ just parse the body into json properly and make sure the JSON body "message"
     // field has this string. This seems fine for now.
-    if (httpStatus() == 507 && bodyContains("Insufficient Space Available")) {
+    if (httpStatus() == 507 && (bodyContains("Insufficient Space Available") || bodyContains("quotaLimitReached"))) {
       return FatalState.FATAL_STATE_FATAL_DESTINATION_FULL;
     }
     return FatalState.FATAL_STATE_FATAL_UNSPECIFIED;

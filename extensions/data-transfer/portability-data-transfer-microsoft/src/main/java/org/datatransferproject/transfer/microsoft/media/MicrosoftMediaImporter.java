@@ -36,6 +36,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import org.apache.commons.lang3.tuple.Pair;
+import com.google.common.util.concurrent.RateLimiter;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.api.transport.JobFileStream;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
@@ -61,12 +62,16 @@ public class MicrosoftMediaImporter
   /** Max number of bytes to upload to Microsoft's APIs at a time. */
   private static final int MICROSOFT_UPLOAD_CHUNK_BYTE_SIZE = 32000 * 1024; // 32000KiB
 
-  private final OkHttpClient client;
+  private final OkHttpClient.Builder httpClientBuilder;
+  private OkHttpClient client;
+
   private final ObjectMapper objectMapper;
   private final TemporaryPerJobDataStore jobStore;
   private final Monitor monitor;
   private final MicrosoftCredentialFactory credentialFactory;
   private final JobFileStream jobFileStream;
+  private final RateLimiter writeRateLimiter;
+
   private final MicrosoftTransmogrificationConfig transmogrificationConfig =
       new MicrosoftTransmogrificationConfig();
   private Credential credential;
@@ -79,13 +84,13 @@ public class MicrosoftMediaImporter
 
   public MicrosoftMediaImporter(
       String baseUrl,
-      OkHttpClient client,
+      OkHttpClient.Builder httpClientBuilder,
       ObjectMapper objectMapper,
       TemporaryPerJobDataStore jobStore,
       Monitor monitor,
       MicrosoftCredentialFactory credentialFactory,
-      JobFileStream jobFileStream) {
-
+      JobFileStream jobFileStream,
+      double maxWritesPerSecond) {
     // NOTE: "special/photos" is a specific folder in One Drive that corresponds to items that
     // should appear in https://photos.onedrive.com/, for more information see:
     // https://learn.microsoft.com/en-us/onedrive/developer/rest-api/api/drive_get_specialfolder?#special-folder-names
@@ -97,13 +102,15 @@ public class MicrosoftMediaImporter
     // /me/drive/items/{parent-id}:/{filename}:/content;
     uploadMediaUrlTemplate = baseUrl + "/v1.0/me/drive/items/%s:/%s:/createUploadSession%s";
 
-    this.client = client;
+    this.httpClientBuilder = httpClientBuilder;
+    this.client = httpClientBuilder.build();
     this.objectMapper = objectMapper;
     this.jobStore = jobStore;
     this.monitor = monitor;
     this.credentialFactory = credentialFactory;
     this.credential = null;
     this.jobFileStream = jobFileStream;
+    this.writeRateLimiter = RateLimiter.create(maxWritesPerSecond);
   }
 
   @Override
@@ -299,17 +306,32 @@ public class MicrosoftMediaImporter
     return new Request.Builder().url(createSessionUrl);
   }
 
-  // Uploads a single DataChunk to an upload URL
-  // PUT to {photoUploadUrl}
-  // HEADERS
-  // Content-Length: {chunk size in bytes}
-  // Content-Range: bytes {begin}-{end}/{total size}
-  // body={bytes}
+  /**
+   * Uploads a single DataChunk to an upload URL {@code photoUploadUrl} via PUT
+   * request with this composition:
+   * <pre>{@code
+   *  HEADERS
+   *  Content-Length: $CHUNK_SIZE_IN_BYTES
+   *  Content-Range: bytes $BEGIN_INDEX-$END_INDEX/$TOTAL_SIZE
+   *  body=$BYTES
+   * }</pre>
+   *
+   * <p>NOTE: an access token is purposely not incluced per Microsoft SDK's own instructions:
+   * https://learn.microsoft.com/en-us/graph/api/driveitem-createuploadsession?view=graph-rest-1.0#remarks
+   *
+   *
+   * <p>See also:
+   * <ul>
+   * <li>https://learn.microsoft.com/en-us/graph/api/driveitem-createuploadsession?view=graph-rest-1.0#upload-bytes-to-the-upload-session
+   * </ul>
+   *
+   * Returns a response, which is only expected to have a response-body in the
+   * event that this is the final chunk.
+   */
   private MicrosoftApiResponse uploadChunk(
       DataChunk chunk, String photoUploadUrl, long totalFileSize, String mediaType)
       throws IOException, DestinationMemoryFullException, PermissionDeniedException {
     Request.Builder uploadRequestBuilder = new Request.Builder().url(photoUploadUrl);
-    uploadRequestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
 
     // put chunk data in
     RequestBody uploadChunkBody =
@@ -340,6 +362,9 @@ public class MicrosoftMediaImporter
   /** Low-level API call used by other helpers: prefer {@link tryWithCreds} instead. */
   private MicrosoftApiResponse sendMicrosoftRequest(Request.Builder requestBuilder)
       throws IOException {
+    // Wait for write permit before making request
+    writeRateLimiter.acquire();
+
     return MicrosoftApiResponse.ofResponse(
         checkNotNull(
             client.newCall(requestBuilder.build()).execute(),
@@ -359,6 +384,8 @@ public class MicrosoftMediaImporter
     MicrosoftApiResponse response = sendMicrosoftRequest(requestBuilder);
     if (response.isTokenRefreshRequired()) {
       credentialFactory.refreshCredential(credential);
+      client = httpClientBuilder.build(); // reset any old pool of maybe-keepalive connections
+
       monitor.info(() -> "Refreshed Microsoft authorization token successfuly");
       requestBuilder.header("Authorization", "Bearer " + credential.getAccessToken());
       response = sendMicrosoftRequest(requestBuilder);
@@ -371,7 +398,10 @@ public class MicrosoftMediaImporter
    * standard token-refresh retry options.
    *
    * <p>Prefer {@link tryWithCredsOrFail(Request.Builder, String, String)} if you ultimately only
-   * care about a particular JSON key in the response body.
+   * care about a particular JSON key in the response body. If you don't
+   * need/expect a response body (or don't know yet) then this is the right
+   * method to call instead (and then call {@link
+   * MicrosoftApiResponse#getJsonValue} yourself later).
    *
    * <p>Example usage:
    *

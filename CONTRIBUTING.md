@@ -23,3 +23,12 @@ that's welcome).
 
 All submissions, including submissions by project members, require review. We
 use GitHub pull requests for this purpose.
+
+### PR Titles
+
+To automate releases we require that PRs are titled according to
+[conventional commits](https://conventionalcommits.org); i.e. that they
+are tagged like `fix: handle exception XYZ correctly`, or
+`feat: implement new video exporter`. See our
+[Publishing documentation](https://github.com/dtinit/data-transfer-project/blob/master/Documentation/Publishing.md#semantic-versioning-and-conventional-commits)
+and the conventional commits documentation for more details.

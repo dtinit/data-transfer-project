@@ -18,6 +18,7 @@ package org.datatransferproject.types.common.models.social;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.collect.ImmutableList;
 import org.datatransferproject.types.common.ImportableItem;
 
@@ -26,6 +27,7 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.Objects;
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
 public class SocialActivityModel implements ImportableItem {
   private final String id;
   private final Instant published;

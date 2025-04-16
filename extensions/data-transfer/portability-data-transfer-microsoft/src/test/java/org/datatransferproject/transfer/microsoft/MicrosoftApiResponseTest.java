@@ -37,7 +37,38 @@ public class MicrosoftApiResponseTest {
 
   @Test
   public void testErrorPermission() throws IOException {
-    Response networkResponse = fakeResponse(403, "Access Denied").build();
+    Response networkResponse = fakeResponse(403, "",
+        "{" +
+            "\"error\": {" +
+                "\"code\":\"accessDenied\"," +
+                "\"message\":\"Access Denied\"," +
+                "\"localizedMessage\":\"アイテムが削除されているか、期限切れになっているか、またはこのアイテムへのアクセス許可がない可能性があります。詳細については、このアイテムの所有者に問い合わせてください。\"," +
+                "\"innerError\": {\"date\":\"2024-12-24T01:03:02\",\"request-id\":\"fake-request-id\",\"client-request-id\":\"fake-client-request-id\"}" +
+            "}" +
+        "}"
+        ).build();
+
+    MicrosoftApiResponse response = MicrosoftApiResponse.ofResponse(networkResponse);
+
+    assertThat(response.isOkay()).isFalse();
+    assertThrows(
+        PermissionDeniedException.class,
+        () -> {
+          response.throwDtpException("unit testing");
+        });
+  }
+
+  @Test
+  public void testErrorPermissionNotAllowed() throws IOException {
+    Response networkResponse = fakeResponse(403, "",
+        "{" +
+            "\"error\": {" +
+                "\"code\":\"notAllowed\"," +
+                "\"message\":\"You do not have access to create this personal site or you do not have a valid license\"," +
+                "\"innerError\": {\"date\":\"2024-11-12T01:30:20\",\"request-id\":\"fake-request-id\",\"client-request-id\":\"fake-client-request-id\"}" +
+            "}" +
+        "}"
+        ).build();
 
     MicrosoftApiResponse response = MicrosoftApiResponse.ofResponse(networkResponse);
 
@@ -53,6 +84,29 @@ public class MicrosoftApiResponseTest {
   public void testDestinationFull() throws IOException {
     Response networkResponse =
         fakeErrorResponse(507, "", "{ \"message\": \"Insufficient Space Available\" }").build();
+
+    MicrosoftApiResponse response = MicrosoftApiResponse.ofResponse(networkResponse);
+
+    assertThat(response.isOkay()).isFalse();
+    assertThrows(
+        DestinationMemoryFullException.class,
+        () -> {
+          response.throwDtpException("unit testing");
+        });
+  }
+
+  // Alternative way Microsoft APIs respond with destination-full errors.
+  @Test
+  public void testDestinationFull_quotaLimitReached() throws IOException {
+    Response networkResponse = fakeResponse(507, "",
+        "{" +
+            "\"error\": {" +
+                "\"code\":\"quotaLimitReached\"," +
+                "\"message\":\"Quota limit reached\"," +
+                "\"innerError\": {\"date\":\"2024-12-12T13:30:20\",\"request-id\":\"fake-request-id\",\"client-request-id\":\"fake-client-request-id\"}" +
+            "}" +
+        "}"
+        ).build();
 
     MicrosoftApiResponse response = MicrosoftApiResponse.ofResponse(networkResponse);
 
