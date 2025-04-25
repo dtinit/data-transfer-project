@@ -39,7 +39,8 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 public class GenericImporter<C extends ContainerResource, R>
     implements Importer<TokensAndUrlAuthData, C> {
-
+  public static final String PAYLOAD_TOO_LARGE = "GenericImporter payload too large: ";
+  
   @JsonIgnoreProperties(ignoreUnknown = true)
   static class ErrorResponse {
     private final String error;
@@ -139,20 +140,28 @@ public class GenericImporter<C extends ContainerResource, R>
                 response.code(), new String(body, StandardCharsets.UTF_8)),
             e);
       }
-
+      
       if (response.code() == 401 && error.getError().equals("invalid_token")) {
         throw new InvalidTokenException(error.toString(), null);
-      } if (response.code() == 413 && error.getError().equals("destination_full")) {
+      }
+      
+      if (response.code() == 413 && error.getError().equals("destination_full")) {
         throw new DestinationMemoryFullException(
             String.format("Generic importer failed with code (%s)", response.code()),
             new RuntimeException("destination_full"));
-      } else {
-        throw new IOException(format("Error (%d) %s", response.code(), error.toString()));
       }
+      
+      if (response.code() == 413 && error.getError().equals("too_large_payload")) {
+        throw new IOException(format("%s (%d) %s", PAYLOAD_TOO_LARGE, response.code(), error));
+      }
+      
+      throw new IOException(format("Error (%d) %s", response.code(), error.toString()));
+      
     }
     if (response.code() < 200 || response.code() >= 300) {
       throw new IOException(format("Unexpected response code (%d)", response.code()));
     }
+    
     return true;
   }
 
