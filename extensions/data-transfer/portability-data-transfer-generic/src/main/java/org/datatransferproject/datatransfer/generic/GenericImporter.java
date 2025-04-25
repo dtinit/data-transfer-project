@@ -39,7 +39,8 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 public class GenericImporter<C extends ContainerResource, R>
     implements Importer<TokensAndUrlAuthData, C> {
-
+  public static final String PAYLOAD_TOO_LARGE = "GenericImporter payload too large: ";
+  
   @JsonIgnoreProperties(ignoreUnknown = true)
   static class ErrorResponse {
     private final String error;
@@ -151,8 +152,7 @@ public class GenericImporter<C extends ContainerResource, R>
       }
       
       if (response.code() == 413 && error.getError().equals("too_large_payload")) {
-        monitor.debug(() -> "Payload rejected: too large %s", error.toString());
-        return true;
+        throw new IOException(format("%s (%d) %s", PAYLOAD_TOO_LARGE, response.code(), error));
       }
       
       throw new IOException(format("Error (%d) %s", response.code(), error.toString()));

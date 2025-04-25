@@ -376,6 +376,10 @@ public class GenericImporterTest {
             "accessToken", "refreshToken", webServer.url("/refresh").toString()),
         new IdOnlyContainerResource("itemId"));
 
-    assertTrue(executor.getErrors().isEmpty());
+    Collection<ErrorDetail> errors = executor.getErrors();
+    assertEquals(1, errors.size());
+    ErrorDetail error = errors.iterator().next();
+    assertEquals("itemId", error.title());
+    assertContains(GenericImporter.PAYLOAD_TOO_LARGE, error.exception());
   }
 }
