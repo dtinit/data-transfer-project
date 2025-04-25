@@ -772,4 +772,8 @@ Content-Type: application/json
   "error_description": "Destination not accepting payloads above XMB"
 }
 ```
-The worker will ignore such imports in this case & continue with other imports.
+
+Generic Importers will throw an IOException with a message starting with:
+ `GenericImporter payload too large: `
+Idempotent executors can ignore such IOExceptions if they want. This allows us to ignore handle large payload errors gracefully.
+If Idempotent executors are configured correctly, the worker will ignore such imports and continue with other imports.
