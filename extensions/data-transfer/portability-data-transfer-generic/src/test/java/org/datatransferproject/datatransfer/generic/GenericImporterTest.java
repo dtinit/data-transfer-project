@@ -107,11 +107,11 @@ public class GenericImporterTest {
         getImporter(
             importerClass,
             container ->
-                    List.of(
-                            new ImportableData<>(
-                                    new GenericPayload<>(container.getId(), "schemasource"),
-                                    container.getId(),
-                                    container.getId())));
+                List.of(
+                    new ImportableData<>(
+                        new GenericPayload<>(container.getId(), "schemasource"),
+                        container.getId(),
+                        container.getId())));
     webServer.setDispatcher(getDispatcher());
 
     importer.importItem(
@@ -199,11 +199,11 @@ public class GenericImporterTest {
         getImporter(
             importerClass,
             container ->
-                    List.of(
-                            new ImportableData<>(
-                                    new GenericPayload<>(container.getId(), "schemasource"),
-                                    container.getId(),
-                                    container.getId())));
+                List.of(
+                    new ImportableData<>(
+                        new GenericPayload<>(container.getId(), "schemasource"),
+                        container.getId(),
+                        container.getId())));
     webServer.setDispatcher(getDispatcher());
 
     importer.importItem(
@@ -243,11 +243,11 @@ public class GenericImporterTest {
         getImporter(
             importerClass,
             container ->
-                    List.of(
-                            new ImportableData<>(
-                                    new GenericPayload<>(container.getId(), "schemasource"),
-                                    container.getId(),
-                                    container.getId())));
+                List.of(
+                    new ImportableData<>(
+                        new GenericPayload<>(container.getId(), "schemasource"),
+                        container.getId(),
+                        container.getId())));
     webServer.enqueue(
         new MockResponse().setResponseCode(400).setBody("{\"error\":\"bad_request\"}"));
 
@@ -272,11 +272,11 @@ public class GenericImporterTest {
         getImporter(
             importerClass,
             container ->
-                    List.of(
-                            new ImportableData<>(
-                                    new GenericPayload<>(container.getId(), "schemasource"),
-                                    container.getId(),
-                                    container.getId())));
+                List.of(
+                    new ImportableData<>(
+                        new GenericPayload<>(container.getId(), "schemasource"),
+                        container.getId(),
+                        container.getId())));
     webServer.enqueue(new MockResponse().setResponseCode(400).setBody("notjson"));
 
     importer.importItem(
@@ -300,11 +300,11 @@ public class GenericImporterTest {
         getImporter(
             importerClass,
             container ->
-                    List.of(
-                            new ImportableData<>(
-                                    new GenericPayload<>(container.getId(), "schemasource"),
-                                    container.getId(),
-                                    container.getId())));
+                List.of(
+                    new ImportableData<>(
+                        new GenericPayload<>(container.getId(), "schemasource"),
+                        container.getId(),
+                        container.getId())));
     webServer.enqueue(new MockResponse().setResponseCode(111));
 
     importer.importItem(
@@ -325,30 +325,57 @@ public class GenericImporterTest {
   public void testGenericImporterDestinationFull() throws Exception {
     InMemoryIdempotentImportExecutor executor = new InMemoryIdempotentImportExecutor(monitor);
     GenericImporter<IdOnlyContainerResource, String> importer =
-            getImporter(
-                    importerClass,
-                    container ->
-                            List.of(
-                                    new ImportableData<>(
-                                            new GenericPayload<>(container.getId(), "schemasource"),
-                                            container.getId(),
-                                            container.getId())));
-    webServer.enqueue(new MockResponse().setResponseCode(413).setBody("{\"error\":\"destination_full\"}"));
+        getImporter(
+            importerClass,
+            container ->
+                List.of(
+                    new ImportableData<>(
+                        new GenericPayload<>(container.getId(), "schemasource"),
+                        container.getId(),
+                        container.getId())));
+    webServer.enqueue(
+        new MockResponse().setResponseCode(413).setBody("{\"error\":\"destination_full\"}"));
 
-    assertThrows(DestinationMemoryFullException.class, () -> {
-      importer.importItem(
+    assertThrows(
+        DestinationMemoryFullException.class,
+        () -> {
+          importer.importItem(
               UUID.randomUUID(),
               executor,
               new TokensAndUrlAuthData(
-                      "accessToken", "refreshToken", webServer.url("/refresh").toString()),
+                  "accessToken", "refreshToken", webServer.url("/refresh").toString()),
               new IdOnlyContainerResource("itemId"));
-    });
-
+        });
 
     Collection<ErrorDetail> errors = executor.getErrors();
     assertEquals(1, errors.size());
     ErrorDetail error = errors.iterator().next();
     assertEquals("itemId", error.title());
     assertContains("Generic importer failed with code (413)", error.exception());
+  }
+
+  @Test
+  public void testGenericImporterIgnoreLargePayload() throws Exception {
+    InMemoryIdempotentImportExecutor executor = new InMemoryIdempotentImportExecutor(monitor);
+    GenericImporter<IdOnlyContainerResource, String> importer =
+        getImporter(
+            importerClass,
+            container ->
+                List.of(
+                    new ImportableData<>(
+                        new GenericPayload<>(container.getId(), "schemasource"),
+                        container.getId(),
+                        container.getId())));
+    webServer.enqueue(
+        new MockResponse().setResponseCode(413).setBody("{\"error\":\"too_large_payload\"}"));
+
+    importer.importItem(
+        UUID.randomUUID(),
+        executor,
+        new TokensAndUrlAuthData(
+            "accessToken", "refreshToken", webServer.url("/refresh").toString()),
+        new IdOnlyContainerResource("itemId"));
+
+    assertTrue(executor.getErrors().isEmpty());
   }
 }

@@ -139,20 +139,29 @@ public class GenericImporter<C extends ContainerResource, R>
                 response.code(), new String(body, StandardCharsets.UTF_8)),
             e);
       }
-
+      
       if (response.code() == 401 && error.getError().equals("invalid_token")) {
         throw new InvalidTokenException(error.toString(), null);
-      } if (response.code() == 413 && error.getError().equals("destination_full")) {
+      }
+      
+      if (response.code() == 413 && error.getError().equals("destination_full")) {
         throw new DestinationMemoryFullException(
             String.format("Generic importer failed with code (%s)", response.code()),
             new RuntimeException("destination_full"));
-      } else {
-        throw new IOException(format("Error (%d) %s", response.code(), error.toString()));
       }
+      
+      if (response.code() == 413 && error.getError().equals("too_large_payload")) {
+        monitor.debug(() -> "Payload rejected: too large %s", error.toString());
+        return true;
+      }
+      
+      throw new IOException(format("Error (%d) %s", response.code(), error.toString()));
+      
     }
     if (response.code() < 200 || response.code() >= 300) {
       throw new IOException(format("Unexpected response code (%d)", response.code()));
     }
+    
     return true;
   }
 

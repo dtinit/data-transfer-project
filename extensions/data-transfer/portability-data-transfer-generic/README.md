@@ -754,3 +754,22 @@ Content-Type: application/json
 ```
 The worker will pause the job and won't retry in such scenario.
 Some exporters also support the ability to retry transfers after user frees up space in the destination.
+
+### Destination Not Accepting Large Payloads
+
+If the destination is unable to accept large payloads due to API gateway limitations or other reasons,
+the POST APIs should also throw a `413 Payload Too Large` error.
+
+`error` field should strictly be set to `too_large_payload` to indicate that the destination cannot handle large payloads.
+
+Example error response:
+
+```
+HTTP/1.1 413 Payload Too Large
+Content-Type: application/json
+{
+  "error": "too_large_payload",
+  "error_description": "Destination not accepting payloads above XMB"
+}
+```
+The worker will ignore such imports in this case & continue with other imports.
