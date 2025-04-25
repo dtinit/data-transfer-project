@@ -775,5 +775,5 @@ Content-Type: application/json
 
 Generic Importers will throw an IOException with a message starting with:
  `GenericImporter payload too large: `
-Idempotent executors can ignore such IOExceptions if they want. This allows us to ignore handle large payload errors gracefully.
+Idempotent executors can ignore such IOExceptions if they want. This allows us to ignore large payload errors gracefully.
 If Idempotent executors are configured correctly, the worker will ignore such imports and continue with other imports.
