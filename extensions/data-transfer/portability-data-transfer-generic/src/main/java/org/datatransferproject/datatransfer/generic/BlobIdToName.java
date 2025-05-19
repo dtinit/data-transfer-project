@@ -6,7 +6,6 @@ import java.util.Map;
 import org.datatransferproject.types.common.models.DataModel;
 
 public class BlobIdToName extends DataModel {
-  
   @JsonProperty("idToName")
   private Map<String, String> idToName;
 
@@ -21,6 +20,4 @@ public class BlobIdToName extends DataModel {
   public String add(String id, String name) {
     return idToName.put(id, name);
   }
-  
-  
 }
