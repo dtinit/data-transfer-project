@@ -29,7 +29,7 @@ public class BlobbySerializerSimulationTest {
   public void setup() throws IOException {
     blobbySerializer = new BlobbySerializer(jobStore);
   }
-
+  
   @Test
   public void simpleImportTest() throws Exception {
 
@@ -91,23 +91,31 @@ public class BlobbySerializerSimulationTest {
     BlobbyStorageContainerResource folder1_1_2 =
         new BlobbyStorageContainerResource(
             "Folder 1.1.2", "1.1.2", List.of(wrapper), Collections.emptyList());
-
+    
+    // To simulate restart
+    blobbySerializer = new BlobbySerializer(jobStore);
     List<ImportableData<ExportData>> data = Lists.newArrayList(blobbySerializer.serialize(rootPre));
     assertEquals(1, data.size());
     assertEquals("/Test Root", data.get(0).getName());
-
+    
+    // To simulate restart
+    blobbySerializer = new BlobbySerializer(jobStore);
     data = Lists.newArrayList(blobbySerializer.serialize(root));
     assertEquals(3, data.size());
     assertEquals("/Test Root", data.get(0).getName());
     assertEquals("/Test Root/Folder 1.1", data.get(1).getName());
     assertEquals("/Test Root/Folder 1.2", data.get(2).getName());
-
+    
+    // To simulate restart
+    blobbySerializer = new BlobbySerializer(jobStore);
     data = Lists.newArrayList(blobbySerializer.serialize(folder1_1));
     assertEquals(3, data.size());
     assertEquals("/Test Root/Folder 1.1", data.get(0).getName());
     assertEquals("/Test Root/Folder 1.1/Folder 1.1.1", data.get(1).getName());
     assertEquals("/Test Root/Folder 1.1/Folder 1.1.2", data.get(2).getName());
-
+    
+    // To simulate restart
+    blobbySerializer = new BlobbySerializer(jobStore);
     data = Lists.newArrayList(blobbySerializer.serialize(folder1_1_1));
     assertEquals(2, data.size());
     assertEquals("/Test Root/Folder 1.1/Folder 1.1.1", data.get(0).getName());
@@ -116,7 +124,9 @@ public class BlobbySerializerSimulationTest {
     assertEquals(
         ((FileExportData) fileExportData.getJsonData().getPayload()).getFolder(),
         "/Test Root/Folder 1.1/Folder 1.1.1");
-
+    
+    // To simulate restart
+    blobbySerializer = new BlobbySerializer(jobStore);
     data = Lists.newArrayList(blobbySerializer.serialize(folder1_1_2));
     assertEquals(2, data.size());
     assertEquals("/Test Root/Folder 1.1/Folder 1.1.2", data.get(0).getName());
@@ -125,7 +135,9 @@ public class BlobbySerializerSimulationTest {
     assertEquals(
         ((FileExportData) fileExportData.getJsonData().getPayload()).getFolder(),
         "/Test Root/Folder 1.1/Folder 1.1.2");
-
+    
+    // To simulate restart
+    blobbySerializer = new BlobbySerializer(jobStore);
     data = Lists.newArrayList(blobbySerializer.serialize(folder1_2));
     assertEquals(2, data.size());
     assertEquals("/Test Root/Folder 1.2", data.get(0).getName());

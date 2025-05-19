@@ -102,6 +102,7 @@ public class TransferCompatibilityProvider {
     Function<ContainerResource, ContainerResource> converter = (cr) ->
         (cr instanceof VideosContainerResource) ?
             MediaContainerResource.videoToMedia((VideosContainerResource) cr) : cr;
+    
     return new AnyToAnyExporter<>(media, MediaContainerResource::mediaToVideo, converter);
   }
 

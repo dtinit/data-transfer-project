@@ -127,7 +127,6 @@ public class BlobbySerializer {
 
   private void saveStateToStore() throws IOException {
     initialiseBlobIdToNameIfNot(JobMetadata.getJobId());
-
     jobStore.create(JobMetadata.getJobId(), BLOB_ID_TO_NAME_KEY, blobIdToName);
   }
 
