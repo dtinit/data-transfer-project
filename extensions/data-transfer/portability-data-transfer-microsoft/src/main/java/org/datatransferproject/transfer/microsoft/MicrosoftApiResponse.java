@@ -277,11 +277,14 @@ public abstract class MicrosoftApiResponse {
 
   /** Returns response body or throws DTP base exception with `causeMessage`. */
   private String checkResponseBody(String causeMessage) throws IOException {
-    return body()
-        .orElseThrow(
-            () ->
-                toIoException(
-                    String.format("HTTP response-body unexpectedly empty: %s", causeMessage)));
+    return body().orElseThrow(() -> {
+      final String causeWithContext = String.format("HTTP response-body unexpectedly empty: %s", causeMessage);
+      if (bodyException().isPresent()) {
+        return toIoException(causeWithContext, bodyException().get());
+      } else {
+        return toIoException(causeWithContext);
+      }
+    });
   }
 
   /** Reads body into memory and checks for needle. */
