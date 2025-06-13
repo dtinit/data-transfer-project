@@ -24,6 +24,7 @@ import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.util.Date;
 import java.net.URL;
 import java.util.Date;
 import java.util.Map;
@@ -157,6 +158,11 @@ public class SynologyDTPService {
     if (!Strings.isNullOrEmpty(imageDescription)) {
       builder.addFormDataPart("description", imageDescription);
     }
+    Date imageUploadedTime = photo.getUploadedTime();
+    if (imageUploadedTime != null) {
+      long timestamp = imageUploadedTime.getTime() / 1000;
+      builder.addFormDataPart("uploaded_time", String.valueOf(timestamp));
+    }
 
     @SuppressWarnings("unchecked")
     Map<String, Object> responseData =
@@ -205,6 +211,11 @@ public class SynologyDTPService {
     String imageDescription = video.getDescription();
     if (!Strings.isNullOrEmpty(imageDescription)) {
       builder.addFormDataPart("description", imageDescription);
+    }
+    Date videoUploadedTime = video.getUploadedTime();
+    if (videoUploadedTime != null) {
+      long timestamp = videoUploadedTime.getTime() / 1000;
+      builder.addFormDataPart("uploaded_time", String.valueOf(timestamp));
     }
 
     @SuppressWarnings("unchecked")
