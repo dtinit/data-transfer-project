@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 import okhttp3.FormBody;
@@ -35,14 +36,17 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.datatransfer.synology.constant.SynologyConstant;
 import org.datatransferproject.datatransfer.synology.exceptions.SynologyHttpException;
 import org.datatransferproject.datatransfer.synology.exceptions.SynologyImportException;
 import org.datatransferproject.datatransfer.synology.exceptions.SynologyMaxRetriesExceededException;
+import org.datatransferproject.datatransfer.synology.models.C2Api;
+import org.datatransferproject.datatransfer.synology.models.ServiceConfig;
+import org.datatransferproject.datatransfer.synology.utils.ServiceConfigParser;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.videos.VideoModel;
+import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
 
 /** Service for handling Synology DTP operations. */
 public class SynologyDTPService {
@@ -52,11 +56,8 @@ public class SynologyDTPService {
   private final OkHttpClient client;
   private final JobStore jobStore;
   private final SynologyOAuthTokenManager tokenManager;
-  private final String BASE_URL = SynologyConstant.C2_BASE_URL;
-  private final String CREATE_ALBUM_URL;
-  private final String UPLOAD_ITEM_URL;
-  private final String ADD_ITEM_TO_ALBUM_URL;
-  private final int MAX_RETRIES = 3;
+  C2Api c2Api;
+  ServiceConfig.Retry retryConfig;
 
   /**
    * Constructs a new {@code SynologyDTPService} instance.
@@ -69,19 +70,21 @@ public class SynologyDTPService {
    */
   public SynologyDTPService(
       Monitor monitor,
+      TransferServiceConfig transferServiceConfig,
       String exportingService,
       JobStore jobStore,
       SynologyOAuthTokenManager tokenManager,
       OkHttpClient client) {
+    ServiceConfig serviceConfig = ServiceConfigParser.parse(transferServiceConfig);
+    this.c2Api = serviceConfig.getServiceAs("c2", C2Api.class);
+    this.retryConfig = serviceConfig.getRetry();
+
     this.monitor = monitor;
     this.exportingService = exportingService;
     this.objectMapper = new ObjectMapper();
     this.jobStore = jobStore;
     this.tokenManager = tokenManager;
     this.client = client;
-    this.CREATE_ALBUM_URL = BASE_URL + "/import/album";
-    this.UPLOAD_ITEM_URL = BASE_URL + "/import/item";
-    this.ADD_ITEM_TO_ALBUM_URL = BASE_URL + "/import/album/item";
   }
 
   /**
@@ -110,7 +113,7 @@ public class SynologyDTPService {
     monitor.info(() -> "[SynologyImporter] Creating album", album.getName(), jobId);
 
     return (Map<String, Object>)
-        sendPostRequest(CREATE_ALBUM_URL, builder.build(), jobId).get("data");
+        sendPostRequest(c2Api.getCreateAlbum(), builder.build(), jobId).get("data");
   }
 
   /**
@@ -157,7 +160,8 @@ public class SynologyDTPService {
 
     @SuppressWarnings("unchecked")
     Map<String, Object> responseData =
-        (Map<String, Object>) sendPostRequest(UPLOAD_ITEM_URL, builder.build(), jobId).get("data");
+        (Map<String, Object>)
+            sendPostRequest(c2Api.getUploadItem(), builder.build(), jobId).get("data");
     return responseData;
   }
 
@@ -205,7 +209,8 @@ public class SynologyDTPService {
 
     @SuppressWarnings("unchecked")
     Map<String, Object> responseData =
-        (Map<String, Object>) sendPostRequest(UPLOAD_ITEM_URL, builder.build(), jobId).get("data");
+        (Map<String, Object>)
+            sendPostRequest(c2Api.getUploadItem(), builder.build(), jobId).get("data");
     return responseData;
   }
 
@@ -223,7 +228,7 @@ public class SynologyDTPService {
             .add("service", exportingService)
             .add("album_id", albumId)
             .add("item_id", itemId);
-    return sendPostRequest(ADD_ITEM_TO_ALBUM_URL, builder.build(), jobId);
+    return sendPostRequest(c2Api.getAddItemToAlbum(), builder.build(), jobId);
   }
 
   @VisibleForTesting
@@ -232,7 +237,7 @@ public class SynologyDTPService {
     Request.Builder requestBuilder = new Request.Builder().url(url).post(body);
 
     Exception lastException = null;
-    for (int retry = MAX_RETRIES; retry > 0; retry--) {
+    for (int retry = retryConfig.getMaxAttempts(); retry > 0; retry--) {
       Response response = null;
       try {
         requestBuilder.header("Authorization", "Bearer " + tokenManager.getAccessToken(jobId));
@@ -274,6 +279,6 @@ public class SynologyDTPService {
       }
     }
     throw new SynologyMaxRetriesExceededException(
-        "Failed to send POST request " + MAX_RETRIES + " times", MAX_RETRIES, lastException);
+        "Failed to send POST request", retryConfig.getMaxAttempts(), lastException);
   }
 }
