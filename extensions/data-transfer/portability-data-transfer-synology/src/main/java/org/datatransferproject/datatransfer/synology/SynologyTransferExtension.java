@@ -26,11 +26,13 @@ import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
+import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
 
 public class SynologyTransferExtension implements TransferExtension {
   private static final ImmutableList<DataVertical> SUPPORTED_SERVICES =
       ImmutableList.of(PHOTOS, VIDEOS, MEDIA);
   private Monitor monitor;
+
   private boolean initialized = false;
 
   private ImmutableMap<DataVertical, Importer> importerMap;
@@ -92,9 +94,15 @@ public class SynologyTransferExtension implements TransferExtension {
             .getRetryingIdempotentImportExecutor(context);
     SynologyOAuthTokenManager tokenManager = new SynologyOAuthTokenManager(appCredentials, monitor);
     OkHttpClient client = context.getService(OkHttpClient.class);
+    TransferServiceConfig transferServiceConfig = context.getService(TransferServiceConfig.class);
     SynologyDTPService synologyDTPService =
         new SynologyDTPService(
-            monitor, JobMetadata.getExportService(), jobStore, tokenManager, client);
+            monitor,
+            transferServiceConfig,
+            JobMetadata.getExportService(),
+            jobStore,
+            tokenManager,
+            client);
     SynologyUploader synologyUploader =
         new SynologyUploader(idempotentImportExecutor, monitor, synologyDTPService);
 

@@ -47,15 +47,16 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okio.Buffer;
 import org.datatransferproject.api.launcher.Monitor;
-import org.datatransferproject.datatransfer.synology.constant.SynologyConstant;
 import org.datatransferproject.datatransfer.synology.exceptions.SynologyImportException;
 import org.datatransferproject.datatransfer.synology.exceptions.SynologyMaxRetriesExceededException;
+import org.datatransferproject.datatransfer.synology.utils.TestConfigs;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.types.common.DownloadableFile;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.videos.VideoModel;
+import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -76,15 +77,22 @@ public class SynologyDTPServiceTest {
   private final UUID jobId = UUID.randomUUID();
   protected SynologyDTPService dtpService;
   @Mock protected Monitor monitor;
+  @Mock protected TransferServiceConfig transferServiceConfig;
   @Mock protected JobStore jobStore;
   @Mock protected SynologyOAuthTokenManager tokenManager;
   @Captor ArgumentCaptor<RequestBody> requestBodyCaptor;
   @Mock private OkHttpClient client;
 
   @BeforeEach
-  public void setUp() throws Exception {
-    dtpService = new SynologyDTPService(monitor, exportingService, jobStore, tokenManager, client);
+  public void setUp() {
     lenient().when(tokenManager.getAccessToken(jobId)).thenReturn("mockAccessToken");
+    lenient()
+        .when(transferServiceConfig.getServiceConfig())
+        .thenReturn(TestConfigs.createServiceConfigJson());
+
+    dtpService =
+        new SynologyDTPService(
+            monitor, transferServiceConfig, exportingService, jobStore, tokenManager, client);
   }
 
   @Nested
@@ -121,7 +129,9 @@ public class SynologyDTPServiceTest {
     public void shouldThrowExceptionIfSendPostRequestFailed() {
       SynologyDTPService spyService = Mockito.spy(dtpService);
 
-      doThrow(new SynologyMaxRetriesExceededException("MockException", 3, new Exception("Failed")))
+      doThrow(
+              new SynologyMaxRetriesExceededException(
+                  "MockException", TestConfigs.TEST_MAX_ATTEMPTS, new Exception("Failed")))
           .when(spyService)
           .sendPostRequest(anyString(), any(), any());
 
@@ -171,7 +181,9 @@ public class SynologyDTPServiceTest {
     public void shouldThrowExceptionIfSendPostRequestFailed() {
       SynologyDTPService spyService = Mockito.spy(dtpService);
 
-      doThrow(new SynologyMaxRetriesExceededException("MockException", 3, new Exception("Failed")))
+      doThrow(
+              new SynologyMaxRetriesExceededException(
+                  "MockException", TestConfigs.TEST_MAX_ATTEMPTS, new Exception("Failed")))
           .when(spyService)
           .sendPostRequest(anyString(), any(), any());
 
@@ -475,7 +487,7 @@ public class SynologyDTPServiceTest {
       when(mockCall.execute()).thenReturn(mockResponseFail).thenReturn(mockResponseSuccess);
 
       Map<String, Object> result =
-          dtpService.sendPostRequest(SynologyConstant.C2_BASE_URL, requestBody, jobId);
+          dtpService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, requestBody, jobId);
 
       assertEquals(Map.of("success", true), result);
 
@@ -497,11 +509,11 @@ public class SynologyDTPServiceTest {
 
       assertThrows(
           SynologyMaxRetriesExceededException.class,
-          () -> dtpService.sendPostRequest(SynologyConstant.C2_BASE_URL, requestBody, jobId),
-          "Failed to send POST request 3 times");
+          () -> dtpService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, requestBody, jobId),
+          String.format("Failed to send POST request %d times", TestConfigs.TEST_MAX_ATTEMPTS));
       verify(tokenManager, never())
           .refreshToken(any(UUID.class), eq(client), any(ObjectMapper.class));
-      verify(client, times(3)).newCall(any(Request.class));
+      verify(client, times(TestConfigs.TEST_MAX_ATTEMPTS)).newCall(any(Request.class));
     }
 
     @Test
@@ -525,7 +537,7 @@ public class SynologyDTPServiceTest {
           .thenReturn(true);
 
       Map<String, Object> result =
-          dtpService.sendPostRequest(SynologyConstant.C2_BASE_URL, requestBody, jobId);
+          dtpService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, requestBody, jobId);
 
       assertEquals(Map.of("success", true), result);
 
@@ -550,12 +562,12 @@ public class SynologyDTPServiceTest {
 
       assertThrows(
           SynologyMaxRetriesExceededException.class,
-          () -> dtpService.sendPostRequest(SynologyConstant.C2_BASE_URL, requestBody, jobId),
-          "Failed to send POST request 3 times");
+          () -> dtpService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, requestBody, jobId),
+          String.format("Failed to send POST request %d times", TestConfigs.TEST_MAX_ATTEMPTS));
 
       verify(tokenManager, times(1))
           .refreshToken(any(UUID.class), eq(client), any(ObjectMapper.class));
-      verify(client, times(3)).newCall(any(Request.class));
+      verify(client, times(TestConfigs.TEST_MAX_ATTEMPTS)).newCall(any(Request.class));
     }
 
     @Test
@@ -573,11 +585,11 @@ public class SynologyDTPServiceTest {
 
       assertThrows(
           SynologyMaxRetriesExceededException.class,
-          () -> dtpService.sendPostRequest(SynologyConstant.C2_BASE_URL, requestBody, jobId),
-          "Failed to send POST request 3 times");
+          () -> dtpService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, requestBody, jobId),
+          String.format("Failed to send POST request %d times", TestConfigs.TEST_MAX_ATTEMPTS));
       verify(tokenManager, never())
           .refreshToken(any(UUID.class), eq(client), any(ObjectMapper.class));
-      verify(client, times(3)).newCall(any(Request.class));
+      verify(client, times(TestConfigs.TEST_MAX_ATTEMPTS)).newCall(any(Request.class));
     }
 
     @Test
@@ -593,7 +605,7 @@ public class SynologyDTPServiceTest {
       when(mockResponseBody.string()).thenReturn("{\"success\": true}");
 
       Map<String, Object> result =
-          dtpService.sendPostRequest(SynologyConstant.C2_BASE_URL, requestBody, jobId);
+          dtpService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, requestBody, jobId);
       assertEquals(Map.of("success", true), result);
       verify(tokenManager, never())
           .refreshToken(any(UUID.class), eq(client), any(ObjectMapper.class));
