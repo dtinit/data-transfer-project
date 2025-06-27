@@ -141,40 +141,65 @@ public class BackblazeDataTransferClient {
 
     private String getAccountRegion(HttpClient httpClient, String keyId, String applicationKey)
             throws BackblazeCredentialsException {
+    
+    String auth = keyId + ":" + applicationKey;
+    byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes());
+    String authHeaderValue = "Basic " + new String(encodedAuth);
 
-        String auth = keyId + ":" + applicationKey;
-        byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes());
-        String authHeaderValue = "Basic " + new String(encodedAuth);
+    HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create("https://api.backblazeb2.com/b2api/v2/b2_authorize_account"))
+            .header("Authorization", authHeaderValue)
+            .GET()
+            .build();
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.backblazeb2.com/b2api/v2/b2_authorize_account"))
-                .header("Authorization", authHeaderValue)
-                .GET()
-                .build();
+    final int maxRetries = 3;
+    final long initialDelayMs = 1000; // 1 second
+    int attempts = 0;
+    Exception lastException = null;
 
-        HttpResponse<String> response;
+    while (attempts < maxRetries) {
         try {
-            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() != 200) {
-                throw new BackblazeCredentialsException("Failed to retrieve users region. Status code: " + response.statusCode(), null);
+            if (attempts > 0) {
+                // Calculate exponential backoff delay
+                long delayMs = initialDelayMs * (long) Math.pow(2, attempts - 1);
+                int finalAttempts = attempts;
+                monitor.info(() -> String.format("Retry attempt %d, waiting %d ms", finalAttempts + 1, delayMs));
+                Thread.sleep(delayMs);
             }
-            String responseBody = response.body();
 
-            JSONParser parser = new JSONParser();
-            JSONObject jsonResponse = (JSONObject) parser.parse(responseBody);
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() == 200) {
+                String responseBody = response.body();
+                JSONParser parser = new JSONParser();
+                JSONObject jsonResponse = (JSONObject) parser.parse(responseBody);
+                String s3ApiUrl = (String) jsonResponse.get("s3ApiUrl");
+                String region = s3ApiUrl.split("s3.")[1].split("\\.")[0];
+                monitor.info(() -> "Region extracted from s3ApiUrl: " + region);
+                return region;
+            } else if (response.statusCode() >= 500) {
+                // Retry on server errors
+                monitor.info(() -> String.format("Received server error %d, will retry", response.statusCode()));
+                lastException = new BackblazeCredentialsException(
+                    "Failed to retrieve users region. Status code: " + response.statusCode(), null);
+            } else {
+                // Don't retry on client errors (4xx)
+                throw new BackblazeCredentialsException(
+                    "Failed to retrieve users region. Status code: " + response.statusCode(), null);
+            }
 
-
-            String s3ApiUrl = (String) jsonResponse.get("s3ApiUrl");
-
-            // Extract the region information from the s3ApiUrl field
-            // Example: Assuming the s3ApiUrl is in the format https://s3.us-west-1.backblazeb2.com
-            String region = s3ApiUrl.split("s3.")[1].split("\\.")[0];
-            monitor.info(() -> "Region extracted from s3ApiUrl: " + region);
-            return region;
         } catch (IOException | InterruptedException | ParseException e) {
-            throw new BackblazeCredentialsException("Failed to retrieve users region", e);
+            monitor.info(() -> String.format("Request failed with error: %s", e.getMessage()));
+            lastException = e;
         }
+        
+        attempts++;
     }
+
+    // If we've exhausted all retries, throw the last exception
+    throw new BackblazeCredentialsException("Failed to retrieve users region after " + maxRetries + " attempts", 
+        lastException);
+}
 
     private String uploadFileUsingMultipartUpload(String fileKey, File file, long contentLength)
             throws IOException, AwsServiceException, SdkClientException {

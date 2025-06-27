@@ -86,6 +86,115 @@ public class BackblazeDataTransferClientTest {
         lenient().doReturn(authorizeAccountHttpResponse).when(httpClient).send(any(), any());
     }
 
+    @Test
+    public void testGetAccountRegionSuccess() throws Exception {
+        createValidBucketList();
+        BackblazeDataTransferClient client = createDefaultClient();
+        client.init(KEY_ID, APP_KEY, EXPORT_SERVICE);
+
+        verify(httpClient, times(1)).send(any(), any());
+        verify(monitor).info(argThat(message ->
+                message.get().contains("Region extracted from s3ApiUrl: us-west-910")));
+    }
+
+    @Test
+    public void testGetAccountRegionWithRetrySuccess() throws Exception {
+        HttpResponse<String> failedResponse = mock(HttpResponse.class);
+        when(failedResponse.statusCode()).thenReturn(500);
+        doReturn(failedResponse)
+                .doReturn(authorizeAccountHttpResponse)
+                .when(httpClient)
+                .send(any(), any());
+
+        createValidBucketList();
+        BackblazeDataTransferClient client = createDefaultClient();
+        client.init(KEY_ID, APP_KEY, EXPORT_SERVICE);
+
+        verify(httpClient, times(2)).send(any(), any());
+        verify(monitor).info(argThat(message -> 
+            message.get().contains("Retry attempt 2")));
+    }
+
+    @Test
+    public void testGetAccountRegionMaxRetriesExceeded() throws Exception {
+        HttpResponse<String> failedResponse = mock(HttpResponse.class);
+        when(failedResponse.statusCode()).thenReturn(500);
+        doReturn(failedResponse)
+                .when(httpClient)
+                .send(any(), any());
+
+        BackblazeDataTransferClient client = createDefaultClient();
+        BackblazeCredentialsException exception = assertThrows(
+                BackblazeCredentialsException.class,
+                () -> client.init(KEY_ID, APP_KEY, EXPORT_SERVICE)
+        );
+
+        verify(httpClient, times(3)).send(any(), any());
+        verify(monitor, times(3)).info(argThat(message ->
+                message.get().contains("Received server error 500")));
+        assertEquals(
+                "Failed to retrieve users region after 3 attempts",
+                exception.getMessage()
+        );
+    }
+
+    @Test
+    public void testGetAccountRegionClientError() throws Exception {
+        HttpResponse<String> clientErrorResponse = mock(HttpResponse.class);
+        when(clientErrorResponse.statusCode()).thenReturn(403);
+        doReturn(clientErrorResponse)
+                .when(httpClient)
+                .send(any(), any());
+
+        BackblazeDataTransferClient client = createDefaultClient();
+
+        assertThrows(
+                BackblazeCredentialsException.class,
+                () -> client.init(KEY_ID, APP_KEY, EXPORT_SERVICE)
+        );
+
+        // Verify no retries on client error
+        verify(httpClient, times(1)).send(any(), any());
+    }
+
+    @Test
+    public void testGetAccountRegionNetworkError() throws Exception {
+        // Given
+        when(httpClient.send(any(), any()))
+                .thenThrow(new IOException("Network error"));
+
+        // When
+        BackblazeDataTransferClient client = createDefaultClient();
+
+        // Then
+        BackblazeCredentialsException exception = assertThrows(
+                BackblazeCredentialsException.class,
+                () -> client.init(KEY_ID, APP_KEY, EXPORT_SERVICE)
+        );
+
+        verify(httpClient, times(3)).send(any(), any());
+        verify(monitor, times(3)).info(argThat(message ->
+                message.get().contains("Request failed with error: Network error")));
+    }
+
+    @Test
+    public void testGetAccountRegionInvalidJson() throws Exception {
+        when(authorizeAccountHttpResponse.statusCode()).thenReturn(200);
+        when(authorizeAccountHttpResponse.body()).thenReturn("invalid json");
+        doReturn(authorizeAccountHttpResponse)
+                .when(httpClient)
+                .send(any(), any());
+
+        BackblazeDataTransferClient client = createDefaultClient();
+
+        assertThrows(
+                BackblazeCredentialsException.class,
+                () -> client.init(KEY_ID, APP_KEY, EXPORT_SERVICE)
+        );
+
+        verify(httpClient, times(3)).send(any(), any());
+    }
+
     private void createValidBucketList() {
         Bucket bucket = Bucket.builder().name(VALID_BUCKET_NAME).build();
         when(s3Client.listBuckets()).thenReturn(ListBucketsResponse.builder().buckets(bucket).build());
