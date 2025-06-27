@@ -17,6 +17,7 @@
 package org.datatransferproject.datatransfer.backblaze.common;
 
 import java.io.IOException;
+import java.net.http.HttpClient;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -45,6 +46,7 @@ public class BackblazeDataTransferClientFactory {
               new BackblazeDataTransferClient(
                       monitor,
                       new BaseBackblazeS3ClientFactory(),
+                      HttpClient.newHttpClient(),
                       SIZE_THRESHOLD_FOR_MULTIPART_UPLOAD,
                       PART_SIZE_FOR_MULTIPART_UPLOAD);
       String exportService = JobMetadata.getExportService();
