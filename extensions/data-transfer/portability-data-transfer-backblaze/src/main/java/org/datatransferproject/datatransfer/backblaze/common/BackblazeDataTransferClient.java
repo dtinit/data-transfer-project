@@ -55,6 +55,23 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.UploadPartRequest;
 import software.amazon.awssdk.services.s3.model.UploadPartResponse;
 
+/**
+ * Represents a client for handling data transfer operations with Backblaze B2's S3 compatible API.
+ * This class is responsible for managing the initialization of connections, uploading files, 
+ * and handling multipart uploads for large files.
+ *
+ * The client requires valid Backblaze credentials (keyId and applicationKey) and an instance 
+ * of a pre-configured S3 client factory for communication with the Backblaze API. 
+ * Additionally, a Monitor is used to log diagnostic messages during execution.
+ *
+ * The class provides methods to:
+ * - Initialize the BackblazeDataTransferClient using user credentials.
+ * - Upload files either as single uploads or using multipart uploads for larger files.
+ * - Create or select appropriate buckets for data transfer.
+ *
+ * The client implements retry mechanisms and proper error handling for common
+ * scenarios like network failures or authentication issues.
+ */
 public class BackblazeDataTransferClient {
     private static final String DATA_TRANSFER_BUCKET_PREFIX_FORMAT_STRING = "%s-data-transfer";
     private static final int MAX_BUCKET_CREATION_ATTEMPTS = 10;
@@ -139,6 +156,20 @@ public class BackblazeDataTransferClient {
         }
     }
 
+    /**
+     * Retrieves the account region from Backblaze B2 API using the provided credentials.
+     * This method implements exponential backoff retry logic for handling transient server errors.
+     *
+     * @param httpClient The HTTP client to use for making the API request
+     * @param keyId The Backblaze B2 account key ID
+     * @param applicationKey The Backblaze B2 application key
+     * @return The region string extracted from the s3ApiUrl in the response
+     * @throws BackblazeCredentialsException if:
+     *     - Authentication fails (4xx errors)
+     *     - Server errors persist after all retry attempts
+     *     - Response parsing fails
+     *     - Network errors occur and persist after retries
+     */
     private String getAccountRegion(HttpClient httpClient, String keyId, String applicationKey)
             throws BackblazeCredentialsException {
     
