@@ -20,14 +20,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.backblaze.exception.BackblazeCredentialsException;
 import org.json.simple.JSONObject;
@@ -81,17 +82,14 @@ public class BackblazeDataTransferClient {
   private final Monitor monitor;
   private S3Client s3Client;
   private String bucketName;
-  private HttpClient httpClient;
 
   public BackblazeDataTransferClient(
       Monitor monitor,
       BackblazeS3ClientFactory backblazeS3ClientFactory,
-      HttpClient httpClient,
       long sizeThresholdForMultipartUpload,
       long partSizeForMultiPartUpload) {
     this.monitor = monitor;
     this.backblazeS3ClientFactory = backblazeS3ClientFactory;
-    this.httpClient = httpClient;
     // Avoid infinite loops
     if (partSizeForMultiPartUpload <= 0)
       throw new IllegalArgumentException("Part size for multipart upload must be positive.");
@@ -99,18 +97,20 @@ public class BackblazeDataTransferClient {
     this.partSizeForMultiPartUpload = partSizeForMultiPartUpload;
   }
 
-  public void init(String keyId, String applicationKey, String exportService)
+  public void init(
+      String keyId, String applicationKey, String exportService, CloseableHttpClient httpClient)
       throws BackblazeCredentialsException, IOException {
     // Fetch all the available buckets and use that to find which region the user is in
     ListBucketsResponse listBucketsResponse = null;
 
     Throwable s3Exception = null;
-    final String userRegion = getAccountRegion(httpClient, keyId, applicationKey);
+    String userRegion = getAccountRegion(httpClient, keyId, applicationKey);
     s3Client = backblazeS3ClientFactory.createS3Client(keyId, applicationKey, userRegion);
     try {
       listBucketsResponse = s3Client.listBuckets();
     } catch (S3Exception e) {
       s3Exception = e;
+    } finally {
       if (s3Client != null) {
         s3Client.close();
       }
@@ -155,83 +155,41 @@ public class BackblazeDataTransferClient {
     }
   }
 
-  /**
-   * Retrieves the account region from Backblaze B2 API using the provided credentials. This method
-   * implements exponential backoff retry logic for handling transient server errors.
-   *
-   * @param httpClient The HTTP client to use for making the API request
-   * @param keyId The Backblaze B2 account key ID
-   * @param applicationKey The Backblaze B2 application key
-   * @return The region string extracted from the s3ApiUrl in the response
-   * @throws BackblazeCredentialsException if: - Authentication fails (4xx errors) - Server errors
-   *     persist after all retry attempts - Response parsing fails - Network errors occur and
-   *     persist after retries
-   */
-  private String getAccountRegion(HttpClient httpClient, String keyId, String applicationKey)
+  private String getAccountRegion(
+      CloseableHttpClient httpClient, String keyId, String applicationKey)
       throws BackblazeCredentialsException {
 
     String auth = keyId + ":" + applicationKey;
     byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes());
     String authHeaderValue = "Basic " + new String(encodedAuth);
 
-    HttpRequest request =
-        HttpRequest.newBuilder()
-            .uri(URI.create("https://api.backblazeb2.com/b2api/v2/b2_authorize_account"))
-            .header("Authorization", authHeaderValue)
-            .GET()
-            .build();
+    HttpGet request = new HttpGet("https://api.backblazeb2.com/b2api/v2/b2_authorize_account");
+    request.addHeader("Authorization", authHeaderValue);
 
-    final int maxRetries = 3;
-    final long initialDelayMs = 1000; // 1 second
-    int attempts = 0;
-    Exception lastException = null;
+    try {
+      CloseableHttpResponse response = httpClient.execute(request);
+      try (response) {
+        int statusCode = response.getStatusLine().getStatusCode();
 
-    while (attempts < maxRetries) {
-      try {
-        if (attempts > 0) {
-          // Calculate exponential backoff delay
-          long delayMs = initialDelayMs * (long) Math.pow(2, attempts - 1);
-          int finalAttempts = attempts;
-          monitor.info(
-              () -> String.format("Retry attempt %d, waiting %d ms", finalAttempts + 1, delayMs));
-          Thread.sleep(delayMs);
-        }
-
-        HttpResponse<String> response =
-            httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-        if (response.statusCode() == 200) {
-          String responseBody = response.body();
+        if (statusCode == 200) {
+          String responseBody = EntityUtils.toString(response.getEntity());
           JSONParser parser = new JSONParser();
           JSONObject jsonResponse = (JSONObject) parser.parse(responseBody);
           String s3ApiUrl = (String) jsonResponse.get("s3ApiUrl");
           String region = s3ApiUrl.split("s3.")[1].split("\\.")[0];
           monitor.info(() -> "Region extracted from s3ApiUrl: " + region);
           return region;
-        } else if (response.statusCode() >= 500) {
-          // Retry on server errors
-          monitor.info(
-              () -> String.format("Received server error %d, will retry", response.statusCode()));
-          lastException =
-              new BackblazeCredentialsException(
-                  "Failed to retrieve users region. Status code: " + response.statusCode(), null);
-        } else {
+        } else if (statusCode >= 400 && statusCode < 500) {
           // Don't retry on client errors (4xx)
           throw new BackblazeCredentialsException(
-              "Failed to retrieve users region. Status code: " + response.statusCode(), null);
+              "Failed to retrieve users region. Status code: " + statusCode, null);
+        } else {
+          throw new IOException("Server returned status code: " + statusCode);
         }
-
-      } catch (IOException | InterruptedException | ParseException e) {
-        monitor.info(() -> String.format("Request failed with error: %s", e.getMessage()));
-        lastException = e;
       }
-
-      attempts++;
+    } catch (IOException | ParseException e) {
+      throw new BackblazeCredentialsException("Failed to retrieve users region", e);
     }
-
-    // If we've exhausted all retries, throw the last exception
-    throw new BackblazeCredentialsException(
-        "Failed to retrieve users region after " + maxRetries + " attempts", lastException);
   }
 
   private String uploadFileUsingMultipartUpload(String fileKey, File file, long contentLength)

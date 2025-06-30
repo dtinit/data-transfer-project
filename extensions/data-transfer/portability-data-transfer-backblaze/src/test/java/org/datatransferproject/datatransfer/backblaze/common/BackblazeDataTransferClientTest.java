@@ -19,16 +19,22 @@ package org.datatransferproject.datatransfer.backblaze.common;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.http.HttpClient;
-import java.net.http.HttpResponse;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.protocol.HttpContext;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.backblaze.exception.BackblazeCredentialsException;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,6 +57,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.UploadPartRequest;
 import software.amazon.awssdk.services.s3.model.UploadPartResponse;
+import org.apache.http.StatusLine;
 
 @ExtendWith(MockitoExtension.class)
 public class BackblazeDataTransferClientTest {
@@ -58,11 +65,23 @@ public class BackblazeDataTransferClientTest {
   @Mock private Monitor monitor;
   @Mock private BackblazeS3ClientFactory backblazeS3ClientFactory;
   @Mock private S3Client s3Client;
-  @Mock private HttpClient httpClient;
-  @Mock private HttpResponse<String> authorizeAccountHttpResponse;
+  @Mock private CloseableHttpClient httpClient;
+  @Mock private CloseableHttpResponse authorizeAccountHttpResponse;
+  @Mock private HttpEntity httpEntity;
+  private static final String KEY_ID = "test-key-id";
+  private static final String APP_KEY = "test-app-key";
+  private static final String VALID_RESPONSE =
+      "{\"s3ApiUrl\": \"https://s3.us-west-002.backblazeb2.com\"}";
+
+  @Mock private CloseableHttpResponse httpResponse;
+
+  @Mock private StatusLine statusLine;
+
+  @Mock private BackblazeS3ClientFactory s3ClientFactory;
+
+  private BackblazeDataTransferClient client;
+
   private static File testFile;
-  private static final String KEY_ID = "keyId";
-  private static final String APP_KEY = "appKey";
   private static final String EXPORT_SERVICE = "exp-serv";
   private static final String FILE_KEY = "fileKey";
   private static final String VALID_BUCKET_NAME = EXPORT_SERVICE + "-data-transfer-bucket";
@@ -74,111 +93,114 @@ public class BackblazeDataTransferClientTest {
 
   @BeforeEach
   public void setUp() throws IOException, InterruptedException {
+    StatusLine statusLine = mock(StatusLine.class);
+    s3Client = mock(S3Client.class);
+    lenient().when(httpResponse.getStatusLine()).thenReturn(statusLine);
+    lenient().when(statusLine.getStatusCode()).thenReturn(200);
+    lenient().when(httpResponse.getEntity()).thenReturn(httpEntity);
     lenient()
-        .when(backblazeS3ClientFactory.createS3Client(anyString(), anyString(), anyString()))
-        .thenReturn(s3Client);
-    lenient().when(authorizeAccountHttpResponse.statusCode()).thenReturn(200);
+        .when(httpEntity.getContent())
+        .thenReturn(new ByteArrayInputStream(VALID_RESPONSE.getBytes()));
+    lenient().when(httpClient.execute(any(HttpGet.class))).thenReturn(httpResponse);
+    InputStream mockInputStream =
+        new ByteArrayInputStream(
+            "{\"s3ApiUrl\":\"https://s3.us-west-910.backblazeb2.pet\"}".getBytes());
+    lenient().when(httpEntity.getContent()).thenReturn(mockInputStream);
     lenient()
-        .when(authorizeAccountHttpResponse.body())
-        .thenReturn("{\"s3ApiUrl\":\"https://s3.us-west-910.backblazeb2.pet\"}");
-    lenient().doReturn(authorizeAccountHttpResponse).when(httpClient).send(any(), any());
+        .doReturn(authorizeAccountHttpResponse)
+        .when(httpClient)
+        .execute((HttpUriRequest) any(), (HttpContext) any());
+    lenient().doReturn(s3Client).when(backblazeS3ClientFactory).createS3Client(any(), any(), any());
+
+    client = new BackblazeDataTransferClient(monitor, s3ClientFactory, 1000L, 100L);
   }
 
   @Test
   public void testGetAccountRegionSuccess() throws Exception {
-    createValidBucketList();
-    BackblazeDataTransferClient client = createDefaultClient();
-    client.init(KEY_ID, APP_KEY, EXPORT_SERVICE);
+    when(httpResponse.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(200);
+    when(httpResponse.getEntity()).thenReturn(httpEntity);
+    when(httpEntity.getContent()).thenReturn(new ByteArrayInputStream(VALID_RESPONSE.getBytes()));
+    when(httpClient.execute(any(HttpGet.class))).thenReturn(httpResponse);
 
-    verify(httpClient, times(1)).send(any(), any());
+    // Mock the S3 client creation and bucket listing
+    doReturn(s3Client)
+        .when(s3ClientFactory)
+        .createS3Client(eq(KEY_ID), eq(APP_KEY), eq("us-west-002"));
+
+    when(s3Client.listBuckets()).thenReturn(ListBucketsResponse.builder().build());
+
+    client.init(KEY_ID, APP_KEY, EXPORT_SERVICE, httpClient);
+
     verify(monitor)
         .info(
             argThat(
-                message -> message.get().contains("Region extracted from s3ApiUrl: us-west-910")));
+                message -> message.get().contains("Region extracted from s3ApiUrl: us-west-002")));
+    verify(s3ClientFactory, times(1)).createS3Client(eq(KEY_ID), eq(APP_KEY), eq("us-west-002"));
   }
 
   @Test
-  public void testGetAccountRegionWithRetrySuccess() throws Exception {
-    HttpResponse<String> failedResponse = mock(HttpResponse.class);
-    when(failedResponse.statusCode()).thenReturn(500);
-    doReturn(failedResponse)
-        .doReturn(authorizeAccountHttpResponse)
-        .when(httpClient)
-        .send(any(), any());
-
-    createValidBucketList();
-    BackblazeDataTransferClient client = createDefaultClient();
-    client.init(KEY_ID, APP_KEY, EXPORT_SERVICE);
-
-    verify(httpClient, times(2)).send(any(), any());
-    verify(monitor).info(argThat(message -> message.get().contains("Retry attempt 2")));
-  }
-
-  @Test
-  public void testGetAccountRegionMaxRetriesExceeded() throws Exception {
-    HttpResponse<String> failedResponse = mock(HttpResponse.class);
-    when(failedResponse.statusCode()).thenReturn(500);
-    doReturn(failedResponse).when(httpClient).send(any(), any());
-
-    BackblazeDataTransferClient client = createDefaultClient();
-    BackblazeCredentialsException exception =
-        assertThrows(
-            BackblazeCredentialsException.class,
-            () -> client.init(KEY_ID, APP_KEY, EXPORT_SERVICE));
-
-    verify(httpClient, times(3)).send(any(), any());
-    verify(monitor, times(3))
-        .info(argThat(message -> message.get().contains("Received server error 500")));
-    assertEquals("Failed to retrieve users region after 3 attempts", exception.getMessage());
-  }
-
-  @Test
-  public void testGetAccountRegionClientError() throws Exception {
-    HttpResponse<String> clientErrorResponse = mock(HttpResponse.class);
-    when(clientErrorResponse.statusCode()).thenReturn(403);
-    doReturn(clientErrorResponse).when(httpClient).send(any(), any());
-
-    BackblazeDataTransferClient client = createDefaultClient();
-
-    assertThrows(
-        BackblazeCredentialsException.class, () -> client.init(KEY_ID, APP_KEY, EXPORT_SERVICE));
-
-    // Verify no retries on client error
-    verify(httpClient, times(1)).send(any(), any());
-  }
-
-  @Test
-  public void testGetAccountRegionNetworkError() throws Exception {
+  public void testGetAccountRegionWithClientError() throws Exception {
     // Given
-    when(httpClient.send(any(), any())).thenThrow(new IOException("Network error"));
+    when(httpResponse.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(403);
+    when(httpClient.execute(any(HttpGet.class))).thenReturn(httpResponse);
 
-    // When
-    BackblazeDataTransferClient client = createDefaultClient();
-
-    // Then
+    // When/Then
     BackblazeCredentialsException exception =
         assertThrows(
             BackblazeCredentialsException.class,
-            () -> client.init(KEY_ID, APP_KEY, EXPORT_SERVICE));
+            () -> client.init(KEY_ID, APP_KEY, EXPORT_SERVICE, httpClient));
 
-    verify(httpClient, times(3)).send(any(), any());
-    verify(monitor, times(3))
-        .info(
-            argThat(message -> message.get().contains("Request failed with error: Network error")));
+    Assertions.assertTrue(exception.getMessage().contains("Failed to retrieve users region"));
+    verify(httpClient, times(1)).execute(any(HttpGet.class));
   }
 
   @Test
-  public void testGetAccountRegionInvalidJson() throws Exception {
-    when(authorizeAccountHttpResponse.statusCode()).thenReturn(200);
-    when(authorizeAccountHttpResponse.body()).thenReturn("invalid json");
-    doReturn(authorizeAccountHttpResponse).when(httpClient).send(any(), any());
+  public void testGetAccountRegionWithServerError() throws Exception {
+    // Given
+    when(httpResponse.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(500);
+    when(httpClient.execute(any(HttpGet.class))).thenReturn(httpResponse);
 
-    BackblazeDataTransferClient client = createDefaultClient();
+    // When/Then
+    BackblazeCredentialsException exception =
+        assertThrows(
+            BackblazeCredentialsException.class,
+            () -> client.init(KEY_ID, APP_KEY, EXPORT_SERVICE, httpClient));
 
+    Assertions.assertTrue(exception.getMessage().contains("Failed to retrieve users region"));
+  }
+
+  @Test
+  public void testGetAccountRegionWithIOException() throws Exception {
+    // Given
+    when(httpClient.execute(any(HttpGet.class))).thenThrow(new IOException("Network error"));
+
+    // When/Then
+    BackblazeCredentialsException exception =
+        assertThrows(
+            BackblazeCredentialsException.class,
+            () -> client.init(KEY_ID, APP_KEY, EXPORT_SERVICE, httpClient));
+
+    Assertions.assertTrue(exception.getMessage().contains("Failed to retrieve users region"));
+    assertEquals("Network error", exception.getCause().getMessage());
+  }
+
+  @Test
+  public void testGetAccountRegionWithMalformedJson() throws Exception {
+    // Given
+    String malformedJson = "{ invalid json }";
+    when(httpResponse.getStatusLine()).thenReturn(statusLine);
+    when(statusLine.getStatusCode()).thenReturn(200);
+    when(httpResponse.getEntity()).thenReturn(httpEntity);
+    when(httpEntity.getContent()).thenReturn(new ByteArrayInputStream(malformedJson.getBytes()));
+    when(httpClient.execute(any(HttpGet.class))).thenReturn(httpResponse);
+
+    // When/Then
     assertThrows(
-        BackblazeCredentialsException.class, () -> client.init(KEY_ID, APP_KEY, EXPORT_SERVICE));
-
-    verify(httpClient, times(3)).send(any(), any());
+        BackblazeCredentialsException.class,
+        () -> client.init(KEY_ID, APP_KEY, EXPORT_SERVICE, httpClient));
   }
 
   private void createValidBucketList() {
@@ -191,8 +213,7 @@ public class BackblazeDataTransferClientTest {
   }
 
   private BackblazeDataTransferClient createDefaultClient() {
-    return new BackblazeDataTransferClient(
-        monitor, backblazeS3ClientFactory, httpClient, 1000, 500);
+    return new BackblazeDataTransferClient(monitor, backblazeS3ClientFactory, 1000, 500);
   }
 
   @Test
@@ -200,7 +221,7 @@ public class BackblazeDataTransferClientTest {
     assertThrows(
         IllegalArgumentException.class,
         () -> {
-          new BackblazeDataTransferClient(monitor, backblazeS3ClientFactory, httpClient, 10, 0);
+          new BackblazeDataTransferClient(monitor, backblazeS3ClientFactory, 10, 0);
         });
   }
 
@@ -208,7 +229,7 @@ public class BackblazeDataTransferClientTest {
   public void testInitBucketNameMatches() throws BackblazeCredentialsException, IOException {
     createValidBucketList();
     BackblazeDataTransferClient client = createDefaultClient();
-    client.init(KEY_ID, APP_KEY, EXPORT_SERVICE);
+    client.init(KEY_ID, APP_KEY, EXPORT_SERVICE, httpClient);
     verify(s3Client, times(0)).createBucket(any(CreateBucketRequest.class));
   }
 
@@ -217,7 +238,7 @@ public class BackblazeDataTransferClientTest {
     Bucket bucket = Bucket.builder().name("invalid-name").build();
     when(s3Client.listBuckets()).thenReturn(ListBucketsResponse.builder().buckets(bucket).build());
     BackblazeDataTransferClient client = createDefaultClient();
-    client.init(KEY_ID, APP_KEY, EXPORT_SERVICE);
+    client.init(KEY_ID, APP_KEY, EXPORT_SERVICE, httpClient);
     verify(s3Client, times(1)).createBucket(any(CreateBucketRequest.class));
   }
 
@@ -231,7 +252,7 @@ public class BackblazeDataTransferClientTest {
     assertThrows(
         IOException.class,
         () -> {
-          client.init(KEY_ID, APP_KEY, EXPORT_SERVICE);
+          client.init(KEY_ID, APP_KEY, EXPORT_SERVICE, httpClient);
         });
     verify(monitor, atLeast(1)).info(any());
   }
@@ -245,7 +266,7 @@ public class BackblazeDataTransferClientTest {
     assertThrows(
         IOException.class,
         () -> {
-          client.init(KEY_ID, APP_KEY, EXPORT_SERVICE);
+          client.init(KEY_ID, APP_KEY, EXPORT_SERVICE, httpClient);
         });
   }
 
@@ -256,7 +277,7 @@ public class BackblazeDataTransferClientTest {
     assertThrows(
         BackblazeCredentialsException.class,
         () -> {
-          client.init(KEY_ID, APP_KEY, EXPORT_SERVICE);
+          client.init(KEY_ID, APP_KEY, EXPORT_SERVICE, httpClient);
         });
     verify(s3Client, atLeast(1)).close();
     //    verify(monitor, atLeast(1)).debug(any());
@@ -279,7 +300,7 @@ public class BackblazeDataTransferClientTest {
     when(s3Client.putObject(any(PutObjectRequest.class), any(RequestBody.class)))
         .thenReturn(PutObjectResponse.builder().versionId(expectedVersionId).build());
     BackblazeDataTransferClient client = createDefaultClient();
-    client.init(KEY_ID, APP_KEY, EXPORT_SERVICE);
+    client.init(KEY_ID, APP_KEY, EXPORT_SERVICE, httpClient);
     String actualVersionId = client.uploadFile(FILE_KEY, testFile);
     verify(s3Client, times(1)).putObject(any(PutObjectRequest.class), any(RequestBody.class));
     assertEquals(expectedVersionId, actualVersionId);
@@ -291,7 +312,7 @@ public class BackblazeDataTransferClientTest {
     when(s3Client.putObject(any(PutObjectRequest.class), any(RequestBody.class)))
         .thenThrow(AwsServiceException.builder().build());
     BackblazeDataTransferClient client = createDefaultClient();
-    client.init(KEY_ID, APP_KEY, EXPORT_SERVICE);
+    client.init(KEY_ID, APP_KEY, EXPORT_SERVICE, httpClient);
     assertThrows(
         IOException.class,
         () -> {
@@ -313,9 +334,8 @@ public class BackblazeDataTransferClientTest {
     final long fileSize = testFile.length();
     final long expectedParts = fileSize / partSize + (fileSize % partSize == 0 ? 0 : 1);
     BackblazeDataTransferClient client =
-        new BackblazeDataTransferClient(
-            monitor, backblazeS3ClientFactory, httpClient, fileSize / 2, partSize);
-    client.init(KEY_ID, APP_KEY, EXPORT_SERVICE);
+        new BackblazeDataTransferClient(monitor, backblazeS3ClientFactory, fileSize / 2, partSize);
+    client.init(KEY_ID, APP_KEY, EXPORT_SERVICE, httpClient);
     String actualVersionId = client.uploadFile(FILE_KEY, testFile);
     verify(s3Client, times((int) expectedParts))
         .uploadPart(any(UploadPartRequest.class), any(RequestBody.class));
@@ -332,8 +352,8 @@ public class BackblazeDataTransferClientTest {
     final long fileSize = testFile.length();
     BackblazeDataTransferClient client =
         new BackblazeDataTransferClient(
-            monitor, backblazeS3ClientFactory, httpClient, fileSize / 2, fileSize / 8);
-    client.init(KEY_ID, APP_KEY, EXPORT_SERVICE);
+            monitor, backblazeS3ClientFactory, fileSize / 2, fileSize / 8);
+    client.init(KEY_ID, APP_KEY, EXPORT_SERVICE, httpClient);
     assertThrows(
         IOException.class,
         () -> {

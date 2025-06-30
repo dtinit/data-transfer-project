@@ -27,6 +27,7 @@ dependencies {
     implementation('software.amazon.awssdk:s3:2.15.24')
     implementation('org.apache.commons:commons-lang3:3.11')
     implementation("commons-io:commons-io:2.6")
+    implementation("org.apache.httpcomponents:httpclient:${apacheHttpVersion}")
     implementation("com.googlecode.json-simple:json-simple:${jsonSimpleVersion}")
 }
 
