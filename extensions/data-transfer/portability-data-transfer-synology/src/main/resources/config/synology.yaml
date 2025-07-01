@@ -1,0 +1,13 @@
+# TODO(ehung): confirm synology sa rate limit
+perUserRateLimit: 1
+serviceConfig:
+  retry:
+    maxAttempts: 3
+  services:
+    c2:
+      type: "c2"
+      baseUrl: "https://sa.dtp.us.c2.synology.com"
+      apiPath:
+        createAlbum: "/import/album"
+        uploadItem: "/import/item"
+        addItemToAlbum: "/import/album/item"
