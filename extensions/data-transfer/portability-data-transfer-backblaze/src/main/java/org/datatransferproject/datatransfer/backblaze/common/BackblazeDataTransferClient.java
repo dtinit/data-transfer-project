@@ -110,7 +110,6 @@ public class BackblazeDataTransferClient {
       listBucketsResponse = s3Client.listBuckets();
     } catch (S3Exception e) {
       s3Exception = e;
-    } finally {
       if (s3Client != null) {
         s3Client.close();
       }
@@ -267,7 +266,7 @@ public class BackblazeDataTransferClient {
                   .build();
           s3Client.createBucket(createBucketRequest);
           return bucketName;
-        } catch (BucketAlreadyExistsException | BucketAlreadyOwnedByYouException e) {
+        } catch (Exception e) {
           monitor.info(() -> "Bucket name already exists");
         }
       }
