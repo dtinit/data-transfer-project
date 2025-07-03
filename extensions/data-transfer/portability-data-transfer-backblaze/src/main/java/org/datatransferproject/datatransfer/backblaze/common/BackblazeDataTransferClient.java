@@ -187,7 +187,7 @@ public class BackblazeDataTransferClient {
         }
       }
     } catch (IOException | ParseException e) {
-      throw new BackblazeCredentialsException("Failed to retrieve users region", e);
+      throw new BackblazeCredentialsException("Failed to retrieve account's region", e);
     }
   }
 
