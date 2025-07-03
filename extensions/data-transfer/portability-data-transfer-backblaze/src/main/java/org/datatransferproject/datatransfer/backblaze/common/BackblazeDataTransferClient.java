@@ -181,7 +181,7 @@ public class BackblazeDataTransferClient {
         } else if (statusCode >= 400 && statusCode < 500) {
           // Don't retry on client errors (4xx)
           throw new BackblazeCredentialsException(
-              "Failed to retrieve users region. Status code: " + statusCode, null);
+              "Failed to retrieve account's region. Status code: " + statusCode, null);
         } else {
           throw new IOException("Server returned status code: " + statusCode);
         }
