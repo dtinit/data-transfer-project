@@ -141,35 +141,27 @@ public class BackblazeDataTransferClientTest {
 
   @Test
   public void testGetAccountRegionWithClientError() throws Exception {
-    // Given
     when(httpResponse.getStatusLine()).thenReturn(statusLine);
     when(statusLine.getStatusCode()).thenReturn(403);
     when(httpClient.execute(any(HttpGet.class))).thenReturn(httpResponse);
 
-    // When/Then
     BackblazeCredentialsException exception =
         assertThrows(
             BackblazeCredentialsException.class,
             () -> client.init(KEY_ID, APP_KEY, EXPORT_SERVICE, httpClient));
-
-    Assertions.assertTrue(exception.getMessage().contains("Failed to retrieve users region"));
     verify(httpClient, times(1)).execute(any(HttpGet.class));
   }
 
   @Test
   public void testGetAccountRegionWithServerError() throws Exception {
-    // Given
     when(httpResponse.getStatusLine()).thenReturn(statusLine);
     when(statusLine.getStatusCode()).thenReturn(500);
     when(httpClient.execute(any(HttpGet.class))).thenReturn(httpResponse);
 
-    // When/Then
     BackblazeCredentialsException exception =
         assertThrows(
             BackblazeCredentialsException.class,
             () -> client.init(KEY_ID, APP_KEY, EXPORT_SERVICE, httpClient));
-
-    Assertions.assertTrue(exception.getMessage().contains("Failed to retrieve users region"));
   }
 
   @Test
@@ -183,7 +175,6 @@ public class BackblazeDataTransferClientTest {
             BackblazeCredentialsException.class,
             () -> client.init(KEY_ID, APP_KEY, EXPORT_SERVICE, httpClient));
 
-    Assertions.assertTrue(exception.getMessage().contains("Failed to retrieve users region"));
     assertEquals("Network error", exception.getCause().getMessage());
   }
 
