@@ -26,6 +26,7 @@ public enum Headers {
   AUTHORIZATION("Authorization"),
   CORRELATION_ID("X-Apple-Request-UUID"),
   CONTENT_TYPE("Content-Type"),
+  ACCEPT("Accept"),
   OPERATION_GROUP("x-apple-operation-group-name");
 
 
