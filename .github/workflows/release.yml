@@ -52,10 +52,8 @@ jobs:
           cache: gradle
       - name: "Sign and Release"
         env:
-          GRADLE_SIGNING_KEY: "${{ secrets.GRADLE_SIGNING_KEY }}" # deprecated
-          GRADLE_SIGNING_PASSWORD: "${{ secrets.GRADLE_SIGNING_PASSWORD }}" # deprecated
-          OSSRH_USERNAME: "${{ secrets.OSSRH_USERNAME }}"
-          OSSRH_PASSWORD: "${{ secrets.OSSRH_PASSWORD }}"
+          GRADLE_SIGNING_KEY: "${{ secrets.GRADLE_SIGNING_KEY }}"
+          GRADLE_SIGNING_PASSWORD: "${{ secrets.GRADLE_SIGNING_PASSWORD }}"
           RELEASE_VERSION: "${{ needs.bump_version.outputs.version }}"
           CENTRAL_PORTAL_PASS: "${{ secrets.CENTRAL_PORTAL_PASS }}"
           CENTRAL_PORTAL_USER: "${{ secrets.CENTRAL_PORTAL_USER }}"
