@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.UUID;
+import org.datatransferproject.types.common.ImportableItem;
 import org.datatransferproject.types.common.models.DataModel;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 
@@ -31,7 +32,7 @@ import org.datatransferproject.types.common.models.photos.PhotoAlbum;
  * TempMediaData used to store personal camera media (album, photos, videos, etc) information before
  * they are ready to be uploaded.
  */
-// TODO(zacsh) update this to support Media* objects and/or Video data
+// TODO(zacsh) rename this to what it's for: ImportableItemContainerMap
 @JsonTypeName("org.dataportability:TempMediaData")
 public class TempMediaData extends DataModel {
 
@@ -99,18 +100,36 @@ public class TempMediaData extends DataModel {
   }
 
   public void addContainedPhotoId(String photoId) {
-    containedPhotoIds.add(photoId);
+    markContained(photoId);
   }
 
   public void addAllContainedPhotoIds(Collection<String> photoIds) {
     containedPhotoIds.addAll(photoIds);
   }
 
-  public Collection lookupContainedPhotoIds() {
+  public Collection<String> lookupContainedPhotoIds() {
     return containedPhotoIds;
   }
 
   public boolean isContainedPhotoId(String photoId) {
-    return containedPhotoIds.contains(photoId);
+    return isContained(photoId);
+  }
+
+  // TODO(zacsh) finish making this model agnostic (we care only about idempotent IDs of a resource
+  // and some containing resource.
+  private boolean isContained(String idempotentId) {
+    return containedPhotoIds.contains(idempotentId);
+  }
+
+  private void markContained(String idempotentId) {
+    containedPhotoIds.add(idempotentId);
+  }
+
+  public boolean isContained(ImportableItem item) {
+    return containedPhotoIds.contains(item.getIdempotentId());
+  }
+
+  public void markContained(ImportableItem item) {
+    containedPhotoIds.add(item.getIdempotentId());
   }
 }
