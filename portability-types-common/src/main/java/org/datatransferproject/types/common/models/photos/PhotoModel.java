@@ -188,7 +188,9 @@ public class PhotoModel implements DownloadableFile {
     return getMediaType();
   }
 
-  // TODO(zacsh) remove this in favor of getFolderId
+  /**
+   * TODO(zacsh) remove this in favor of getFolderId
+   */
   public String getAlbumId() {
     return albumId;
   }
