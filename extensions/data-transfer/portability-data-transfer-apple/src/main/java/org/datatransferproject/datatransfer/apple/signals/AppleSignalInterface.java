@@ -89,6 +89,8 @@ public class AppleSignalInterface implements AppleBaseInterface {
       con.setRequestMethod("POST");
       con.setRequestProperty(Headers.AUTHORIZATION.getValue(), authData.getAccessToken());
       con.setRequestProperty(Headers.CORRELATION_ID.getValue(), correlationId);
+      con.setRequestProperty(Headers.CONTENT_TYPE.getValue(), "application/json");
+      con.setRequestProperty(Headers.ACCEPT.getValue(), "application/json");
 
       IOUtils.write(requestData, con.getOutputStream());
       responseString = IOUtils.toString(con.getInputStream(), StandardCharsets.ISO_8859_1);
