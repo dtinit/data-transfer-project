@@ -148,17 +148,19 @@ def configurePublication(Project project) {
             mavenDeployer {
                 beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-                repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2") {
+                // Please see https://central.sonatype.org/publish/publish-portal-ossrh-staging-api/#overview
+                repository(url: "https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2") {
                     authentication(
-                      userName: project.hasProperty('ossrhUsername') ? ossrhUsername : System.getenv('OSSRH_USERNAME'),
-                      password: project.hasProperty('ossrhPassword') ? ossrhPassword : System.getenv('OSSRH_PASSWORD')
+                      userName: project.hasProperty('ossrhUsername') ? ossrhUsername : System.getenv('CENTRAL_PORTAL_USER'),
+                      password: project.hasProperty('ossrhPassword') ? ossrhPassword : System.getenv('CENTRAL_PORTAL_PASS')
                     )
                 }
 
-                snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots") {
+                // not sure if it works anymore
+                snapshotRepository(url: "https://ossrh-staging-api.central.sonatype.com/content/repositories/snapshots") {
                     authentication(
-                      userName: project.hasProperty('ossrhUsername') ? ossrhUsername : System.getenv('OSSRH_USERNAME'),
-                      password: project.hasProperty('ossrhPassword') ? ossrhPassword : System.getenv('OSSRH_PASSWORD')
+                      userName: project.hasProperty('ossrhUsername') ? ossrhUsername : System.getenv('CENTRAL_PORTAL_USER'),
+                      password: project.hasProperty('ossrhPassword') ? ossrhPassword : System.getenv('CENTRAL_PORTAL_PASS')
                     )
                 }
 
