@@ -10,5 +10,6 @@ public interface DownloadableItem extends ImportableItem {
 
   /** Remote or local URL used to download and identify an item. */
   String getFetchableUrl();
+
   boolean isInTempStore();
 }
