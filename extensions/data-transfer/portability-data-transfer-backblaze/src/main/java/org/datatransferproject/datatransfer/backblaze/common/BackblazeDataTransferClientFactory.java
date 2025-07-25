@@ -49,7 +49,13 @@ public class BackblazeDataTransferClientFactory {
                       SIZE_THRESHOLD_FOR_MULTIPART_UPLOAD,
                       PART_SIZE_FOR_MULTIPART_UPLOAD);
       String exportService = JobMetadata.getExportService();
-      backblazeDataTransferClient.init(authData.getToken(), authData.getSecret(), exportService, HttpClientBuilder.create().build());
+      CustomIPv4DnsResolver customDnsResolver = new CustomIPv4DnsResolver();
+      backblazeDataTransferClient.init(
+              authData.getToken(),
+              authData.getSecret(),
+              exportService,
+              HttpClientBuilder.create().setDnsResolver(customDnsResolver).build()
+      );
       backblazeDataTransferClientMap.put(jobId, backblazeDataTransferClient);
     }
     return backblazeDataTransferClientMap.get(jobId);
