@@ -32,6 +32,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -201,14 +202,16 @@ public class SynologyDTPServiceTest {
     private final String fetchUrl = "https://example.com";
     private final String description = "desc";
     private final String itemId = "itemId";
+    private final Long uploadedTimestamp = 1718697600L; // 2024-06-18 00:00:00 UTC
 
     public Stream<Object> provideMediaObjectsInTempStore() {
+      Date uploadedTime = new Date(uploadedTimestamp * 1000);
       return Stream.of(
-          new PhotoModel(itemName, fetchUrl, description, "mediaType", itemId, null, true),
-          new VideoModel(itemName, fetchUrl, description, "format", itemId, null, true, null));
+          new PhotoModel(itemName, fetchUrl, description, "mediaType", itemId, null, true, uploadedTime),
+          new VideoModel(itemName, fetchUrl, description, "format", itemId, null, true, uploadedTime));
     }
 
-    public Stream<Object> provideMediaObjectsWithoutDescriptionInTempStore() {
+    public Stream<Object> provideMediaObjectsWithoutDescriptionAndUploadedTimeInTempStore() {
       return Stream.of(
           new PhotoModel(itemName, fetchUrl, null, "mediaType", itemId, null, true),
           new VideoModel(itemName, fetchUrl, null, "format", itemId, null, true, null));
@@ -321,9 +324,9 @@ public class SynologyDTPServiceTest {
     }
 
     @ParameterizedTest(
-        name = "shouldSendPostRequestWithCorrectFormBodyWithDescription [{index}] {0}")
+        name = "shouldSendPostRequestWithCorrectFormBodyWithDescriptionAndUploadedTime [{index}] {0}")
     @MethodSource("provideMediaObjectsInTempStore")
-    public void shouldSendPostRequestWithCorrectFormBodyWithDescription(DownloadableFile item)
+    public void shouldSendPostRequestWithCorrectFormBodyWithDescriptionAndUploadedTime(DownloadableFile item)
         throws IOException {
       byte[] mockImage = new byte[] {1, 2, 3};
       InputStream mockInputStream = new ByteArrayInputStream(mockImage);
@@ -357,7 +360,8 @@ public class SynologyDTPServiceTest {
               "service", exportingService,
               "item_id", itemId,
               "title", itemName,
-              "description", description);
+              "description", description,
+              "uploaded_time", String.valueOf(uploadedTimestamp));
 
       for (MultipartBody.Part part : multipartBody.parts()) {
         String partName =
@@ -379,8 +383,8 @@ public class SynologyDTPServiceTest {
     }
 
     @ParameterizedTest(
-        name = "shouldSendPostRequestWithCorrectFormBodyWithoutDescription [{index}] {0}")
-    @MethodSource("provideMediaObjectsWithoutDescriptionInTempStore")
+        name = "shouldSendPostRequestWithCorrectFormBodyWithoutDescriptionAndUploadedTime [{index}] {0}")
+    @MethodSource("provideMediaObjectsWithoutDescriptionAndUploadedTimeInTempStore")
     public void shouldSendPostRequestWithCorrectFormBodyWithoutDescription(DownloadableFile item)
         throws IOException {
       byte[] mockImage = new byte[] {1, 2, 3};
