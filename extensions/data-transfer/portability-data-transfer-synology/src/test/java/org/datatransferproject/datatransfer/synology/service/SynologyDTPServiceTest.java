@@ -202,10 +202,10 @@ public class SynologyDTPServiceTest {
     private final String fetchUrl = "https://example.com";
     private final String description = "desc";
     private final String itemId = "itemId";
-    private final Long uploadedTimestamp = 1718697600L; // 2024-06-18 00:00:00 UTC
+    private final Long uploadedTimestampInSeconds = 1718697600L; // 2024-06-18 00:00:00 UTC
 
     public Stream<Object> provideMediaObjectsInTempStore() {
-      Date uploadedTime = new Date(uploadedTimestamp * 1000);
+      Date uploadedTime = new Date(uploadedTimestampInSeconds * 1000);
       return Stream.of(
           new PhotoModel(itemName, fetchUrl, description, "mediaType", itemId, null, true, uploadedTime),
           new VideoModel(itemName, fetchUrl, description, "format", itemId, null, true, uploadedTime));
@@ -361,7 +361,7 @@ public class SynologyDTPServiceTest {
               "item_id", itemId,
               "title", itemName,
               "description", description,
-              "uploaded_time", String.valueOf(uploadedTimestamp));
+              "uploaded_time", String.valueOf(uploadedTimestampInSeconds));
 
       for (MultipartBody.Part part : multipartBody.parts()) {
         String partName =

@@ -160,8 +160,8 @@ public class SynologyDTPService {
     }
     Date imageUploadedTime = photo.getUploadedTime();
     if (imageUploadedTime != null) {
-      long timestamp = imageUploadedTime.getTime() / 1000;
-      builder.addFormDataPart("uploaded_time", String.valueOf(timestamp));
+      long timestampInSeconds = imageUploadedTime.getTime() / 1000;
+      builder.addFormDataPart("uploaded_time", String.valueOf(timestampInSeconds));
     }
 
     @SuppressWarnings("unchecked")
@@ -214,8 +214,8 @@ public class SynologyDTPService {
     }
     Date videoUploadedTime = video.getUploadedTime();
     if (videoUploadedTime != null) {
-      long timestamp = videoUploadedTime.getTime() / 1000;
-      builder.addFormDataPart("uploaded_time", String.valueOf(timestamp));
+      long timestampInSeconds = videoUploadedTime.getTime() / 1000;
+      builder.addFormDataPart("uploaded_time", String.valueOf(timestampInSeconds));
     }
 
     @SuppressWarnings("unchecked")
