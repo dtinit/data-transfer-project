@@ -67,7 +67,6 @@ public class GoogleMusicExporterTest {
   static final String PLAYLIST_ITEM_TOKEN = "playlist_item_token";
   static final String RELEASE_ITEM_TOKEN = "release_item_token";
 
-
   private final UUID uuid = UUID.randomUUID();
 
   private GoogleMusicExporter googleMusicExporter;
@@ -92,12 +91,10 @@ public class GoogleMusicExporterTest {
     playlistItemExportResponse = mock(PlaylistItemExportResponse.class);
     exportReleaseResponse = mock(ExportReleaseResponse.class);
 
-
     when(musicHttpApi.exportPlaylists(any(Optional.class))).thenReturn(playlistExportResponse);
     when(musicHttpApi.exportPlaylistItems(any(String.class), any(Optional.class)))
         .thenReturn(playlistItemExportResponse);
     when(musicHttpApi.exportReleases(any(Optional.class))).thenReturn(exportReleaseResponse);
-
 
     verifyNoInteractions(credentialFactory);
   }

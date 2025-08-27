@@ -74,7 +74,6 @@ public class GoogleMusicHttpApi {
   private static final String BASE_URL =
       "https://youtubemediaconnect.googleapis.com/v1/users/me/musicLibrary/";
   private static final String RELEASE_BASE_URL = "https://youtubemediaconnect.googleapis.com/v1/";
-
   private static final int PLAYLIST_PAGE_SIZE = 20;
   private static final int PLAYLIST_ITEM_PAGE_SIZE = 50;
   private static final String PLAYLIST_ID_KEY = "playlistId";
@@ -83,7 +82,6 @@ public class GoogleMusicHttpApi {
   private static final String ORIGINAL_PLAYLIST_ID_KEY = "originalPlaylistId";
   private static final String ACCESS_TOKEN_KEY = "access_token";
   private static final int RELEASE_ITEM_PAGE_SIZE = 50;
-
 
   private final ObjectMapper objectMapper =
       new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
