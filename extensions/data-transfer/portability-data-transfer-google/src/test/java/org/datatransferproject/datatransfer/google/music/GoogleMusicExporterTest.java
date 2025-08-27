@@ -18,6 +18,7 @@ package org.datatransferproject.datatransfer.google.music;
 
 import static org.datatransferproject.datatransfer.google.music.GoogleMusicExporter.GOOGLE_PLAYLIST_NAME_PREFIX;
 import static org.datatransferproject.datatransfer.google.music.GoogleMusicExporter.PLAYLIST_TOKEN_PREFIX;
+import static org.datatransferproject.datatransfer.google.music.GoogleMusicExporter.RELEASE_TOKEN_PREFIX;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -36,6 +37,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
+import org.datatransferproject.datatransfer.google.musicModels.ExportReleaseResponse;
 import org.datatransferproject.datatransfer.google.musicModels.GooglePlaylist;
 import org.datatransferproject.datatransfer.google.musicModels.GooglePlaylistItem;
 import org.datatransferproject.datatransfer.google.musicModels.GoogleRelease;
@@ -46,6 +48,7 @@ import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
+import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.PaginationData;
 import org.datatransferproject.types.common.StringPaginationToken;
 import org.datatransferproject.types.common.models.ContainerResource;
@@ -62,6 +65,8 @@ public class GoogleMusicExporterTest {
 
   static final String PLAYLIST_PAGE_TOKEN = "playlist_page_token";
   static final String PLAYLIST_ITEM_TOKEN = "playlist_item_token";
+  static final String RELEASE_ITEM_TOKEN = "release_item_token";
+
 
   private final UUID uuid = UUID.randomUUID();
 
@@ -70,6 +75,7 @@ public class GoogleMusicExporterTest {
 
   private PlaylistExportResponse playlistExportResponse;
   private PlaylistItemExportResponse playlistItemExportResponse;
+  private ExportReleaseResponse exportReleaseResponse;
 
   @BeforeEach
   public void setUp() throws IOException, InvalidTokenException, PermissionDeniedException {
@@ -84,10 +90,14 @@ public class GoogleMusicExporterTest {
 
     playlistExportResponse = mock(PlaylistExportResponse.class);
     playlistItemExportResponse = mock(PlaylistItemExportResponse.class);
+    exportReleaseResponse = mock(ExportReleaseResponse.class);
+
 
     when(musicHttpApi.exportPlaylists(any(Optional.class))).thenReturn(playlistExportResponse);
     when(musicHttpApi.exportPlaylistItems(any(String.class), any(Optional.class)))
         .thenReturn(playlistItemExportResponse);
+    when(musicHttpApi.exportReleases(any(Optional.class))).thenReturn(exportReleaseResponse);
+
 
     verifyNoInteractions(credentialFactory);
   }
@@ -229,6 +239,93 @@ public class GoogleMusicExporterTest {
     assertThat(paginationToken).isNull();
   }
 
+  @Test
+  public void exportReleaseFirstSet()
+      throws InvalidTokenException, PermissionDeniedException, IOException, ParseException {
+    GoogleRelease release = setUpSingleRelease("Test", "R_icpn");
+    when(exportReleaseResponse.getReleases())
+        .thenReturn(new GoogleRelease[]{release});
+    when(exportReleaseResponse.getNextPageToken()).thenReturn(null);
+    StringPaginationToken inputPaginationToken = new StringPaginationToken(RELEASE_TOKEN_PREFIX);
+    ExportInformation exportInformation = new ExportInformation(inputPaginationToken, null);
+    ExportResult<MusicContainerResource> result = googleMusicExporter.export(uuid, null, Optional.of(exportInformation));
+
+    // Check results
+    // Verify correct methods were called
+    verify(musicHttpApi).exportReleases(Optional.empty());
+    verify(exportReleaseResponse).getReleases();
+
+    // Check pagination token
+    ContinuationData continuationData = result.getContinuationData();
+    StringPaginationToken paginationToken = (StringPaginationToken) continuationData.getPaginationData();
+    assertThat(paginationToken).isNull();
+  }
+
+  @Test
+  public void exportReleaseSubsequentSet()
+      throws InvalidTokenException, PermissionDeniedException, IOException, ParseException {
+    GoogleRelease release = setUpSingleRelease("Test", "R_icpn");
+    when(exportReleaseResponse.getReleases())
+        .thenReturn(new GoogleRelease[]{release});
+    when(exportReleaseResponse.getNextPageToken()).thenReturn(null);
+    StringPaginationToken inputPaginationToken = new StringPaginationToken(RELEASE_TOKEN_PREFIX + RELEASE_ITEM_TOKEN);
+    ExportInformation exportInformation = new ExportInformation(inputPaginationToken, null);
+    ExportResult<MusicContainerResource> result = googleMusicExporter.export(uuid, null, Optional.of(exportInformation));
+
+    // Check results
+    // Verify correct methods were called
+    verify(musicHttpApi).exportReleases(Optional.of(RELEASE_ITEM_TOKEN));
+    verify(exportReleaseResponse).getReleases();
+
+    // Check pagination token
+    ContinuationData continuationData = result.getContinuationData();
+    StringPaginationToken paginationToken = (StringPaginationToken) continuationData.getPaginationData();
+    assertThat(paginationToken).isNull();
+  }
+
+  @Test
+  public void exportReleaseWithNextPage()
+      throws InvalidTokenException, PermissionDeniedException, IOException, ParseException {
+    GoogleRelease release = setUpSingleRelease("Test", "R_icpn");
+    when(exportReleaseResponse.getReleases())
+        .thenReturn(new GoogleRelease[]{release});
+    when(exportReleaseResponse.getNextPageToken()).thenReturn(RELEASE_ITEM_TOKEN);
+    StringPaginationToken inputPaginationToken = new StringPaginationToken(RELEASE_TOKEN_PREFIX + RELEASE_ITEM_TOKEN);
+    ExportInformation exportInformation = new ExportInformation(inputPaginationToken, null);
+    ExportResult<MusicContainerResource> result = googleMusicExporter.export(uuid, null, Optional.of(exportInformation));
+
+    // Check results
+    // Verify correct methods were called
+    verify(musicHttpApi).exportReleases(Optional.of(RELEASE_ITEM_TOKEN));
+    verify(exportReleaseResponse).getReleases();
+
+    // Check pagination token
+    ContinuationData continuationData = result.getContinuationData();
+    StringPaginationToken paginationToken = (StringPaginationToken) continuationData.getPaginationData();
+    assertEquals(RELEASE_TOKEN_PREFIX+RELEASE_ITEM_TOKEN, paginationToken.getToken());
+  }
+
+  @Test
+  public void exportReleaseWithNoData()
+      throws InvalidTokenException, PermissionDeniedException, IOException, ParseException {
+    when(exportReleaseResponse.getReleases())
+        .thenReturn(null);
+    when(exportReleaseResponse.getNextPageToken()).thenReturn(null);
+    StringPaginationToken inputPaginationToken = new StringPaginationToken(RELEASE_TOKEN_PREFIX);
+    ExportInformation exportInformation = new ExportInformation(inputPaginationToken, null);
+    ExportResult<MusicContainerResource> result = googleMusicExporter.export(uuid, null, Optional.of(exportInformation));
+
+    // Check results
+    // Verify correct methods were called
+    verify(musicHttpApi).exportReleases(Optional.empty());
+    verify(exportReleaseResponse).getReleases();
+
+    // Check pagination token
+    ContinuationData continuationData = result.getContinuationData();
+    StringPaginationToken paginationToken = (StringPaginationToken) continuationData.getPaginationData();
+    assertThat(paginationToken).isNull();
+  }
+
   /**
    * Sets up a response with a single playlist, containing a single playlist item
    */
@@ -254,5 +351,12 @@ public class GoogleMusicExporterTest {
     track.setExplicitType("EXPLICIT_TYPE_EXPLICIT");
     playlistItemEntry.setTrack(track);
     return playlistItemEntry;
+  }
+
+  private GoogleRelease setUpSingleRelease(String title, String icpn){
+    GoogleRelease release = new GoogleRelease();
+    release.setIcpn(icpn);
+    release.setReleaseTitle(title);
+    return release;
   }
 }
