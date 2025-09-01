@@ -19,6 +19,7 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.InMemoryIdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
+import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.common.models.IdOnlyContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
@@ -30,6 +31,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
+import org.mockito.Mockito;
 
 @RunWith(Parameterized.class)
 public class GenericImporterTest {
@@ -37,6 +39,8 @@ public class GenericImporterTest {
   private final TemporaryPerJobDataStore dataStore = new TemporaryPerJobDataStore() {};
   @Parameter public String importerClass;
   private MockWebServer webServer;
+  private static final UUID MOCK_JOB_ID = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+  private static final String MOCK_EXPORT_SERVICE = "mockExportService";
 
   @Parameters(name = "{0}")
   public static Collection<String> strings() {
@@ -350,5 +354,39 @@ public class GenericImporterTest {
     ErrorDetail error = errors.iterator().next();
     assertEquals("itemId", error.title());
     assertContains("Generic importer failed with code (413)", error.exception());
+  }
+
+  @Test
+  public void testGenericImporterPassingJobMetadata() throws Exception {
+    try (var mockedStatic = Mockito.mockStatic(JobMetadata.class)) {
+      mockedStatic.when(JobMetadata::getJobId).thenReturn(this.MOCK_JOB_ID);
+      mockedStatic.when(JobMetadata::getExportService).thenReturn(this.MOCK_EXPORT_SERVICE);
+
+      InMemoryIdempotentImportExecutor executor = new InMemoryIdempotentImportExecutor(monitor);
+      GenericImporter<IdOnlyContainerResource, String> importer =
+          getImporter(
+              importerClass,
+              container ->
+                      List.of(
+                              new ImportableData<>(
+                                      new GenericPayload<>(container.getId(), "schemasource"),
+                                      container.getId(),
+                                      container.getId())));
+      webServer.setDispatcher(getDispatcher());
+
+      importer.importItem(
+          UUID.randomUUID(),
+          executor,
+          new TokensAndUrlAuthData(
+              "accessToken", "refreshToken", webServer.url("/refresh").toString()),
+          new IdOnlyContainerResource("id"));
+
+      assertEquals(1, webServer.getRequestCount());
+      RecordedRequest request = webServer.takeRequest();
+      assertEquals("POST", request.getMethod());
+      assertEquals(this.MOCK_EXPORT_SERVICE, request.getHeader("X-Export-Service"));
+      assertEquals(MOCK_JOB_ID.toString(), request.getHeader("X-Job-Id"));
+      assertTrue(executor.getErrors().isEmpty());
+    }
   }
 }
