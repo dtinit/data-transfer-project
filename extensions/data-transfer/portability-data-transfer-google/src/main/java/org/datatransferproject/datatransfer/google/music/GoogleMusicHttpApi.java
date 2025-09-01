@@ -73,7 +73,7 @@ public class GoogleMusicHttpApi {
 
   private static final String BASE_URL =
       "https://youtubemediaconnect.googleapis.com/v1/users/me/musicLibrary/";
-  private static final String RELEASE_BASE_URL = "https://youtubemediaconnect.googleapis.com/v1/";
+  private static final String RELEASE_BASE_URL = "https://youtubemediaconnect.googleapis.com/v1/releases";
   private static final int PLAYLIST_PAGE_SIZE = 20;
   private static final int PLAYLIST_ITEM_PAGE_SIZE = 50;
   private static final String PLAYLIST_ID_KEY = "playlistId";
@@ -140,7 +140,7 @@ public class GoogleMusicHttpApi {
       params.put(TOKEN_KEY, pageToken.get());
     }
     return makeGetRequest(
-        RELEASE_BASE_URL + "releases", Optional.of(params),
+        RELEASE_BASE_URL, Optional.of(params),
         ExportReleaseResponse.class);
 
   }

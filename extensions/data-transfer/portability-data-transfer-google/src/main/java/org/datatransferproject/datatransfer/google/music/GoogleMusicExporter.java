@@ -254,11 +254,11 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
     ContinuationData continuationData = new ContinuationData(nextPageData);
     MusicContainerResource containerResource = null;
     GoogleRelease[] googleReleases = exportReleaseResponse.getReleases();
-    List<MusicRelease> exportReleases = new ArrayList<>();
+    List<MusicRelease> exportableReleases = new ArrayList<>();
 
     if (googleReleases != null && googleReleases.length > 0) {
       for (GoogleRelease googleRelease : googleReleases) {
-        exportReleases.add(convertRelease(googleRelease));
+        exportableReleases.add(convertRelease(googleRelease));
         monitor.debug(
             () ->
                 String.format(
@@ -267,7 +267,7 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
                     googleRelease.getTitle(),
                     googleRelease.getIcpn()));
       }
-      containerResource = new MusicContainerResource(null, null, null, exportReleases);
+      containerResource = new MusicContainerResource(null, null, null, exportableReleases);
     }
     return new ExportResult<>(resultType, containerResource, continuationData);
   }
