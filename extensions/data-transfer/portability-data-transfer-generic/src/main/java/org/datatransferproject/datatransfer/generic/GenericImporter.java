@@ -33,6 +33,7 @@ import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
+import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
@@ -79,6 +80,7 @@ public class GenericImporter<C extends ContainerResource, R>
   OkHttpClient client = new OkHttpClient();
   ObjectMapper om = new ObjectMapper();
   Map<UUID, OAuthTokenManager> jobTokenManagerMap = new HashMap<>();
+  protected final String exportService;
 
   static final MediaType JSON = MediaType.parse("application/json");
 
@@ -91,6 +93,7 @@ public class GenericImporter<C extends ContainerResource, R>
     this.appCredentials = appCredentials;
     this.endpoint = endpoint;
     this.containerSerializer = containerSerializer;
+    this.exportService = JobMetadata.getExportService();
     configureObjectMapper(om);
   }
 
@@ -163,6 +166,8 @@ public class GenericImporter<C extends ContainerResource, R>
         new Request.Builder()
             .url(endpoint)
             .addHeader("Authorization", format("Bearer %s", authData.getToken()))
+            .addHeader("X-Export-Service", this.exportService)
+            .addHeader("X-Job-Id", jobId.toString())
             .post(RequestBody.create(JSON, om.writeValueAsBytes(dataItem.getJsonData())))
             .build();
 

@@ -64,6 +64,8 @@ public class GenericFileImporter<C extends ContainerResource, R> extends Generic
         new Request.Builder()
             .url(endpoint)
             .addHeader("Authorization", format("Bearer %s", authData.getToken()))
+            .addHeader("X-Export-Service", this.exportService)
+            .addHeader("X-Job-Id", jobId.toString())
             .post(
                 new MultipartBody.Builder()
                     .setType(MULTIPART_RELATED)
