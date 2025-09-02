@@ -52,6 +52,7 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.musicModels.BatchPlaylistItemRequest;
 import org.datatransferproject.datatransfer.google.musicModels.BatchPlaylistItemResponse;
+import org.datatransferproject.datatransfer.google.musicModels.ExportReleaseResponse;
 import org.datatransferproject.datatransfer.google.musicModels.GooglePlaylist;
 import org.datatransferproject.datatransfer.google.musicModels.ImportPlaylistRequest;
 import org.datatransferproject.datatransfer.google.musicModels.PlaylistItemExportResponse;
@@ -72,6 +73,7 @@ public class GoogleMusicHttpApi {
 
   private static final String BASE_URL =
       "https://youtubemediaconnect.googleapis.com/v1/users/me/musicLibrary/";
+  private static final String RELEASE_BASE_URL = "https://youtubemediaconnect.googleapis.com/v1/releases";
   private static final int PLAYLIST_PAGE_SIZE = 20;
   private static final int PLAYLIST_ITEM_PAGE_SIZE = 50;
   private static final String PLAYLIST_ID_KEY = "playlistId";
@@ -79,6 +81,7 @@ public class GoogleMusicHttpApi {
   private static final String TOKEN_KEY = "pageToken";
   private static final String ORIGINAL_PLAYLIST_ID_KEY = "originalPlaylistId";
   private static final String ACCESS_TOKEN_KEY = "access_token";
+  private static final int RELEASE_ITEM_PAGE_SIZE = 50;
 
   private final ObjectMapper objectMapper =
       new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -126,6 +129,20 @@ public class GoogleMusicHttpApi {
     return makeGetRequest(
         BASE_URL + "playlists:exportPlaylistItems", Optional.of(params),
         PlaylistItemExportResponse.class);
+  }
+
+  ExportReleaseResponse exportReleases(Optional<String> pageToken)
+      throws InvalidTokenException, PermissionDeniedException, IOException {
+
+    Map<String, String> params = new LinkedHashMap<>();
+    params.put(PAGE_SIZE_KEY, String.valueOf(RELEASE_ITEM_PAGE_SIZE));
+    if (pageToken.isPresent()) {
+      params.put(TOKEN_KEY, pageToken.get());
+    }
+    return makeGetRequest(
+        RELEASE_BASE_URL, Optional.of(params),
+        ExportReleaseResponse.class);
+
   }
 
   GooglePlaylist importPlaylist(GooglePlaylist playlist, String playlistId)
