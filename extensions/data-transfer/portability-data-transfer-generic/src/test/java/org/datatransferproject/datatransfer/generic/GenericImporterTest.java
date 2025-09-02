@@ -384,8 +384,8 @@ public class GenericImporterTest {
       assertEquals(1, webServer.getRequestCount());
       RecordedRequest request = webServer.takeRequest();
       assertEquals("POST", request.getMethod());
-      assertEquals(this.MOCK_EXPORT_SERVICE, request.getHeader("X-Export-Service"));
-      assertEquals(MOCK_JOB_ID.toString(), request.getHeader("X-Job-Id"));
+      assertEquals(this.MOCK_EXPORT_SERVICE, request.getHeader("X-DTP-Export-Service"));
+      assertEquals(MOCK_JOB_ID.toString(), request.getHeader("X-DTP-Job-Id"));
       assertTrue(executor.getErrors().isEmpty());
     }
   }

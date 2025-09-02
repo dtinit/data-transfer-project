@@ -166,8 +166,8 @@ public class GenericImporter<C extends ContainerResource, R>
         new Request.Builder()
             .url(endpoint)
             .addHeader("Authorization", format("Bearer %s", authData.getToken()))
-            .addHeader("X-Export-Service", this.exportService)
-            .addHeader("X-Job-Id", jobId.toString())
+            .addHeader("X-DTP-Export-Service", this.exportService)
+            .addHeader("X-DTP-Job-Id", jobId.toString())
             .post(RequestBody.create(JSON, om.writeValueAsBytes(dataItem.getJsonData())))
             .build();
 
