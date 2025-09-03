@@ -21,12 +21,15 @@ import org.apache.commons.fileupload.MultipartStream.MalformedStreamException;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.InMemoryIdempotentImportExecutor;
+import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.common.models.IdOnlyContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 public class GenericFileImporterTest {
   private MockWebServer webServer;
@@ -38,16 +41,24 @@ public class GenericFileImporterTest {
           return new InputStreamWrapper(new ByteArrayInputStream("Hello world".getBytes()));
         }
       };
+  private static final UUID MOCK_JOB_ID = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+  private static final String MOCK_EXPORT_SERVICE = "mockExportService";
+  private MockedStatic<JobMetadata> jobMetadataMock;
 
   @Before
   public void setup() throws IOException {
     webServer = new MockWebServer();
     webServer.start();
+
+    jobMetadataMock = Mockito.mockStatic(JobMetadata.class);
+    jobMetadataMock.when(JobMetadata::getJobId).thenReturn(MOCK_JOB_ID);
+    jobMetadataMock.when(JobMetadata::getExportService).thenReturn(MOCK_EXPORT_SERVICE);
   }
 
   @After
   public void teardown() throws IOException {
     webServer.shutdown();
+    jobMetadataMock.close();
   }
 
   public static MultipartStream getMultipartStream(RecordedRequest request) {
@@ -173,5 +184,40 @@ public class GenericFileImporterTest {
         "{\"@type\":\"GenericPayload\",\"payload\":\"not"
             + " file\",\"schemaSource\":\"schemasource\",\"apiVersion\":\"0.1.0\"}",
         jsonRequest.getBody().readUtf8());
+  }
+
+  @Test
+  public void testGenericFileImporterPassingJobMetadata() throws Exception {
+    GenericFileImporter<IdOnlyContainerResource, String> importer =
+      new GenericFileImporter<>(
+          container ->
+              Arrays.asList(
+                  new ImportableFileData<>(
+                      new CachedDownloadableItem(container.getId(), container.getId()),
+                      "video/mp4",
+                      new GenericPayload<>(container.getId(), "schemasource"),
+                      container.getId(),
+                      container.getId())),
+          new AppCredentials("key", "secret"),
+          webServer.url("/id").url(),
+          dataStore,
+          monitor);
+    InMemoryIdempotentImportExecutor executor = new InMemoryIdempotentImportExecutor(monitor);
+    webServer.enqueue(new MockResponse().setResponseCode(201).setBody("OK"));
+
+    importer.importItem(
+        MOCK_JOB_ID,
+        executor,
+        new TokensAndUrlAuthData(
+            "accessToken", "refreshToken", webServer.url("/refresh").toString()),
+        new IdOnlyContainerResource("id"));
+
+    assertEquals(1, webServer.getRequestCount());
+
+    RecordedRequest request = webServer.takeRequest();
+    assertEquals("POST", request.getMethod());
+    assertEquals(this.MOCK_EXPORT_SERVICE, request.getHeader("X-DTP-Export-Service"));
+    assertEquals(MOCK_JOB_ID.toString(), request.getHeader("X-DTP-Job-Id"));
+    assertTrue(executor.getErrors().isEmpty());
   }
 }
