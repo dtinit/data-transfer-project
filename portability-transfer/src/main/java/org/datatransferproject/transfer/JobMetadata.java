@@ -18,6 +18,9 @@ package org.datatransferproject.transfer;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 
+import javax.annotation.Nullable;
+
+import java.util.Optional;
 import java.util.UUID;
 import org.datatransferproject.types.common.models.DataVertical;
 
@@ -34,12 +37,14 @@ import org.datatransferproject.types.common.models.DataVertical;
 public final class JobMetadata {
   private static byte[] encodedPrivateKey = null;
   private static UUID jobId = null;
+  private static UUID recurringJobId = null;
   private static DataVertical dataType = null;
   private static String exportService = null;
   private static String importService = null;
   private static Stopwatch stopWatch = null;
 
   public static boolean isInitialized() {
+    // recurringJobId can be null and that's ok
     return (jobId != null
         && encodedPrivateKey != null
         && dataType != null
@@ -50,6 +55,7 @@ public final class JobMetadata {
 
   static void init(
       UUID initJobId,
+      @Nullable UUID initRecurringJobId,
       byte[] initEncodedPrivateKey,
       DataVertical initDataType,
       String initExportService,
@@ -57,6 +63,7 @@ public final class JobMetadata {
       Stopwatch initStopWatch) {
     Preconditions.checkState(!isInitialized(), "JobMetadata cannot be initialized twice");
     jobId = initJobId;
+    recurringJobId = initRecurringJobId;
     encodedPrivateKey = initEncodedPrivateKey;
     dataType = initDataType;
     exportService = initExportService;
@@ -67,6 +74,7 @@ public final class JobMetadata {
   // TODO: remove this
   static synchronized void reset() {
     jobId = null;
+    recurringJobId = null;
     encodedPrivateKey = null;
     dataType = null;
     exportService = null;
@@ -82,6 +90,11 @@ public final class JobMetadata {
   public static UUID getJobId() {
     Preconditions.checkState(isInitialized(), "JobMetadata must be initialized");
     return jobId;
+  }
+
+  public static Optional<UUID> getRecurringJobId() {
+    Preconditions.checkState(isInitialized(), "JobMetadata must be initialized");
+    return Optional.ofNullable(recurringJobId);
   }
 
   public static DataVertical getDataType() {

@@ -152,6 +152,7 @@ public class JobProcessorTest {
   public void processJobGetsErrorsEvenWhenCopyThrows() throws CopyException, IOException, RetryException {
     JobMetadata.init(
       jobId,
+      null,
       "".getBytes(),
       DataVertical.BLOBS,
       "",
@@ -175,6 +176,7 @@ public class JobProcessorTest {
   public void processJobCopiesSuccessfully() throws CopyException, IOException, RetryException {
     JobMetadata.init(
       jobId,
+      null,
       "".getBytes(),
       DataVertical.BLOBS,
       "",
@@ -208,6 +210,7 @@ public class JobProcessorTest {
 
     JobMetadata.init(
       jobId,
+      null,
       "".getBytes(),
       DataVertical.BLOBS,
       "",
