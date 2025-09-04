@@ -16,6 +16,8 @@
 
 package org.datatransferproject.transfer;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -52,6 +54,7 @@ import org.mockito.Mockito;
 public class JobProcessorTest {
 
   private UUID jobId;
+  private UUID recurringJobId;
   private ExportInformation exportInfo;
   private AuthData exportAuthData;
   private AuthData importAuthData;
@@ -96,6 +99,7 @@ public class JobProcessorTest {
   public void setUp() throws JsonProcessingException {
     importAuthData = exportAuthData = Mockito.mock(AuthData.class);
     jobId = UUID.randomUUID();
+    recurringJobId = UUID.randomUUID();
     exportInfo = Mockito.mock(ExportInformation.class);
     copier = Mockito.mock(InMemoryDataCopier.class);
     importSignalHandlerProvider = (Provider<SignalHandler>) Mockito.mock(Provider.class);
@@ -152,7 +156,6 @@ public class JobProcessorTest {
   public void processJobGetsErrorsEvenWhenCopyThrows() throws CopyException, IOException, RetryException {
     JobMetadata.init(
       jobId,
-      null,
       "".getBytes(),
       DataVertical.BLOBS,
       "",
@@ -176,7 +179,6 @@ public class JobProcessorTest {
   public void processJobCopiesSuccessfully() throws CopyException, IOException, RetryException {
     JobMetadata.init(
       jobId,
-      null,
       "".getBytes(),
       DataVertical.BLOBS,
       "",
@@ -210,12 +212,14 @@ public class JobProcessorTest {
 
     JobMetadata.init(
       jobId,
-      null,
       "".getBytes(),
       DataVertical.BLOBS,
       "",
       "",
       Stopwatch.createUnstarted());
+
+    assertTrue(JobMetadata.getRecurringJobId().isEmpty());
+
     Mockito.doThrow(new CopyException("error", new Exception())).when(copier)
       .copy(importAuthData, exportAuthData, jobId, Optional.of(exportInfo));
     processor.processJob();
@@ -228,5 +232,30 @@ public class JobProcessorTest {
     Mockito.verify(exportSignalHandlerProvider, Mockito.never()).get();
     Mockito.verify(exportSignalHandler, Mockito.never())
       .sendSignal(any(SignalRequest.class), eq(exportAuthData), any(Monitor.class));
+  }
+
+  @Test
+  public void testInitJobMetadataWithRecurringId() throws CopyException,
+    IOException, RetryException {
+    processor = Mockito.spy(
+      new TestJobProcessor(jobStore,
+        copier,
+        objectMapper,
+        decryptionService,
+        Boolean.FALSE,
+        importSignalHandlerProvider,
+        exportSignalHandlerProvider));
+
+    JobMetadata.init(
+      jobId,
+      recurringJobId,
+      "".getBytes(),
+      DataVertical.BLOBS,
+      "",
+      "",
+      Stopwatch.createUnstarted());
+
+    assertEquals(jobId, JobMetadata.getJobId());
+    assertEquals(recurringJobId, JobMetadata.getRecurringJobId().get());
   }
 }
