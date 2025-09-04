@@ -10,6 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.UUID;
 import okhttp3.Headers;
 import okhttp3.mockwebserver.MockResponse;
@@ -42,6 +43,7 @@ public class GenericFileImporterTest {
         }
       };
   private static final UUID MOCK_JOB_ID = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+  private static final UUID MOCK_RECURRING_JOB_ID = UUID.fromString("123e4567-e89b-12d3-a456-426614174001");
   private static final String MOCK_EXPORT_SERVICE = "mockExportService";
   private MockedStatic<JobMetadata> jobMetadataMock;
 
@@ -218,6 +220,45 @@ public class GenericFileImporterTest {
     assertEquals("POST", request.getMethod());
     assertEquals(this.MOCK_EXPORT_SERVICE, request.getHeader("X-DTP-Export-Service"));
     assertEquals(MOCK_JOB_ID.toString(), request.getHeader("X-DTP-Job-Id"));
+    assertTrue(executor.getErrors().isEmpty());
+  }
+
+
+  @Test
+  public void testGenericFileImporterPassingJobMetadataRecurringJob() throws Exception {
+    jobMetadataMock.when(JobMetadata::getRecurringJobId).thenReturn(Optional.of(MOCK_RECURRING_JOB_ID));
+
+    GenericFileImporter<IdOnlyContainerResource, String> importer =
+      new GenericFileImporter<>(
+          container ->
+              Arrays.asList(
+                  new ImportableFileData<>(
+                      new CachedDownloadableItem(container.getId(), container.getId()),
+                      "video/mp4",
+                      new GenericPayload<>(container.getId(), "schemasource"),
+                      container.getId(),
+                      container.getId())),
+          new AppCredentials("key", "secret"),
+          webServer.url("/id").url(),
+          dataStore,
+          monitor);
+    InMemoryIdempotentImportExecutor executor = new InMemoryIdempotentImportExecutor(monitor);
+    webServer.enqueue(new MockResponse().setResponseCode(201).setBody("OK"));
+
+    importer.importItem(
+        MOCK_JOB_ID,
+        executor,
+        new TokensAndUrlAuthData(
+            "accessToken", "refreshToken", webServer.url("/refresh").toString()),
+        new IdOnlyContainerResource("id"));
+
+    assertEquals(1, webServer.getRequestCount());
+
+    RecordedRequest request = webServer.takeRequest();
+    assertEquals("POST", request.getMethod());
+    assertEquals(this.MOCK_EXPORT_SERVICE, request.getHeader("X-DTP-Export-Service"));
+    assertEquals(MOCK_JOB_ID.toString(), request.getHeader("X-DTP-Job-Id"));
+    assertEquals(MOCK_RECURRING_JOB_ID.toString(), request.getHeader("X-DTP-Recurring-Job-Id"));
     assertTrue(executor.getErrors().isEmpty());
   }
 }
