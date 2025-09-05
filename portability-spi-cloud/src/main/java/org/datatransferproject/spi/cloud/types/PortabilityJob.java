@@ -11,6 +11,7 @@ import com.google.common.collect.ImmutableMap;
 import java.time.Instant;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.UUID;
 import javax.annotation.Nullable;
 import org.datatransferproject.types.common.models.DataVertical;
 
@@ -38,6 +39,7 @@ public abstract class PortabilityJob {
   private static final String EXPORT_ENCRYPTED_INITIAL_AUTH_DATA =
       "EXPORT_ENCRYPTED_INITIAL_AUTH_DATA";
   private static final String JOB_STATE = "JOB_STATE";
+  private static final String RECURRING_JOB_ID = "RECURRING_JOB_ID";
   private static final String TRANSFER_MODE = "TRANSFER_MODE";
   private static final String FAILURE_REASON = "FAILURE_REASON";
   private static final String NUMBER_OF_FAILED_FILES_KEY = "NUM_FAILED_FILES";
@@ -110,6 +112,11 @@ public abstract class PortabilityJob {
             ? DataVertical.fromDataType((String) properties.get(DATA_TYPE_KEY))
             : null;
 
+    UUID recurringJobId =
+        properties.containsKey(RECURRING_JOB_ID)
+            ? UUID.fromString((String) properties.get(RECURRING_JOB_ID))
+            : null;
+
     return PortabilityJob.builder()
         .setState(state)
         .setExportService((String) properties.get(EXPORT_SERVICE_KEY))
@@ -135,6 +142,7 @@ public abstract class PortabilityJob {
         .setUserLocale(userLocale)
         .setUserAlias(userAlias)
         .setTransferMode(transferMode)
+        .setRecurringJobId(recurringJobId)
         .build();
   }
 
@@ -196,6 +204,10 @@ public abstract class PortabilityJob {
   @Nullable
   @JsonProperty("transferMode")
   public abstract TransferMode transferMode();
+
+  @Nullable
+  @JsonProperty("recurringJobId")
+  public abstract UUID recurringJobId();
 
   public abstract PortabilityJob.Builder toBuilder();
 
@@ -261,6 +273,10 @@ public abstract class PortabilityJob {
 
     if (null != transferMode()) {
       builder.put(TRANSFER_MODE, transferMode().toString());
+    }
+
+    if (null != recurringJobId()) {
+      builder.put(RECURRING_JOB_ID, recurringJobId());
     }
 
     return builder.build();
@@ -360,6 +376,10 @@ public abstract class PortabilityJob {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("transferMode")
     public abstract Builder setTransferMode(TransferMode transferMode);
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("recurringJobId")
+    public abstract Builder setRecurringJobId(@Nullable UUID recurringJobId);
 
     // For internal use only; clients should use setAndValidateJobAuthorization
     protected abstract Builder setJobAuthorization(JobAuthorization jobAuthorization);
