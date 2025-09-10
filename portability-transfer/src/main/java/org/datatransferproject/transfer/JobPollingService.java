@@ -206,6 +206,7 @@ class JobPollingService extends AbstractScheduledService {
 
     JobMetadata.init(
         jobId,
+        existingJob.recurringJobId(),
         keyPair.getEncodedPrivateKey(),
         existingJob.transferDataType(),
         existingJob.exportService(),

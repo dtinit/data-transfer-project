@@ -60,17 +60,25 @@ public class GenericFileImporter<C extends ContainerResource, R> extends Generic
         dataStore.getTempFileFromInputStream(wrapper.getStream(), data.getFile().getName(), null);
     MediaType mimeType =
         Optional.ofNullable(MediaType.parse(data.getFileMimeType())).orElse(OCTET_STREAM);
-    Request request =
+
+    Request.Builder builder =
         new Request.Builder()
             .url(endpoint)
             .addHeader("Authorization", format("Bearer %s", authData.getToken()))
+            .addHeader("X-DTP-Export-Service", this.exportService)
+            .addHeader("X-DTP-Job-Id", jobId.toString())
             .post(
                 new MultipartBody.Builder()
                     .setType(MULTIPART_RELATED)
                     .addPart(RequestBody.create(JSON, om.writeValueAsBytes(data.getJsonData())))
                     .addPart(MultipartBody.create(mimeType, tempFile))
-                    .build())
-            .build();
+                    .build());
+
+    if (this.recurringJobId.isPresent()) {
+      builder.addHeader("X-DTP-Recurring-Job-Id", this.recurringJobId.get().toString());
+    }
+
+    Request request = builder.build();
 
     try (Response response = client.newCall(request).execute()) {
       return parseResponse(response);
