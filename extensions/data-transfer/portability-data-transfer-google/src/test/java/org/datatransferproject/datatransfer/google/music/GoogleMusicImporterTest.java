@@ -363,6 +363,7 @@ public final class GoogleMusicImporterTest {
     verify(googleMusicHttpApi,times(3))
         .createRelease(any(GoogleRelease.class));
     assertTrue(executor.isKeyCached("test-release3"));
+    assertEquals(1, executor.getErrors().size());
     assertEquals(importResult, ImportResult.OK);
   }
 
