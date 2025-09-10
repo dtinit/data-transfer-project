@@ -170,9 +170,9 @@ public class GoogleMusicHttpApi {
 
   GoogleRelease createRelease(GoogleRelease googleRelease)
       throws IOException, InvalidTokenException, PermissionDeniedException {
-    Map<String, Object> createReleaseMap = createJsonMap(googleRelease);
+    Map<String, Object> googleReleaseMap = createJsonMap(googleRelease);
     Map<String, String> params = new LinkedHashMap<>();
-    HttpContent content = new JsonHttpContent(jsonFactory, createReleaseMap);
+    HttpContent content = new JsonHttpContent(jsonFactory, googleReleaseMap);
 
     return makePostRequest(RELEASE_BASE_URL, Optional.of(params),
         content,
