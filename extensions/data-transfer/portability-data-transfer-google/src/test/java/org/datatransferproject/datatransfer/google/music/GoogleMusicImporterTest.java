@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -30,6 +31,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.protobuf.util.Durations;
 import com.google.rpc.Code;
+import java.io.IOException;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
@@ -282,6 +284,87 @@ public final class GoogleMusicImporterTest {
 
     // Only log the error not throw.
     assertThat(executor.getErrors()).isEmpty();
+  }
+
+  @Test
+  void importSingleRelease() throws Exception {
+    // Set up
+    MusicRelease release = new MusicRelease("icpndevtest", "test-release", null);
+    ImmutableList<MusicRelease> releases = ImmutableList.of(release);
+    MusicContainerResource data = new MusicContainerResource(null, null, null, releases);
+
+    GoogleRelease googleRelease = new GoogleRelease();
+    googleRelease.setIcpn("icpndevtest");
+    googleRelease.setReleaseTitle("test-release");
+    when(googleMusicHttpApi.createRelease(any(GoogleRelease.class)))
+        .thenReturn(googleRelease);
+
+    // Run test
+    ImportResult importResult = googleMusicImporter.importItem(uuid, executor, null, data);
+
+    // Check results
+    ArgumentCaptor<GoogleRelease> releaseArgumentCaptor =
+        ArgumentCaptor.forClass(GoogleRelease.class);
+    verify(googleMusicHttpApi)
+        .createRelease(releaseArgumentCaptor.capture());
+    assertEquals("test-release", releaseArgumentCaptor.getValue().getTitle());
+    assertTrue(executor.isKeyCached("test-release"));
+    assertEquals(importResult, ImportResult.OK);
+  }
+
+  @Test
+  void importMultipleReleases() throws Exception {
+    // Set up
+    MusicRelease release1 = new MusicRelease("icpndevtest1", "test-release1", null);
+    MusicRelease release2 = new MusicRelease("icpndevtest2", "test-release2", null);
+    MusicRelease release3 = new MusicRelease("icpndevtest3", "test-release3", null);
+
+    ImmutableList<MusicRelease> releases = ImmutableList.of(release1, release2, release3);
+    MusicContainerResource data = new MusicContainerResource(null, null, null, releases);
+
+    GoogleRelease googleRelease = new GoogleRelease();
+    googleRelease.setIcpn("icpndevtest");
+    googleRelease.setReleaseTitle("test-release");
+    when(googleMusicHttpApi.createRelease(any(GoogleRelease.class)))
+        .thenReturn(googleRelease);
+
+    // Run test
+    ImportResult importResult = googleMusicImporter.importItem(uuid, executor, null, data);
+
+    // Check results
+    verify(googleMusicHttpApi,times(3))
+        .createRelease(any(GoogleRelease.class));
+    assertTrue(executor.isKeyCached("test-release3"));
+    assertEquals(importResult, ImportResult.OK);
+  }
+
+  @Test
+  void importMultipleReleasesWithOneFailure() throws Exception {
+    // Set up
+    MusicRelease release1 = new MusicRelease("icpndevtest1", "test-release1", null);
+    MusicRelease release2 = new MusicRelease("icpndevtest2", "test-release2", null);
+    MusicRelease release3 = new MusicRelease("icpndevtest3", "test-release3", null);
+
+    ImmutableList<MusicRelease> releases = ImmutableList.of(release1, release2, release3);
+    MusicContainerResource data = new MusicContainerResource(null, null, null, releases);
+
+    GoogleRelease googleRelease = new GoogleRelease();
+    googleRelease.setIcpn("icpndevtest");
+    googleRelease.setReleaseTitle("test-release");
+    when(googleMusicHttpApi.createRelease(any(GoogleRelease.class)))
+        .thenReturn(googleRelease)
+        .thenThrow(new IOException("Not found"))
+        .thenReturn(googleRelease);
+
+    // Run test
+    ImportResult importResult = googleMusicImporter.importItem(uuid, executor, null, data);
+
+    // Check results
+    verify(googleMusicHttpApi,times(3))
+        .createRelease(any(GoogleRelease.class));
+    assertTrue(executor.isKeyCached("test-release3"));
+    assertEquals(1, executor.getErrors().size());
+    assertEquals(importResult, ImportResult.OK);
   }
 
   private void importPlaylistSetUp(String playlistId, String playlistTitle)

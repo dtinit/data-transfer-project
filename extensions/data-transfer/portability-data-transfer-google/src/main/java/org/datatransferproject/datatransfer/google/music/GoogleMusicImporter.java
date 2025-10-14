@@ -53,6 +53,7 @@ import org.datatransferproject.types.common.models.music.MusicContainerResource;
 import org.datatransferproject.types.common.models.music.MusicGroup;
 import org.datatransferproject.types.common.models.music.MusicPlaylist;
 import org.datatransferproject.types.common.models.music.MusicPlaylistItem;
+import org.datatransferproject.types.common.models.music.MusicRelease;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, MusicContainerResource> {
@@ -117,7 +118,19 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
 
     // TODO: create tracks
 
-    // TODO: create releases
+    for (MusicRelease release: data.getReleases()){
+      monitor.debug(
+          () ->
+              String.format(
+                  "%s: Google Music importing release item: [release title: %s, release icpn: %s]",
+                  jobId,
+                  release.getTitle(),
+                  release.getIcpnCode()));
+      idempotentImportExecutor.executeAndSwallowIOExceptions(
+          release.getTitle(),
+          release.getTitle(),
+          () -> importSingleRelease(jobId, authData, release));
+    }
 
     return ImportResult.OK;
   }
@@ -134,6 +147,20 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
     getOrCreateMusicInterface(jobId, authData)
         .importPlaylist(googlePlaylist, inputPlaylist.getId());
     return inputPlaylist.getId();
+  }
+
+  @VisibleForTesting
+  String importSingleRelease(
+      UUID jobId, TokensAndUrlAuthData authData, MusicRelease musicRelease)
+      throws IOException, CopyException {
+    // Set up Release
+    GoogleRelease googleRelease = new GoogleRelease();
+    googleRelease.setReleaseTitle(musicRelease.getTitle());
+    googleRelease.setIcpn(musicRelease.getIcpnCode());
+
+    getOrCreateMusicInterface(jobId, authData)
+        .createRelease(googleRelease);
+    return musicRelease.getTitle();
   }
 
   void importPlaylistItems(

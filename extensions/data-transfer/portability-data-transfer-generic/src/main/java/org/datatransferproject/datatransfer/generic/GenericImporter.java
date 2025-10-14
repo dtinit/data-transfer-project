@@ -33,6 +33,7 @@ import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
+import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
@@ -79,6 +80,8 @@ public class GenericImporter<C extends ContainerResource, R>
   OkHttpClient client = new OkHttpClient();
   ObjectMapper om = new ObjectMapper();
   Map<UUID, OAuthTokenManager> jobTokenManagerMap = new HashMap<>();
+  protected final String exportService;
+  protected final Optional<UUID> recurringJobId;
 
   static final MediaType JSON = MediaType.parse("application/json");
 
@@ -91,6 +94,8 @@ public class GenericImporter<C extends ContainerResource, R>
     this.appCredentials = appCredentials;
     this.endpoint = endpoint;
     this.containerSerializer = containerSerializer;
+    this.exportService = JobMetadata.getExportService();
+    this.recurringJobId = JobMetadata.getRecurringJobId();
     configureObjectMapper(om);
   }
 
@@ -159,12 +164,18 @@ public class GenericImporter<C extends ContainerResource, R>
   boolean importSingleItem(UUID jobId, TokensAndUrlAuthData authData, ImportableData<R> dataItem)
       throws IOException, InvalidTokenException, DestinationMemoryFullException {
 
-    Request request =
-        new Request.Builder()
-            .url(endpoint)
-            .addHeader("Authorization", format("Bearer %s", authData.getToken()))
-            .post(RequestBody.create(JSON, om.writeValueAsBytes(dataItem.getJsonData())))
-            .build();
+    Request.Builder builder = new Request.Builder()
+      .url(endpoint)
+      .addHeader("Authorization", format("Bearer %s", authData.getToken()))
+      .addHeader("X-DTP-Export-Service", this.exportService)
+      .addHeader("X-DTP-Job-Id", jobId.toString())
+      .post(RequestBody.create(JSON, om.writeValueAsBytes(dataItem.getJsonData())));
+
+    if (this.recurringJobId.isPresent()) {
+      builder.addHeader("X-DTP-Recurring-Job-Id", this.recurringJobId.get().toString());
+    }
+
+    Request request = builder.build();
 
     try (Response response = client.newCall(request).execute()) {
       return parseResponse(response);

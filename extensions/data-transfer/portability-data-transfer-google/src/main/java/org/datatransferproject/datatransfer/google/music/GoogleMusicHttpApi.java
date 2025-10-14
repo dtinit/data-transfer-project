@@ -54,6 +54,7 @@ import org.datatransferproject.datatransfer.google.musicModels.BatchPlaylistItem
 import org.datatransferproject.datatransfer.google.musicModels.BatchPlaylistItemResponse;
 import org.datatransferproject.datatransfer.google.musicModels.ExportReleaseResponse;
 import org.datatransferproject.datatransfer.google.musicModels.GooglePlaylist;
+import org.datatransferproject.datatransfer.google.musicModels.GoogleRelease;
 import org.datatransferproject.datatransfer.google.musicModels.ImportPlaylistRequest;
 import org.datatransferproject.datatransfer.google.musicModels.PlaylistItemExportResponse;
 import org.datatransferproject.datatransfer.google.musicModels.PlaylistExportResponse;
@@ -165,6 +166,17 @@ public class GoogleMusicHttpApi {
     return makePostRequest(
         BASE_URL + "playlists:importPlaylistItems", Optional.empty(), content,
         BatchPlaylistItemResponse.class);
+  }
+
+  GoogleRelease createRelease(GoogleRelease googleRelease)
+      throws IOException, InvalidTokenException, PermissionDeniedException {
+    Map<String, Object> googleReleaseMap = createJsonMap(googleRelease);
+    Map<String, String> params = new LinkedHashMap<>();
+    HttpContent content = new JsonHttpContent(jsonFactory, googleReleaseMap);
+
+    return makePostRequest(RELEASE_BASE_URL, Optional.of(params),
+        content,
+        GoogleRelease.class);
   }
 
   private <T> T makeGetRequest(
