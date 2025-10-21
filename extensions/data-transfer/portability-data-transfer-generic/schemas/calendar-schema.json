@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "CalendarEventTime": {
+      "type": "object",
+      "properties": {
+        "dateOnly": {
+          "type": "boolean"
+        },
+        "dateTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "@type": {
+          "const": "CalendarEventModel$CalendarEventTime"
+        }
+      },
+      "required": [
+        "@type",
+        "dateTime"
+      ]
+    }
+  },
+  "anyOf": [
+    {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "@type": {
+          "const": "Calendar"
+        }
+      },
+      "required": [
+        "@type",
+        "name",
+        "id"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "attendees": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "displayName": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "optional": {
+                "type": "boolean"
+              },
+              "@type": {
+                "const": "CalendarAttendeeModel"
+              }
+            },
+            "required": [
+              "@type"
+            ]
+          }
+        },
+        "calendarId": {
+          "type": "string"
+        },
+        "endTime": {
+          "$ref": "#/$defs/CalendarEventTime"
+        },
+        "location": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "recurrenceRule": {
+          "type": "object",
+          "properties": {
+            "exDate": {
+              "type": "object"
+            }
+          }
+        },
+        "startTime": {
+          "$ref": "#/$defs/CalendarEventTime"
+        },
+        "title": {
+          "type": "string"
+        },
+        "@type": {
+          "const": "CalendarEvent"
+        }
+      },
+      "required": [
+        "@type",
+        "calendarId",
+        "title"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "@type": "GenericPayload",
+  "schemaSource": ".../SocialPostsSerializer.java",
+  "apiVersion": "0.1.0",
+  "payload": {
+    "@type": "SocialActivityData",
+    "metadata": {
+      "@type": "SocialActivityMetadata",
+      "actor": {
+        "@type": "SocialActivityActor",
+        "id": "321",
+        "name": "Steve",
+        "url": null
+      }
+    },
+    "activity": {
+      "@type": "SocialActivityModel",
+      "id": "456",
+      "published": 1731604863.845677,
+      "type": "NOTE",
+      "attachments": [
+        {
+          "@type": "SocialActivityAttachment",
+          "type": "IMAGE",
+          "url": "foo.com",
+          "name": "Foo",
+          "content": null
+        }
+      ],
+      "location": {
+        "@type": "SocialActivityLocation",
+        "name": "foo",
+        "longitude": 10.0,
+        "latitude": 10.0
+      },
+      "title": "Hello world!",
+      "content": "Hi there",
+      "url": null
+    }
+  }
+}

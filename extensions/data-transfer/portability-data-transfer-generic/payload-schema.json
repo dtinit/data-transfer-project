@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "apiVersion": {
+      "type": "string"
+    },
+    "payload": {
+      "type": "object",
+      "description": "The inner payload, which contains data from one of the described data verticals",
+      "minProperties": 1,
+      "anyOf": [{
+        "$ref": "media-schema.json"
+      }]
+    },
+    "schemaSource": {
+      "type": "string",
+      "description": "The source file containing the schema definition"
+    },
+    "@type": {
+      "const": "GenericPayload"
+    }
+  },
+  "required": [
+    "@type",
+    "schemaSource",
+    "apiVersion",
+    "payload"
+  ]
+}

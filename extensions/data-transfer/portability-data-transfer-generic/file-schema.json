@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "dateModified": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "folder": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "@type": {
+      "const": "File"
+    }
+  },
+  "required": [
+    "@type",
+    "name",
+    "folder"
+  ]
+}
