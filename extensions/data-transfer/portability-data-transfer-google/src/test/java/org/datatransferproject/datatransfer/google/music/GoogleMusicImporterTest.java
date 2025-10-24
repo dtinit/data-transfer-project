@@ -53,7 +53,6 @@ import org.datatransferproject.types.common.models.music.MusicPlaylistItem;
 import org.datatransferproject.types.common.models.music.MusicRecording;
 import org.datatransferproject.types.common.models.music.MusicRelease;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

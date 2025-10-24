@@ -63,7 +63,7 @@ import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 /**
  * GoogleMusicHttpApi makes HTTP requests to read and write to the public Google Music's "Music
  * Library" APIs, following its documentation at
- * <a href="https://developers.google.com/youtube/mediaconnect">...</a>.
+ * https://developers.google.com/youtube/mediaconnect.
  *
  * <p>Note that this is the lowest level of Google Music interaction - that is, you probably don't
  * want to use this class and are better off using something like a bit higher level like the Google
