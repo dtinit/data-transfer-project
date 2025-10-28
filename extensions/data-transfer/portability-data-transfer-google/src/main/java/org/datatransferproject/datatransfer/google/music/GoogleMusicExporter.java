@@ -100,7 +100,7 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
       UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation)
       throws IOException, InvalidTokenException, PermissionDeniedException, ParseException {
     // Used in production
-    if (!exportInformation.isPresent()) {
+    if (exportInformation.isEmpty()) {
       StringPaginationToken paginationToken = new StringPaginationToken(PLAYLIST_TOKEN_PREFIX);
       return exportPlaylists(authData, Optional.of(paginationToken), jobId);
     }
@@ -151,7 +151,7 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
       resultType = ResultType.CONTINUE;
     }
     ContinuationData continuationData = new ContinuationData(nextPageData);
-    if (googlePlaylists != null && googlePlaylists.length > 0) {
+    if (googlePlaylists != null) {
       for (GooglePlaylist googlePlaylist : googlePlaylists) {
         Instant createTime = googlePlaylist.getCreateTime() == null ? null
             : Instant.parse(googlePlaylist.getCreateTime());

@@ -185,8 +185,6 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
         }
       }
     }
-
-    return;
   }
 
   private void importPlaylistItemBatch(

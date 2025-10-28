@@ -17,7 +17,6 @@
 package org.datatransferproject.datatransfer.google.music;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.stream.Collectors.toCollection;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -111,9 +110,7 @@ public class GoogleMusicHttpApi {
     Map<String, String> exportPlyalistsRequestMap = new LinkedHashMap<>();
     Map<String, String> params = new LinkedHashMap<>();
     exportPlyalistsRequestMap.put(PAGE_SIZE_KEY, String.valueOf(PLAYLIST_PAGE_SIZE));
-    if (pageToken.isPresent()) {
-      exportPlyalistsRequestMap.put(TOKEN_KEY, pageToken.get());
-    }
+    pageToken.ifPresent(s -> exportPlyalistsRequestMap.put(TOKEN_KEY, s));
     HttpContent content = new JsonHttpContent(jsonFactory, createJsonMap(exportPlyalistsRequestMap));
     return makePostRequest(BASE_URL + "playlists:export", Optional.of(params), content,
         PlaylistExportResponse.class);
@@ -124,9 +121,7 @@ public class GoogleMusicHttpApi {
     Map<String, String> params = new LinkedHashMap<>();
     params.put(PLAYLIST_ID_KEY, playlistId);
     params.put(PAGE_SIZE_KEY, String.valueOf(PLAYLIST_ITEM_PAGE_SIZE));
-    if (pageToken.isPresent()) {
-      params.put(TOKEN_KEY, pageToken.get());
-    }
+    pageToken.ifPresent(s -> params.put(TOKEN_KEY, s));
     return makeGetRequest(
         BASE_URL + "playlists:exportPlaylistItems", Optional.of(params),
         PlaylistItemExportResponse.class);
@@ -137,9 +132,7 @@ public class GoogleMusicHttpApi {
 
     Map<String, String> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(RELEASE_ITEM_PAGE_SIZE));
-    if (pageToken.isPresent()) {
-      params.put(TOKEN_KEY, pageToken.get());
-    }
+    pageToken.ifPresent(s -> params.put(TOKEN_KEY, s));
     return makeGetRequest(
         RELEASE_BASE_URL, Optional.of(params),
         ExportReleaseResponse.class);
@@ -312,14 +305,12 @@ public class GoogleMusicHttpApi {
 
   private String generateParamsString(Optional<Map<String, String>> params) {
     Map<String, String> updatedParams = new ArrayMap<>();
-    if (params.isPresent()) {
-      updatedParams.putAll(params.get());
-    }
+    params.ifPresent(updatedParams::putAll);
 
     updatedParams.put(ACCESS_TOKEN_KEY, Preconditions.checkNotNull(credential.getAccessToken()));
 
     List<String> orderedKeys =
-        updatedParams.keySet().stream().collect(toCollection(ArrayList::new));
+        new ArrayList<>(updatedParams.keySet());
     Collections.sort(orderedKeys);
 
     List<String> paramStrings = new ArrayList<>();
@@ -337,7 +328,7 @@ public class GoogleMusicHttpApi {
     // JacksonFactory expects to receive a Map, not a JSON-annotated POJO, so we have to convert the
     // NewMediaItemUpload to a Map before making the HttpContent.
     TypeReference<HashMap<String, Object>> typeRef =
-        new TypeReference<HashMap<String, Object>>() {
+        new TypeReference<>() {
         };
     return objectMapper.readValue(objectMapper.writeValueAsString(object), typeRef);
   }
