@@ -1,0 +1,13 @@
+plugins {
+    id 'maven'
+    id 'signing'
+}
+
+dependencies {
+    compile project(':portability-spi-api')
+    compile project(':portability-spi-cloud')
+    compile project(':libraries:auth')
+}
+
+configurePublication(project)
+

@@ -153,11 +153,6 @@ class JobPollingService extends AbstractScheduledService {
     // Lookup the job so we can append to its existing properties.
     PortabilityJob existingJob = store.findJob(jobId);
     monitor.debug(() -> format("JobPollingService: tryToClaimJob: jobId: %s", existingJob));
-    // Verify no transfer worker key
-    if (existingJob.jobAuthorization().authPublicKey() != null) {
-      monitor.debug(() -> "A public key cannot be persisted again");
-      return false;
-    }
 
     // TODO: Consider moving this check earlier in the flow
     String scheme = existingJob.jobAuthorization().encryptionScheme();
@@ -211,6 +206,7 @@ class JobPollingService extends AbstractScheduledService {
 
     JobMetadata.init(
         jobId,
+        existingJob.recurringJobId(),
         keyPair.getEncodedPrivateKey(),
         existingJob.transferDataType(),
         existingJob.exportService(),

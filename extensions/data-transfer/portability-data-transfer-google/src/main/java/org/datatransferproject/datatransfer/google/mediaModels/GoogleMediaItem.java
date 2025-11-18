@@ -17,11 +17,32 @@
 package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import java.io.File;
+import java.io.Serializable;
+import java.nio.file.Files;
+import java.text.ParseException;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
+import java.util.Optional;
+import org.datatransferproject.types.common.models.photos.PhotoModel;
+import org.datatransferproject.types.common.models.videos.VideoModel;
+import org.datatransferproject.types.common.models.FavoriteInfo;
+import org.apache.tika.Tika;
+import com.google.common.base.Strings;
 
-/**
- Media item returned by queries to the Google Photos API.  Represents what is stored by Google.
- */
-public class GoogleMediaItem {
+
+/** Media item returned by queries to the Google Photos API. Represents what is stored by Google. */
+public class GoogleMediaItem implements Serializable {
+  public final static Tika TIKA = new Tika();
+  private final static String DEFAULT_PHOTO_MIMETYPE = "image/jpg";
+  private final static String DEFAULT_VIDEO_MIMETYPE = "video/mp4";
+  // If Tika cannot detect the mimetype, it returns the binary mimetype. This can be considered null
+  private static final String DEFAULT_BINARY_MIMETYPE = "application/octet-stream";
+
   @JsonProperty("id")
   private String id;
 
@@ -43,31 +64,193 @@ public class GoogleMediaItem {
   @JsonProperty("productUrl")
   private String productUrl;
 
-  public String getId() { return id; }
+  @JsonProperty("uploadedTime")
+  // TODO akshaysinghh - rename the field to creationTime since creation time is what all the
+  //  services use to display the photos timeline, instead of uploadTime.
+  private Date uploadedTime;
 
-  public String getDescription() { return description; }
+  @JsonProperty("favoriteInfo")
+  private FavoriteInfo favoriteInfo;
 
-  public String getBaseUrl() { return baseUrl; }
+  public boolean isPhoto() {
+    return this.getMediaMetadata().getPhoto() != null;
+  }
 
-  public String getMimeType() { return mimeType; }
+  public boolean isVideo() {
+    return this.getMediaMetadata().getVideo() != null;
+  }
 
-  public String getFilename() { return filename; }
+  public String getFetchableUrl() {
+    if (this.isPhoto()) {
+      return this.getBaseUrl() + "=d";
+    } else if (this.isVideo()) {
+      // dv = download video otherwise you only get a thumbnail
+      return this.getBaseUrl() + "=dv";
+    } else {
+      throw new IllegalArgumentException("unimplemented media type");
+    }
+  }
 
+  public static VideoModel convertToVideoModel(
+      Optional<String> albumId, GoogleMediaItem mediaItem) throws ParseException{
+    Preconditions.checkArgument(mediaItem.isVideo());
+
+    return new VideoModel(
+        mediaItem.getFilename(),
+        mediaItem.getFetchableUrl(),
+        mediaItem.getDescription(),
+        getMimeType(mediaItem),
+        mediaItem.getId(),
+        albumId.orElse(null),
+        false /*inTempStore*/,
+        getCreationTime(mediaItem),
+        new FavoriteInfo(getFavorite(mediaItem), getLastUpdateTime(mediaItem)));
+  }
+
+  public static PhotoModel convertToPhotoModel (
+      Optional<String> albumId, GoogleMediaItem mediaItem) throws ParseException{
+    Preconditions.checkArgument(mediaItem.isPhoto());
+
+    return new PhotoModel(
+        mediaItem.getFilename(),
+        mediaItem.getFetchableUrl(),
+        mediaItem.getDescription(),
+        getMimeType(mediaItem),
+        mediaItem.getId(),
+        albumId.orElse(null),
+        false  /*inTempStore*/,
+        null  /*sha1*/,
+        getCreationTime(mediaItem),
+        new FavoriteInfo(getFavorite(mediaItem), getLastUpdateTime(mediaItem)));
+  }
+
+  /**
+   * Nearly identical variant of {@link Instant#parse} that, per RFC3339, is okay with either
+   * offsets or "Z" indicator.
+   */
+  @VisibleForTesting
+  public static Date parseIso8601DateTime(String zonedIso8601DateTime) throws ParseException {
+    return Date.from(
+        DateTimeFormatter.ISO_OFFSET_DATE_TIME.parse(zonedIso8601DateTime, Instant::from));
+  }
+
+  private static Date getCreationTime(GoogleMediaItem mediaItem) throws ParseException {
+    // per verified backend code, this cannot be empty or null
+    final String zonedIso8601DateTime = mediaItem.getMediaMetadata().getCreationTime();
+
+    try {
+      // per https://developers.google.com/photos/library/reference/rest/v1/mediaItems#mediametadata
+      // we expect an iso 8601 date-time with a timezone/offset indicator.
+      return parseIso8601DateTime(zonedIso8601DateTime);
+    } catch (ParseException parseException) {
+      throw new ParseException(
+          String.format(
+              "Failed parsing creation time from \"%s\" for MediaItem %s",
+              mediaItem.getMediaMetadata().getCreationTime(), mediaItem.getId()),
+          parseException.getErrorOffset());
+    }
+  }
+
+  private static String getMimeType(GoogleMediaItem mediaItem) {
+    String guessedMimetype = guessMimeTypeFromFilename(mediaItem.getFilename());
+    if (!Strings.isNullOrEmpty(guessedMimetype)) {
+      return guessedMimetype;
+    }
+
+    if (!Strings.isNullOrEmpty(mediaItem.getMimeType())) {
+      return mediaItem.getMimeType();
+    }
+
+    if (mediaItem.isPhoto()) {
+      return DEFAULT_PHOTO_MIMETYPE;
+    }
+    return DEFAULT_VIDEO_MIMETYPE;
+  }
+
+  // Guesses the mimetype from the filename, or returns null on failure.
+  private static String guessMimeTypeFromFilename(String filename) {
+    try {
+      String mimeType = TIKA.detect(filename);
+      if (mimeType.equals(DEFAULT_BINARY_MIMETYPE)) {
+        return null;
+      }
+      return mimeType;
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public void setId(String id) {
+    this.id = id;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
+  public String getBaseUrl() {
+    return baseUrl;
+  }
+
+  public void setBaseUrl(String baseUrl) {
+    this.baseUrl = baseUrl;
+  }
+
+  public String getMimeType() {
+    return mimeType;
+  }
+
+  public void setMimeType(String mimeType) {
+    this.mimeType = mimeType;
+  }
+
+  public String getFilename() {
+    return filename;
+  }
+
+  public void setFilename(String filename) {
+    this.filename = filename;
+  }
+
+  // TODO(zacsh) investigate why/if there's no setter for this; do we need setters or does the java
+  // annotation do the work for us somehow?
   public String getProductUrl() {
     return productUrl;
   }
 
-  public MediaMetadata getMediaMetadata() { return mediaMetadata; }
+  public MediaMetadata getMediaMetadata() {
+    return mediaMetadata;
+  }
 
-  public void setDescription(String description) { this.description = description; }
+  public void setMediaMetadata(MediaMetadata mediaMetadata) {
+    this.mediaMetadata = mediaMetadata;
+  }
 
-  public void setBaseUrl(String baseUrl) { this.baseUrl = baseUrl; }
+  public Date getUploadedTime() {
+    return this.uploadedTime;
+  }
 
-  public void setId(String id) { this.id = id; }
+  public void setUploadedTime(Date date) {
+    this.uploadedTime = date;
+  }
 
-  public void setMimeType(String mimeType) { this.mimeType = mimeType; }
+  public void setFavoriteInfo(FavoriteInfo favoriteInfo) {
+    this.favoriteInfo = favoriteInfo;
+  }
+  public static boolean getFavorite(GoogleMediaItem mediaItem)  {
+    return mediaItem.favoriteInfo != null && mediaItem.favoriteInfo.getFavorited();
+  }
 
-  public void setFilename(String filename) { this.filename = filename; }
-
-  public void setMediaMetadata(MediaMetadata mediaMetadata) { this.mediaMetadata = mediaMetadata; }
+  public static Date getLastUpdateTime(GoogleMediaItem mediaItem) throws ParseException  {
+    return (mediaItem.favoriteInfo == null  || mediaItem.favoriteInfo.getLastUpdateTime() == null)
+        ? getCreationTime(mediaItem) : mediaItem.favoriteInfo.getLastUpdateTime();
+  }
 }

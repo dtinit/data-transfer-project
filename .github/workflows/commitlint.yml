@@ -1,0 +1,17 @@
+name: Lint PR Title
+
+on:
+  pull_request:
+   types: [opened, synchronize, edited]
+
+jobs:
+  commitlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: "Install commitizen"
+        run: pip install --user -U commitizen
+      - name: "Lint the PR title"
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: cz check --message "${TITLE}" || { echo "see https://github.com/dtinit/data-transfer-project/blob/master/Documentation/Publishing.md#semantic-versioning-and-conventional-commits" >&2; exit 1; }

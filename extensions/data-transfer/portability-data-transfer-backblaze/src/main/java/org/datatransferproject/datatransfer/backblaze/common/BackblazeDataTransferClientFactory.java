@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.backblaze.exception.BackblazeCredentialsException;
 import org.datatransferproject.transfer.JobMetadata;
@@ -48,7 +49,13 @@ public class BackblazeDataTransferClientFactory {
                       SIZE_THRESHOLD_FOR_MULTIPART_UPLOAD,
                       PART_SIZE_FOR_MULTIPART_UPLOAD);
       String exportService = JobMetadata.getExportService();
-      backblazeDataTransferClient.init(authData.getToken(), authData.getSecret(), exportService);
+      CustomIPv4DnsResolver customDnsResolver = new CustomIPv4DnsResolver();
+      backblazeDataTransferClient.init(
+              authData.getToken(),
+              authData.getSecret(),
+              exportService,
+              HttpClientBuilder.create().setDnsResolver(customDnsResolver).build()
+      );
       backblazeDataTransferClientMap.put(jobId, backblazeDataTransferClient);
     }
     return backblazeDataTransferClientMap.get(jobId);

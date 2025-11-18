@@ -11,29 +11,61 @@ import org.datatransferproject.types.transfer.auth.AuthData;
 /**
  * Allows flexible bridging between adapters of different types with compatible functionality.
  *
- * @param <From> The container type supported by the available exporter.
- * @param <To>   The container type that's desired.
+ * ## Usage
+ *
+ * DTP transfers data by passing models from an Exporter (producing bytes)
+ * to an {@link Importer} (consuming bytes). Models have a 1:1 correspondance to
+ * {@link org.datatransferproject.types.common.models.DataVertical} (so a PHOTO
+ * vertical is universally assumed in the DTP codebase to be used for
+ * PhotosContainerResource transfers).
+ *
+ * ### Example Usage
+ *
+ * Given:
+ *
+ * - a DataVertical.PHOTO transfer
+ * - a matching Exporter: an adapter producing {@link PhotosContainerResource} data
+ * - a stand-in Importer: a good-enough adapter; something intended for a
+ *   semi-compatible but not identical data type (eg: {@link MediaContainerResource}).
+ * - a conversion function to go from said PHOTOS objects to DataVertical.MEDIA
+ *   objects (eg: {@link MediaContainerResource} data).
+ *
+ * Then: one can create a synthetic Importer with this class by constructing with said conversion function.
+ *
+ * @param <StandinImporterType> Container type in which some extant exporter is
+ *     providing data. eg: MediaContainerResource.
+ * @param <ExportingType> The original container type which is being exported
+ *     (that we will convert before arriving at our stand-in importer); eg:
+ *     PhotosContainerResource.
  */
 public class AnyToAnyImporter<
     AD extends AuthData,
-    From extends ContainerResource,
-    To extends ContainerResource> implements Importer<AD, To> {
+    StandinImporterType extends ContainerResource,
+    ExportingType extends ContainerResource> implements Importer<AD, ExportingType> {
 
-  private final Importer<AD, From> importer;
-  private final Function<To, From> converter;
+  private final Importer<AD, StandinImporterType> standinImporter;
+  private final Function<ExportingType, StandinImporterType> modelConverter;
 
   /**
-   * @param importer  existing importer
-   * @param converter function converting between the existing and desired containers.
+   * @param standinImporter  existing importer
+   * @param modelConverter function converting between some existing
+   *    exporters' type to our stand-in importers' container types.
    */
-  public AnyToAnyImporter(Importer<AD, From> importer, Function<To, From> converter) {
-    this.importer = importer;
-    this.converter = converter;
+  public AnyToAnyImporter(
+      Importer<AD, StandinImporterType> standinImporter,
+      Function<ExportingType, StandinImporterType> modelConverter
+    ) {
+    this.standinImporter = standinImporter;
+    this.modelConverter = modelConverter;
   }
 
   @Override
-  public ImportResult importItem(UUID jobId, IdempotentImportExecutor idempotentExecutor,
-      AD authData, To data) throws Exception {
-    return importer.importItem(jobId, idempotentExecutor, authData, converter.apply(data));
+  public ImportResult importItem(
+      UUID jobId,
+      IdempotentImportExecutor idempotentExecutor,
+      AD authData,
+      ExportingType data
+  ) throws Exception {
+    return standinImporter.importItem(jobId, idempotentExecutor, authData, modelConverter.apply(data));
   }
 }

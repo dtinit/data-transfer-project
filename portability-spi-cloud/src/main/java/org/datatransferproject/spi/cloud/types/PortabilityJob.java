@@ -11,6 +11,7 @@ import com.google.common.collect.ImmutableMap;
 import java.time.Instant;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.UUID;
 import javax.annotation.Nullable;
 import org.datatransferproject.types.common.models.DataVertical;
 
@@ -38,11 +39,13 @@ public abstract class PortabilityJob {
   private static final String EXPORT_ENCRYPTED_INITIAL_AUTH_DATA =
       "EXPORT_ENCRYPTED_INITIAL_AUTH_DATA";
   private static final String JOB_STATE = "JOB_STATE";
+  private static final String RECURRING_JOB_ID = "RECURRING_JOB_ID";
   private static final String TRANSFER_MODE = "TRANSFER_MODE";
   private static final String FAILURE_REASON = "FAILURE_REASON";
   private static final String NUMBER_OF_FAILED_FILES_KEY = "NUM_FAILED_FILES";
   private static final String USER_TIMEZONE = "USER_TIMEZONE";
   private static final String USER_LOCALE = "USER_LOCALE";
+  private static final String USER_ALIAS = "USER_ALIAS";
 
   public static PortabilityJob.Builder builder() {
     Instant now = Instant.now();
@@ -96,6 +99,9 @@ public abstract class PortabilityJob {
     String userLocale =
         properties.containsKey(USER_LOCALE) ? (String) properties.get(USER_LOCALE) : null;
 
+    String userAlias =
+        properties.containsKey(USER_ALIAS) ? (String) properties.get(USER_ALIAS) : null;
+
     TransferMode transferMode =
         properties.containsKey(TRANSFER_MODE)
             ? TransferMode.valueOf((String) properties.get(TRANSFER_MODE))
@@ -104,6 +110,11 @@ public abstract class PortabilityJob {
     DataVertical dataType =
         properties.containsKey(DATA_TYPE_KEY)
             ? DataVertical.fromDataType((String) properties.get(DATA_TYPE_KEY))
+            : null;
+
+    UUID recurringJobId =
+        properties.containsKey(RECURRING_JOB_ID)
+            ? UUID.fromString((String) properties.get(RECURRING_JOB_ID))
             : null;
 
     return PortabilityJob.builder()
@@ -129,7 +140,9 @@ public abstract class PortabilityJob {
                 .build())
         .setUserTimeZone(userTimeZone)
         .setUserLocale(userLocale)
+        .setUserAlias(userAlias)
         .setTransferMode(transferMode)
+        .setRecurringJobId(recurringJobId)
         .build();
   }
 
@@ -185,8 +198,16 @@ public abstract class PortabilityJob {
   public abstract String userLocale();
 
   @Nullable
+  @JsonProperty("userAlias")
+  public abstract String userAlias();
+
+  @Nullable
   @JsonProperty("transferMode")
   public abstract TransferMode transferMode();
+
+  @Nullable
+  @JsonProperty("recurringJobId")
+  public abstract UUID recurringJobId();
 
   public abstract PortabilityJob.Builder toBuilder();
 
@@ -246,8 +267,16 @@ public abstract class PortabilityJob {
       builder.put(USER_LOCALE, userLocale());
     }
 
+    if (null != userAlias()) {
+      builder.put(USER_ALIAS, userAlias());
+    }
+
     if (null != transferMode()) {
       builder.put(TRANSFER_MODE, transferMode().toString());
+    }
+
+    if (null != recurringJobId()) {
+      builder.put(RECURRING_JOB_ID, recurringJobId());
     }
 
     return builder.build();
@@ -341,8 +370,16 @@ public abstract class PortabilityJob {
     public abstract Builder setUserLocale(String locale);
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("userAlias")
+    public abstract Builder setUserAlias(String alias);
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("transferMode")
     public abstract Builder setTransferMode(TransferMode transferMode);
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("recurringJobId")
+    public abstract Builder setRecurringJobId(@Nullable UUID recurringJobId);
 
     // For internal use only; clients should use setAndValidateJobAuthorization
     protected abstract Builder setJobAuthorization(JobAuthorization jobAuthorization);

@@ -29,34 +29,23 @@ public class GoogleRelease {
   @JsonProperty("icpn")
   private String icpn;
 
-  @JsonProperty("releaseTitle")
-  private String releaseTitle;
-
-  @JsonProperty("artistTitles")
-  private String[] artistTitles;
+  @JsonProperty("title")
+  private String title;
 
   public String getIcpn() {
     return icpn;
   }
 
-  public String getReleaseTitle() {
-    return releaseTitle;
-  }
-
-  public String[] getArtistTitles() {
-    return artistTitles;
+  public String getTitle() {
+    return title;
   }
 
   public void setIcpn(String icpn) {
     this.icpn = icpn;
   }
 
-  public void setReleaseTitle(String releaseTitle) {
-    this.releaseTitle = releaseTitle;
-  }
-
-  public void setArtistTitles(String[] artistTitles) {
-    this.artistTitles = artistTitles;
+  public void setReleaseTitle(String title) {
+    this.title = title;
   }
 
   @Override
@@ -69,12 +58,11 @@ public class GoogleRelease {
     }
     GoogleRelease that = (GoogleRelease) o;
     return Objects.equals(icpn, that.icpn)
-        && Objects.equals(releaseTitle, that.releaseTitle)
-        && Arrays.equals(artistTitles, that.artistTitles);
+        && Objects.equals(title, that.title);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(getIcpn(), getReleaseTitle(), Arrays.hashCode(getArtistTitles()));
+    return Objects.hash(getIcpn(), getTitle());
   }
 }

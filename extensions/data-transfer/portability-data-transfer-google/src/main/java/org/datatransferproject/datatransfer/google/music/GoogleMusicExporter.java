@@ -23,19 +23,23 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.text.ParseException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
+import org.datatransferproject.datatransfer.google.musicModels.ExportReleaseResponse;
+import org.datatransferproject.datatransfer.google.musicModels.GoogleArtist;
 import org.datatransferproject.datatransfer.google.musicModels.GooglePlaylist;
 import org.datatransferproject.datatransfer.google.musicModels.GooglePlaylistItem;
 import org.datatransferproject.datatransfer.google.musicModels.GoogleRelease;
 import org.datatransferproject.datatransfer.google.musicModels.GoogleTrack;
-import org.datatransferproject.datatransfer.google.musicModels.PlaylistItemListResponse;
-import org.datatransferproject.datatransfer.google.musicModels.PlaylistListResponse;
+import org.datatransferproject.datatransfer.google.musicModels.PlaylistExportResponse;
+import org.datatransferproject.datatransfer.google.musicModels.PlaylistItemExportResponse;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.provider.ExportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Exporter;
@@ -55,6 +59,7 @@ import org.datatransferproject.types.common.models.music.MusicRelease;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, MusicContainerResource> {
+
   static final String PLAYLIST_TRACK_RELEASE_TOKEN_PREFIX = "playlist:track:release:";
   static final String PLAYLIST_TRACK_TOKEN_PREFIX = "playlist:track:";
   static final String PLAYLIST_RELEASE_TOKEN_PREFIX = "playlist:release:";
@@ -93,14 +98,19 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
   @Override
   public ExportResult<MusicContainerResource> export(
       UUID jobId, TokensAndUrlAuthData authData, Optional<ExportInformation> exportInformation)
-      throws IOException, InvalidTokenException, PermissionDeniedException {
+      throws IOException, InvalidTokenException, PermissionDeniedException, ParseException {
+    // Used in production
+    if (exportInformation.isEmpty()) {
+      StringPaginationToken paginationToken = new StringPaginationToken(PLAYLIST_TOKEN_PREFIX);
+      return exportPlaylists(authData, Optional.of(paginationToken), jobId);
+    }
 
     if (exportInformation.get().getContainerResource() instanceof IdOnlyContainerResource) {
       // if ExportInformation is an id only container, this is a request to export playlist items.
       return exportPlaylistItems(
           authData,
           (IdOnlyContainerResource) exportInformation.get().getContainerResource(),
-          Optional.of(exportInformation.get().getPaginationData()));
+          Optional.ofNullable(exportInformation.get().getPaginationData()), jobId);
     }
 
     StringPaginationToken paginationToken =
@@ -115,59 +125,44 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
       return new ExportResult<>(ResultType.END, null, null);
     } else if (paginationDataPresent
         && paginationToken.getToken().startsWith(RELEASE_TOKEN_PREFIX)) {
-      // TODO: export releases
-      return new ExportResult<>(ResultType.END, null, null);
+      return exportReleases(authData, Optional.of(paginationToken), jobId);
     } else {
       // There is nothing to export.
       return new ExportResult<>(ResultType.END, null, null);
     }
   }
 
-  // TODO(@jzacsh): Replace pageTokenPrefix and paginationToken with simplified and general class or
-  // functions.
   @VisibleForTesting
   ExportResult<MusicContainerResource> exportPlaylists(
       TokensAndUrlAuthData authData, Optional<PaginationData> paginationData, UUID jobId)
       throws IOException, InvalidTokenException, PermissionDeniedException {
-    Optional<String> paginationToken = Optional.empty();
-    String pageTokenPrefix = "";
-    if (paginationData.isPresent()) {
-      String token = ((StringPaginationToken) paginationData.get()).getToken();
-      Preconditions.checkArgument(
-          token.startsWith(PLAYLIST_TOKEN_PREFIX), "Invalid pagination token %s", token);
-      pageTokenPrefix = token.substring(0, getTokenPrefixLength(token));
-      if (getTokenPrefixLength(token) < token.length()) {
-        paginationToken = Optional.of(token.substring(getTokenPrefixLength(token)));
-      }
-    }
+    Optional<String> paginationToken = getToken(PLAYLIST_TOKEN_PREFIX, paginationData);
+    PlaylistExportResponse playlistExportResponse =
+        getOrCreateMusicHttpApi(authData).exportPlaylists(paginationToken);
 
-    PlaylistListResponse playlistListResponse =
-        getOrCreateMusicHttpApi(authData).listPlaylists(paginationToken);
-
-    PaginationData nextPageData;
-    String token = playlistListResponse.getNextPageToken();
+    PaginationData nextPageData = new StringPaginationToken("");
+    String nextPageToken = playlistExportResponse.getNextPageToken();
     List<MusicPlaylist> playlists = new ArrayList<>();
-    GooglePlaylist[] googlePlaylists = playlistListResponse.getPlaylists();
+    GooglePlaylist[] googlePlaylists = playlistExportResponse.getPlaylists();
     ResultType resultType = ResultType.END;
 
-    if (Strings.isNullOrEmpty(token)) {
-      nextPageData =
-          new StringPaginationToken(pageTokenPrefix.substring(PLAYLIST_TOKEN_PREFIX.length()));
-    } else {
-      nextPageData = new StringPaginationToken(pageTokenPrefix + token);
+    if (!Strings.isNullOrEmpty(nextPageToken)) {
+      nextPageData = new StringPaginationToken(PLAYLIST_TOKEN_PREFIX + nextPageToken);
       resultType = ResultType.CONTINUE;
     }
     ContinuationData continuationData = new ContinuationData(nextPageData);
-
-    if (googlePlaylists != null && googlePlaylists.length > 0) {
+    if (googlePlaylists != null) {
       for (GooglePlaylist googlePlaylist : googlePlaylists) {
+        Instant createTime = googlePlaylist.getCreateTime() == null ? null
+            : Instant.parse(googlePlaylist.getCreateTime());
+        Instant updateTime = googlePlaylist.getUpdateTime() == null ? null
+            : Instant.parse(googlePlaylist.getUpdateTime());
         MusicPlaylist musicPlaylist =
             new MusicPlaylist(
                 googlePlaylist.getName().substring(GOOGLE_PLAYLIST_NAME_PREFIX.length()),
                 googlePlaylist.getTitle(),
                 googlePlaylist.getDescription(),
-                Instant.ofEpochMilli(googlePlaylist.getCreateTime()),
-                Instant.ofEpochMilli(googlePlaylist.getUpdateTime()));
+                createTime, updateTime);
         playlists.add(musicPlaylist);
 
         monitor.debug(
@@ -189,27 +184,34 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
   ExportResult<MusicContainerResource> exportPlaylistItems(
       TokensAndUrlAuthData authData,
       IdOnlyContainerResource playlistData,
-      Optional<PaginationData> paginationData)
-      throws IOException, InvalidTokenException, PermissionDeniedException {
+      Optional<PaginationData> paginationData, UUID jobId)
+      throws IOException, InvalidTokenException, PermissionDeniedException, ParseException {
     String playlistId = playlistData.getId();
     Optional<String> paginationToken =
         paginationData.map((PaginationData value) -> ((StringPaginationToken) value).getToken());
 
-    PlaylistItemListResponse playlistItemListResponse =
-        getOrCreateMusicHttpApi(authData).listPlaylistItems(playlistId, paginationToken);
+    PlaylistItemExportResponse playlistItemExportResponse =
+        getOrCreateMusicHttpApi(authData).exportPlaylistItems(playlistId, paginationToken);
 
     PaginationData nextPageData = null;
-    if (!Strings.isNullOrEmpty(playlistItemListResponse.getNextPageToken())) {
-      nextPageData = new StringPaginationToken(playlistItemListResponse.getNextPageToken());
+    if (!Strings.isNullOrEmpty(playlistItemExportResponse.getNextPageToken())) {
+      nextPageData = new StringPaginationToken(playlistItemExportResponse.getNextPageToken());
     }
     ContinuationData continuationData = new ContinuationData(nextPageData);
 
     MusicContainerResource containerResource = null;
-    GooglePlaylistItem[] googlePlaylistItems = playlistItemListResponse.getPlaylistItems();
+    GooglePlaylistItem[] googlePlaylistItems = playlistItemExportResponse.getPlaylistItems();
     List<MusicPlaylistItem> playlistItems = new ArrayList<>();
     if (googlePlaylistItems != null && googlePlaylistItems.length > 0) {
       for (GooglePlaylistItem googlePlaylistItem : googlePlaylistItems) {
         playlistItems.add(convertPlaylistItem(playlistId, googlePlaylistItem));
+        monitor.debug(
+            () ->
+                String.format(
+                    "%s: Google Music exporting playlist item in %s : [track title: %s, track isrc: %s]",
+                    jobId, playlistId,
+                    googlePlaylistItem.getTrack().getTitle(),
+                    googlePlaylistItem.getTrack().getIsrc()));
       }
       containerResource = new MusicContainerResource(null, playlistItems, null, null);
     }
@@ -217,50 +219,82 @@ public class GoogleMusicExporter implements Exporter<TokensAndUrlAuthData, Music
     return new ExportResult<>(ResultType.CONTINUE, containerResource, continuationData);
   }
 
-  private int getTokenPrefixLength(String token) {
-    final ImmutableList<String> knownPrefixes =
-        ImmutableList.of(
-            PLAYLIST_TRACK_RELEASE_TOKEN_PREFIX,
-            PLAYLIST_TRACK_TOKEN_PREFIX,
-            PLAYLIST_RELEASE_TOKEN_PREFIX,
-            PLAYLIST_TOKEN_PREFIX,
-            TRACK_RELEASE_TOKEN_PREFIX,
-            TRACK_TOKEN_PREFIX,
-            RELEASE_TOKEN_PREFIX);
+  @VisibleForTesting
+  ExportResult<MusicContainerResource> exportReleases(TokensAndUrlAuthData authData,
+      Optional<PaginationData> paginationData,
+      UUID jobId) throws InvalidTokenException, PermissionDeniedException, IOException {
+    Optional<String> paginationToken = getToken(RELEASE_TOKEN_PREFIX, paginationData);
+    ExportReleaseResponse exportReleaseResponse = getOrCreateMusicHttpApi(authData).exportReleases(paginationToken);
 
-    for (String prefix : knownPrefixes) {
-      if (token.startsWith(prefix)) {
-        return prefix.length();
-      }
+    PaginationData nextPageData = null;
+    String token = exportReleaseResponse.getNextPageToken();
+    ResultType resultType = ResultType.END;
+    if (!Strings.isNullOrEmpty(token)) {
+      nextPageData = new StringPaginationToken(RELEASE_TOKEN_PREFIX + token);
+      resultType = ResultType.CONTINUE;
     }
-    return 0;
+
+    ContinuationData continuationData = new ContinuationData(nextPageData);
+    MusicContainerResource containerResource = null;
+    GoogleRelease[] googleReleases = exportReleaseResponse.getReleases();
+    List<MusicRelease> exportableReleases = new ArrayList<>();
+
+    if (googleReleases != null && googleReleases.length > 0) {
+      for (GoogleRelease googleRelease : googleReleases) {
+        exportableReleases.add(convertRelease(googleRelease));
+        monitor.debug(
+            () ->
+                String.format(
+                    "%s: Google Music exporting release item: [release title: %s, release icpn: %s]",
+                    jobId,
+                    googleRelease.getTitle(),
+                    googleRelease.getIcpn()));
+      }
+      containerResource = new MusicContainerResource(null, null, null, exportableReleases);
+    }
+    return new ExportResult<>(resultType, containerResource, continuationData);
   }
 
-  private List<MusicGroup> createMusicGroups(String[] artistTitles) {
-    if (artistTitles == null) {
+  private Optional<String> getToken(String prefix, Optional<PaginationData> paginationData){
+    Optional<String> paginationToken = Optional.empty();
+    if (paginationData.isPresent()) {
+      StringPaginationToken tokenObject = ((StringPaginationToken) paginationData.get());
+      tokenObject.verify(prefix);
+      paginationToken = tokenObject.getParsedToken(prefix);
+    }
+    return paginationToken;
+  }
+
+  private @Nullable List<MusicGroup> createMusicGroups(GoogleArtist[] artists) {
+    if (artists == null) {
       return null;
     }
     List<MusicGroup> musicGroups = new ArrayList<>();
-    for (String artistTitle : artistTitles) {
-      musicGroups.add(new MusicGroup(artistTitle));
+    for (GoogleArtist artist : artists) {
+      musicGroups.add(new MusicGroup(artist.getTitle()));
     }
     return musicGroups;
   }
 
+  private MusicRelease convertRelease(GoogleRelease googleRelease){
+    return new MusicRelease(googleRelease.getIcpn(), googleRelease.getTitle(), null);
+
+  }
+
   private MusicPlaylistItem convertPlaylistItem(
-      String playlistId, GooglePlaylistItem googlePlaylistItem) {
+      String playlistId, GooglePlaylistItem googlePlaylistItem) throws ParseException {
     GoogleTrack track = googlePlaylistItem.getTrack();
-    GoogleRelease release = track.getRelease();
+    GoogleRelease release = track.getReleaseReference();
     return new MusicPlaylistItem(
         new MusicRecording(
             track.getIsrc(),
-            track.getTrackTitle(),
-            track.getDurationMillis(),
+            track.getTitle(),
+            track.convertDurationToMillions(),
             new MusicRelease(
                 release.getIcpn(),
-                release.getReleaseTitle(),
-                createMusicGroups(release.getArtistTitles())),
-            createMusicGroups(track.getArtistTitles())),
+                release.getTitle(),null),
+            createMusicGroups(track.getArtistReferences()),
+            "EXPLICIT_TYPE_EXPLICIT".equals(track.getExplicitType())),
         playlistId,
         googlePlaylistItem.getOrder());
   }

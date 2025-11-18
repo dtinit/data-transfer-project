@@ -7,3 +7,7 @@ updates:
     # Always increase the version requirement
     # to match the new version.
     versioning-strategy: increase
+    commit-message:
+      prefix: "fix"
+      prefix-development: "build"
+      include: "scope"

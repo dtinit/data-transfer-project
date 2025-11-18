@@ -21,7 +21,7 @@ plugins {
 }
 
 group = "${projectGroup}"
-version = "${projectVersion}"
+version = System.getenv("RELEASE_VERSION")
 
 description = """Portability Worker"""
 
@@ -36,6 +36,7 @@ configurations {
 
 dependencies {
     compile project(':portability-api-launcher')
+    compile project(':portability-spi-api')
     compile project(':portability-spi-service')
     compile project(':portability-spi-cloud')
     compile project(':portability-spi-transfer')
@@ -45,6 +46,7 @@ dependencies {
     compile("com.google.inject:guice:${guiceVersion}")
     compile "com.squareup.okhttp3:okhttp:${okHttpVersion}"
     compile("com.google.http-client:google-http-client-gson:${googleHttpClientVersion}")
+    compile("com.google.cloud:google-cloud-datastore:${googleDatastoreVersion}")
 
     testCompile project(':extensions:cloud:portability-cloud-local')
     testCompile project(':extensions:copier:portability-stack-copier')

@@ -17,10 +17,13 @@ package org.datatransferproject.types.common.models.calendar;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Objects;
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
 public class CalendarEventModel {
 
   private final String calendarId;
@@ -112,6 +115,7 @@ public class CalendarEventModel {
         getRecurrenceRule());
   }
 
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
   public static class CalendarEventTime {
     private final OffsetDateTime dateTime;
     private final boolean dateOnly;

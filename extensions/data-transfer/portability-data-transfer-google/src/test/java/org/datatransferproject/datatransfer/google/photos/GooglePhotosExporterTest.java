@@ -30,8 +30,11 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.json.gson.GsonFactory;
+import com.google.common.collect.ImmutableList;
+import com.google.gdata.data.photos.AlbumData;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -45,13 +48,14 @@ import org.datatransferproject.datatransfer.google.mediaModels.GoogleMediaItem;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaItemSearchResponse;
 import org.datatransferproject.datatransfer.google.mediaModels.MediaMetadata;
 import org.datatransferproject.datatransfer.google.mediaModels.Photo;
+import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.provider.ExportResult;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
-import org.datatransferproject.spi.transfer.types.TempPhotosData;
+import org.datatransferproject.spi.transfer.types.TempMediaData;
 import org.datatransferproject.spi.transfer.types.UploadErrorException;
 import org.datatransferproject.types.common.PaginationData;
 import org.datatransferproject.types.common.StringPaginationToken;
@@ -60,6 +64,7 @@ import org.datatransferproject.types.common.models.IdOnlyContainerResource;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
+import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -76,19 +81,22 @@ public class GooglePhotosExporterTest {
   private UUID uuid = UUID.randomUUID();
 
   private GooglePhotosExporter googlePhotosExporter;
-  private TemporaryPerJobDataStore jobStore;
+  private JobStore jobStore;
   private GooglePhotosInterface photosInterface;
 
   private MediaItemSearchResponse mediaItemSearchResponse;
   private AlbumListResponse albumListResponse;
 
+  private TokensAndUrlAuthData authData;
+
   @BeforeEach
   public void setup()
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     GoogleCredentialFactory credentialFactory = mock(GoogleCredentialFactory.class);
-    jobStore = mock(TemporaryPerJobDataStore.class);
+    jobStore = mock(JobStore.class);
     when(jobStore.getStream(any(), anyString())).thenReturn(mock(InputStreamWrapper.class));
     photosInterface = mock(GooglePhotosInterface.class);
+    authData = mock(TokensAndUrlAuthData.class);
 
     albumListResponse = mock(AlbumListResponse.class);
     mediaItemSearchResponse = mock(MediaItemSearchResponse.class);
@@ -262,10 +270,10 @@ public class GooglePhotosExporterTest {
     // Check contents of job store
     ArgumentCaptor<InputStream> inputStreamArgumentCaptor =
         ArgumentCaptor.forClass(InputStream.class);
-    verify(jobStore).create(eq(uuid), eq("tempPhotosData"), inputStreamArgumentCaptor.capture());
-    TempPhotosData tempPhotosData =
-        new ObjectMapper().readValue(inputStreamArgumentCaptor.getValue(), TempPhotosData.class);
-    assertThat(tempPhotosData.lookupContainedPhotoIds()).containsExactly(PHOTO_ID, secondId);
+    verify(jobStore).create(eq(uuid), eq("tempMediaData"), inputStreamArgumentCaptor.capture());
+    TempMediaData tempMediaData =
+        new ObjectMapper().readValue(inputStreamArgumentCaptor.getValue(), TempMediaData.class);
+    assertThat(tempMediaData.lookupContainedPhotoIds()).containsExactly(PHOTO_ID, secondId);
   }
 
   @Test
@@ -290,10 +298,10 @@ public class GooglePhotosExporterTest {
         .thenReturn(new GoogleMediaItem[] {containedPhoto, albumlessPhoto});
     when(mediaItemSearchResponse.getNextPageToken()).thenReturn(null);
 
-    TempPhotosData tempPhotosData = new TempPhotosData(uuid);
-    tempPhotosData.addContainedPhotoId(containedPhotoId);
-    InputStream stream = GooglePhotosExporter.convertJsonToInputStream(tempPhotosData);
-    when(jobStore.getStream(uuid, "tempPhotosData")).thenReturn(new InputStreamWrapper(stream));
+    TempMediaData tempMediaData = new TempMediaData(uuid);
+    tempMediaData.addContainedPhotoId(containedPhotoId);
+    InputStream stream = GooglePhotosExporter.convertJsonToInputStream(tempMediaData);
+    when(jobStore.getStream(uuid, "tempMediaData")).thenReturn(new InputStreamWrapper(stream));
 
     // Run test
     ExportResult<PhotosContainerResource> result =
@@ -305,6 +313,47 @@ public class GooglePhotosExporterTest {
                 .map(PhotoModel::getFetchableUrl)
                 .collect(Collectors.toList()))
         .containsExactly(albumlessPhotoUri + "=d"); // download
+  }
+
+  @Test
+  public void photoModelConversionErrorsSkipped() throws Exception {
+    // These media items fail when converting because MediaItem.isPhoto() returns false.
+    GoogleMediaItem failedGoogleMediaItem1 = setUpSinglePhoto("uri1", "failed-photo-1");
+    failedGoogleMediaItem1.setMediaMetadata(new MediaMetadata());
+
+    GoogleMediaItem failedGoogleMediaItem2 = setUpSinglePhoto("uri2", "failed-photo-2");
+    failedGoogleMediaItem2.setMediaMetadata(new MediaMetadata());
+
+    GoogleMediaItem[] mediaItems = {
+        setUpSinglePhoto("uri3", "photoId1"),
+        failedGoogleMediaItem1,
+        setUpSinglePhoto("uri4", "photoId2"),
+        setUpSinglePhoto("uri5", "photoId3"),
+        failedGoogleMediaItem2,
+        setUpSinglePhoto("uri6", "photoId4")
+    };
+
+    MediaItemSearchResponse mediaItemSearchResponse = new MediaItemSearchResponse();
+    mediaItemSearchResponse.setMediaItems(mediaItems);
+    mediaItemSearchResponse.setNextPageToken(null);
+
+    when(photosInterface.listMediaItems(any(), any())).thenReturn(mediaItemSearchResponse);
+
+    ExportResult<PhotosContainerResource> result =
+        googlePhotosExporter.exportPhotos(authData, Optional.of(new IdOnlyContainerResource("albumId")), Optional.empty(), uuid);
+
+    assertThat(result.getExportedData().getPhotos()).hasSize(4);
+    assertThat(
+        result.getExportedData()
+            .getPhotos()
+            .stream()
+            .map(photo -> photo.getDataId())
+            .collect(Collectors.toList()))
+        .isEqualTo(
+            Arrays.stream(mediaItems)
+                .map(mediaItem -> mediaItem.getId())
+                .filter(id -> !(id.equals(failedGoogleMediaItem1.getId()) || id.equals(failedGoogleMediaItem2.getId())))
+                .collect(Collectors.toList()));
   }
 
   /** Sets up a response with a single album, containing a single photo */
@@ -326,6 +375,7 @@ public class GooglePhotosExporterTest {
     photoEntry.setFilename(FILENAME);
     MediaMetadata mediaMetadata = new MediaMetadata();
     mediaMetadata.setPhoto(new Photo());
+    mediaMetadata.setCreationTime("2022-09-01T20:25:38Z");
     photoEntry.setMediaMetadata(mediaMetadata);
 
     return photoEntry;

@@ -19,9 +19,10 @@ package org.datatransferproject.datatransfer.google.mediaModels;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
-public class BatchMediaItemResponse {
+public class BatchMediaItemResponse implements Serializable {
   @JsonProperty("newMediaItemResults")
   private NewMediaItemResult[] results;
 

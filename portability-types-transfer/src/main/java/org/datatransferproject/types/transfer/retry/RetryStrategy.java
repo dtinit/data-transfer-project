@@ -33,7 +33,10 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 @JsonSubTypes({
     @JsonSubTypes.Type(value = UniformRetryStrategy.class, name = "Uniform"),
     @JsonSubTypes.Type(value = ExponentialBackoffStrategy.class, name = "Exponential"),
-    @JsonSubTypes.Type(value = NoRetryStrategy.class, name = "Fatal")
+    @JsonSubTypes.Type(value = NoRetryStrategy.class, name = "Fatal"),
+    @JsonSubTypes.Type(value = SkipRetryStrategy.class, name = "Skip"),
+    @JsonSubTypes.Type(value = ExponentialBackoffSkipStrategy.class, name = "ExponentialSkip"),
+    @JsonSubTypes.Type(value = UniformRetrySkipStrategy.class, name = "UniformSkip")
 })
 public interface RetryStrategy {
 
@@ -52,4 +55,9 @@ public interface RetryStrategy {
    * Gets milliseconds until the next retry, given elapsed time so far
    */
   long getRemainingIntervalMillis(int tries, long elapsedMillis);
+
+  /** Shows whether exception should be skipped */
+  default boolean canSkip() {
+    return false;
+  }
 }

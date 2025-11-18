@@ -21,6 +21,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
+import com.google.protobuf.util.Durations;
 import com.google.rpc.Code;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,31 +31,33 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.musicModels.BatchPlaylistItemRequest;
 import org.datatransferproject.datatransfer.google.musicModels.BatchPlaylistItemResponse;
+import org.datatransferproject.datatransfer.google.musicModels.ImportPlaylistItemRequest;
+import org.datatransferproject.datatransfer.google.musicModels.GoogleArtist;
 import org.datatransferproject.datatransfer.google.musicModels.GooglePlaylist;
 import org.datatransferproject.datatransfer.google.musicModels.GooglePlaylistItem;
 import org.datatransferproject.datatransfer.google.musicModels.GoogleRelease;
 import org.datatransferproject.datatransfer.google.musicModels.GoogleTrack;
 import org.datatransferproject.datatransfer.google.musicModels.NewPlaylistItemResult;
 import org.datatransferproject.datatransfer.google.musicModels.Status;
-import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.CopyException;
-import org.datatransferproject.spi.transfer.types.InvalidTokenException;
-import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.types.common.models.music.MusicContainerResource;
 import org.datatransferproject.types.common.models.music.MusicGroup;
 import org.datatransferproject.types.common.models.music.MusicPlaylist;
 import org.datatransferproject.types.common.models.music.MusicPlaylistItem;
+import org.datatransferproject.types.common.models.music.MusicRelease;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, MusicContainerResource> {
+
   // TODO(critical WIP-feature step): fine tune the batch size when inserting playlist items
   private static final int PLAYLIST_ITEM_BATCH_SIZE = 49;
 
@@ -62,7 +65,6 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
   private final JsonFactory jsonFactory;
   private volatile GoogleMusicHttpApi musicHttpApi;
   private final Map<UUID, GoogleMusicHttpApi> musicHttpApisMap;
-  private final TemporaryPerJobDataStore dataStore;
 
   private final Monitor monitor;
   private final double writesPerSecond;
@@ -70,11 +72,9 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
   public GoogleMusicImporter(
       GoogleCredentialFactory credentialFactory,
       JsonFactory jsonFactory,
-      TemporaryPerJobDataStore dataStore,
       Monitor monitor,
       double writesPerSecond) {
-    this(
-        credentialFactory, jsonFactory, null, new HashMap<>(), dataStore, monitor, writesPerSecond);
+    this(credentialFactory, jsonFactory, null, new HashMap<>(), monitor, writesPerSecond);
   }
 
   @VisibleForTesting
@@ -83,14 +83,12 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
       JsonFactory jsonFactory,
       GoogleMusicHttpApi musicHttpApi,
       Map<UUID, GoogleMusicHttpApi> musicHttpApisMap,
-      TemporaryPerJobDataStore dataStore,
       Monitor monitor,
       double writesPerSecond) {
     this.credentialFactory = credentialFactory;
     this.jsonFactory = jsonFactory;
     this.musicHttpApi = musicHttpApi;
     this.musicHttpApisMap = musicHttpApisMap;
-    this.dataStore = dataStore;
     this.monitor = monitor;
     this.writesPerSecond = writesPerSecond;
   }
@@ -120,7 +118,19 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
 
     // TODO: create tracks
 
-    // TODO: create releases
+    for (MusicRelease release: data.getReleases()){
+      monitor.debug(
+          () ->
+              String.format(
+                  "%s: Google Music importing release item: [release title: %s, release icpn: %s]",
+                  jobId,
+                  release.getTitle(),
+                  release.getIcpnCode()));
+      idempotentImportExecutor.executeAndSwallowIOExceptions(
+          release.getTitle(),
+          release.getTitle(),
+          () -> importSingleRelease(jobId, authData, release));
+    }
 
     return ImportResult.OK;
   }
@@ -128,23 +138,29 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
   @VisibleForTesting
   String importSinglePlaylist(
       UUID jobId, TokensAndUrlAuthData authData, MusicPlaylist inputPlaylist)
-      throws IOException, InvalidTokenException, PermissionDeniedException {
+      throws IOException, CopyException {
     // Set up GooglePlaylist
     GooglePlaylist googlePlaylist = new GooglePlaylist();
     googlePlaylist.setDescription(inputPlaylist.getDescription());
     googlePlaylist.setTitle(inputPlaylist.getTitle());
-    if (inputPlaylist.getTimeCreated() != null) {
-      googlePlaylist.setCreateTime(inputPlaylist.getTimeCreated().toEpochMilli());
-    }
-    if (inputPlaylist.getTimeUpdated() != null) {
-      googlePlaylist.setUpdateTime(inputPlaylist.getTimeUpdated().toEpochMilli());
-    }
 
-    GooglePlaylist responsePlaylist =
-        getOrCreateMusicInterface(jobId, authData)
-            .createPlaylist(googlePlaylist, inputPlaylist.getId());
-    storePlaylistToken(jobId, inputPlaylist.getId(), responsePlaylist);
+    getOrCreateMusicInterface(jobId, authData)
+        .importPlaylist(googlePlaylist, inputPlaylist.getId());
     return inputPlaylist.getId();
+  }
+
+  @VisibleForTesting
+  String importSingleRelease(
+      UUID jobId, TokensAndUrlAuthData authData, MusicRelease musicRelease)
+      throws IOException, CopyException {
+    // Set up Release
+    GoogleRelease googleRelease = new GoogleRelease();
+    googleRelease.setReleaseTitle(musicRelease.getTitle());
+    googleRelease.setIcpn(musicRelease.getIcpnCode());
+
+    getOrCreateMusicInterface(jobId, authData)
+        .createRelease(googleRelease);
+    return musicRelease.getTitle();
   }
 
   void importPlaylistItems(
@@ -169,8 +185,6 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
         }
       }
     }
-
-    return;
   }
 
   private void importPlaylistItemBatch(
@@ -182,9 +196,7 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
       throws Exception {
     // Note this be null if the playlist create failed, which is what we want
     // because that will also mark this batch of playlist items as being failed.
-    GooglePlaylistInsertionToken playlistToken =
-        dataStore.findData(jobId, playlistId, GooglePlaylistInsertionToken.class);
-    if (playlistToken == null) {
+    if (!executor.isKeyCached(playlistId)) {
       for (MusicPlaylistItem playlistItem : playlistItems) {
         executor.executeAndSwallowIOExceptions(
             playlistItem.toString(),
@@ -198,92 +210,102 @@ public class GoogleMusicImporter implements Importer<TokensAndUrlAuthData, Music
       }
       return;
     }
-    List<GooglePlaylistItem> googlePlaylistItems = new ArrayList<>();
+    List<ImportPlaylistItemRequest> createPlaylistItemRequests = new ArrayList<>();
     for (MusicPlaylistItem playlistItem : playlistItems) {
-      googlePlaylistItems.add(createGooglePlaylistItem(playlistItem));
+      createPlaylistItemRequests.add(
+          buildImportPlaylistItemRequest(playlistItem, playlistId));
     }
 
     BatchPlaylistItemRequest batchRequest =
-        new BatchPlaylistItemRequest(googlePlaylistItems, playlistId, playlistToken.getToken());
+        new BatchPlaylistItemRequest(createPlaylistItemRequests, playlistId);
+
+    BatchPlaylistItemResponse responsePlaylistItem =
+        getOrCreateMusicInterface(jobId, authData).importPlaylistItems(batchRequest);
+    for (int i = 0; i < responsePlaylistItem.getResults().length; i++) {
+      NewPlaylistItemResult playlistItemResult = responsePlaylistItem.getResults()[i];
+      // playlistItemResult should be success or skippable failure.
+      // TODO(critical WIP-feature step): Replace it with skippable failure support.
+      // processNewPlaylistItemResult(playlistItems.get(i), playlistItemResult, executor);
+      executor.executeAndSwallowIOExceptions(
+          playlistItems.get(i).toString(),
+          playlistItems.get(i).toString(),
+          () -> summarizeNewPlaylistItemResultErrors(playlistItemResult));
+    }
+  }
+
+  /**
+   * Summarizes result as a human-readable string. Empty string indicates no issues.
+   */
+  private String summarizeNewPlaylistItemResultErrors(
+      NewPlaylistItemResult playlistItemResult)
+      throws Exception {
     try {
-      BatchPlaylistItemResponse responsePlaylistItem =
-          getOrCreateMusicInterface(jobId, authData).createPlaylistItems(batchRequest);
-      for (int i = 0; i < responsePlaylistItem.getResults().length; i++) {
-        NewPlaylistItemResult playlistItemResult = responsePlaylistItem.getResults()[i];
-        // playlistItemResult should be success or skippable failure.
-        // TODO(critical WIP-feature step): Replace it with skippable failure support.
-        executor.executeAndSwallowIOExceptions(
-            playlistItems.get(i).toString(),
-            playlistItems.get(i).toString(),
-            () -> processNewPlaylistItemResult(playlistItemResult));
+      if (playlistItemResult.getStatus() != null) {
+        Status status = playlistItemResult.getStatus();
+        if (status.getCode() != Code.OK_VALUE) {
+          throw new IOException(
+              String.format(
+                  "PlaylistItem could not be created. Code: %d Message: %s",
+                  status.getCode(), status.getMessage()));
+        }
       }
     } catch (IOException e) {
       if (StringUtils.contains(e.getMessage(), "permanent failure")) {
         // Permanent Failure: terminate the transfer job and notify the end user
         // TODO(critical WIP-feature step): Add permanent failures.
         throw new CopyException("Permanent Failure:", e);
-      } else if (StringUtils.contains(e.getMessage(), "skippable failure")) {
+      } else if (StringUtils.contains(e.getMessage(), "Fail to find track matching")
+          || StringUtils.contains(e.getMessage(), "Missing ISRC in playlist item")
+          || StringUtils.contains(e.getMessage(), "Max videos exceeded")) {
         // Skippable Failure: we skip this batch and log some data to understand it better
         // TODO(critical WIP-feature step): Add skippable failures.
         monitor.info(() -> "Skippable Failure:", e);
       } else {
-        // Retryable Failure: retry the batch
+        // Retryable Failure: retry the playlist item
         throw e;
       }
     }
-
-    return;
+    return ""; // No errors, so nothing to summarize.
   }
 
-  private String processNewPlaylistItemResult(NewPlaylistItemResult playlistItemResult)
-      throws Exception {
-    Status status = playlistItemResult.getStatus();
-    if (status.getCode() != Code.OK_VALUE) {
-      throw new IOException(
-          String.format(
-              "PlaylistItem could not be created. Code: %d Message: %s",
-              status.getCode(), status.getMessage()));
-    }
-    return playlistItemResult.getPlaylistItem().getTrack().getIsrc();
-  }
-
-  private String[] getArtistTitles(List<MusicGroup> artists) {
+  private @Nullable GoogleArtist[] getArtists(List<MusicGroup> artists) {
     if (artists == null || artists.isEmpty()) {
       return null;
     }
-    String[] artistsTitles = new String[artists.size()];
+    GoogleArtist[] googleArtists = new GoogleArtist[artists.size()];
     for (int i = 0; i < artists.size(); i++) {
-      artistsTitles[i] = artists.get(i).getName();
+      GoogleArtist googleArtist = new GoogleArtist();
+      googleArtist.setTitle(artists.get(i).getName());
+      googleArtists[i] = googleArtist;
     }
-    return artistsTitles;
+    return googleArtists;
   }
 
-  private GooglePlaylistItem createGooglePlaylistItem(MusicPlaylistItem playlistItem) {
+  private ImportPlaylistItemRequest buildImportPlaylistItemRequest(
+      MusicPlaylistItem playlistItem, String playlistId) {
     GooglePlaylistItem googlePlaylistItem = new GooglePlaylistItem();
     GoogleTrack googleTrack = new GoogleTrack();
     GoogleRelease googleRelease = new GoogleRelease();
 
     googleRelease.setIcpn(playlistItem.getTrack().getMusicRelease().getIcpnCode());
     googleRelease.setReleaseTitle(playlistItem.getTrack().getMusicRelease().getTitle());
-    googleRelease.setArtistTitles(
-        getArtistTitles(playlistItem.getTrack().getMusicRelease().getByArtists()));
 
     googleTrack.setIsrc(playlistItem.getTrack().getIsrcCode());
-    googleTrack.setTrackTitle(playlistItem.getTrack().getTitle());
-    googleTrack.setArtistTitles(getArtistTitles(playlistItem.getTrack().getByArtists()));
-    googleTrack.setDurationMillis(playlistItem.getTrack().getDurationMillis());
-    googleTrack.setRelease(googleRelease);
+    googleTrack.setTitle(playlistItem.getTrack().getTitle());
+    googleTrack.setArtistReferences(getArtists(playlistItem.getTrack().getByArtists()));
+    googleTrack.setDuration(
+        Durations.toString(Durations.fromMillis(playlistItem.getTrack().getDurationMillis())));
+    if (playlistItem.getTrack().getIsExplicit()) {
+      googleTrack.setExplicitType("EXPLICIT_TYPE_EXPLICIT");
+    } else {
+      googleTrack.setExplicitType("EXPLICIT_TYPE_NOT_EXPLICIT");
+    }
+    googleTrack.setReleaseReference(googleRelease);
 
     googlePlaylistItem.setTrack(googleTrack);
     googlePlaylistItem.setOrder(playlistItem.getOrder());
-    return googlePlaylistItem;
-  }
 
-  // Store playlist token returned by createPlaylist. It will be used to batch ceating playlist
-  // items later.
-  private void storePlaylistToken(UUID jobId, String playlistId, GooglePlaylist playlist)
-      throws IOException {
-    dataStore.create(jobId, playlistId, new GooglePlaylistInsertionToken(playlist.getToken()));
+    return new ImportPlaylistItemRequest(playlistId, googlePlaylistItem);
   }
 
   private synchronized GoogleMusicHttpApi getOrCreateMusicInterface(

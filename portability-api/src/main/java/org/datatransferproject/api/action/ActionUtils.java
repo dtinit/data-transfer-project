@@ -15,11 +15,10 @@
  */
 package org.datatransferproject.api.action;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
-
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import org.datatransferproject.types.common.models.DataVertical;
 
@@ -28,13 +27,13 @@ public final class ActionUtils {
 
   public static String encodeJobId(UUID jobId) {
     Preconditions.checkNotNull(jobId);
-    return BaseEncoding.base64Url().encode(jobId.toString().getBytes(Charsets.UTF_8));
+    return BaseEncoding.base64Url().encode(jobId.toString().getBytes(StandardCharsets.UTF_8));
   }
 
   public static UUID decodeJobId(String encodedJobId) {
     Preconditions.checkArgument(!Strings.isNullOrEmpty(encodedJobId));
     return UUID.fromString(new String(BaseEncoding.base64Url().decode(encodedJobId),
-        Charsets.UTF_8));
+        StandardCharsets.UTF_8));
   }
 
   /** Determines whether the current service is a valid service for import.
