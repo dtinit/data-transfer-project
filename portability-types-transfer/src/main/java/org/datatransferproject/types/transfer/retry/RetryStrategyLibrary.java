@@ -38,7 +38,8 @@ public class RetryStrategyLibrary {
 
   @JsonProperty("strategyMappings")
   private final List<RetryMapping> retryMappings;
-  @JsonProperty("defaultRetryStrategy")
+
+  @JsonProperty(value = "defaultRetryStrategy", required = true)
   private final RetryStrategy defaultRetryStrategy;
 
   public RetryStrategyLibrary(@JsonProperty("strategyMappings") List<RetryMapping> retryMappings,
@@ -49,16 +50,15 @@ public class RetryStrategyLibrary {
   }
 
   /**
-   * Returns the best {@link RetryStrategy} for a given Throwable.  If there are no matches, returns
+   * Returns the best {@link RetryStrategy} for a given Throwable. If there are no matches, returns
    * the default RetryStrategy.
    *
    * Right now it just looks at the message in the Throwable and tries to find a matching regex in
    * its internal library.  Later on it will use more and more of the Throwable to make a decision.
    */
   public RetryStrategy checkoutRetryStrategy(Throwable throwable) {
-    // TODO: determine retry strategy based on full information in Throwable
     for (RetryMapping mapping : retryMappings) {
-      if (mapping.matchesThrowable(throwable)) {
+      if (mapping.matches(throwable)) {
         return mapping.getStrategy();
       }
     }

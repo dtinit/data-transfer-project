@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.AbstractScheduledService.Scheduler;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -33,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import org.datatransferproject.api.launcher.DelegatingExtensionContext;
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.api.launcher.ExtensionContext;
+import org.datatransferproject.api.launcher.Flag;
 import org.datatransferproject.api.launcher.MetricRecorder;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.config.FlagBindingModule;
@@ -45,8 +47,10 @@ import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.hooks.JobHooks;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.spi.transfer.provider.SignalHandler;
 import org.datatransferproject.spi.transfer.provider.TransferCompatibilityProvider;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.security.PublicKeySerializer;
@@ -63,7 +67,7 @@ final class WorkerModule extends FlagBindingModule {
   private final ExtensionContext context;
   private final List<TransferExtension> transferExtensions;
   private final SecurityExtension securityExtension;
-  private final IdempotentImportExecutor idempotentImportExecutor;
+  private final IdempotentImportExecutorExtension idempotentImportExecutorExtension;
   private final SymmetricKeyGenerator symmetricKeyGenerator;
   private final JobHooks jobHooks;
   private final TransferCompatibilityProvider compatibilityProvider;
@@ -73,7 +77,7 @@ final class WorkerModule extends FlagBindingModule {
       CloudExtension cloudExtension,
       List<TransferExtension> transferExtensions,
       SecurityExtension securityExtension,
-      IdempotentImportExecutor idempotentImportExecutor,
+      IdempotentImportExecutorExtension idempotentImportExecutorExtension,
       SymmetricKeyGenerator symmetricKeyGenerator,
       JobHooks jobHooks,
       TransferCompatibilityProvider transferCompatibilityProvider) {
@@ -81,7 +85,7 @@ final class WorkerModule extends FlagBindingModule {
     this.context = context;
     this.transferExtensions = transferExtensions;
     this.securityExtension = securityExtension;
-    this.idempotentImportExecutor = idempotentImportExecutor;
+    this.idempotentImportExecutorExtension = idempotentImportExecutorExtension;
     this.symmetricKeyGenerator = symmetricKeyGenerator;
     this.jobHooks = jobHooks;
     this.compatibilityProvider = transferCompatibilityProvider;
@@ -93,7 +97,7 @@ final class WorkerModule extends FlagBindingModule {
     try {
       return transferExtensions
           .stream()
-          .filter(ext -> ext.getServiceId().toLowerCase().equals(service.toLowerCase()))
+          .filter(ext -> ext.supportsService(service))
           .collect(onlyElement());
     } catch (IllegalArgumentException e) {
       throw new IllegalStateException(
@@ -197,6 +201,45 @@ final class WorkerModule extends FlagBindingModule {
 
   @Provides
   @Singleton
+  @Annotations.ImportSignalHandler
+  SignalHandler getImportSignalHandler(ImmutableList<TransferExtension> transferExtensions) {
+    TransferExtension extension =
+      findTransferExtension(transferExtensions, JobMetadata.getImportService());
+    DelegatingExtensionContext serviceSpecificContext = new DelegatingExtensionContext(context);
+    serviceSpecificContext.registerOverrideService(
+      MetricRecorder.class,
+      new ServiceAwareMetricRecorder(
+        extension.getServiceId(),
+        context.getService(DtpInternalMetricRecorder.class)));
+    serviceSpecificContext.registerOverrideService(
+      TransferServiceConfig.class,
+      getTransferServiceConfig(extension));
+    extension.initialize(serviceSpecificContext);
+    extension.initialize(serviceSpecificContext);
+    return extension.getSignalHandler();
+  }
+
+  @Provides
+  @Singleton
+  @Annotations.ExportSignalHandler
+  SignalHandler getExportSignalHandler(ImmutableList<TransferExtension> transferExtensions) {
+    TransferExtension extension =
+      findTransferExtension(transferExtensions, JobMetadata.getExportService());
+    DelegatingExtensionContext serviceSpecificContext = new DelegatingExtensionContext(context);
+    serviceSpecificContext.registerOverrideService(
+      MetricRecorder.class,
+      new ServiceAwareMetricRecorder(
+        extension.getServiceId(),
+        context.getService(DtpInternalMetricRecorder.class)));
+    serviceSpecificContext.registerOverrideService(
+      TransferServiceConfig.class,
+      getTransferServiceConfig(extension));
+    extension.initialize(serviceSpecificContext);
+    return extension.getSignalHandler();
+  }
+
+  @Provides
+  @Singleton
   ImmutableList<TransferExtension> getTransferExtensions() {
     return ImmutableList.copyOf(transferExtensions);
   }
@@ -240,27 +283,29 @@ final class WorkerModule extends FlagBindingModule {
   }
 
   private TransferServiceConfig getTransferServiceConfig(TransferExtension ext) {
-    String configFileName = "config/" + ext.getServiceId().toLowerCase() + ".yaml";
-    InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream(configFileName);
-    getMonitor()
-        .info(
-            () ->
-                format(
-                    "Service %s has a config file: %s", ext.getServiceId(), (inputStream != null)));
-    if (inputStream == null) {
-      return TransferServiceConfig.getDefaultInstance();
-    } else {
-      try {
-        return TransferServiceConfig.create(inputStream);
-      } catch (IOException e) {
-        throw new RuntimeException("Couldn't create config for " + ext.getServiceId(), e);
-      }
+    try {
+      return TransferServiceConfig.getForService(ext.getServiceId());
+    } catch (IOException e) {
+      throw new RuntimeException("Couldn't create config for " + ext.getServiceId(), e);
     }
   }
 
   @Provides
   @Singleton
   public IdempotentImportExecutor getIdempotentImportExecutor() {
-    return idempotentImportExecutor;
+    return idempotentImportExecutorExtension.getIdempotentImportExecutor(context);
+  }
+
+  @Provides
+  @Singleton
+  @Annotations.RetryingExecutor
+  public IdempotentImportExecutor getRetryingIdempotentImportExecutor() {
+    return idempotentImportExecutorExtension.getRetryingIdempotentImportExecutor(context);
+  }
+
+  @Provides
+  @Named("transferSignalEnabled")
+  public Boolean transferSignalEnabled() {
+    return context.getSetting("transferSignalEnabled", Boolean.TRUE);
   }
 }

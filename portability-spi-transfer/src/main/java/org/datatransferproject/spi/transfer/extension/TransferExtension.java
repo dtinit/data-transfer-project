@@ -16,15 +16,21 @@
 package org.datatransferproject.spi.transfer.extension;
 
 import org.datatransferproject.api.launcher.AbstractExtension;
+import org.datatransferproject.spi.transfer.provider.SignalHandler;
 import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.types.transfer.auth.AuthData;
 
 /** Transfer extensions implement this contract to be loaded in a transfer worker process. */
 public interface TransferExtension extends AbstractExtension {
 
   /** The key associated with this extension's service. */
   String getServiceId();
+
+  default boolean supportsService(String service) {
+    return this.getServiceId().toLowerCase().equals(service.toLowerCase());
+  }
 
   /** Returns initialized extension exporter.
    * @param transferDataType*/
@@ -33,4 +39,11 @@ public interface TransferExtension extends AbstractExtension {
   /** Returns initialized extension importer.
    * @param transferDataType*/
   Importer<?, ?> getImporter(DataVertical transferDataType);
+
+  /**
+   * Returns initialized Signaller.
+   */
+  default SignalHandler<?> getSignalHandler() {
+    return new SignalHandler<AuthData>(){};
+  }
 }

@@ -78,7 +78,7 @@ public class MediaContainerResource extends ContainerResource {
             .stream()
             .map(MediaAlbum::videoToMediaAlbum)
             .collect(Collectors.toList()),
-        null,
+        null  /*photos*/,
         videosContainer.getVideos());
   }
 

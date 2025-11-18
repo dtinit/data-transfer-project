@@ -48,7 +48,7 @@ public class ImgurPhotosImporter
 
   private final String CREATE_ALBUM_URL;
   private final String UPLOAD_PHOTO_URL;
-  private static final String TEMP_PHOTOS_KEY = "tempPhotosData";
+  private static final String TEMP_PHOTOS_KEY = "tempMediaData";
 
   public ImgurPhotosImporter(
       Monitor monitor,

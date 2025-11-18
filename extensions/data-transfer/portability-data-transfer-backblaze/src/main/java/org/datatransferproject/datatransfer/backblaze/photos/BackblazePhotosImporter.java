@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.UUID;
+import java.util.concurrent.atomic.LongAdder;
+
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.backblaze.common.BackblazeDataTransferClient;
 import org.datatransferproject.datatransfer.backblaze.common.BackblazeDataTransferClientFactory;
@@ -80,14 +82,23 @@ public class BackblazePhotosImporter
       }
     }
 
+    final LongAdder totalImportedFilesSizes = new LongAdder();
     if (data.getPhotos() != null && data.getPhotos().size() > 0) {
       for (PhotoModel photo : data.getPhotos()) {
         idempotentExecutor.importAndSwallowIOExceptions(
-            photo, p -> importSinglePhoto(idempotentExecutor, b2Client, jobId, p));
+            photo,
+            p -> {
+              ItemImportResult<String> fileImportResult =
+                  importSinglePhoto(idempotentExecutor, b2Client, jobId, p);
+              if (fileImportResult.hasBytes()) {
+                totalImportedFilesSizes.add(fileImportResult.getBytes());
+              }
+              return fileImportResult;
+            });
       }
     }
 
-    return ImportResult.OK;
+    return ImportResult.OK.copyWithBytes(totalImportedFilesSizes.longValue());
   }
 
   private ItemImportResult<String> importSinglePhoto(
@@ -115,8 +126,11 @@ public class BackblazePhotosImporter
     } catch (Exception e) {
       // Swallow the exception caused by Remove data so that existing flows continue
       monitor.info(
-          () -> format("Exception swallowed while removing data for jobId %s, localPath %s",
-              jobId, photo.getFetchableUrl()), e);
+          () ->
+              format(
+                  "Exception swallowed while removing data for jobId %s, localPath %s",
+                  jobId, photo.getFetchableUrl()),
+          e);
     }
 
     return ItemImportResult.success(response, size);

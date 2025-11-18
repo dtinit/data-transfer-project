@@ -1,6 +1,8 @@
 package org.datatransferproject.transfer.koofr.videos;
 
 import com.google.common.collect.ImmutableList;
+import java.time.Instant;
+import java.util.Date;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.datatransferproject.api.launcher.Monitor;
@@ -35,14 +37,10 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class KoofrVideosImporterTest {
-  @Mock
-  private KoofrClientFactory clientFactory;
-  @Mock
-  private KoofrClient client;
-  @Mock
-  private Monitor monitor;
-  @Mock
-  private IdempotentImportExecutor executor;
+  @Mock private KoofrClientFactory clientFactory;
+  @Mock private KoofrClient client;
+  @Mock private Monitor monitor;
+  @Mock private IdempotentImportExecutor executor;
   private KoofrVideosImporter importer;
   private TokensAndUrlAuthData authData;
   private MockWebServer server;
@@ -66,6 +64,7 @@ public class KoofrVideosImporterTest {
               capturedResult.set(result);
               return result;
             });
+    when(executor.importAndSwallowIOExceptions(any(), any())).thenCallRealMethod();
     authData = new TokensAndUrlAuthData("acc", "refresh", "");
   }
 
@@ -97,6 +96,7 @@ public class KoofrVideosImporterTest {
             new VideoAlbum("id1", "Album 1", "This is a fake album"),
             new VideoAlbum("id2", "", description1001));
 
+    Date uploadedTime = Date.from(Instant.parse("2020-09-04T12:40:57.741Z"));
     Collection<VideoModel> videos =
         ImmutableList.of(
             new VideoModel(
@@ -107,7 +107,7 @@ public class KoofrVideosImporterTest {
                 "video1",
                 "id1",
                 false,
-                null),
+                uploadedTime),
             new VideoModel(
                 "video2.mp4",
                 server.url("/2.mp4").toString(),
@@ -146,7 +146,7 @@ public class KoofrVideosImporterTest {
             eq("video1.mp4"),
             any(),
             eq("video/mp4"),
-            isNull(),
+            eq(uploadedTime),
             eq("A video 1"));
     clientInOrder.verify(client).fileExists(eq("/root/Album 1/video2.mp4"));
     clientInOrder.verify(client).fileExists(eq("/root/Album/video3.mp4"));
@@ -231,16 +231,16 @@ public class KoofrVideosImporterTest {
     Collection<VideoAlbum> albums = ImmutableList.of();
 
     Collection<VideoModel> videos =
-            ImmutableList.of(
-                    new VideoModel(
-                            "not_found_video_1.mp4",
-                            server.url("/not_found.mp4").toString(),
-                            "Video not founded in CDN",
-                            "video/mp4",
-                            "not_found_video_1",
-                            null,
-                            false,
-                            null));
+        ImmutableList.of(
+            new VideoModel(
+                "not_found_video_1.mp4",
+                server.url("/not_found.mp4").toString(),
+                "Video not founded in CDN",
+                "video/mp4",
+                "not_found_video_1",
+                null,
+                false,
+                null));
 
     VideosContainerResource resource = spy(new VideosContainerResource(albums, videos));
 

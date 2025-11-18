@@ -15,6 +15,9 @@
  */
 package org.datatransferproject.launcher.monitor;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static com.google.common.base.Throwables.getStackTraceAsString;
+
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 
@@ -24,9 +27,16 @@ import java.time.format.DateTimeFormatter;
 import java.util.function.Supplier;
 import org.datatransferproject.launcher.monitor.events.EventCode;
 
-/** Outputs monitor events to the console. Uses ANSI color codes in shells that support them. */
+/**
+ * Outputs monitor events to the console. Uses ANSI color codes in shells that support them.
+ *
+ * <p>For pretty color output in your local TTY ensure your shell has set
+ * {@code FORCE_COLOR} environment variable to "1" or "true" (and that you're
+ * not on Windows).
+ */
 public class ConsoleMonitor implements Monitor {
-  private Level level;
+  private final Level minLevel;
+  private final boolean useAnsiColor = shouldUseColor();
 
   public enum Level {
     SEVERE(2),
@@ -45,11 +55,9 @@ public class ConsoleMonitor implements Monitor {
   private static final String ANSI_RED = "\u001B[31m";
   private static final String ANSI_BLUE = "\u001B[34m";
 
-  private boolean ansi;
-
-  public ConsoleMonitor(Level level) {
-    this.level = level;
-    ansi = !System.getProperty("os.name").contains("Windows");
+  /** Constructs a logger that drops all logs at a level below {@code minLevel}. */
+  public ConsoleMonitor(Level minLevel) {
+    this.minLevel = minLevel;
   }
 
   public void severe(Supplier<String> supplier, Object... data) {
@@ -57,37 +65,86 @@ public class ConsoleMonitor implements Monitor {
   }
 
   public void info(Supplier<String> supplier, Object... data) {
-    if (Level.INFO.value < level.value) {
+    if (Level.INFO.value < minLevel.value) {
       return;
     }
     output("INFO", supplier, ANSI_BLUE, data);
   }
 
   public void debug(Supplier<String> supplier, Object... data) {
-    if (Level.DEBUG.value < level.value) {
+    if (Level.DEBUG.value < minLevel.value) {
       return;
     }
     output("DEBUG", supplier, ANSI_BLACK, data);
   }
 
   private void output(String level, Supplier<String> supplier, String color, Object... data) {
-    color = ansi ? color : "";
-    String reset = ansi ? ANSI_RESET : "";
+    StringBuilder builder = new StringBuilder();
+    if (useAnsiColor) {
+      builder.append(color);
+    }
 
-    String time = ZonedDateTime.now(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-    System.out.println(color + level + " " + time + " " + supplier.get() + reset);
+    builder.append(level);
+    builder.append(" ");
+
+    // ISO, because obvz (sortable, standard), and offset because this may be
+    // shared/discussed/debugged outside someone's console, at which point a
+    // vague clock time without its timezone is useless.
+    builder.append(ZonedDateTime.now(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+
+    builder.append(" ");
+    builder.append(supplier.get());
+
+    if (useAnsiColor) {
+      builder.append(ANSI_RESET);
+    }
+
     if (data != null) {
       for (Object datum : data) {
         if (datum instanceof Throwable) {
-          ((Throwable) datum).printStackTrace(System.out);
+          builder.append(getStackTraceAsString((Throwable) datum));
         } else if (datum instanceof UUID) {
-          System.out.println("JobId: " + ((UUID)datum).toString());
+          builder.append("JobId: ");
+          builder.append(((UUID) datum).toString());
         } else if (datum instanceof EventCode) {
-          System.out.println("EventCode: " + datum.toString());
+          builder.append("EventCode: ");
+          builder.append(((EventCode) datum).toString());
         } else if (datum != null) {
-          System.out.println(datum);
+          builder.append(datum);
         }
       }
+    }
+
+    // Write to standard error, as these are debug logs for which any buffering
+    // won't help us at all.
+    System.err.println(builder.toString());
+  }
+
+  /**
+   * Whether we think we're attached to a human's TTY that wants pretty colors,
+   * otherwise this is a log file someone may be hunting/analyzing later so
+   * ASCII-escape codes for color will just be annoying.
+   */
+  private static final boolean shouldUseColor() {
+    try {
+      final String osName = System.getProperty("os.name");
+      return getEnv("FORCE_COLOR") && !getEnv("NO_COLOR") &&
+        !osName.contains("Windows");
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  /** Check of boolean-esque env. variable, or false if anything goes wrong. */
+  private static final boolean getEnv(String envVarName) {
+    try {
+      final String rawEnvValue = System.getenv(envVarName);
+      if (isNullOrEmpty(rawEnvValue)) {
+        return false;
+      }
+      return rawEnvValue.equals("1") || rawEnvValue.equals("true");
+    } catch (Exception e) {
+      return false;
     }
   }
 }

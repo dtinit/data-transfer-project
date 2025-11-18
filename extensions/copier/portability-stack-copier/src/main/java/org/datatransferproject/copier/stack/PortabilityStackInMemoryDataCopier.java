@@ -17,7 +17,6 @@
 package org.datatransferproject.copier.stack;
 
 import com.google.inject.Provider;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Stack;
@@ -33,12 +32,12 @@ import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.ContinuationData;
 import org.datatransferproject.spi.transfer.types.CopyException;
+import org.datatransferproject.transfer.Annotations;
 import org.datatransferproject.transfer.copier.InMemoryDataCopier;
 import org.datatransferproject.transfer.copier.PortabilityAbstractInMemoryDataCopier;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.transfer.auth.AuthData;
-import org.datatransferproject.types.transfer.errors.ErrorDetail;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 
 /** Implementation of {@link InMemoryDataCopier}. */
@@ -55,6 +54,7 @@ public class PortabilityStackInMemoryDataCopier extends PortabilityAbstractInMem
       Provider<RetryStrategyLibrary> retryStrategyLibraryProvider,
       Monitor monitor,
       IdempotentImportExecutor idempotentImportExecutor,
+      @Annotations.RetryingExecutor IdempotentImportExecutor retryingIdempotentImportExecutor,
       DtpInternalMetricRecorder dtpInternalMetricRecorder,
       JobStore jobStore) {
     super(
@@ -63,6 +63,7 @@ public class PortabilityStackInMemoryDataCopier extends PortabilityAbstractInMem
         retryStrategyLibraryProvider,
         monitor,
         idempotentImportExecutor,
+        retryingIdempotentImportExecutor,
         dtpInternalMetricRecorder,
         jobStore);
   }
@@ -83,7 +84,7 @@ public class PortabilityStackInMemoryDataCopier extends PortabilityAbstractInMem
    * @param exportInfo Any pagination or resource information to use for subsequent calls.
    */
   @Override
-  public Collection<ErrorDetail> copy(
+  public void copy(
       AuthData exportAuthData,
       AuthData importAuthData,
       UUID jobId,
@@ -132,7 +133,6 @@ public class PortabilityStackInMemoryDataCopier extends PortabilityAbstractInMem
           copyIteration,
           exportResult.getContinuationData());
     }
-    return idempotentImportExecutor.getErrors();
   }
 
   private void updateStackAfterCopyIteration(

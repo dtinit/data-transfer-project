@@ -20,6 +20,9 @@ import static java.lang.String.format;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.name.Named;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Optional;
@@ -33,15 +36,22 @@ import org.datatransferproject.spi.cloud.types.JobAuthorization;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
 import org.datatransferproject.spi.cloud.types.PortabilityJob.State;
 import org.datatransferproject.spi.transfer.hooks.JobHooks;
+import org.datatransferproject.spi.transfer.provider.SignalHandler;
+import org.datatransferproject.spi.transfer.provider.SignalRequest;
+import org.datatransferproject.spi.transfer.types.signals.JobLifeCycle;
 import org.datatransferproject.spi.transfer.security.AuthDataDecryptService;
 import org.datatransferproject.spi.transfer.types.CopyException;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 import org.datatransferproject.spi.transfer.types.FailureReasons;
+import org.datatransferproject.spi.transfer.types.signals.JobLifeCycle.EndReason;
+import org.datatransferproject.transfer.Annotations.ExportSignalHandler;
+import org.datatransferproject.transfer.Annotations.ImportSignalHandler;
 import org.datatransferproject.transfer.copier.InMemoryDataCopier;
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.transfer.auth.AuthData;
 import org.datatransferproject.types.transfer.auth.AuthDataPair;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
+import org.datatransferproject.types.transfer.retry.RetryException;
 
 /**
  * Process a job in two steps: <br>
@@ -49,14 +59,17 @@ import org.datatransferproject.types.transfer.errors.ErrorDetail;
  * key<br>
  * (2)Run the copy job
  */
-final class JobProcessor {
+class JobProcessor {
   private final JobStore store;
   private final JobHooks hooks;
   private final ObjectMapper objectMapper;
   private final InMemoryDataCopier copier;
   private final AuthDataDecryptService decryptService;
+  private final Provider<SignalHandler> exportSignalHandlerProvider;
+  private final Provider<SignalHandler> importSignalHandlerProvider;
   private final Monitor monitor;
   private final DtpInternalMetricRecorder dtpInternalMetricRecorder;
+  private final boolean transferSignalEnabled;
 
   @Inject
   JobProcessor(
@@ -65,6 +78,9 @@ final class JobProcessor {
       ObjectMapper objectMapper,
       InMemoryDataCopier copier,
       AuthDataDecryptService decryptService,
+      @ExportSignalHandler Provider<SignalHandler> exportSignalHandlerProvider,
+      @ImportSignalHandler Provider<SignalHandler> importSignalHandlerProvider,
+      @Named("transferSignalEnabled") Boolean transferSignalEnabled,
       Monitor monitor,
       DtpInternalMetricRecorder dtpInternalMetricRecorder) {
     this.store = store;
@@ -72,8 +88,11 @@ final class JobProcessor {
     this.objectMapper = objectMapper;
     this.copier = copier;
     this.decryptService = decryptService;
+    this.exportSignalHandlerProvider = exportSignalHandlerProvider;
+    this.importSignalHandlerProvider = importSignalHandlerProvider;
     this.monitor = monitor;
     this.dtpInternalMetricRecorder = dtpInternalMetricRecorder;
+    this.transferSignalEnabled = transferSignalEnabled.booleanValue();
   }
 
   /** Process our job, whose metadata is available via {@link JobMetadata}. */
@@ -81,8 +100,8 @@ final class JobProcessor {
     boolean success = false;
     UUID jobId = JobMetadata.getJobId();
     monitor.debug(() -> format("Begin processing jobId: %s", jobId), EventCode.WORKER_JOB_STARTED);
-
-    Collection<ErrorDetail> errors = null;
+    AuthData exportAuthData = null;
+    AuthData importAuthData = null;
 
     try {
       markJobStarted(jobId);
@@ -111,8 +130,9 @@ final class JobProcessor {
       String encrypted = jobAuthorization.encryptedAuthData();
       byte[] encodedPrivateKey = JobMetadata.getPrivateKey();
       AuthDataPair pair = decryptService.decrypt(encrypted, encodedPrivateKey);
-      AuthData exportAuthData = objectMapper.readValue(pair.getExportAuthData(), AuthData.class);
-      AuthData importAuthData = objectMapper.readValue(pair.getImportAuthData(), AuthData.class);
+
+      exportAuthData = objectMapper.readValue(pair.getExportAuthData(), AuthData.class);
+      importAuthData = objectMapper.readValue(pair.getImportAuthData(), AuthData.class);
 
       String exportInfoStr = job.exportInformation();
       Optional<ExportInformation> exportInfo = Optional.empty();
@@ -126,11 +146,9 @@ final class JobProcessor {
           JobMetadata.getExportService(),
           JobMetadata.getImportService());
       JobMetadata.getStopWatch().start();
-      errors = copier.copy(exportAuthData, importAuthData, jobId, exportInfo);
-      final int numErrors = errors.size();
-      monitor.debug(
-          () -> format("Finished copy for jobId: %s with %d error(s).", jobId, numErrors));
-      success = errors.isEmpty();
+      sendSignals(jobId, exportAuthData, importAuthData, JobLifeCycle.JOB_STARTED(), monitor);
+      copier.copy(exportAuthData, importAuthData, jobId, exportInfo);
+      success = true;
     } catch (CopyExceptionWithFailureReason e) {
       String failureReason = e.getFailureReason();
       if (failureReason.contains(FailureReasons.DESTINATION_FULL.toString())) {
@@ -153,9 +171,19 @@ final class JobProcessor {
     } catch (IOException | CopyException | RuntimeException e) {
       monitor.severe(() -> "Error processing jobId: " + jobId, e, EventCode.WORKER_JOB_ERRORED);
     } finally {
-      monitor.debug(() -> "Finished processing jobId: " + jobId, EventCode.WORKER_JOB_FINISHED);
-      addErrorsAndMarkJobFinished(jobId, success, errors);
+      // The errors returned by copier.getErrors are those logged by the idempotentImportExecutor
+      // and are distinct from the exceptions thrown by copier.copy
+      final Collection<ErrorDetail> loggedErrors = copier.getErrors(jobId);
+      final int numErrors = loggedErrors.size();
+      // success is set to true above if copy returned without throwing
+      success &= loggedErrors.isEmpty();
+      monitor.debug(
+          () -> format("Finished processing jobId: %s with %d error(s).", jobId, numErrors),
+          EventCode.WORKER_JOB_FINISHED);
+      addErrorsAndMarkJobFinished(jobId, success, loggedErrors);
       hooks.jobFinished(jobId, success);
+      JobLifeCycle finalStatus = deriveFinalJobStatus(success);
+      sendSignals(jobId, exportAuthData, importAuthData, finalStatus, monitor);
       dtpInternalMetricRecorder.finishedJob(
           JobMetadata.getDataType(),
           JobMetadata.getExportService(),
@@ -164,6 +192,36 @@ final class JobProcessor {
           JobMetadata.getStopWatch().elapsed());
       monitor.flushLogs();
       JobMetadata.reset();
+    }
+  }
+
+  private static JobLifeCycle deriveFinalJobStatus(boolean success) {
+    return JobLifeCycle.builder()
+      .setState(JobLifeCycle.State.ENDED)
+      .setEndReason(success ? EndReason.SUCCESSFULLY_COMPLETED : EndReason.PARTIALLY_COMPLETED)
+      .build();
+  }
+
+  private void sendSignals(UUID jobId, AuthData exportAuthData, AuthData importAuthData,
+    JobLifeCycle jobLifeCycle, Monitor monitor) {
+    if(!transferSignalEnabled) {
+      monitor.info(() -> "Transfer Signal Disabled.");
+      return;
+    }
+
+    SignalRequest signalRequest = SignalRequest.builder()
+      .setJobId(jobId.toString())
+      .setDataType(JobMetadata.getDataType().getDataType())
+      .setJobStatus(jobLifeCycle)
+      .setExportingService(JobMetadata.getExportService())
+      .setImportingService(JobMetadata.getImportService())
+      .build();
+
+    try {
+      exportSignalHandlerProvider.get().sendSignal(signalRequest, exportAuthData, monitor);
+      importSignalHandlerProvider.get().sendSignal(signalRequest, importAuthData, monitor);
+    } catch (CopyExceptionWithFailureReason | IOException | RetryException e) {
+      monitor.info(() -> "Errored while sending transfer signals.", e);
     }
   }
 

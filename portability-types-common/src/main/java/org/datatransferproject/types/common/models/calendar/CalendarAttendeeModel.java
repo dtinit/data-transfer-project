@@ -17,9 +17,11 @@ package org.datatransferproject.types.common.models.calendar;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import java.util.Objects;
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
 public class CalendarAttendeeModel {
   private final String displayName;
   private final String email;

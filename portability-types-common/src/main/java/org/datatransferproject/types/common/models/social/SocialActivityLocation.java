@@ -18,14 +18,16 @@ package org.datatransferproject.types.common.models.social;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import java.util.Objects;
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
 public class SocialActivityLocation {
 
-  private String name;
-  private double longitude;
-  private double latitude;
+  private final String name;
+  private final double longitude;
+  private final double latitude;
 
   @JsonCreator
   public SocialActivityLocation(

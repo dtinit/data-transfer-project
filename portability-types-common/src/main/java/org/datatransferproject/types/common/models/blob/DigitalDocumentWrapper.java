@@ -1,7 +1,9 @@
 package org.datatransferproject.types.common.models.blob;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Map;
 import org.datatransferproject.types.common.models.DataModel;
 
 /**
@@ -10,6 +12,7 @@ import org.datatransferproject.types.common.models.DataModel;
  * this class represent DTP specific data that doesn't fit into the schema.org representation.
  */
 public class DigitalDocumentWrapper extends DataModel {
+
   private final DtpDigitalDocument dtpDigitalDocument;
   private final String originalEncodingFormat;
   // This isn't in the schema.org spec and is only needed to store the bytes DTP will transfer
@@ -36,5 +39,11 @@ public class DigitalDocumentWrapper extends DataModel {
 
   public String getOriginalEncodingFormat() {
     return originalEncodingFormat;
+  }
+
+  @JsonIgnore
+  @Override
+  public Map<String, Integer> getCounts() {
+    return super.getCounts();
   }
 }

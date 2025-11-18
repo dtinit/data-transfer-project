@@ -23,6 +23,7 @@ import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.http.ByteArrayContent;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpContent;
+import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
@@ -33,7 +34,6 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.ArrayMap;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.BaseEncoding;
@@ -43,6 +43,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
@@ -65,11 +66,14 @@ import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.spi.transfer.types.UploadErrorException;
 
+// TODO (#1307): Find a way to consolidate all 3P API interfaces
 public class GooglePhotosInterface {
-
   public static final String ERROR_HASH_MISMATCH = "Hash mismatch";
   private static final String GOOG_ERROR_HASH_MISMATCH_LEGACY = "Checksum from header does not match received payload content.";
   private static final String GOOG_ERROR_HASH_MISMATCH_UNIFIED = "User-provided checksum does not match received payload content.";
+
+  private static final String GOOGPHOTOS_ALBUMS_PERMISSION_ERROR = "The caller does not have permission";
+  private static final String GOOGPHOTOS_PHOTO_PERMISSION_ERROR = "Google Photos is disabled for the user";
 
   private static final String BASE_URL = "https://photoslibrary.googleapis.com/v1/";
   private static final int ALBUM_PAGE_SIZE = 20; // TODO
@@ -95,20 +99,20 @@ public class GooglePhotosInterface {
   private final GoogleCredentialFactory credentialFactory;
   private final RateLimiter writeRateLimiter;
 
-  GooglePhotosInterface(
+  public GooglePhotosInterface(
       GoogleCredentialFactory credentialFactory,
       Credential credential,
       JsonFactory jsonFactory,
       Monitor monitor,
       double writesPerSecond) {
+    this.credentialFactory = credentialFactory;
     this.credential = credential;
     this.jsonFactory = jsonFactory;
     this.monitor = monitor;
-    this.credentialFactory = credentialFactory;
     writeRateLimiter = RateLimiter.create(writesPerSecond);
   }
 
-  AlbumListResponse listAlbums(Optional<String> pageToken)
+  public AlbumListResponse listAlbums(Optional<String> pageToken)
       throws IOException, InvalidTokenException, PermissionDeniedException {
     Map<String, String> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(ALBUM_PAGE_SIZE));
@@ -118,18 +122,18 @@ public class GooglePhotosInterface {
     return makeGetRequest(BASE_URL + "albums", Optional.of(params), AlbumListResponse.class);
   }
 
-  GoogleAlbum getAlbum(String albumId) throws IOException, InvalidTokenException, PermissionDeniedException{
+  public GoogleAlbum getAlbum(String albumId) throws IOException, InvalidTokenException, PermissionDeniedException{
     Map<String, String> params = new LinkedHashMap<>();
     return makeGetRequest(BASE_URL + "albums/" + albumId, Optional.of(params), GoogleAlbum.class);
   }
 
-  GoogleMediaItem getMediaItem(String mediaId) throws IOException, InvalidTokenException, PermissionDeniedException {
+  public GoogleMediaItem getMediaItem(String mediaId) throws IOException, InvalidTokenException, PermissionDeniedException {
     Map<String, String> params = new LinkedHashMap<>();
     return makeGetRequest(BASE_URL + "mediaItems/" + mediaId, Optional.of(params), GoogleMediaItem
         .class);
   }
 
-  MediaItemSearchResponse listMediaItems(Optional<String> albumId, Optional<String> pageToken)
+  public MediaItemSearchResponse listMediaItems(Optional<String> albumId, Optional<String> pageToken)
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     Map<String, Object> params = new LinkedHashMap<>();
     params.put(PAGE_SIZE_KEY, String.valueOf(MEDIA_PAGE_SIZE));
@@ -146,8 +150,8 @@ public class GooglePhotosInterface {
         content, MediaItemSearchResponse.class);
   }
 
-  GoogleAlbum createAlbum(GoogleAlbum googleAlbum)
-      throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+  public GoogleAlbum createAlbum(GoogleAlbum googleAlbum)
+          throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     Map<String, Object> albumMap = createJsonMap(googleAlbum);
     Map<String, Object> contentMap = ImmutableMap.of("album", albumMap);
     HttpContent content = new JsonHttpContent(jsonFactory, contentMap);
@@ -156,7 +160,7 @@ public class GooglePhotosInterface {
         GoogleAlbum.class);
   }
 
-  String uploadPhotoContent(InputStream inputStream, @Nullable String sha1)
+  public String uploadMediaContent(InputStream inputStream, @Nullable String sha1)
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     // TODO: add filename
     InputStreamContent content = new InputStreamContent(null, inputStream);
@@ -183,7 +187,7 @@ public class GooglePhotosInterface {
         Optional.of(headers.build()), httpContent, String.class);
   }
 
-  BatchMediaItemResponse createPhotos(NewMediaItemUpload newMediaItemUpload)
+  public BatchMediaItemResponse createPhotos(NewMediaItemUpload newMediaItemUpload)
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
     HashMap<String, Object> map = createJsonMap(newMediaItemUpload);
     HttpContent httpContent = new JsonHttpContent(this.jsonFactory, map);
@@ -195,59 +199,44 @@ public class GooglePhotosInterface {
   private <T> T makeGetRequest(String url, Optional<Map<String, String>> parameters, Class<T> clazz)
       throws IOException, InvalidTokenException, PermissionDeniedException {
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
-    HttpRequest getRequest =
-        requestFactory.buildGetRequest(
-            new GenericUrl(url + "?" + generateParamsString(parameters)));
 
     HttpResponse response;
     try {
-      response = getRequest.execute();
-    } catch (HttpResponseException e) {
-      response =
-          handleHttpResponseException(
-              () ->
+      response = makeHttpRequest(() ->
                   requestFactory.buildGetRequest(
-                      new GenericUrl(url + "?" + generateParamsString(parameters))),
-              e);
+                      new GenericUrl(url + "?" + generateParamsString(parameters))));
+    } catch (UploadErrorException e) {
+      throw new IllegalStateException("GET request unexpectedly produced Upload exception", e);
     }
 
-    Preconditions.checkState(response.getStatusCode() == 200);
     String result =
-        CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
+        CharStreams.toString(new InputStreamReader(response.getContent(), StandardCharsets.UTF_8));
     return objectMapper.readValue(result, clazz);
   }
 
-  <T> T makePostRequest(String url, Optional<Map<String, String>> parameters,
-      Optional<Map<String, String>> extraHeaders, HttpContent httpContent, Class<T> clazz)
+  public <T> T makePostRequest(
+      String url,
+      Optional<Map<String, String>> parameters,
+      Optional<Map<String, String>> extraHeaders,
+      HttpContent httpContent,
+      Class<T> clazz)
       throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
-    // Wait for write permit before making request
-    writeRateLimiter.acquire();
-
     HttpRequestFactory requestFactory = httpTransport.createRequestFactory();
-    HttpRequest postRequest =
+    HttpResponse response = makeHttpRequest(() -> {
+      // Wait for write permit before making request
+      writeRateLimiter.acquire();
+
+      HttpRequest postRequest =
         requestFactory.buildPostRequest(
             new GenericUrl(url + "?" + generateParamsString(parameters)), httpContent);
-    extraHeaders.ifPresent(stringStringMap -> stringStringMap.forEach(
-        (key, value) -> postRequest.getHeaders().set(key, value)));
-    postRequest.setReadTimeout(2 * 60000); // 2 minutes read timeout
-    HttpResponse response;
+      extraHeaders.ifPresent(stringStringMap -> stringStringMap.forEach(
+            (key, value) -> postRequest.getHeaders().set(key, value)));
+      postRequest.setReadTimeout(2 * 60000); // 2 minutes read timeout
+      return postRequest;
+    });
 
-    try {
-      response = postRequest.execute();
-    } catch (HttpResponseException e) {
-      maybeRethrowAsUploadError(e);
-
-      response =
-          handleHttpResponseException(
-              () ->
-                  requestFactory.buildPostRequest(
-                      new GenericUrl(url + "?" + generateParamsString(parameters)), httpContent),
-              e);
-    }
-
-    Preconditions.checkState(response.getStatusCode() == 200);
     String result =
-        CharStreams.toString(new InputStreamReader(response.getContent(), Charsets.UTF_8));
+        CharStreams.toString(new InputStreamReader(response.getContent(), StandardCharsets.UTF_8));
     if (clazz.isAssignableFrom(String.class)) {
       return (T) result;
     } else {
@@ -255,55 +244,115 @@ public class GooglePhotosInterface {
     }
   }
 
-  /**
-   * Converting {@link HttpResponseException} to upload-related exceptions. Current this is only
-   * used for payload hash verifications.
-   *
-   * Note that making this a separate method to avoid polluting throw lists.
-   */
-  private void maybeRethrowAsUploadError(HttpResponseException e) throws UploadErrorException {
-    if (e.getStatusCode() == 400) {
-      if (e.getContent().contains(GOOG_ERROR_HASH_MISMATCH_LEGACY) || e.getContent()
-          .contains(GOOG_ERROR_HASH_MISMATCH_UNIFIED)) {
-        throw new UploadErrorException(ERROR_HASH_MISMATCH, e);
+  private HttpResponse makeHttpRequest(SupplierWithIO<HttpRequest> httpRequest)
+  throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException {
+
+    HttpResponse response = null;
+    HttpRequest firstReq = httpRequest.getWithIO();
+    try {
+      response = firstReq.execute();
+    } catch (HttpResponseException firstReqException) {
+      Optional<HttpResponse> maybeTokenRefreshedRetry = Optional.empty();
+      try {
+        maybeTokenRefreshedRetry =
+            maybeRetryWithFreshToken(httpRequest, firstReqException);
+      } catch (HttpResponseException tokenRefreshedRetryException) {
+        rethrowForDtpStandards(
+            tokenRefreshedRetryException.getStatusCode(),
+            Optional.of(tokenRefreshedRetryException),
+            Optional.empty() /*maybeResponse*/);
       }
-      // Delegate other 400 errors and non-400 errors to {@link #handleHttpResponseException}.
+
+      if (maybeTokenRefreshedRetry.isPresent()) {
+        response = maybeTokenRefreshedRetry.get();
+      } else {
+        rethrowForDtpStandards(
+            firstReqException.getStatusCode(),
+            Optional.of(firstReqException),
+            Optional.empty() /*maybeResponse*/);
+      }
     }
+    Preconditions.checkNotNull(
+        response,
+        "bug? response should be set, else DTP error already thrown, but neither happened?");
+
+    if (response.getStatusCode() != 200) {
+      rethrowForDtpStandards(
+        response.getStatusCode(),
+        Optional.empty() /*maybeException*/,
+        Optional.ofNullable(response));
+    }
+
+    return response;
   }
 
-  private HttpResponse handleHttpResponseException(
+  private Optional<HttpResponse> maybeRetryWithFreshToken(
       SupplierWithIO<HttpRequest> httpRequest, HttpResponseException e)
-      throws IOException, InvalidTokenException, PermissionDeniedException {
+      throws IOException, InvalidTokenException {
     // if the response is "unauthorized", refresh the token and try the request again
     final int statusCode = e.getStatusCode();
 
-    if (statusCode == 401) {
-      monitor.info(() -> "Attempting to refresh authorization token");
-      // if the credential refresh failed, let the error bubble up via the IOException that gets
-      // thrown
-      credential = credentialFactory.refreshCredential(credential);
-      monitor.info(() -> "Refreshed authorization token successfully");
+    if (statusCode != 401) {
+      return Optional.empty();
+    }
 
-      // if the second attempt throws an error, then something else is wrong, and we bubble up the
-      // response errors
-      return httpRequest.getWithIO().execute();
-    }
-    // "The caller does not have permission" is potential error for albums.
-    // "Google Photos is disabled for the user" is potential error for photos.
-    if (statusCode == 403 &&
-            (e.getContent().contains("The caller does not have permission") ||
-             e.getContent().contains("Google Photos is disabled for the user"))) {
-      throw new PermissionDeniedException("User permission to google photos was denied", e);
+    monitor.info(() -> String.format("GooglePhotosInterface: Attempting to refresh authorization token due to HTTP response code=%s, %s\n", statusCode, e));
+    // if the credential refresh failed, let the error bubble up via the IOException that gets
+    // thrown
+    credential = credentialFactory.refreshCredential(credential);
+    monitor.info(() -> "GooglePhotosInterface: Refreshed authorization token successfully");
+
+    // if the second attempt throws an error, then something else is wrong, and we bubble up the
+    // response errors
+    return Optional.of(httpRequest.getWithIO().execute());
+  }
+
+  /**
+   * Tries to throw a DTP-standard exception for a request that's failed, given whatever info we
+   * have about the failure (HTTP response code, if nothing else) .
+   */
+  // TODO: jzacsh rework this class to interact with HTTP in an easily
+  // loggable/testable/re-usable way, like we did with MicrosoftApiResponse.
+  private void rethrowForDtpStandards(
+    int statusCode,
+    Optional<HttpResponseException> maybeException,
+    Optional<HttpResponse> maybeResponse)
+  throws IOException, InvalidTokenException, PermissionDeniedException, UploadErrorException { 
+    final String emptyServerMessage = "[no server message: have neither response nor exception]";
+    final Optional<String> serverMessage;
+    if (maybeException.isPresent()) {
+      serverMessage = Optional.of(maybeException.get().getContent());
+    } else if (maybeResponse.isPresent()) {
+      serverMessage = Optional.of(maybeResponse.get().getStatusMessage());
     } else {
-      // something else is wrong, bubble up the error
-      throw new IOException(
-          "Bad status code: "
-              + e.getStatusCode()
-              + " Error: '"
-              + e.getStatusMessage()
-              + "' Content: "
-              + e.getContent());
+      serverMessage = Optional.empty();
     }
+
+    if (statusCode == 403 &&
+        (serverMessage.orElse("").contains(GOOGPHOTOS_ALBUMS_PERMISSION_ERROR) ||
+        serverMessage.orElse("").contains(GOOGPHOTOS_PHOTO_PERMISSION_ERROR))) {
+      throw new PermissionDeniedException("User permission to google photos was denied", maybeException.orElse(null));
+    }
+
+   // Upload-related exceptions; currently this is only used for payload hash verifications.
+    if (statusCode == 400 &&
+      (serverMessage.orElse("").contains(GOOG_ERROR_HASH_MISMATCH_LEGACY) ||
+      serverMessage.orElse("").contains(GOOG_ERROR_HASH_MISMATCH_UNIFIED))) {
+    Throwable throwableForBadResponse =
+        new IOException(String.format(
+          "non-error HTTP response statusCode=%s: %s",
+          statusCode,
+          serverMessage.orElse(emptyServerMessage)));
+    Throwable cause = maybeException.map(e -> (Throwable) e /*downcast*/).orElse(throwableForBadResponse);
+    throw new UploadErrorException(ERROR_HASH_MISMATCH, cause);
+    }
+
+    // something else is wrong, bubble up the error
+    throw new IOException(
+        String.format("Bad HTTP response: status code=%s, Error='%s' Content: %s",
+            statusCode,
+            maybeException.map(e -> e.getStatusMessage()).orElse("[no HTTP error]"),
+            serverMessage.orElse(emptyServerMessage)));
   }
 
   private String generateParamsString(Optional<Map<String, String>> params) {

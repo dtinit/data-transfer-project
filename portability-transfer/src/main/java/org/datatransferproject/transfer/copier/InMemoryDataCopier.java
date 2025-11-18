@@ -28,9 +28,11 @@ import java.util.UUID;
 /** In-memory Copier interface */
 public interface InMemoryDataCopier {
   /* Copies the provided dataType from exportService to importService */
-  Collection<ErrorDetail> copy(
+  void copy(
           AuthData exportAuthData,
           AuthData importAuthData,
           UUID jobId, Optional<ExportInformation> exportInfo)
       throws IOException, CopyException;
+
+  Collection<ErrorDetail> getErrors(UUID jobId);
 }

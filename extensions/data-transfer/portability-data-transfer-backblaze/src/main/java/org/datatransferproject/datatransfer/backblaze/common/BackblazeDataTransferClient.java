@@ -20,21 +20,23 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.backblaze.exception.BackblazeCredentialsException;
-import org.datatransferproject.transfer.JobMetadata;
-import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
-import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Bucket;
 import software.amazon.awssdk.services.s3.model.BucketAlreadyExistsException;
@@ -54,11 +56,25 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.UploadPartRequest;
 import software.amazon.awssdk.services.s3.model.UploadPartResponse;
 
+/**
+ * Represents a client for handling data transfer operations with Backblaze B2's S3 compatible API.
+ * This class is responsible for managing the initialization of connections, uploading files, and
+ * handling multipart uploads for large files.
+ *
+ * <p>The client requires valid Backblaze credentials (keyId and applicationKey) and an instance of
+ * a pre-configured S3 client factory for communication with the Backblaze API. Additionally, a
+ * Monitor is used to log diagnostic messages during execution.
+ *
+ * <p>The class provides methods to: - Initialize the BackblazeDataTransferClient using user
+ * credentials. - Upload files either as single uploads or using multipart uploads for larger files.
+ * - Create or select appropriate buckets for data transfer.
+ *
+ * <p>The client implements retry mechanisms and proper error handling for common scenarios like
+ * network failures or authentication issues.
+ */
 public class BackblazeDataTransferClient {
   private static final String DATA_TRANSFER_BUCKET_PREFIX_FORMAT_STRING = "%s-data-transfer";
   private static final int MAX_BUCKET_CREATION_ATTEMPTS = 10;
-  private final List<String> BACKBLAZE_REGIONS =
-      Arrays.asList("us-west-000", "us-west-001", "us-west-002", "eu-central-003");
 
   private final long sizeThresholdForMultipartUpload;
   private final long partSizeForMultiPartUpload;
@@ -68,10 +84,10 @@ public class BackblazeDataTransferClient {
   private String bucketName;
 
   public BackblazeDataTransferClient(
-          Monitor monitor,
-          BackblazeS3ClientFactory backblazeS3ClientFactory,
-          long sizeThresholdForMultipartUpload,
-          long partSizeForMultiPartUpload) {
+      Monitor monitor,
+      BackblazeS3ClientFactory backblazeS3ClientFactory,
+      long sizeThresholdForMultipartUpload,
+      long partSizeForMultiPartUpload) {
     this.monitor = monitor;
     this.backblazeS3ClientFactory = backblazeS3ClientFactory;
     // Avoid infinite loops
@@ -81,43 +97,25 @@ public class BackblazeDataTransferClient {
     this.partSizeForMultiPartUpload = partSizeForMultiPartUpload;
   }
 
-  public void init(String keyId, String applicationKey, String exportService)
+  public void init(
+      String keyId, String applicationKey, String exportService, CloseableHttpClient httpClient)
       throws BackblazeCredentialsException, IOException {
     // Fetch all the available buckets and use that to find which region the user is in
     ListBucketsResponse listBucketsResponse = null;
-    String userRegion = null;
-
-    // The Key ID starts with the region identifier number, so reorder the regions such that
-    // the first region is most likely the user's region
-    String regionId = keyId.substring(0, 3);
-    BACKBLAZE_REGIONS.sort(
-        (String region1, String region2) -> {
-          if (region1.endsWith(regionId)) {
-            return -1;
-          }
-          return 0;
-        });
 
     Throwable s3Exception = null;
-    for (String region : BACKBLAZE_REGIONS) {
-      try {
-        s3Client = backblazeS3ClientFactory.createS3Client(keyId, applicationKey, region);
-
-        listBucketsResponse = s3Client.listBuckets();
-        userRegion = region;
-        break;
-      } catch (S3Exception e) {
-        s3Exception = e;
-        if (s3Client != null) {
-          s3Client.close();
-        }
-        if (e.statusCode() == 403) {
-          monitor.debug(() -> String.format("User is not in region %s", region));
-        }
+    String userRegion = getAccountRegion(httpClient, keyId, applicationKey);
+    s3Client = backblazeS3ClientFactory.createS3Client(keyId, applicationKey, userRegion);
+    try {
+      listBucketsResponse = s3Client.listBuckets();
+    } catch (S3Exception e) {
+      s3Exception = e;
+      if (s3Client != null) {
+        s3Client.close();
       }
     }
 
-    if (listBucketsResponse == null || userRegion == null) {
+    if (listBucketsResponse == null) {
       throw new BackblazeCredentialsException(
           "User's credentials or permissions are not valid for any regions available", s3Exception);
     }
@@ -140,7 +138,7 @@ public class BackblazeDataTransferClient {
             () ->
                 String.format(
                     "File size is larger than %d bytes, so using multipart upload",
-                        sizeThresholdForMultipartUpload));
+                    sizeThresholdForMultipartUpload));
         return uploadFileUsingMultipartUpload(fileKey, file, contentLength);
       }
 
@@ -153,6 +151,43 @@ public class BackblazeDataTransferClient {
       return putObjectResponse.versionId();
     } catch (AwsServiceException | SdkClientException e) {
       throw new IOException(String.format("Error while uploading file, fileKey: %s", fileKey), e);
+    }
+  }
+
+  private String getAccountRegion(
+      CloseableHttpClient httpClient, String keyId, String applicationKey)
+      throws BackblazeCredentialsException {
+
+    String auth = keyId + ":" + applicationKey;
+    byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes());
+    String authHeaderValue = "Basic " + new String(encodedAuth);
+
+    HttpGet request = new HttpGet("https://api.backblazeb2.com/b2api/v2/b2_authorize_account");
+    request.addHeader("Authorization", authHeaderValue);
+
+    try {
+      CloseableHttpResponse response = httpClient.execute(request);
+      try (response) {
+        int statusCode = response.getStatusLine().getStatusCode();
+
+        if (statusCode == 200) {
+          String responseBody = EntityUtils.toString(response.getEntity());
+          JSONParser parser = new JSONParser();
+          JSONObject jsonResponse = (JSONObject) parser.parse(responseBody);
+          String s3ApiUrl = (String) jsonResponse.get("s3ApiUrl");
+          String region = s3ApiUrl.split("s3.")[1].split("\\.")[0];
+          monitor.info(() -> "Region extracted from s3ApiUrl: " + region);
+          return region;
+        } else if (statusCode >= 400 && statusCode < 500) {
+          // Don't retry on client errors (4xx)
+          throw new BackblazeCredentialsException(
+              "Failed to retrieve account's region. Status code: " + statusCode, null);
+        } else {
+          throw new IOException("Server returned status code: " + statusCode);
+        }
+      }
+    } catch (IOException | ParseException e) {
+      throw new BackblazeCredentialsException("Failed to retrieve account's region", e);
     }
   }
 
@@ -210,9 +245,7 @@ public class BackblazeDataTransferClient {
       throws IOException {
 
     String fullPrefix =
-        String.format(
-            DATA_TRANSFER_BUCKET_PREFIX_FORMAT_STRING,
-            exportService.toLowerCase());
+        String.format(DATA_TRANSFER_BUCKET_PREFIX_FORMAT_STRING, exportService.toLowerCase());
     try {
       for (Bucket bucket : listBucketsResponse.buckets()) {
         if (bucket.name().startsWith(fullPrefix)) {
@@ -233,7 +266,7 @@ public class BackblazeDataTransferClient {
                   .build();
           s3Client.createBucket(createBucketRequest);
           return bucketName;
-        } catch (BucketAlreadyExistsException | BucketAlreadyOwnedByYouException e) {
+        } catch (Exception e) {
           monitor.info(() -> "Bucket name already exists");
         }
       }

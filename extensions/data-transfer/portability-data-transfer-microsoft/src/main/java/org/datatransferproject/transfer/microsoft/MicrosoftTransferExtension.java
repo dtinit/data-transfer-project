@@ -15,6 +15,7 @@ import com.google.common.collect.ImmutableMap;
 import okhttp3.OkHttpClient;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.spi.api.transport.JobFileStream;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.types.common.models.DataVertical;
@@ -45,7 +46,7 @@ public class MicrosoftTransferExtension implements TransferExtension {
   // isn't supported on one or the other side of this equation; this is just a WIP prototype to show
   // the concept of converters at play.
   private static final ImmutableList<DataVertical> SUPPORTED_IMPORT_SERVICES =
-      ImmutableList.of(CALENDAR, CONTACTS, PHOTOS);
+      ImmutableList.of(CALENDAR, CONTACTS, PHOTOS, MEDIA);
   private static final ImmutableList<DataVertical> SUPPORTED_EXPORT_SERVICES =
       ImmutableList.of(CALENDAR, CONTACTS, PHOTOS, MEDIA, OFFLINE_DATA);
   private ImmutableMap<DataVertical, Importer> importerMap;
@@ -96,12 +97,19 @@ public class MicrosoftTransferExtension implements TransferExtension {
     // times.
     if (initialized) return;
 
+    final double maxWritesPerSecond =  context.getSetting("msoftMaxWritesPerSecond", 1.0);
     TemporaryPerJobDataStore jobStore = context.getService(TemporaryPerJobDataStore.class);
     HttpTransport httpTransport = context.getService(HttpTransport.class);
+
     JsonFactory jsonFactory = context.getService(JsonFactory.class);
     TransformerService transformerService = new TransformerServiceImpl();
-    OkHttpClient client = new OkHttpClient.Builder().build();
+    OkHttpClient.Builder httpClientBuilder = new OkHttpClient.Builder();
     ObjectMapper mapper = new ObjectMapper();
+
+    // TODO(jzacsh) does anyone really want this across importer/exporters of
+    // this adapter? we can probably delete this and pass a fresh .build() to
+    // every constructor below, right?
+    final OkHttpClient sharedHttpClient = httpClientBuilder.build();
 
     AppCredentials appCredentials;
     try {
@@ -120,34 +128,37 @@ public class MicrosoftTransferExtension implements TransferExtension {
     // Create the MicrosoftCredentialFactory with the given {@link AppCredentials}.
     MicrosoftCredentialFactory credentialFactory =
         new MicrosoftCredentialFactory(httpTransport, jsonFactory, appCredentials);
+    JobFileStream jobFileStream = new JobFileStream();
 
     Monitor monitor = context.getMonitor();
 
     ImmutableMap.Builder<DataVertical, Importer> importBuilder = ImmutableMap.builder();
     importBuilder.put(
         CONTACTS,
-        new MicrosoftContactsImporter(BASE_GRAPH_URL, client, mapper, transformerService));
+        new MicrosoftContactsImporter(BASE_GRAPH_URL, sharedHttpClient, mapper, transformerService));
     importBuilder.put(
         CALENDAR,
-        new MicrosoftCalendarImporter(BASE_GRAPH_URL, client, mapper, transformerService));
+        new MicrosoftCalendarImporter(BASE_GRAPH_URL, sharedHttpClient, mapper, transformerService));
+    // WARNING: do not use this importer; it will be deleted soon by jzacsh@ in favor of the actually maintained Media variant.
     importBuilder.put(
-        PHOTOS, new MicrosoftPhotosImporter(BASE_GRAPH_URL, client, mapper, jobStore, monitor,
-          credentialFactory));
-    importBuilder.put(MEDIA, new MicrosoftMediaImporter(BASE_GRAPH_URL, client, mapper, jobStore, monitor,
-          credentialFactory));
+        PHOTOS, new MicrosoftPhotosImporter(BASE_GRAPH_URL, sharedHttpClient, mapper, jobStore, monitor,
+          credentialFactory, jobFileStream));
+    importBuilder.put(MEDIA, new MicrosoftMediaImporter(BASE_GRAPH_URL, httpClientBuilder, mapper, jobStore, monitor,
+          credentialFactory, jobFileStream, maxWritesPerSecond));
     importerMap = importBuilder.build();
 
     ImmutableMap.Builder<DataVertical, Exporter> exporterBuilder = ImmutableMap.builder();
     exporterBuilder.put(
         CONTACTS,
-        new MicrosoftContactsExporter(BASE_GRAPH_URL, client, mapper, transformerService));
+        new MicrosoftContactsExporter(BASE_GRAPH_URL, sharedHttpClient, mapper, transformerService));
     exporterBuilder.put(
         CALENDAR,
-        new MicrosoftCalendarExporter(BASE_GRAPH_URL, client, mapper, transformerService));
+        new MicrosoftCalendarExporter(BASE_GRAPH_URL, sharedHttpClient, mapper, transformerService));
+    // WARNING: do not use this importer; it will be deleted soon by jzacsh@ in favor of the actually maintained Media variant.
     exporterBuilder.put(PHOTOS, new MicrosoftPhotosExporter(credentialFactory, jsonFactory, monitor));
     exporterBuilder.put(MEDIA, new MicrosoftMediaExporter(credentialFactory, jsonFactory, monitor));
     exporterBuilder.put(
-        OFFLINE_DATA, new MicrosoftOfflineDataExporter(BASE_GRAPH_URL, client, mapper));
+        OFFLINE_DATA, new MicrosoftOfflineDataExporter(BASE_GRAPH_URL, sharedHttpClient, mapper));
 
     exporterMap = exporterBuilder.build();
 

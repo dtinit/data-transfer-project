@@ -36,7 +36,8 @@ public abstract class ErrorDetail {
   private static final String DATA_KEY = "Data";
 
   public static ErrorDetail.Builder builder() {
-    return new org.datatransferproject.types.transfer.errors.AutoValue_ErrorDetail.Builder();
+    return new org.datatransferproject.types.transfer.errors.AutoValue_ErrorDetail.Builder()
+        .setCanSkip(false);
   }
 
   @JsonProperty("id")
@@ -47,6 +48,9 @@ public abstract class ErrorDetail {
 
   @JsonProperty("exception")
   public abstract String exception();
+
+  @JsonProperty("canSkip")
+  public abstract boolean canSkip();
 
   @AutoValue.Builder
   public abstract static class Builder {
@@ -65,5 +69,8 @@ public abstract class ErrorDetail {
 
     @JsonProperty("exception")
     public abstract Builder setException(String exception);
+
+    @JsonProperty("canSkip")
+    public abstract Builder setCanSkip(boolean canSkip);
   }
 }

@@ -15,6 +15,7 @@
  */
 package org.datatransferproject.transfer.copier;
 
+import com.google.cloud.datastore.DatastoreException;
 import com.google.common.base.Stopwatch;
 import com.google.inject.Provider;
 import java.io.IOException;
@@ -39,6 +40,7 @@ import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.CopyException;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
+import org.datatransferproject.transfer.Annotations;
 import org.datatransferproject.transfer.CallableExporter;
 import org.datatransferproject.transfer.CallableImporter;
 import org.datatransferproject.transfer.CallableSizeCalculator;
@@ -64,6 +66,7 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
 
   protected final Provider<Importer> importerProvider;
   protected final IdempotentImportExecutor idempotentImportExecutor;
+  protected final IdempotentImportExecutor retryingIdempotentImportExecutor;
   protected final Provider<RetryStrategyLibrary> retryStrategyLibraryProvider;
   protected final Monitor monitor;
   protected final DtpInternalMetricRecorder metricRecorder;
@@ -75,6 +78,7 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
       Provider<RetryStrategyLibrary> retryStrategyLibraryProvider,
       Monitor monitor,
       IdempotentImportExecutor idempotentImportExecutor,
+      @Annotations.RetryingExecutor IdempotentImportExecutor retryingIdempotentImportExecutor,
       DtpInternalMetricRecorder dtpInternalMetricRecorder,
       JobStore jobStore) {
     this.exporterProvider = exporterProvider;
@@ -82,6 +86,7 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
     this.retryStrategyLibraryProvider = retryStrategyLibraryProvider;
     this.monitor = monitor;
     this.idempotentImportExecutor = idempotentImportExecutor;
+    this.retryingIdempotentImportExecutor = retryingIdempotentImportExecutor;
     this.metricRecorder = dtpInternalMetricRecorder;
     this.jobStore = jobStore;
   }
@@ -90,12 +95,19 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
 
   /** Kicks off transfer job {@code jobId} from {@code exporter} to {@code importer}. */
   @Override
-  public abstract Collection<ErrorDetail> copy(
+  public abstract void copy(
       AuthData exportAuthData,
       AuthData importAuthData,
       UUID jobId,
       Optional<ExportInformation> exportInfo)
       throws IOException, CopyException;
+
+  @Override
+  public Collection<ErrorDetail> getErrors(UUID jobId) {
+    idempotentImportExecutor.setJobId(jobId);
+    retryingIdempotentImportExecutor.setJobId(jobId);
+    return idempotentImportExecutor.getErrors();
+  }
 
   protected ExportResult<?> copyIteration(
       UUID jobId,
@@ -212,14 +224,18 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
         try {
           jobStore.addCounts(jobId, importResult.getCounts().orElse(null));
           jobStore.addBytes(jobId, importResult.getBytes().orElse(null));
-        } catch (IOException e) {
+        } catch (IOException | DatastoreException e) {
           monitor.debug(() -> jobIdPrefix + "Unable to add counts to job: ", e);
         }
       }
       monitor.debug(
           () -> jobIdPrefix + "Finished import, copy iteration: " + copyIteration,
           EventCode.COPIER_FINISHED_IMPORT);
-    } catch (RetryException | RuntimeException e) {
+    } catch (RetryException e) {
+      if (!e.canSkip()) {
+        throw convertToCopyException(jobIdPrefix, "import", e);
+      }
+    } catch (RuntimeException e) {
       throw convertToCopyException(jobIdPrefix, "import", e);
     } finally {
       metricRecorder.importPageFinished(

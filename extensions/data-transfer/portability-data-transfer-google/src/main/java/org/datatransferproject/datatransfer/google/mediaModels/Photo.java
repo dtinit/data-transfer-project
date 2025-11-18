@@ -17,11 +17,12 @@
 package org.datatransferproject.datatransfer.google.mediaModels;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.io.Serializable;
 
 /**
  * Photo metadata - not the content of the photo itself!
  */
-public class Photo {
+public class Photo implements Serializable {
   @JsonProperty("cameraMake")
   private String cameraMake;
 

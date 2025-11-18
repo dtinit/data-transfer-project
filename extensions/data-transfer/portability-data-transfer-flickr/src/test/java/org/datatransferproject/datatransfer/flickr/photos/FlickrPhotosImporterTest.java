@@ -33,11 +33,13 @@ import com.flickr4java.flickr.photosets.Photoset;
 import com.flickr4java.flickr.photosets.PhotosetsInterface;
 import com.flickr4java.flickr.uploader.UploadMetaData;
 import com.flickr4java.flickr.uploader.Uploader;
+import com.github.scribejava.core.model.OAuth1Token;
 import java.io.BufferedInputStream;
 import java.util.Collections;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.cloud.local.LocalJobStore;
+import org.datatransferproject.datatransfer.flickr.FlickrTestUtils;
 import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
@@ -51,7 +53,6 @@ import org.datatransferproject.types.transfer.auth.TokenSecretAuthData;
 import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.scribe.model.Token;
 
 public class FlickrPhotosImporterTest {
 
@@ -95,7 +96,7 @@ public class FlickrPhotosImporterTest {
 
     // Setup Mock
     when(user.getId()).thenReturn("userId");
-    when(authInterface.checkToken(any(Token.class))).thenReturn(auth);
+    when(authInterface.checkToken(any(OAuth1Token.class))).thenReturn(auth);
 
     when(flickr.getPhotosetsInterface()).thenReturn(photosetsInterface);
     when(flickr.getUploader()).thenReturn(uploader);

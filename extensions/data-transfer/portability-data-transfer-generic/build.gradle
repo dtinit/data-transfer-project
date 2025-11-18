@@ -1,0 +1,36 @@
+/*
+ * Copyright 2018 The Data Transfer Project Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+plugins {
+    id 'maven'
+    id 'signing'
+    id 'application'
+}
+
+dependencies {
+    compile project(':portability-spi-transfer')
+    compile project(':portability-transfer')
+    compile project(':portability-spi-cloud')
+    compile project(':portability-types-common')
+    compile "com.squareup.okhttp3:okhttp:${okHttpVersion}"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${jacksonVersion}"
+    testCompile project(':portability-transfer').sourceSets.test.output
+    testCompile project(':extensions:cloud:portability-cloud-local')
+    testCompile "com.squareup.okhttp3:mockwebserver:${okHttpVersion}"
+    testCompile "commons-fileupload:commons-fileupload:1.5"
+}
+
+configurePublication(project)
