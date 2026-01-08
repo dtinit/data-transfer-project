@@ -1,0 +1,85 @@
+{
+  "$schema" : "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "FavoriteInfo": {
+      "type": "object",
+      "properties": {
+        "favorite": {
+          "type": "boolean"
+        },
+        "lastUpdateTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "@type": {
+          "const": "FavoriteInfo"
+        }
+      },
+      "required": [
+        "@type",
+        "favorite",
+        "lastUpdateTime"
+      ]
+    }
+  },
+  "anyOf": [
+    {
+      "type": "object",
+      "properties": {
+        "albumId": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "favoriteInfo": {
+          "$ref": "#/$defs/FavoriteInfo"
+        },
+        "name": {
+          "type": "string"
+        },
+        "uploadedTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "@type": {
+          "const": "Video"
+        }
+      },
+      "required": [
+        "@type",
+        "albumId",
+        "name"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "albumId": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "favoriteInfo": {
+          "$ref": "#/$defs/FavoriteInfo"
+        },
+        "name": {
+          "type": "string"
+        },
+        "uploadedTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "@type": {
+          "const": "Photo"
+        }
+      },
+      "required": [
+        "@type",
+        "albumId",
+        "name"
+      ]
+    }
+  ]
+}
