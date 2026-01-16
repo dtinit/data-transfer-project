@@ -1,6 +1,4 @@
 package org.datatransferproject.datatransfer.backblaze.common;
-
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.launcher.monitor.ConsoleMonitor;
 
@@ -34,7 +32,7 @@ public class BackblazeIntegrationTest {
 
         // Initialize client with your credentials
         // The "test-service" string is used as a prefix for bucket naming
-        client.init(keyId, appKey, "test-service", HttpClientBuilder.create().build());
+        client.init(keyId, appKey, "test-service");
 
         System.out.println("Client initialized successfully!");
 

@@ -21,19 +21,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.util.EntityUtils;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.backblaze.exception.BackblazeCredentialsException;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -75,6 +66,18 @@ import software.amazon.awssdk.services.s3.model.UploadPartResponse;
 public class BackblazeDataTransferClient {
   private static final String DATA_TRANSFER_BUCKET_PREFIX_FORMAT_STRING = "%s-data-transfer";
   private static final int MAX_BUCKET_CREATION_ATTEMPTS = 10;
+  // Backblaze B2 Native API only supports IPv4; until it supports IPv6 we cannot use
+  // the b2_authorize_account endpoint to look up what region an account is in. For now
+  // a hard-coded list will be maintained and updated if the cluster list changes.
+  private static final List<String> REGIONS = List.of(
+      "us-west-000",
+      "us-west-001",
+      "us-west-002",
+      "us-west-004",
+      "us-east-005",
+      "eu-central-003",
+      "ca-east-006"
+  );
 
   private final long sizeThresholdForMultipartUpload;
   private final long partSizeForMultiPartUpload;
@@ -97,21 +100,28 @@ public class BackblazeDataTransferClient {
     this.partSizeForMultiPartUpload = partSizeForMultiPartUpload;
   }
 
-  public void init(
-      String keyId, String applicationKey, String exportService, CloseableHttpClient httpClient)
+  public void init(String keyId, String applicationKey, String exportService)
       throws BackblazeCredentialsException, IOException {
     // Fetch all the available buckets and use that to find which region the user is in
     ListBucketsResponse listBucketsResponse = null;
+    String successfulRegion = null;
 
     Throwable s3Exception = null;
-    String userRegion = getAccountRegion(httpClient, keyId, applicationKey);
-    s3Client = backblazeS3ClientFactory.createS3Client(keyId, applicationKey, userRegion);
-    try {
-      listBucketsResponse = s3Client.listBuckets();
-    } catch (S3Exception e) {
-      s3Exception = e;
-      if (s3Client != null) {
-        s3Client.close();
+    for (String region : REGIONS) {
+      S3Client potentialS3Client =
+          backblazeS3ClientFactory.createS3Client(keyId, applicationKey, region);
+      try {
+        listBucketsResponse = potentialS3Client.listBuckets();
+        s3Client = potentialS3Client;
+        successfulRegion = region;
+        monitor.info(() -> "Successfully connected to Backblaze region: " + region);
+        break;
+      } catch (S3Exception e) {
+        monitor.info(() -> "Failed to connect to Backblaze region: " + region);
+        s3Exception = e;
+        if (potentialS3Client != null) {
+          potentialS3Client.close();
+        }
       }
     }
 
@@ -120,7 +130,7 @@ public class BackblazeDataTransferClient {
           "User's credentials or permissions are not valid for any regions available", s3Exception);
     }
 
-    bucketName = getOrCreateBucket(s3Client, listBucketsResponse, userRegion, exportService);
+    bucketName = getOrCreateBucket(s3Client, listBucketsResponse, successfulRegion, exportService);
   }
 
   public String uploadFile(String fileKey, File file) throws IOException {
@@ -154,42 +164,6 @@ public class BackblazeDataTransferClient {
     }
   }
 
-  private String getAccountRegion(
-      CloseableHttpClient httpClient, String keyId, String applicationKey)
-      throws BackblazeCredentialsException {
-
-    String auth = keyId + ":" + applicationKey;
-    byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes());
-    String authHeaderValue = "Basic " + new String(encodedAuth);
-
-    HttpGet request = new HttpGet("https://api.backblazeb2.com/b2api/v2/b2_authorize_account");
-    request.addHeader("Authorization", authHeaderValue);
-
-    try {
-      CloseableHttpResponse response = httpClient.execute(request);
-      try (response) {
-        int statusCode = response.getStatusLine().getStatusCode();
-
-        if (statusCode == 200) {
-          String responseBody = EntityUtils.toString(response.getEntity());
-          JSONParser parser = new JSONParser();
-          JSONObject jsonResponse = (JSONObject) parser.parse(responseBody);
-          String s3ApiUrl = (String) jsonResponse.get("s3ApiUrl");
-          String region = s3ApiUrl.split("s3.")[1].split("\\.")[0];
-          monitor.info(() -> "Region extracted from s3ApiUrl: " + region);
-          return region;
-        } else if (statusCode >= 400 && statusCode < 500) {
-          // Don't retry on client errors (4xx)
-          throw new BackblazeCredentialsException(
-              "Failed to retrieve account's region. Status code: " + statusCode, null);
-        } else {
-          throw new IOException("Server returned status code: " + statusCode);
-        }
-      }
-    } catch (IOException | ParseException e) {
-      throw new BackblazeCredentialsException("Failed to retrieve account's region", e);
-    }
-  }
 
   private String uploadFileUsingMultipartUpload(String fileKey, File file, long contentLength)
       throws IOException, AwsServiceException, SdkClientException {
