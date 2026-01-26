@@ -2,6 +2,7 @@ package org.datatransferproject.datatransfer.synology.media;
 
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.datatransfer.synology.exceptions.SynologyException;
 import org.datatransferproject.datatransfer.synology.service.SynologyOAuthTokenManager;
 import org.datatransferproject.datatransfer.synology.uploader.SynologyUploader;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
@@ -39,6 +40,9 @@ public class SynologyMediaImporter
       synologyUploader.importAlbums(data.getAlbums(), jobId);
       synologyUploader.importPhotos(data.getPhotos(), jobId);
       synologyUploader.importVideos(data.getVideos(), jobId);
+    } catch (SynologyException e) {
+      monitor.severe(() -> "[SynologyImporter] SynologyMediaImporter failed to import data:" + e);
+      throw e;
     } catch (Exception e) {
       monitor.severe(() -> "[SynologyImporter] SynologyMediaImporter failed to import data:" + e);
       return new ImportResult(e);

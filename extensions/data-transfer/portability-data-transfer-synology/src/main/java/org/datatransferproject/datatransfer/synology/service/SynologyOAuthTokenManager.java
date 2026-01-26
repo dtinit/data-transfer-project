@@ -42,7 +42,7 @@ public class SynologyOAuthTokenManager {
     this.monitor = monitor;
   }
 
-  public String getAccessToken(UUID jobId) {
+  public String getAccessToken(UUID jobId) throws SynologyImportException {
     if (!authMap.containsKey(jobId)) {
       throw new SynologyImportException("No auth data found for job: " + jobId);
     }

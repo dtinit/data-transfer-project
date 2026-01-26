@@ -42,4 +42,6 @@ public interface SynologyErrorCode {
   // DTP Client Errors
   public static final int MAX_RETRIES_EXCEEDED = 11001;
   public static final int IMPORT_FAILED = 11002;
+  public static final int QUOTA_NOT_CLAIMED = 11003;
+  public static final int DESTINATION_FULL = 11004;
 }
