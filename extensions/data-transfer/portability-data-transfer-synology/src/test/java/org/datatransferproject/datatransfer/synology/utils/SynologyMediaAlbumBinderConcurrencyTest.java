@@ -28,6 +28,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.datatransfer.synology.exceptions.SynologyImportException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -71,6 +72,8 @@ public class SynologyMediaAlbumBinderConcurrencyTest {
               binder.put(albumId, itemId, jobId);
             } catch (InterruptedException e) {
               Thread.currentThread().interrupt();
+            } catch (SynologyImportException e) {
+              throw new RuntimeException(e);
             } finally {
               doneLatch.countDown();
             }
@@ -85,6 +88,8 @@ public class SynologyMediaAlbumBinderConcurrencyTest {
               binder.whenAlbumReady(albumId, newAlbumId, jobId);
             } catch (InterruptedException e) {
               Thread.currentThread().interrupt();
+            } catch (SynologyImportException e) {
+              throw new RuntimeException(e);
             } finally {
               doneLatch.countDown();
             }

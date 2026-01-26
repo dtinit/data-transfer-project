@@ -48,11 +48,13 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okio.Buffer;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.datatransfer.synology.exceptions.SynologyException;
 import org.datatransferproject.datatransfer.synology.exceptions.SynologyImportException;
 import org.datatransferproject.datatransfer.synology.exceptions.SynologyMaxRetriesExceededException;
 import org.datatransferproject.datatransfer.synology.utils.TestConfigs;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
+import org.datatransferproject.spi.transfer.types.FailureReasons;
 import org.datatransferproject.types.common.DownloadableFile;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
@@ -85,7 +87,7 @@ public class SynologyDTPServiceTest {
   @Mock private OkHttpClient client;
 
   @BeforeEach
-  public void setUp() {
+  public void setUp() throws SynologyImportException {
     lenient().when(tokenManager.getAccessToken(jobId)).thenReturn("mockAccessToken");
     lenient()
         .when(transferServiceConfig.getServiceConfig())
@@ -102,7 +104,7 @@ public class SynologyDTPServiceTest {
     private final String itemId = "testItem";
 
     @Test
-    public void shouldSendPostRequestWithCorrectFormBody() {
+    public void shouldSendPostRequestWithCorrectFormBody() throws SynologyException {
       SynologyDTPService spyService = Mockito.spy(dtpService);
 
       doReturn(Map.of("success", true)).when(spyService).sendPostRequest(anyString(), any(), any());
@@ -127,7 +129,7 @@ public class SynologyDTPServiceTest {
     }
 
     @Test
-    public void shouldThrowExceptionIfSendPostRequestFailed() {
+    public void shouldThrowExceptionIfSendPostRequestFailed() throws SynologyException {
       SynologyDTPService spyService = Mockito.spy(dtpService);
 
       doThrow(
@@ -150,7 +152,7 @@ public class SynologyDTPServiceTest {
     private final MediaAlbum album = new MediaAlbum(albumId, albumName, "");
 
     @Test
-    public void shouldSendPostRequestWithCorrectFormBody() {
+    public void shouldSendPostRequestWithCorrectFormBody() throws SynologyException {
       SynologyDTPService spyService = Mockito.spy(dtpService);
       Map<String, Object> dataMap = Map.of("album_id", albumId);
 
@@ -179,7 +181,7 @@ public class SynologyDTPServiceTest {
     }
 
     @Test
-    public void shouldThrowExceptionIfSendPostRequestFailed() {
+    public void shouldThrowExceptionIfSendPostRequestFailed() throws SynologyException {
       SynologyDTPService spyService = Mockito.spy(dtpService);
 
       doThrow(
@@ -207,8 +209,10 @@ public class SynologyDTPServiceTest {
     public Stream<Object> provideMediaObjectsInTempStore() {
       Date uploadedTime = new Date(uploadedTimestampInSeconds * 1000);
       return Stream.of(
-          new PhotoModel(itemName, fetchUrl, description, "mediaType", itemId, null, true, uploadedTime),
-          new VideoModel(itemName, fetchUrl, description, "format", itemId, null, true, uploadedTime));
+          new PhotoModel(
+              itemName, fetchUrl, description, "mediaType", itemId, null, true, uploadedTime),
+          new VideoModel(
+              itemName, fetchUrl, description, "format", itemId, null, true, uploadedTime));
     }
 
     public Stream<Object> provideMediaObjectsWithoutDescriptionAndUploadedTimeInTempStore() {
@@ -226,7 +230,7 @@ public class SynologyDTPServiceTest {
     @ParameterizedTest(name = "shouldGetStreamFromJobStoreIfMediaItemIsInTempStore [{index}] {0}")
     @MethodSource("provideMediaObjectsInTempStore")
     public void shouldGetStreamFromJobStoreIfMediaItemIsInTempStore(DownloadableFile item)
-        throws IOException {
+        throws IOException, SynologyException {
       byte[] mockImage = new byte[] {1, 2, 3};
       InputStream mockInputStream = new ByteArrayInputStream(mockImage);
       InputStreamWrapper streamWrapper = mock(InputStreamWrapper.class);
@@ -250,7 +254,7 @@ public class SynologyDTPServiceTest {
     @ParameterizedTest(name = "shouldGetStreamFromUrlIfPhotoIsNotInTempStore [{index}] {0}")
     @MethodSource("provideMediaObjectsNotInTempStore")
     public void shouldGetStreamFromUrlIfPhotoIsNotInTempStore(DownloadableFile item)
-        throws IOException {
+        throws IOException, SynologyException {
       byte[] mockImage = new byte[] {1, 2, 3};
       SynologyDTPService spyService = Mockito.spy(dtpService);
       InputStream mockInputStream = new ByteArrayInputStream(mockImage);
@@ -271,7 +275,7 @@ public class SynologyDTPServiceTest {
 
     // VideoModel.contentUrl can't be null
     @Test
-    public void shouldReturnNullWhenPhotoIsNotInTempStoreAndHasNoUrl() {
+    public void shouldReturnNullWhenPhotoIsNotInTempStoreAndHasNoUrl() throws SynologyException {
       PhotoModel photo =
           new PhotoModel(itemName, null, description, "mediaType", itemId, null, false);
       SynologyDTPService spyService = Mockito.spy(dtpService);
@@ -281,7 +285,8 @@ public class SynologyDTPServiceTest {
 
     @ParameterizedTest(name = "shouldThrowExceptionIfNewURLFailed [{index}] {0}")
     @MethodSource("provideMediaObjectsNotInTempStore")
-    public void shouldThrowExceptionIfNewURLFailed(DownloadableFile item) throws IOException {
+    public void shouldThrowExceptionIfNewURLFailed(DownloadableFile item)
+        throws IOException, SynologyException {
       SynologyDTPService spyService = Mockito.spy(dtpService);
       doThrow(new MalformedURLException("Failed to create url for photo"))
           .when(spyService)
@@ -305,7 +310,7 @@ public class SynologyDTPServiceTest {
     @ParameterizedTest(name = "shouldThrowExceptionIfFailedToGetStream [{index}] {0}")
     @MethodSource("provideMediaObjectsInTempStore")
     public void shouldThrowExceptionIfFailedToGetStream(DownloadableFile item)
-        throws IOException, SynologyMaxRetriesExceededException {
+        throws IOException, SynologyMaxRetriesExceededException, SynologyException {
       SynologyDTPService spyService = Mockito.spy(dtpService);
       when(jobStore.getStream(jobId, fetchUrl)).thenThrow(new IOException("Failed to get stream"));
 
@@ -324,10 +329,11 @@ public class SynologyDTPServiceTest {
     }
 
     @ParameterizedTest(
-        name = "shouldSendPostRequestWithCorrectFormBodyWithDescriptionAndUploadedTime [{index}] {0}")
+        name =
+            "shouldSendPostRequestWithCorrectFormBodyWithDescriptionAndUploadedTime [{index}] {0}")
     @MethodSource("provideMediaObjectsInTempStore")
-    public void shouldSendPostRequestWithCorrectFormBodyWithDescriptionAndUploadedTime(DownloadableFile item)
-        throws IOException {
+    public void shouldSendPostRequestWithCorrectFormBodyWithDescriptionAndUploadedTime(
+        DownloadableFile item) throws IOException, SynologyException {
       byte[] mockImage = new byte[] {1, 2, 3};
       InputStream mockInputStream = new ByteArrayInputStream(mockImage);
       InputStreamWrapper streamWrapper = mock(InputStreamWrapper.class);
@@ -383,10 +389,12 @@ public class SynologyDTPServiceTest {
     }
 
     @ParameterizedTest(
-        name = "shouldSendPostRequestWithCorrectFormBodyWithoutDescriptionAndUploadedTime [{index}] {0}")
+        name =
+            "shouldSendPostRequestWithCorrectFormBodyWithoutDescriptionAndUploadedTime [{index}]"
+                + " {0}")
     @MethodSource("provideMediaObjectsWithoutDescriptionAndUploadedTimeInTempStore")
     public void shouldSendPostRequestWithCorrectFormBodyWithoutDescription(DownloadableFile item)
-        throws IOException {
+        throws IOException, SynologyException {
       byte[] mockImage = new byte[] {1, 2, 3};
       InputStream mockInputStream = new ByteArrayInputStream(mockImage);
       InputStreamWrapper streamWrapper = mock(InputStreamWrapper.class);
@@ -443,7 +451,7 @@ public class SynologyDTPServiceTest {
     @ParameterizedTest(name = "shouldThrowExceptionIfSendPostRequestFailed [{index}] {0}")
     @MethodSource("provideMediaObjectsInTempStore")
     public void shouldThrowExceptionIfSendPostRequestFailed(DownloadableFile item)
-        throws IOException {
+        throws IOException, SynologyException {
       byte[] mockImage = new byte[] {1, 2, 3};
       InputStream mockInputStream = new ByteArrayInputStream(mockImage);
       InputStreamWrapper streamWrapper = mock(InputStreamWrapper.class);
@@ -474,7 +482,7 @@ public class SynologyDTPServiceTest {
     private RequestBody requestBody = RequestBody.create(MediaType.parse("application/json"), "{}");
 
     @Test
-    public void shouldRetryIfGotError() throws IOException {
+    public void shouldRetryIfGotError() throws IOException, SynologyException {
       Call mockCall = mock(Call.class);
 
       Response mockResponseFail = mock(Response.class);
@@ -522,7 +530,7 @@ public class SynologyDTPServiceTest {
 
     @Test
     public void shouldRefreshTokenAndRetryIfGotUnauthorizedHttpError()
-        throws IOException, JsonProcessingException {
+        throws IOException, JsonProcessingException, SynologyException {
       Call mockCall = mock(Call.class);
 
       Response mockResponseFail = mock(Response.class);
@@ -597,7 +605,8 @@ public class SynologyDTPServiceTest {
     }
 
     @Test
-    public void shouldReturnResponseData() throws IOException, JsonProcessingException {
+    public void shouldReturnResponseData()
+        throws IOException, JsonProcessingException, SynologyException {
       Response mockResponse = mock(Response.class);
       ResponseBody mockResponseBody = mock(ResponseBody.class);
       Call mockCall = mock(Call.class);
@@ -614,6 +623,105 @@ public class SynologyDTPServiceTest {
       verify(tokenManager, never())
           .refreshToken(any(UUID.class), eq(client), any(ObjectMapper.class));
       verify(client, times(1)).newCall(any(Request.class));
+    }
+
+    @Test
+    public void shouldThrowExceptionIfGot413() throws IOException {
+      Call mockCall = mock(Call.class);
+
+      Response mockResponseFail = mock(Response.class);
+      when(mockResponseFail.code()).thenReturn(413);
+      when(mockResponseFail.isSuccessful()).thenReturn(false);
+
+      when(client.newCall(any(Request.class))).thenReturn(mockCall);
+      when(mockCall.execute()).thenReturn(mockResponseFail);
+
+      SynologyImportException exception =
+          assertThrows(
+              SynologyImportException.class,
+              () -> dtpService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, requestBody, jobId));
+      assertEquals(FailureReasons.DESTINATION_FULL.toString(), exception.getFailureReason());
+    }
+
+    @Test
+    public void shouldCallCheckUnprocessableContentIfGot422()
+        throws IOException, SynologyException {
+      Call mockCall = mock(Call.class);
+      SynologyDTPService spyService = Mockito.spy(dtpService);
+
+      Response mockResponseFail = mock(Response.class);
+      ResponseBody mockResponseBody = mock(ResponseBody.class);
+      when(mockResponseFail.code()).thenReturn(422);
+      when(mockResponseFail.isSuccessful()).thenReturn(false);
+      when(mockResponseFail.body()).thenReturn(mockResponseBody);
+      when(mockResponseBody.string())
+          .thenReturn(
+              "{\"error\":{\"code\":2000,\"message\":\"User has not claimed C2 Storage"
+                  + " quota.\"}}");
+
+      when(client.newCall(any(Request.class))).thenReturn(mockCall);
+      when(mockCall.execute()).thenReturn(mockResponseFail);
+
+      SynologyImportException exception =
+          assertThrows(
+              SynologyImportException.class,
+              () -> spyService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, requestBody, jobId));
+      assertEquals(FailureReasons.NO_NAS_IN_ACCOUNT.toString(), exception.getFailureReason());
+    }
+  }
+
+  @Nested
+  public class CheckUnprocessableContentTest {
+    private Response mockResponse(String jsonBody) {
+      ResponseBody body = ResponseBody.create(MediaType.parse("application/json"), jsonBody);
+      Response response = mock(Response.class);
+      when(response.body()).thenReturn(body);
+      return response;
+    }
+
+    @Test
+    public void shouldThrowExceptionIfErrorCodeIs2000() throws SynologyImportException {
+      String jsonBody =
+          "{\"error\":{\"code\": 2000,\"message\":\"User has not claimed C2 Storage quota.\"}}";
+      Response response = mockResponse(jsonBody);
+
+      SynologyImportException exception =
+          assertThrows(
+              SynologyImportException.class, () -> dtpService.checkUnprocessableContent(response));
+      assertEquals(FailureReasons.NO_NAS_IN_ACCOUNT.toString(), exception.getFailureReason());
+    }
+
+    @Test
+    public void shouldThrowExceptionIfErrorCodeIs2001() throws SynologyImportException {
+      String jsonBody =
+          "{\"error\":{\"code\": 2001,\"message\":\"C2 Storage quota is not enough.\"}}";
+      Response response = mockResponse(jsonBody);
+
+      SynologyImportException exception =
+          assertThrows(
+              SynologyImportException.class, () -> dtpService.checkUnprocessableContent(response));
+      assertEquals(FailureReasons.NO_NAS_IN_ACCOUNT.toString(), exception.getFailureReason());
+    }
+
+    @Test
+    public void shouldNotThrowExceptionIfNoErrorCode() throws SynologyImportException {
+      String jsonBody = "{\"data\":{\"album_id\":\"test_album_id\"}}";
+      Response response = mockResponse(jsonBody);
+      dtpService.checkUnprocessableContent(response);
+    }
+
+    @Test
+    public void shouldNotThrowExceptionIfErrorCodeIsDifferent() throws SynologyImportException {
+      String jsonBody = "{\"error\":{\"code\":\"1000\",\"message\":\"Some other error.\"}}";
+      Response response = mockResponse(jsonBody);
+      dtpService.checkUnprocessableContent(response);
+    }
+
+    @Test
+    public void shouldNotThrowExceptionIfBodyIsInvalidJson() throws SynologyImportException {
+      String jsonBody = "invalid-json";
+      Response response = mockResponse(jsonBody);
+      dtpService.checkUnprocessableContent(response);
     }
   }
 }

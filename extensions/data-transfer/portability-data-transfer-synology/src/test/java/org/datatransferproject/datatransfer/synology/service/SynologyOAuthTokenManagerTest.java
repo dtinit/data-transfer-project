@@ -60,7 +60,7 @@ public class SynologyOAuthTokenManagerTest {
   @Nested
   class OAuthTokenManagerBasicTest {
     @Test
-    void shouldGetAccessTokenIfExist() {
+    void shouldGetAccessTokenIfExist() throws SynologyImportException {
       UUID jobId = UUID.randomUUID();
       TokensAndUrlAuthData authData =
           new TokensAndUrlAuthData("accessToken", "refreshToken", "http://mock.token.url");
@@ -80,7 +80,7 @@ public class SynologyOAuthTokenManagerTest {
     }
 
     @Test
-    void shouldNotReplaceExistingAuthData() {
+    void shouldNotReplaceExistingAuthData() throws SynologyImportException {
       UUID jobId = UUID.randomUUID();
       TokensAndUrlAuthData authData1 =
           new TokensAndUrlAuthData("accessToken1", "refreshToken1", "url1");
@@ -204,7 +204,8 @@ public class SynologyOAuthTokenManagerTest {
     }
 
     @Test
-    void shouldUpdateTokenAndReturnTrue() throws IOException, JsonProcessingException {
+    void shouldUpdateTokenAndReturnTrue()
+        throws IOException, JsonProcessingException, SynologyImportException {
       UUID jobId = UUID.randomUUID();
       TokensAndUrlAuthData authData =
           new TokensAndUrlAuthData("oldAccessToken", "oldRefreshToken", "http://mock.token.url");
