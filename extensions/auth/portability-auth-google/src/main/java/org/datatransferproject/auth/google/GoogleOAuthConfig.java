@@ -20,6 +20,7 @@ import static org.datatransferproject.types.common.models.DataVertical.BLOBS;
 import static org.datatransferproject.types.common.models.DataVertical.CALENDAR;
 import static org.datatransferproject.types.common.models.DataVertical.CONTACTS;
 import static org.datatransferproject.types.common.models.DataVertical.MAIL;
+import static org.datatransferproject.types.common.models.DataVertical.MEDIA;
 import static org.datatransferproject.types.common.models.DataVertical.MUSIC;
 import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
 import static org.datatransferproject.types.common.models.DataVertical.SOCIAL_POSTS;
@@ -70,6 +71,7 @@ public class GoogleOAuthConfig implements OAuth2Config {
         .put(SOCIAL_POSTS, ImmutableSet.of("https://www.googleapis.com/auth/plus.login"))
         .put(TASKS, ImmutableSet.of("https://www.googleapis.com/auth/tasks.readonly"))
         .put(VIDEOS, ImmutableSet.of("https://www.googleapis.com/auth/photoslibrary.readonly"))
+        .put(MEDIA, ImmutableSet.of("https://www.googleapis.com/auth/photoslibrary.readonly"))
         .put(MUSIC, ImmutableSet.of("https://www.googleapis.com/auth/music"))
 	.build();
   }
@@ -85,6 +87,7 @@ public class GoogleOAuthConfig implements OAuth2Config {
         .put(PHOTOS, ImmutableSet.of("https://www.googleapis.com/auth/photoslibrary.appendonly"))
         .put(TASKS, ImmutableSet.of("https://www.googleapis.com/auth/tasks"))
         .put(VIDEOS, ImmutableSet.of("https://www.googleapis.com/auth/photoslibrary"))
+        .put(MEDIA, ImmutableSet.of("https://www.googleapis.com/auth/photoslibrary"))
         .put(MUSIC, ImmutableSet.of("https://www.googleapis.com/auth/music"))
 	.build();
   }

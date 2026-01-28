@@ -203,7 +203,8 @@ All POST requests containing data to be imported are wrapped in a top-level `Gen
     },
     "schemaSource": {
       "type": "string",
-      "description": "The source file containing the schema definition"
+      "description": "The source file containing the schema definition.  The whole path relative to this package is not needed, 
+      so the value may be '.../SocialPostsSerializer.java' rather than './src/main/java/org/datatransferproject/datatransfer/generic/SocialPostsSerializer'."
     },
     "@type": {
       "const": "GenericPayload"

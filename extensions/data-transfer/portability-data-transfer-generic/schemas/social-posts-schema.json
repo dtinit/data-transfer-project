@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "activity": {
+      "type": "object",
+      "properties": {
+        "attachments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "content": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "LINK",
+                  "IMAGE",
+                  "VIDEO"
+                ]
+              },
+              "url": {
+                "type": "string"
+              },
+              "@type": {
+                "const": "SocialActivityAttachment"
+              }
+            },
+            "required": [
+              "@type",
+              "name"
+            ]
+          }
+        },
+        "content": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "location": {
+          "type": "object",
+          "properties": {
+            "latitude": {
+              "type": "number"
+            },
+            "longitude": {
+              "type": "number"
+            },
+            "name": {
+              "type": "string"
+            },
+            "@type": {
+              "const": "SocialActivityLocation"
+            }
+          },
+          "required": [
+            "@type",
+            "latitude",
+            "longitude"
+          ]
+        },
+        "published": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "CHECKIN",
+            "POST",
+            "NOTE"
+          ]
+        },
+        "url": {
+          "type": "string"
+        },
+        "@type": {
+          "const": "SocialActivityModel"
+        }
+      },
+      "required": [
+        "@type",
+        "id",
+        "content"
+      ]
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "actor": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            },
+            "@type": {
+              "const": "SocialActivityActor"
+            }
+          },
+          "required": [
+            "@type",
+            "id"
+          ]
+        },
+        "@type": {
+          "const": "SocialActivityMetadata"
+        }
+      },
+      "required": [
+        "@type"
+      ]
+    },
+    "@type": {
+      "const": "SocialActivity"
+    }
+  },
+  "required": [
+    "@type",
+    "activity"
+  ]
+}

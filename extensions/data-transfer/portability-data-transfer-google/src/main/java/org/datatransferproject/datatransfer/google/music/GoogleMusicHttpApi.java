@@ -17,7 +17,6 @@
 package org.datatransferproject.datatransfer.google.music;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.stream.Collectors.toCollection;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -52,7 +51,9 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.google.common.GoogleCredentialFactory;
 import org.datatransferproject.datatransfer.google.musicModels.BatchPlaylistItemRequest;
 import org.datatransferproject.datatransfer.google.musicModels.BatchPlaylistItemResponse;
+import org.datatransferproject.datatransfer.google.musicModels.ExportReleaseResponse;
 import org.datatransferproject.datatransfer.google.musicModels.GooglePlaylist;
+import org.datatransferproject.datatransfer.google.musicModels.GoogleRelease;
 import org.datatransferproject.datatransfer.google.musicModels.ImportPlaylistRequest;
 import org.datatransferproject.datatransfer.google.musicModels.PlaylistItemExportResponse;
 import org.datatransferproject.datatransfer.google.musicModels.PlaylistExportResponse;
@@ -72,6 +73,7 @@ public class GoogleMusicHttpApi {
 
   private static final String BASE_URL =
       "https://youtubemediaconnect.googleapis.com/v1/users/me/musicLibrary/";
+  private static final String RELEASE_BASE_URL = "https://youtubemediaconnect.googleapis.com/v1/releases";
   private static final int PLAYLIST_PAGE_SIZE = 20;
   private static final int PLAYLIST_ITEM_PAGE_SIZE = 50;
   private static final String PLAYLIST_ID_KEY = "playlistId";
@@ -79,6 +81,7 @@ public class GoogleMusicHttpApi {
   private static final String TOKEN_KEY = "pageToken";
   private static final String ORIGINAL_PLAYLIST_ID_KEY = "originalPlaylistId";
   private static final String ACCESS_TOKEN_KEY = "access_token";
+  private static final int RELEASE_ITEM_PAGE_SIZE = 50;
 
   private final ObjectMapper objectMapper =
       new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -107,9 +110,7 @@ public class GoogleMusicHttpApi {
     Map<String, String> exportPlyalistsRequestMap = new LinkedHashMap<>();
     Map<String, String> params = new LinkedHashMap<>();
     exportPlyalistsRequestMap.put(PAGE_SIZE_KEY, String.valueOf(PLAYLIST_PAGE_SIZE));
-    if (pageToken.isPresent()) {
-      exportPlyalistsRequestMap.put(TOKEN_KEY, pageToken.get());
-    }
+    pageToken.ifPresent(s -> exportPlyalistsRequestMap.put(TOKEN_KEY, s));
     HttpContent content = new JsonHttpContent(jsonFactory, createJsonMap(exportPlyalistsRequestMap));
     return makePostRequest(BASE_URL + "playlists:export", Optional.of(params), content,
         PlaylistExportResponse.class);
@@ -120,12 +121,22 @@ public class GoogleMusicHttpApi {
     Map<String, String> params = new LinkedHashMap<>();
     params.put(PLAYLIST_ID_KEY, playlistId);
     params.put(PAGE_SIZE_KEY, String.valueOf(PLAYLIST_ITEM_PAGE_SIZE));
-    if (pageToken.isPresent()) {
-      params.put(TOKEN_KEY, pageToken.get());
-    }
+    pageToken.ifPresent(s -> params.put(TOKEN_KEY, s));
     return makeGetRequest(
         BASE_URL + "playlists:exportPlaylistItems", Optional.of(params),
         PlaylistItemExportResponse.class);
+  }
+
+  ExportReleaseResponse exportReleases(Optional<String> pageToken)
+      throws InvalidTokenException, PermissionDeniedException, IOException {
+
+    Map<String, String> params = new LinkedHashMap<>();
+    params.put(PAGE_SIZE_KEY, String.valueOf(RELEASE_ITEM_PAGE_SIZE));
+    pageToken.ifPresent(s -> params.put(TOKEN_KEY, s));
+    return makeGetRequest(
+        RELEASE_BASE_URL, Optional.of(params),
+        ExportReleaseResponse.class);
+
   }
 
   GooglePlaylist importPlaylist(GooglePlaylist playlist, String playlistId)
@@ -148,6 +159,17 @@ public class GoogleMusicHttpApi {
     return makePostRequest(
         BASE_URL + "playlists:importPlaylistItems", Optional.empty(), content,
         BatchPlaylistItemResponse.class);
+  }
+
+  GoogleRelease createRelease(GoogleRelease googleRelease)
+      throws IOException, InvalidTokenException, PermissionDeniedException {
+    Map<String, Object> googleReleaseMap = createJsonMap(googleRelease);
+    Map<String, String> params = new LinkedHashMap<>();
+    HttpContent content = new JsonHttpContent(jsonFactory, googleReleaseMap);
+
+    return makePostRequest(RELEASE_BASE_URL, Optional.of(params),
+        content,
+        GoogleRelease.class);
   }
 
   private <T> T makeGetRequest(
@@ -283,14 +305,12 @@ public class GoogleMusicHttpApi {
 
   private String generateParamsString(Optional<Map<String, String>> params) {
     Map<String, String> updatedParams = new ArrayMap<>();
-    if (params.isPresent()) {
-      updatedParams.putAll(params.get());
-    }
+    params.ifPresent(updatedParams::putAll);
 
     updatedParams.put(ACCESS_TOKEN_KEY, Preconditions.checkNotNull(credential.getAccessToken()));
 
     List<String> orderedKeys =
-        updatedParams.keySet().stream().collect(toCollection(ArrayList::new));
+        new ArrayList<>(updatedParams.keySet());
     Collections.sort(orderedKeys);
 
     List<String> paramStrings = new ArrayList<>();
@@ -308,7 +328,7 @@ public class GoogleMusicHttpApi {
     // JacksonFactory expects to receive a Map, not a JSON-annotated POJO, so we have to convert the
     // NewMediaItemUpload to a Map before making the HttpContent.
     TypeReference<HashMap<String, Object>> typeRef =
-        new TypeReference<HashMap<String, Object>>() {
+        new TypeReference<>() {
         };
     return objectMapper.readValue(objectMapper.writeValueAsString(object), typeRef);
   }
