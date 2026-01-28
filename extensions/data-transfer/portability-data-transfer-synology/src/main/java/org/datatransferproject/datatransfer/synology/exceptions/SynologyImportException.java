@@ -25,6 +25,10 @@ public class SynologyImportException extends SynologyDTPClientException {
     super(message, "IMPORT_ERROR");
   }
 
+  public SynologyImportException(String message, String errorCode) {
+    super(message, errorCode);
+  }
+
   public SynologyImportException(String message, Throwable cause) {
     super(message, cause, String.valueOf(SynologyErrorCode.IMPORT_FAILED));
   }

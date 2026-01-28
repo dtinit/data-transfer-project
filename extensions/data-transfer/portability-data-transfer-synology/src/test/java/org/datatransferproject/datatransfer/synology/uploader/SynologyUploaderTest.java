@@ -39,6 +39,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.synology.constant.SynologyConstant;
+import org.datatransferproject.datatransfer.synology.exceptions.SynologyException;
 import org.datatransferproject.datatransfer.synology.exceptions.SynologyHttpException;
 import org.datatransferproject.datatransfer.synology.exceptions.SynologyImportException;
 import org.datatransferproject.datatransfer.synology.service.SynologyDTPService;
@@ -116,7 +117,8 @@ public class SynologyUploaderTest {
     }
 
     @Test
-    public void shouldThrowExceptionIfCreateAlbumFails() {
+    public void shouldThrowExceptionIfCreateAlbumFails()
+        throws SynologyException, SynologyImportException {
       SynologyUploader spyUploader =
           Mockito.spy(new SynologyUploader(executor, monitor, synologyDTPService));
       List<MediaAlbum> albums = List.of(new MediaAlbum("1", "album1", "desc"));
@@ -158,7 +160,7 @@ public class SynologyUploaderTest {
     }
 
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws SynologyException {
       lenient()
           .when(synologyDTPService.addItemToAlbum(any(), any(), any()))
           .thenReturn(Map.of("success", true));
@@ -192,7 +194,8 @@ public class SynologyUploaderTest {
     @ParameterizedTest(name = "shouldImportMediaItemsWhenAlbumBeforeItem [{index}] {0}")
     @MethodSource("provideMediaItems")
     public void shouldImportMediaItemsWhenAlbumBeforeItem(
-        List<? extends DownloadableItem> mediaItems) {
+        List<? extends DownloadableItem> mediaItems)
+        throws SynologyException, SynologyImportException {
       SynologyUploader uploader = new SynologyUploader(executor, monitor, synologyDTPService);
       List<MediaAlbum> albums = List.of(new MediaAlbum(albumId, "album1", "desc"));
 
@@ -274,7 +277,8 @@ public class SynologyUploaderTest {
         name = "shouldThrowHttpExceptionWithStatusCodeIfCreateMediaItemFails [{index}] {0}")
     @MethodSource("provideMediaItems")
     public void shouldThrowHttpExceptionWithStatusCodeIfCreateMediaItemFails(
-        List<? extends DownloadableItem> mediaItems) {
+        List<? extends DownloadableItem> mediaItems)
+        throws SynologyException, SynologyImportException {
       SynologyUploader spyUploader =
           Mockito.spy(new SynologyUploader(executor, monitor, synologyDTPService));
       List<MediaAlbum> albums = List.of(new MediaAlbum("1", "album1", "desc"));
@@ -312,7 +316,8 @@ public class SynologyUploaderTest {
     @ParameterizedTest(name = "shouldThrowExceptionIfCreateMediaItemNotSuccess [{index}] {0}")
     @MethodSource("provideMediaItems")
     public void shouldThrowExceptionIfCreateMediaItemNotSuccess(
-        List<? extends DownloadableItem> mediaItems) {
+        List<? extends DownloadableItem> mediaItems)
+        throws SynologyException, SynologyImportException {
       SynologyUploader spyUploader =
           Mockito.spy(new SynologyUploader(executor, monitor, synologyDTPService));
       List<MediaAlbum> albums = List.of(new MediaAlbum("1", "album1", "desc"));
@@ -330,20 +335,21 @@ public class SynologyUploaderTest {
             assertThrows(
                 SynologyImportException.class,
                 () -> spyUploader.importPhotos((List<PhotoModel>) mediaItems, mockJobId));
-        assertTrue(containsMessage(e, "Failed to import photos"));
+        assertTrue(containsMessage(e, "Failed to import item"));
       } else if (mediaItems.get(0) instanceof VideoModel) {
         Exception e =
             assertThrows(
                 SynologyImportException.class,
                 () -> spyUploader.importVideos((List<VideoModel>) mediaItems, mockJobId));
-        assertTrue(containsMessage(e, "Failed to import videos"));
+        assertTrue(containsMessage(e, "Failed to import item"));
       }
     }
 
     @ParameterizedTest(name = "shouldThrowExceptionIfAddItemToAlbumFails [{index}] {0}")
     @MethodSource("provideMediaItems")
     public void shouldThrowExceptionIfAddItemToAlbumFails(
-        List<? extends DownloadableItem> mediaItems) {
+        List<? extends DownloadableItem> mediaItems)
+        throws SynologyException, SynologyImportException {
       SynologyUploader spyUploader =
           Mockito.spy(new SynologyUploader(executor, monitor, synologyDTPService));
       List<MediaAlbum> albums = List.of(new MediaAlbum("1", "album1", "desc"));
@@ -374,7 +380,8 @@ public class SynologyUploaderTest {
     @ParameterizedTest(name = "shouldThrowExceptionIfAddItemToAlbumNotSuccess [{index}] {0}")
     @MethodSource("provideMediaItems")
     public void shouldThrowExceptionIfAddItemToAlbumNotSuccess(
-        List<? extends DownloadableItem> mediaItems) {
+        List<? extends DownloadableItem> mediaItems)
+        throws SynologyException, SynologyImportException {
       SynologyUploader spyUploader =
           Mockito.spy(new SynologyUploader(executor, monitor, synologyDTPService));
       List<MediaAlbum> albums = List.of(new MediaAlbum("1", "album1", "desc"));

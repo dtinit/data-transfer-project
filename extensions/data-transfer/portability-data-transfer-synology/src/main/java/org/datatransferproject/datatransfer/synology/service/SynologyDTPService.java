@@ -24,7 +24,6 @@ import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.util.Date;
 import java.net.URL;
 import java.util.Date;
 import java.util.Map;
@@ -37,6 +36,8 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.datatransfer.synology.constant.SynologyErrorCode;
+import org.datatransferproject.datatransfer.synology.exceptions.SynologyException;
 import org.datatransferproject.datatransfer.synology.exceptions.SynologyHttpException;
 import org.datatransferproject.datatransfer.synology.exceptions.SynologyImportException;
 import org.datatransferproject.datatransfer.synology.exceptions.SynologyMaxRetriesExceededException;
@@ -106,7 +107,7 @@ public class SynologyDTPService {
    * @param jobId the job ID
    * @return a map of shape {"data": {"album_id": <album_id>}}
    */
-  public Map<String, Object> createAlbum(MediaAlbum album, UUID jobId) {
+  public Map<String, Object> createAlbum(MediaAlbum album, UUID jobId) throws SynologyException {
     FormBody.Builder builder = new FormBody.Builder().add("title", album.getName());
     builder.add("album_id", album.getId());
     builder.add("job_id", jobId.toString());
@@ -124,7 +125,7 @@ public class SynologyDTPService {
    * @param jobId the job ID
    * @return a map of shape {"data": {"item_id": <item_id>}}
    */
-  public Map<String, Object> createPhoto(PhotoModel photo, UUID jobId) {
+  public Map<String, Object> createPhoto(PhotoModel photo, UUID jobId) throws SynologyException {
     byte[] imageBytes;
     try {
       InputStream inputStream = null;
@@ -178,7 +179,7 @@ public class SynologyDTPService {
    * @param jobId the job ID
    * @return a map of shape {"data": {"item_id": <item_id>}}
    */
-  public Map<String, Object> createVideo(VideoModel video, UUID jobId) {
+  public Map<String, Object> createVideo(VideoModel video, UUID jobId) throws SynologyException {
     byte[] videoBytes;
     try {
       InputStream inputStream = null;
@@ -232,7 +233,8 @@ public class SynologyDTPService {
    * @param itemId the item ID
    * @return a map of shape {"success": <bool>}
    */
-  public Map<String, Object> addItemToAlbum(String albumId, String itemId, UUID jobId) {
+  public Map<String, Object> addItemToAlbum(String albumId, String itemId, UUID jobId)
+      throws SynologyException {
     FormBody.Builder builder =
         new FormBody.Builder()
             .add("job_id", jobId.toString())
@@ -243,7 +245,40 @@ public class SynologyDTPService {
   }
 
   @VisibleForTesting
-  protected Map<String, Object> sendPostRequest(String url, RequestBody body, UUID jobId) {
+  protected void checkUnprocessableContent(Response response) throws SynologyImportException {
+    String errorCode = "";
+    String errorMessage = "";
+
+    try {
+      assert response.body() != null;
+
+      String bodyString = response.body().string();
+      Map<String, Object> responseData =
+          (Map<String, Object>) objectMapper.readValue(bodyString, Map.class);
+
+      if (!responseData.containsKey("error")) {
+        return;
+      }
+
+      Map<String, Object> errorData = (Map<String, Object>) responseData.get("error");
+      errorCode = errorData.getOrDefault("code", "").toString();
+      errorMessage = errorData.getOrDefault("msg", "").toString();
+    } catch (Exception e) {
+      monitor.severe(
+          () ->
+              "[SynologyImporter] Failed to parse unprocessable content response data, exception:",
+          e);
+    }
+
+    if (errorCode.equals("2000") || errorCode.equals("2001")) {
+      throw new SynologyImportException(
+          errorMessage, Integer.toString(SynologyErrorCode.QUOTA_NOT_CLAIMED));
+    }
+  }
+
+  @VisibleForTesting
+  protected Map<String, Object> sendPostRequest(String url, RequestBody body, UUID jobId)
+      throws SynologyException {
     boolean triedRefreshToken = false;
     Request.Builder requestBuilder = new Request.Builder().url(url).post(body);
 
@@ -255,6 +290,13 @@ public class SynologyDTPService {
         response = client.newCall(requestBuilder.build()).execute();
         if (!response.isSuccessful()) {
           int code = response.code();
+          if (code == 413) {
+            throw new SynologyImportException(
+                "Uploaded file is too large", Integer.toString(SynologyErrorCode.DESTINATION_FULL));
+          }
+          if (code == 422) {
+            checkUnprocessableContent(response);
+          }
           if (code == 401 && !triedRefreshToken) {
             triedRefreshToken = true;
             if (tokenManager.refreshToken(jobId, client, objectMapper)) {
@@ -263,6 +305,10 @@ public class SynologyDTPService {
           }
           throw new SynologyHttpException("Synology request failed", code, response.message());
         }
+      } catch (SynologyImportException e) {
+        monitor.severe(
+            () -> "[SynologyImporter] Failed to send post request,", "url:", url, "exception:", e);
+        throw e;
       } catch (Exception e) {
         monitor.severe(
             () -> "[SynologyImporter] Failed to send post request,", "url:", url, "exception:", e);
