@@ -2,13 +2,12 @@
 
 Artifacts are signed and published to Maven Central. You can see the latest version at the maven central website https://search.maven.org/search?q=g:org.datatransferproject.
 
-The publication process is mostly automated through Gradle and Github Actions; when you merge a commit to the `master` branch, a new version will be created in the Maven Central staging repository. You can then release the packages to the public Central Repository following the steps in the [Sonatype documentation](https://central.sonatype.org/publish/release/). \
-We are on the legacy host so make sure to use https://oss.sonatype.org/. Only attempt to Close the staging repository once the Github action has finished.
+First phase of publishing process is mostly automated. The second phase requires some manual actions.
 
 ## Automated Process
 
 DTP's publication automation is done through a Github action in `.github/workflows/release.yml`. \
-The action contains two jobs; one to bump the version number of the DTP packages and publish a git tag, and one to build, sign, and upload the artifacts to Maven Central.
+The action contains two jobs; one to bump the version number of the DTP packages and publish a git tag, and one to build, sign, and upload the artifacts to Maven Central staging repository.
 
 ### Semantic Versioning and Conventional Commits
 
@@ -16,7 +15,7 @@ DTP uses [Semantic Versioning](https://semver.org/) for published packages. We a
 
 Commitizen is a tool that supports automatically incrementing SemVer version numbers based on git commit history. Our usage of Commitizen is configured in `.cz.toml`, and is used in a Github action to automatically tag the new version in git and publish to maven (per "automated publishing" section of this doc).
 
-### Automated Publishing
+### Automated Publishing to staging
 
 Using the `maven` and `signing` gradle plugins adds the `sign` and `uploadArchives` targets, which together automate the process of publishing to Maven Central based on our configuration in `build.gradle`. \
 The `release` job in the Github action runs these targets, using environment variables to inject secret values like GPG keys and the OSSRH User Token required for publishing.

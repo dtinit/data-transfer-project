@@ -33,44 +33,13 @@ import org.datatransferproject.spi.transfer.provider.ImportResult.ResultType;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
+import org.datatransferproject.spi.transfer.types.SessionInvalidatedException;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 public class GenericImporter<C extends ContainerResource, R>
     implements Importer<TokensAndUrlAuthData, C> {
-
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  static class ErrorResponse {
-    private final String error;
-    private final Optional<String> errorDescription;
-
-    @JsonCreator
-    public ErrorResponse(
-        @JsonProperty(value = "error", required = true) String error,
-        @Nullable @JsonProperty("error_description") String errorDescription) {
-      this.error = error;
-      this.errorDescription = Optional.ofNullable(errorDescription);
-    }
-
-    public String getError() {
-      return error;
-    }
-
-    public Optional<String> getErrorDescription() {
-      return errorDescription;
-    }
-
-    public String toString() {
-      StringBuilder builder = new StringBuilder();
-      builder.append(error);
-      if (errorDescription.isPresent()) {
-        builder.append(" - ");
-        builder.append(errorDescription.get());
-      }
-      return builder.toString();
-    }
-  }
 
   ContainerSerializer<C, R> containerSerializer;
   URL endpoint;
@@ -126,7 +95,7 @@ public class GenericImporter<C extends ContainerResource, R>
     return new ImportResult(ResultType.OK);
   }
 
-  boolean parseResponse(Response response) throws IOException, InvalidTokenException, DestinationMemoryFullException {
+  boolean parseResponse(Response response) throws IOException, InvalidTokenException, DestinationMemoryFullException, SessionInvalidatedException {
     if (response.code() >= 400) {
       byte[] body = response.body().bytes();
       ErrorResponse error;
@@ -142,7 +111,9 @@ public class GenericImporter<C extends ContainerResource, R>
 
       if (response.code() == 401 && error.getError().equals("invalid_token")) {
         throw new InvalidTokenException(error.toString(), null);
-      } if (response.code() == 413 && error.getError().equals("destination_full")) {
+      }
+      
+      if (response.code() == 413 && error.getError().equals("destination_full")) {
         throw new DestinationMemoryFullException(
             String.format("Generic importer failed with code (%s)", response.code()),
             new RuntimeException("destination_full"));
@@ -157,7 +128,7 @@ public class GenericImporter<C extends ContainerResource, R>
   }
 
   boolean importSingleItem(UUID jobId, TokensAndUrlAuthData authData, ImportableData<R> dataItem)
-      throws IOException, InvalidTokenException, DestinationMemoryFullException {
+      throws IOException, InvalidTokenException, DestinationMemoryFullException, SessionInvalidatedException {
 
     Request request =
         new Request.Builder()
