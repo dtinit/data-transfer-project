@@ -140,7 +140,7 @@ public class OAuthTokenManager {
         throw new IOException(
             format(
                 "Error while refreshing token (%d): %s",
-                response.code(), new String(response.body().bytes(), StandardCharsets.UTF_8)));
+                response.code(), new String(body, StandardCharsets.UTF_8)));
       }
       RefreshTokenResponse responsePayload;
       try {
