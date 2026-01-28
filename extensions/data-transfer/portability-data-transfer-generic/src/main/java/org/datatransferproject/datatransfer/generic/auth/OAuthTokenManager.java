@@ -21,7 +21,9 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.datatransfer.generic.ErrorResponse;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
+import org.datatransferproject.spi.transfer.types.SessionInvalidatedException;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
@@ -101,7 +103,7 @@ public class OAuthTokenManager {
     this.om.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   }
 
-  private TokensAndUrlAuthData refreshToken() throws IOException {
+  private TokensAndUrlAuthData refreshToken() throws IOException, SessionInvalidatedException {
     monitor.info(() -> "Refreshing OAuth token");
     Request request =
         new Request.Builder()
@@ -117,13 +119,29 @@ public class OAuthTokenManager {
             .build();
 
     try (Response response = client.newCall(request).execute()) {
+      byte[] body = response.body().bytes();
       if (response.code() >= 400) {
+        if(response.code() == 401) {
+          ErrorResponse error;
+          try {
+            error = om.readValue(body, ErrorResponse.class);
+          } catch (JsonParseException | JsonMappingException e) {
+            throw new IOException(
+                format(
+                    "Unexpected response while refreshing token: %s",
+                    new String(body, StandardCharsets.UTF_8)),
+                e);
+          }
+          if(error.getError().equals("session_invalidated")) {
+            throw new SessionInvalidatedException(error.getErrorDescription().orElse("session_invalidated"), null);
+          }
+        }
+        
         throw new IOException(
             format(
                 "Error while refreshing token (%d): %s",
-                response.code(), new String(response.body().bytes(), StandardCharsets.UTF_8)));
+                response.code(), new String(body, StandardCharsets.UTF_8)));
       }
-      byte[] body = response.body().bytes();
       RefreshTokenResponse responsePayload;
       try {
         responsePayload = om.readValue(body, RefreshTokenResponse.class);
@@ -154,7 +172,7 @@ public class OAuthTokenManager {
    *     access token has been refreshed
    */
   public <T, Ex extends Exception> T withAuthData(FunctionRequiringAuthData<T, Ex> f)
-      throws Ex, InvalidTokenException, IOException {
+      throws Ex, InvalidTokenException, IOException, SessionInvalidatedException {
     try {
       return f.execute(authData);
     } catch (InvalidTokenException e) {

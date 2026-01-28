@@ -733,8 +733,24 @@ Content-Type: application/json
   "error_description": "The access token expired"
 }
 ```
-
 The worker will request a token refresh through the standard OAuth refresh token flow.
+
+### Invalidating Refresh Token
+
+If you need to stop receiving data for a specific account (for example, after an account deletion), invalidating the refresh token (and any associated access tokens) is sufficient.
+Sending following response with refresh token will ensure that the token can no longer be used and that no further actions should be taken with it:
+```http
+HTTP/1.1 401 Unauthorized
+Content-Type: application/json
+
+{
+  "error": "session_invalidated",
+  "error_description": "The refresh token expired"
+}
+```
+
+The workers will stop using the refresh token for current and subsequent recurring jobs
+
 
 ### Destination Full
 

@@ -18,6 +18,7 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.InvalidTokenException;
+import org.datatransferproject.spi.transfer.types.SessionInvalidatedException;
 import org.datatransferproject.types.common.models.ContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.AuthData;
@@ -44,7 +45,7 @@ public class GenericFileImporter<C extends ContainerResource, R> extends Generic
   @Override
   public boolean importSingleItem(
       UUID jobId, TokensAndUrlAuthData authData, ImportableData<R> dataItem)
-      throws IOException, InvalidTokenException, DestinationMemoryFullException {
+      throws IOException, InvalidTokenException, DestinationMemoryFullException, SessionInvalidatedException {
     if (dataItem instanceof ImportableFileData) {
       return importSingleFileItem(jobId, authData, (ImportableFileData<R>) dataItem);
     } else {
@@ -54,7 +55,7 @@ public class GenericFileImporter<C extends ContainerResource, R> extends Generic
 
   private <T> boolean importSingleFileItem(
       UUID jobId, AuthData authData, ImportableFileData<R> data)
-      throws IOException, InvalidTokenException, DestinationMemoryFullException {
+      throws IOException, InvalidTokenException, DestinationMemoryFullException, SessionInvalidatedException {
     InputStreamWrapper wrapper = connectionProvider.getInputStreamForItem(jobId, data.getFile());
     File tempFile =
         dataStore.getTempFileFromInputStream(wrapper.getStream(), data.getFile().getName(), null);
