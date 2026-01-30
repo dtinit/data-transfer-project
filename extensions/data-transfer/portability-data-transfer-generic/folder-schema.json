@@ -1,5 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Schema for folder metadata in data-transfer-project generic endpoints",
   "type": "object",
   "properties": {
     "path": {
