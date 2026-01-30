@@ -8,15 +8,11 @@
     },
     "payload": {
       "type": "object",
-      "description": "The inner payload, which contains data from one of the described data verticals",
-      "minProperties": 1,
-      "anyOf": [{
-        "$ref": "media-schema.json"
-      }]
+      "description": "The inner payload, which contains data from one of the described data verticals"
     },
     "schemaSource": {
       "type": "string",
-      "description": "The source file containing the schema definition"
+      "description": "The source file containing the schema definition.  The whole path relative to this package is not needed, so the value may be '.../SocialPostsSerializer.java' rather than './src/main/java/org/datatransferproject/datatransfer/generic/SocialPostsSerializer'."
     },
     "@type": {
       "const": "GenericPayload"
