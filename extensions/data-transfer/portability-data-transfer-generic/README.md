@@ -185,7 +185,7 @@ serviceConfig:
 
 ## Schemas
 
-Below are the [JSON schemas](https://json-schema.org/specification) for each supported vertical.
+[JSON schemas](https://json-schema.org/specification) are defined for each supported vertical.
 
 All POST requests containing data to be imported are wrapped in a top-level `GenericPayload` wrapper with
 the <a href="./payload-schema.json">Payload schema</a>.
@@ -226,7 +226,7 @@ in <a href="./folder-schema.json">the folder schema</a>.
 
 #### File-based Data Types
 
-The only file-based data type exposed for BLOBS data is `File`, which describes an arbitrary file in a folder. The file's metadata will be describes in the JSON part of the payload, with the <a href="./file-schema.json">file schema</>.
+The only file-based data type exposed for BLOBS data is `File`, which describes an arbitrary file in a folder. The file's metadata will be describes in the JSON part of the payload, with the <a href="./file-schema.json">file schema</a>.
 
 ### CALENDAR
 
