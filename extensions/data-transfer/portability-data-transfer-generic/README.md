@@ -79,7 +79,9 @@ Your endpoint should return a 20x status code if the resource has been created, 
 
 For basic data-types the Importer will send a POST request with a `Content-Type: application/json` header. The body of the POST request will be a UTF-8 encoded JSON payload conforming to the relevant data-type schema detailed in the [Schemas](#schemas) section.
 
-For example, below is a full request of a SOCIAL-POSTS item (JSON formatted for readability)
+For example, below is a full request of a SOCIAL-POSTS item (JSON formatted for readability).  This example is also 
+in <a href="./social-post-payload-example.json">social-post-payload-example.json</a>, which can be validated against 
+<a href="./payload-schema.json">payload-schema.json</a> and its subschemas. 
 
 ```http
 POST /import/social-posts HTTP/1.1
@@ -103,7 +105,7 @@ Authorization: Bearer accessToken
         "@type": "SocialActivityActor",
         "id": "321",
         "name": "Steve",
-        "url": null
+        "url": "http://example.org/actor/Steve"
       }
     },
     "activity": {
@@ -117,7 +119,7 @@ Authorization: Bearer accessToken
           "type": "IMAGE",
           "url": "foo.com",
           "name": "Foo",
-          "content": null
+          "content": "Example"
         }
       ],
       "location": {
@@ -128,7 +130,7 @@ Authorization: Bearer accessToken
       },
       "title": "Hello world!",
       "content": "Hi there",
-      "url": null
+      "url": "http://example.org/post/foo"
     }
   }
 }
