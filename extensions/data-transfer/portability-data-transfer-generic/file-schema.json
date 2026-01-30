@@ -1,5 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://id.schemas.pub/o/dtinit.org/dtp/file-schema",
+  "title": "Schema for file (blob) metadata in data-transfer-project generic endpoints",
   "type": "object",
   "properties": {
     "dateModified": {

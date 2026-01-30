@@ -1,5 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://id.schemas.pub/o/dtinit.org/dtp/social-posts-schema",
+  "title": "Schema for social post object data in data-transfer-project generic endpoints",
   "type": "object",
   "properties": {
     "activity": {

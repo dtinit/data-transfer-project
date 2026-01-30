@@ -1,5 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://id.schemas.pub/o/dtinit.org/dtp/payload-schema",
+  "title": "Schema for payload wrapper in data-transfer-project generic endpoints",
   "type": "object",
   "properties": {
     "apiVersion": {
@@ -9,9 +11,14 @@
       "type": "object",
       "description": "The inner payload, which contains data from one of the described data verticals",
       "minProperties": 1,
-      "anyOf": [{
-        "$ref": "media-schema.json"
-      }]
+      "anyOf": [
+        { "$ref": "album-schema" },
+        { "$ref": "calendar-schema" },
+        { "$ref": "file-schema" },
+        { "$ref": "folder-schema" },
+        { "$ref": "photo-and-video-schema" },
+        { "$ref": "social-posts-schema" }
+      ]
     },
     "schemaSource": {
       "type": "string",

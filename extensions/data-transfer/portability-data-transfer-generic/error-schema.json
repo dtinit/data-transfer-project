@@ -1,4 +1,7 @@
 {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://id.schemas.pub/o/dtinit.org/dtp/error-schema",
+  "title": "Schema for Album metadata in data-transfer-project generic endpoints",
   "type": "object",
   "properties": {
     "error": {

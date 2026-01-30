@@ -1,5 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://id.schemas.pub/o/dtinit.org/dtp/calendar-schema",
+  "title": "Schema for Calendar object info in data-transfer-project generic endpoints",
   "$defs": {
     "CalendarEventTime": {
       "type": "object",

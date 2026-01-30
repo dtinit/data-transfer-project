@@ -1,5 +1,7 @@
 {
   "$schema" : "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://id.schemas.pub/o/dtinit.org/dtp/photo-and-video-schema",
+  "title": "Schema for photo and video metadata in data-transfer-project generic endpoints",
   "$defs": {
     "FavoriteInfo": {
       "type": "object",

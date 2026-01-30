@@ -3,20 +3,20 @@
   "schemaSource": ".../SocialPostsSerializer.java",
   "apiVersion": "0.1.0",
   "payload": {
-    "@type": "SocialActivityData",
+    "@type": "SocialActivity",
     "metadata": {
       "@type": "SocialActivityMetadata",
       "actor": {
         "@type": "SocialActivityActor",
         "id": "321",
         "name": "Steve",
-        "url": null
+        "url": "http://example.org/actor/321"
       }
     },
     "activity": {
       "@type": "SocialActivityModel",
       "id": "456",
-      "published": 1731604863.845677,
+      "published": "1731604863.845677",
       "type": "NOTE",
       "attachments": [
         {
@@ -24,7 +24,7 @@
           "type": "IMAGE",
           "url": "foo.com",
           "name": "Foo",
-          "content": null
+          "content": "Example content"
         }
       ],
       "location": {
@@ -35,7 +35,7 @@
       },
       "title": "Hello world!",
       "content": "Hi there",
-      "url": null
+      "url": "http://example.org/post/foo"
     }
   }
 }

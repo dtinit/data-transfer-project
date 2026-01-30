@@ -79,7 +79,9 @@ Your endpoint should return a 20x status code if the resource has been created, 
 
 For basic data-types the Importer will send a POST request with a `Content-Type: application/json` header. The body of the POST request will be a UTF-8 encoded JSON payload conforming to the relevant data-type schema detailed in the [Schemas](#schemas) section.
 
-For example, below is a full request of a SOCIAL-POSTS item (JSON formatted for readability)
+For example, below is a full request of a SOCIAL-POSTS item (JSON formatted for readability).  This example is also 
+in <a href="./social-post-payload-example.json">social-post-payload-example.json</a>, which can be validated against 
+<a href="./payload-schema.json">payload-schema.json</a> and its subschemas. 
 
 ```http
 POST /import/social-posts HTTP/1.1
@@ -103,7 +105,7 @@ Authorization: Bearer accessToken
         "@type": "SocialActivityActor",
         "id": "321",
         "name": "Steve",
-        "url": null
+        "url": "http://example.org/actor/Steve"
       }
     },
     "activity": {
@@ -117,7 +119,7 @@ Authorization: Bearer accessToken
           "type": "IMAGE",
           "url": "foo.com",
           "name": "Foo",
-          "content": null
+          "content": "Example"
         }
       ],
       "location": {
@@ -128,7 +130,7 @@ Authorization: Bearer accessToken
       },
       "title": "Hello world!",
       "content": "Hi there",
-      "url": null
+      "url": "http://example.org/post/foo"
     }
   }
 }
@@ -185,39 +187,10 @@ serviceConfig:
 
 ## Schemas
 
-Below are the [JSON schemas](https://json-schema.org/specification) for each supported vertical.
+[JSON schemas](https://json-schema.org/specification) are defined for each supported vertical.
 
-All POST requests containing data to be imported are wrapped in a top-level `GenericPayload` wrapper.
-
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "type": "object",
-  "properties": {
-    "apiVersion": {
-      "type": "string"
-    },
-    "payload": {
-      "type": "object",
-      "description": "The inner payload, which contains data from one of the described data verticals"
-    },
-    "schemaSource": {
-      "type": "string",
-      "description": "The source file containing the schema definition.  The whole path relative to this package is not needed, 
-      so the value may be '.../SocialPostsSerializer.java' rather than './src/main/java/org/datatransferproject/datatransfer/generic/SocialPostsSerializer'."
-    },
-    "@type": {
-      "const": "GenericPayload"
-    }
-  },
-  "required": [
-    "@type",
-    "schemaSource",
-    "apiVersion",
-    "payload"
-  ]
-}
-```
+All POST requests containing data to be imported are wrapped in a top-level `GenericPayload` wrapper with
+the <a href="./payload-schema.json">Payload schema</a>.
 
 ### MEDIA
 
@@ -229,125 +202,12 @@ Albums are conventionally imported before the photos and videos contained in the
 
 #### Basic Data Types
 
-The only basic data type exposed for MEDIA data is `Album`, which contains metadata about an album.
-
-```json
-{
-  "$schema" : "https://json-schema.org/draft/2020-12/schema",
-  "type": "object",
-  "properties": {
-    "description": {
-      "type": "string"
-    },
-    "id": {
-      "type": "string"
-    },
-    "name": {
-      "type": "string"
-    },
-    "@type": {
-      "const": "Album"
-    }
-  },
-  "required": [
-    "@type",
-    "id",
-    "name"
-  ]
-}
-```
+The only basic data type exposed for MEDIA data is `Album`, using the <a href="./album-schema.json">Album schema</a>.
 
 #### File-based Data Types
 
-The `Photo` and `Video` data types are sent as file-based data containing metadata described below in the JSON part of the payload.
-
-```json
-{
-  "$schema" : "https://json-schema.org/draft/2020-12/schema",
-  "$defs": {
-    "FavoriteInfo": {
-      "type": "object",
-      "properties": {
-        "favorite": {
-          "type": "boolean"
-        },
-        "lastUpdateTime": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "@type": {
-          "const": "FavoriteInfo"
-        }
-      },
-      "required": [
-        "@type",
-        "favorite",
-        "lastUpdateTime"
-      ]
-    }
-  },
-  "anyOf": [
-    {
-      "type": "object",
-      "properties": {
-        "albumId": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "favoriteInfo": {
-          "$ref": "#/$defs/FavoriteInfo"
-        },
-        "name": {
-          "type": "string"
-        },
-        "uploadedTime": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "@type": {
-          "const": "Video"
-        }
-      },
-      "required": [
-        "@type",
-        "albumId",
-        "name"
-      ]
-    },
-    {
-      "type": "object",
-      "properties": {
-        "albumId": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "favoriteInfo": {
-          "$ref": "#/$defs/FavoriteInfo"
-        },
-        "name": {
-          "type": "string"
-        },
-        "uploadedTime": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "@type": {
-          "const": "Photo"
-        }
-      },
-      "required": [
-        "@type",
-        "albumId",
-        "name"
-      ]
-    }
-  ]
-}
-```
+The `Photo` and `Video` data types are sent as file-based data containing metadata described in <a 
+href="./photo-and-video-schema.json">the photo and video schema</a>.
 
 #### PHOTOS and VIDEOS
 
@@ -363,61 +223,12 @@ Folders are conventionally imported before any of their containing data, which m
 
 #### Basic Data Types
 
-The only basic data type exposed for BLOBS data is `Folder`, which describes a folder containing other folders and/or files.
-
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "type": "object",
-  "properties": {
-    "path": {
-      "type": "string",
-      "description": "Full path of the folder to be created"
-    },
-    "@type": {
-      "const": "Folder"
-    }
-  },
-  "required": [
-    "@type",
-    "path"
-  ]
-}
-```
+The only basic data type exposed for BLOBS data is `Folder`, which describes a folder containing other folders and/or files
+in <a href="./folder-schema.json">the folder schema</a>.
 
 #### File-based Data Types
 
-The only file-based data type exposed for BLOBS data is `File`, which describes an arbitrary file in a folder. The file's metadata will be describes in the JSON part of the payload, with the below schema.
-
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "type": "object",
-  "properties": {
-    "dateModified": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "format": "date-time"
-    },
-    "folder": {
-      "type": "string"
-    },
-    "name": {
-      "type": "string"
-    },
-    "@type": {
-      "const": "File"
-    }
-  },
-  "required": [
-    "@type",
-    "name",
-    "folder"
-  ]
-}
-```
+The only file-based data type exposed for BLOBS data is `File`, which describes an arbitrary file in a folder. The file's metadata will be describes in the JSON part of the payload, with the <a href="./file-schema.json">file schema</a>.
 
 ### CALENDAR
 
@@ -427,120 +238,9 @@ The CALENDAR vertical describes calendars and events on those calendars.
 
 Calendars are conventionally imported before the events associated with them.
 
-All data exposed by the CALENDER vertical is encoded as a basic data type.
+All data exposed by the CALENDER vertical is encoded as a basic data type with the 
+<a href="./calendar-schema.json">calendar schema</a>.
 
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$defs": {
-    "CalendarEventTime": {
-      "type": "object",
-      "properties": {
-        "dateOnly": {
-          "type": "boolean"
-        },
-        "dateTime": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "@type": {
-          "const": "CalendarEventModel$CalendarEventTime"
-        }
-      },
-      "required": [
-        "@type",
-        "dateTime"
-      ]
-    }
-  },
-  "anyOf": [
-    {
-      "type": "object",
-      "properties": {
-        "description": {
-          "type": "string"
-        },
-        "id": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "@type": {
-          "const": "Calendar"
-        }
-      },
-      "required": [
-        "@type",
-        "name",
-        "id"
-      ]
-    },
-    {
-      "type": "object",
-      "properties": {
-        "attendees": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "displayName": {
-                "type": "string"
-              },
-              "email": {
-                "type": "string"
-              },
-              "optional": {
-                "type": "boolean"
-              },
-              "@type": {
-                "const": "CalendarAttendeeModel"
-              }
-            },
-            "required": [
-              "@type"
-            ]
-          }
-        },
-        "calendarId": {
-          "type": "string"
-        },
-        "endTime": {
-          "$ref": "#/$defs/CalendarEventTime"
-        },
-        "location": {
-          "type": "string"
-        },
-        "notes": {
-          "type": "string"
-        },
-        "recurrenceRule": {
-          "type": "object",
-          "properties": {
-            "exDate": {
-              "type": "object"
-            }
-          }
-        },
-        "startTime": {
-          "$ref": "#/$defs/CalendarEventTime"
-        },
-        "title": {
-          "type": "string"
-        },
-        "@type": {
-          "const": "CalendarEvent"
-        }
-      },
-      "required": [
-        "@type",
-        "calendarId",
-        "title"
-      ]
-    }
-  ]
-}
-```
 
 ### SOCIAL-POSTS
 
@@ -548,167 +248,14 @@ Endpoint: `/social-posts`
 
 The SOCIAL-POSTS vertical represents posts made by the user on a social media platform.
 
-Only the `SocialActivity` data type is exposed by the SOCIAL-POSTS vertical, which is a basic data type.
+Only the `SocialActivity` data type is exposed by the SOCIAL-POSTS vertical, see the <a
+href="./social-posts-schema.json">Social Posts schema</a>.
 
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "type": "object",
-  "properties": {
-    "activity": {
-      "type": "object",
-      "properties": {
-        "attachments": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "content": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              },
-              "type": {
-                "type": "string",
-                "enum": [
-                  "LINK",
-                  "IMAGE",
-                  "VIDEO"
-                ]
-              },
-              "url": {
-                "type": "string"
-              },
-              "@type": {
-                "const": "SocialActivityAttachment"
-              }
-            },
-            "required": [
-              "@type",
-              "name"
-            ]
-          }
-        },
-        "content": {
-          "type": "string"
-        },
-        "id": {
-          "type": "string"
-        },
-        "location": {
-          "type": "object",
-          "properties": {
-            "latitude": {
-              "type": "number"
-            },
-            "longitude": {
-              "type": "number"
-            },
-            "name": {
-              "type": "string"
-            },
-            "@type": {
-              "const": "SocialActivityLocation"
-            }
-          },
-          "required": [
-            "@type",
-            "latitude",
-            "longitude"
-          ]
-        },
-        "published": {
-          "type": "string",
-          "format": "date-time"
-        },
-        "title": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string",
-          "enum": [
-            "CHECKIN",
-            "POST",
-            "NOTE"
-          ]
-        },
-        "url": {
-          "type": "string"
-        },
-        "@type": {
-          "const": "SocialActivityModel"
-        }
-      },
-      "required": [
-        "@type",
-        "id",
-        "content"
-      ]
-    },
-    "metadata": {
-      "type": "object",
-      "properties": {
-        "actor": {
-          "type": "object",
-          "properties": {
-            "id": {
-              "type": "string"
-            },
-            "name": {
-              "type": "string"
-            },
-            "url": {
-              "type": "string"
-            },
-            "@type": {
-              "const": "SocialActivityActor"
-            }
-          },
-          "required": [
-            "@type",
-            "id"
-          ]
-        },
-        "@type": {
-          "const": "SocialActivityMetadata"
-        }
-      },
-      "required": [
-        "@type"
-      ]
-    },
-    "@type": {
-      "const": "SocialActivity"
-    }
-  },
-  "required": [
-    "@type",
-    "activity"
-  ]
-}
-```
 
 ### Endpoint Errors
 
-If there is an error importing an item on any endpoint, the relevant HTTP response code (40x, 50x) should be set, and a JSON encoded response body with the following schema should be sent.
+If there is an error importing an item on any endpoint, the relevant HTTP response code (40x, 50x) should be set, and a JSON encoded response body with the <a href="./error-schema.json">error schema</a> should be sent.
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "error_description": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
 
 The combination of the HTTP response code and `error` field can be used to encode for specific failure modes; see [Token Refresh](#token-refresh) & [Destination Full](#destination-full) below.
 
