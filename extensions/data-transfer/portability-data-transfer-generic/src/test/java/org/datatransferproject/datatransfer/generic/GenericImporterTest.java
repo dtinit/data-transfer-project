@@ -278,9 +278,7 @@ public class GenericImporterTest {
     assertEquals("itemId", error.title());
     assertContains("(400) bad_request", error.exception());
   }
-
-
-
+  
   @Test
   public void testGenericImporterUnexpectedResponse() throws Exception {
     InMemoryIdempotentImportExecutor executor = new InMemoryIdempotentImportExecutor(monitor);
@@ -308,8 +306,6 @@ public class GenericImporterTest {
     assertEquals("itemId", error.title());
     assertContains("Unexpected response (400) 'notjson'", error.exception());
   }
-
-
 
   @Test
   public void testGenericImporterUnexpectedResponseCode() throws Exception {
@@ -457,5 +453,4 @@ public class GenericImporterTest {
               new IdOnlyContainerResource("itemId"));
     });
   }
-
 }
