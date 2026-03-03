@@ -20,6 +20,7 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.InMemoryIdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
+import org.datatransferproject.spi.transfer.types.SessionInvalidatedException;
 import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.common.models.IdOnlyContainerResource;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
@@ -277,7 +278,7 @@ public class GenericImporterTest {
     assertEquals("itemId", error.title());
     assertContains("(400) bad_request", error.exception());
   }
-
+  
   @Test
   public void testGenericImporterUnexpectedResponse() throws Exception {
     InMemoryIdempotentImportExecutor executor = new InMemoryIdempotentImportExecutor(monitor);
@@ -426,4 +427,30 @@ public class GenericImporterTest {
     assertTrue(executor.getErrors().isEmpty());
   }
 
+  @Test
+  public void testSessionInvalidatedException() throws Exception {
+    InMemoryIdempotentImportExecutor executor = new InMemoryIdempotentImportExecutor(monitor);
+    GenericImporter<IdOnlyContainerResource, String> importer =
+            getImporter(
+                    importerClass,
+                    container ->
+                            List.of(
+                                    new ImportableData<>(
+                                            new GenericPayload<>(container.getId(), "schemasource"),
+                                            container.getId(),
+                                            container.getId())));
+    webServer.enqueue(new MockResponse()
+            .setResponseCode(401)
+            .setBody("{\"error\":\"invalid_token\"}"));
+    webServer.enqueue(new MockResponse().setResponseCode(401).setBody("{\"error\":\"session_invalidated\"}"));
+
+    assertThrows(SessionInvalidatedException.class, () -> {
+      importer.importItem(
+              UUID.randomUUID(),
+              executor,
+              new TokensAndUrlAuthData(
+                      "accessToken", "refreshToken", webServer.url("/refresh").toString()),
+              new IdOnlyContainerResource("itemId"));
+    });
+  }
 }
