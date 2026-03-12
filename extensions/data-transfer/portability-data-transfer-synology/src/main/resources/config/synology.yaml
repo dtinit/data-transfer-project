@@ -11,3 +11,4 @@ serviceConfig:
         createAlbum: "/import/album"
         uploadItem: "/import/item"
         addItemToAlbum: "/import/album/item"
+        signalJob: "/import/job/signal"

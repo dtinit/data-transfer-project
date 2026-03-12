@@ -14,6 +14,7 @@ import org.datatransferproject.datatransfer.synology.media.SynologyMediaImporter
 import org.datatransferproject.datatransfer.synology.photos.SynologyPhotosImporter;
 import org.datatransferproject.datatransfer.synology.service.SynologyDTPService;
 import org.datatransferproject.datatransfer.synology.service.SynologyOAuthTokenManager;
+import org.datatransferproject.datatransfer.synology.signals.SynologySignalHandler;
 import org.datatransferproject.datatransfer.synology.uploader.SynologyUploader;
 import org.datatransferproject.datatransfer.synology.videos.SynologyVideosImporter;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
@@ -23,6 +24,7 @@ import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportE
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.spi.transfer.provider.SignalHandler;
 import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
@@ -36,6 +38,7 @@ public class SynologyTransferExtension implements TransferExtension {
   private boolean initialized = false;
 
   private ImmutableMap<DataVertical, Importer> importerMap;
+  private SynologySignalHandler signalHandler;
 
   @Override
   public String getServiceId() {
@@ -62,6 +65,11 @@ public class SynologyTransferExtension implements TransferExtension {
     monitor.info(() -> "Getting importer for " + transferDataType);
     monitor.info(() -> "has importer: " + importerMap.containsKey(transferDataType));
     return importerMap.get(transferDataType);
+  }
+
+  @Override
+  public SignalHandler<?> getSignalHandler() {
+    return signalHandler;
   }
 
   @Override
@@ -113,6 +121,9 @@ public class SynologyTransferExtension implements TransferExtension {
     importerBuilder.put(
         VIDEOS, new SynologyVideosImporter(monitor, tokenManager, synologyUploader));
     importerMap = importerBuilder.build();
+    signalHandler =
+        new SynologySignalHandler(
+            tokenManager, synologyDTPService, context.getSetting("retryLibrary", null));
 
     monitor.info(() -> "Initializing SynologyTransferExtension");
     initialized = true;
