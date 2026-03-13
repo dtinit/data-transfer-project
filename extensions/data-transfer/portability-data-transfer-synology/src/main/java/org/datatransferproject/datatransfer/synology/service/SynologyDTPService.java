@@ -44,6 +44,7 @@ import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.NoNasInAccountException;
 import org.datatransferproject.spi.transfer.types.UploadErrorException;
+import org.datatransferproject.spi.transfer.types.signals.JobLifeCycle;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.videos.VideoModel;
@@ -244,6 +245,27 @@ public class SynologyDTPService {
             .add("album_id", albumId)
             .add("item_id", itemId);
     return sendPostRequest(c2Api.getAddItemToAlbum(), builder.build(), jobId);
+  }
+
+  /**
+   * Updates job status.
+   *
+   * @param jobStatus the job status
+   * @param jobId the job ID
+   * @return a map of shape {"success": <bool>}
+   */
+  public Map<String, Object> sendJobSignal(JobLifeCycle jobStatus, UUID jobId)
+      throws CopyExceptionWithFailureReason {
+    FormBody.Builder builder =
+        new FormBody.Builder()
+            .add("job_id", jobId.toString())
+            .add("service", exportingService)
+            .add("state", jobStatus.state().name());
+    if (jobStatus.endReason() != null) {
+      builder.add("end_reason", jobStatus.endReason().name());
+    }
+
+    return sendPostRequest(c2Api.getSignalJob(), builder.build(), jobId);
   }
 
   @VisibleForTesting

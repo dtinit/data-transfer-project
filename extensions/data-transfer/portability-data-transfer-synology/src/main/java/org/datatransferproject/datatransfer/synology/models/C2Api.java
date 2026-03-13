@@ -28,6 +28,7 @@ public class C2Api extends ServiceConfig.Service {
   private final String createAlbum;
   private final String uploadItem;
   private final String addItemToAlbum;
+  private final String signalJob;
 
   @JsonCreator
   public C2Api(@JsonProperty("baseUrl") String baseUrl, @JsonProperty("apiPath") ApiPath apiPath) {
@@ -38,6 +39,7 @@ public class C2Api extends ServiceConfig.Service {
     this.createAlbum = UrlUtils.join(baseUrl, apiPath.getCreateAlbumPath());
     this.uploadItem = UrlUtils.join(baseUrl, apiPath.getUploadItemPath());
     this.addItemToAlbum = UrlUtils.join(baseUrl, apiPath.getAddItemToAlbumPath());
+    this.signalJob = UrlUtils.join(baseUrl, apiPath.getSignalJobPath());
   }
 
   public ApiPath getApiPath() {
@@ -56,19 +58,26 @@ public class C2Api extends ServiceConfig.Service {
     return addItemToAlbum;
   }
 
+  public String getSignalJob() {
+    return signalJob;
+  }
+
   public static class ApiPath {
     private final String createAlbumPath;
     private final String uploadItemPath;
     private final String addItemToAlbumPath;
+    private final String signalJobPath;
 
     @JsonCreator
     public ApiPath(
         @JsonProperty("createAlbum") String createAlbumPath,
         @JsonProperty("uploadItem") String uploadItemPath,
-        @JsonProperty("addItemToAlbum") String addItemToAlbumPath) {
+        @JsonProperty("addItemToAlbum") String addItemToAlbumPath,
+        @JsonProperty("signalJob") String signalJobPath) {
       this.createAlbumPath = createAlbumPath;
       this.uploadItemPath = uploadItemPath;
       this.addItemToAlbumPath = addItemToAlbumPath;
+      this.signalJobPath = signalJobPath;
     }
 
     public String getCreateAlbumPath() {
@@ -81,6 +90,10 @@ public class C2Api extends ServiceConfig.Service {
 
     public String getAddItemToAlbumPath() {
       return addItemToAlbumPath;
+    }
+
+    public String getSignalJobPath() {
+      return signalJobPath;
     }
   }
 }
