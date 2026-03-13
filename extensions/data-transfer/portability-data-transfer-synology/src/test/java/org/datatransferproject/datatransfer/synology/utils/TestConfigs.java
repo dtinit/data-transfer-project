@@ -30,12 +30,16 @@ public class TestConfigs {
   public static final String TEST_CREATE_ALBUM_PATH = "/create";
   public static final String TEST_UPLOAD_ITEM_PATH = "/upload";
   public static final String TEST_ADD_ITEM_TO_ALBUM_PATH = "/add";
+  public static final String TEST_SIGNAL_JOB_PATH = "/signal";
   public static final int TEST_MAX_ATTEMPTS = 5;
 
   public static ServiceConfig createServiceConfig() {
     C2Api.ApiPath apiPath =
         new C2Api.ApiPath(
-            TEST_CREATE_ALBUM_PATH, TEST_UPLOAD_ITEM_PATH, TEST_ADD_ITEM_TO_ALBUM_PATH);
+            TEST_CREATE_ALBUM_PATH,
+            TEST_UPLOAD_ITEM_PATH,
+            TEST_ADD_ITEM_TO_ALBUM_PATH,
+            TEST_SIGNAL_JOB_PATH);
 
     C2Api c2Api = new C2Api(TEST_C2_BASE_URL, apiPath);
 
