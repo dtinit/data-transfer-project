@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Date;
@@ -45,8 +44,8 @@ import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
+import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.NoNasInAccountException;
-import org.datatransferproject.spi.transfer.types.UploadErrorException;
 import org.datatransferproject.spi.transfer.types.signals.JobLifeCycle;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
@@ -66,7 +65,7 @@ public class SynologyDTPService {
 
   @FunctionalInterface
   protected interface RequestBodyGenerator {
-    RequestBody get() throws CopyExceptionWithFailureReason;
+    RequestBody get() throws CopyExceptionWithFailureReason, IOException;
   }
 
   /**
@@ -105,7 +104,7 @@ public class SynologyDTPService {
    * @return a map of shape {"data": {"album_id": <album_id>}}
    */
   public Map<String, Object> createAlbum(MediaAlbum album, UUID jobId)
-      throws CopyExceptionWithFailureReason {
+      throws CopyExceptionWithFailureReason, IOException {
     FormBody.Builder builder = new FormBody.Builder().add("title", album.getName());
     builder.add("album_id", album.getId());
     builder.add("job_id", jobId.toString());
@@ -127,27 +126,16 @@ public class SynologyDTPService {
    */
   @VisibleForTesting
   protected InputStreamWrapper getMediaInputStreamWrapper(
-      UUID jobId, String fetchableUrl, boolean isInTempStore)
-      throws CopyExceptionWithFailureReason {
-    try {
-      if (isInTempStore) {
-        return jobStore.getStream(jobId, fetchableUrl);
-      } else if (fetchableUrl != null) {
-        URL url = new URL(fetchableUrl);
-        URLConnection connection = url.openConnection();
-        return new InputStreamWrapper(
-            connection.getInputStream(), connection.getContentLengthLong());
-      }
-    } catch (MalformedURLException e) {
-      throw new UploadErrorException(
-          String.format("Failed to create url for fetchableUrl [%s]", fetchableUrl), e);
-    } catch (IOException e) {
-      throw new UploadErrorException(
-          String.format("Failed to create input stream for fetchableUrl [%s]", fetchableUrl), e);
+      UUID jobId, String fetchableUrl, boolean isInTempStore) throws IOException {
+    if (isInTempStore) {
+      return jobStore.getStream(jobId, fetchableUrl);
+    } else if (fetchableUrl != null) {
+      URL url = new URL(fetchableUrl);
+      URLConnection connection = url.openConnection();
+      return new InputStreamWrapper(connection.getInputStream(), connection.getContentLengthLong());
     }
-    throw new UploadErrorException(
-        "No valid input stream source for media",
-        new IOException("fetchableUrl is null and isInTempStore is false"));
+
+    throw new IllegalArgumentException("fetchableUrl is null and isInTempStore is false");
   }
 
   /**
@@ -158,11 +146,11 @@ public class SynologyDTPService {
    * @return a map of shape {"data": {"item_id": <item_id>}}
    */
   public Map<String, Object> createPhoto(PhotoModel photo, UUID jobId)
-      throws CopyExceptionWithFailureReason {
+      throws CopyExceptionWithFailureReason, IOException {
     monitor.info(
         () ->
             String.format(
-                "[SynologyImporter] starts creating photo, dataId: [%s], name: [%s]",
+                "[SynologyImporter] starts creating photo, dataId: [%s], name: [%s].",
                 photo.getDataId(), photo.getTitle()),
         jobId);
 
@@ -228,7 +216,7 @@ public class SynologyDTPService {
     monitor.info(
         () ->
             String.format(
-                "[SynologyImporter] photo created successfully, name: [%s]", photo.getTitle()),
+                "[SynologyImporter] photo created successfully, name: [%s].", photo.getTitle()),
         jobId);
     return responseData;
   }
@@ -241,11 +229,11 @@ public class SynologyDTPService {
    * @return a map of shape {"data": {"item_id": <item_id>}}
    */
   public Map<String, Object> createVideo(VideoModel video, UUID jobId)
-      throws CopyExceptionWithFailureReason {
+      throws CopyExceptionWithFailureReason, IOException {
     monitor.info(
         () ->
             String.format(
-                "[SynologyImporter] starts creating video, dataId: [%s], name: [%s]",
+                "[SynologyImporter] starts creating video, dataId: [%s], name: [%s].",
                 video.getDataId(), video.getName()),
         jobId);
 
@@ -308,6 +296,11 @@ public class SynologyDTPService {
     Map<String, Object> responseData =
         (Map<String, Object>)
             sendPostRequest(c2Api.getUploadItem(), bodyGenerator, jobId, 300).get("data");
+    monitor.info(
+        () ->
+            String.format(
+                "[SynologyImporter] video created successfully, name: [%s].", video.getName()),
+        jobId);
     return responseData;
   }
 
@@ -319,7 +312,7 @@ public class SynologyDTPService {
    * @return a map of shape {"success": <bool>}
    */
   public Map<String, Object> addItemToAlbum(String albumId, String itemId, UUID jobId)
-      throws CopyExceptionWithFailureReason {
+      throws CopyExceptionWithFailureReason, IOException {
     FormBody.Builder builder =
         new FormBody.Builder()
             .add("job_id", jobId.toString())
@@ -338,7 +331,7 @@ public class SynologyDTPService {
    * @return a map of shape {"success": <bool>}
    */
   public Map<String, Object> sendJobSignal(JobLifeCycle jobStatus, UUID jobId)
-      throws CopyExceptionWithFailureReason {
+      throws CopyExceptionWithFailureReason, IOException {
     FormBody.Builder builder =
         new FormBody.Builder()
             .add("job_id", jobId.toString())
@@ -390,7 +383,7 @@ public class SynologyDTPService {
   @VisibleForTesting
   protected Map<String, Object> sendPostRequest(
       String url, RequestBodyGenerator bodyGenerator, UUID jobId)
-      throws CopyExceptionWithFailureReason {
+      throws CopyExceptionWithFailureReason, IOException {
     return sendPostRequest(url, bodyGenerator, jobId, -1);
   }
 
@@ -403,7 +396,7 @@ public class SynologyDTPService {
   @VisibleForTesting
   protected Map<String, Object> sendPostRequest(
       String url, RequestBodyGenerator bodyGenerator, UUID jobId, int timeoutInSeconds)
-      throws CopyExceptionWithFailureReason {
+      throws CopyExceptionWithFailureReason, IOException {
     boolean triedRefreshToken = false;
 
     Exception lastException = null;
@@ -427,7 +420,12 @@ public class SynologyDTPService {
         }
         if (!response.isSuccessful()) {
           int code = response.code();
-          if (code == 401 && !triedRefreshToken) {
+          if (code == 401) {
+            if (triedRefreshToken) {
+              throw new InvalidTokenException(
+                  "Synology access token is invalid even after refresh",
+                  new IOException("SynologyDTPService get http 401 unauthorized"));
+            }
             triedRefreshToken = true;
             if (tokenManager.refreshToken(jobId, client, objectMapper)) {
               continue;
@@ -477,7 +475,7 @@ public class SynologyDTPService {
         lastException = e;
       }
     }
-    throw new UploadErrorException(
+    throw new IOException(
         String.format(
             "Failed to send POST request after %d retries: %s",
             retryConfig.getMaxAttempts(), lastException.getMessage()),

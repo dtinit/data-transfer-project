@@ -118,7 +118,8 @@ public class SynologyDTPServiceTest {
     private final String itemId = "testItem";
 
     @Test
-    public void shouldSendPostRequestWithCorrectFormBody() throws CopyExceptionWithFailureReason {
+    public void shouldSendPostRequestWithCorrectFormBody()
+        throws CopyExceptionWithFailureReason, IOException {
       SynologyDTPService spyService = Mockito.spy(dtpService);
 
       doReturn(Map.of("success", true))
@@ -146,7 +147,7 @@ public class SynologyDTPServiceTest {
 
     @Test
     public void shouldThrowExceptionIfSendPostRequestFailed()
-        throws CopyExceptionWithFailureReason {
+        throws CopyExceptionWithFailureReason, IOException {
       SynologyDTPService spyService = Mockito.spy(dtpService);
 
       doThrow(new UploadErrorException("MockException", null))
@@ -167,7 +168,8 @@ public class SynologyDTPServiceTest {
     private final MediaAlbum album = new MediaAlbum(albumId, albumName, "");
 
     @Test
-    public void shouldSendPostRequestWithCorrectFormBody() throws CopyExceptionWithFailureReason {
+    public void shouldSendPostRequestWithCorrectFormBody()
+        throws CopyExceptionWithFailureReason, IOException {
       SynologyDTPService spyService = Mockito.spy(dtpService);
       Map<String, Object> dataMap = Map.of("album_id", albumId);
 
@@ -197,7 +199,7 @@ public class SynologyDTPServiceTest {
 
     @Test
     public void shouldThrowExceptionIfSendPostRequestFailed()
-        throws CopyExceptionWithFailureReason {
+        throws CopyExceptionWithFailureReason, IOException {
       SynologyDTPService spyService = Mockito.spy(dtpService);
 
       doThrow(new UploadErrorException("MockException", null))
@@ -473,9 +475,10 @@ public class SynologyDTPServiceTest {
       when(mockCall.execute()).thenReturn(mockResponseFail);
 
       assertThrows(
-          UploadErrorException.class,
+          IOException.class,
           () -> dtpService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, () -> requestBody, jobId),
-          String.format("Failed to send POST request %d times", TestConfigs.TEST_MAX_ATTEMPTS));
+          String.format(
+              "Failed to send POST request after %d retries", TestConfigs.TEST_MAX_ATTEMPTS));
       verify(tokenManager, never())
           .refreshToken(any(UUID.class), eq(client), any(ObjectMapper.class));
       verify(client, times(TestConfigs.TEST_MAX_ATTEMPTS)).newCall(any(Request.class));
@@ -526,13 +529,12 @@ public class SynologyDTPServiceTest {
           .thenReturn(false);
 
       assertThrows(
-          UploadErrorException.class,
-          () -> dtpService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, () -> requestBody, jobId),
-          String.format("Failed to send POST request %d times", TestConfigs.TEST_MAX_ATTEMPTS));
+          InvalidTokenException.class,
+          () -> dtpService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, () -> requestBody, jobId));
 
       verify(tokenManager, times(1))
           .refreshToken(any(UUID.class), eq(client), any(ObjectMapper.class));
-      verify(client, times(TestConfigs.TEST_MAX_ATTEMPTS)).newCall(any(Request.class));
+      verify(client, times(2)).newCall(any(Request.class));
     }
 
     @Test
@@ -549,9 +551,10 @@ public class SynologyDTPServiceTest {
           .thenThrow(new IOException("Error when call response.body.string()"));
 
       assertThrows(
-          UploadErrorException.class,
+          IOException.class,
           () -> dtpService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, () -> requestBody, jobId),
-          String.format("Failed to send POST request %d times", TestConfigs.TEST_MAX_ATTEMPTS));
+          String.format(
+              "Failed to send POST request after %d retries", TestConfigs.TEST_MAX_ATTEMPTS));
       verify(tokenManager, never())
           .refreshToken(any(UUID.class), eq(client), any(ObjectMapper.class));
       verify(client, times(TestConfigs.TEST_MAX_ATTEMPTS)).newCall(any(Request.class));
@@ -712,23 +715,17 @@ public class SynologyDTPServiceTest {
 
     @Test
     public void shouldThrowExceptionWhenNoSource() {
-      UploadErrorException exception =
-          assertThrows(
-              UploadErrorException.class,
-              () -> dtpService.getMediaInputStreamWrapper(jobId, null, false));
-
-      assertEquals("No valid input stream source for media", exception.getMessage());
+      assertThrows(
+          IllegalArgumentException.class,
+          () -> dtpService.getMediaInputStreamWrapper(jobId, null, false));
     }
 
     @Test
     public void shouldThrowExceptionForMalformedUrl() {
       String malformedUrl = "this is not a url";
-      UploadErrorException exception =
-          assertThrows(
-              UploadErrorException.class,
-              () -> dtpService.getMediaInputStreamWrapper(jobId, malformedUrl, false));
-      assertEquals(
-          "Failed to create url for fetchableUrl [this is not a url]", exception.getMessage());
+      assertThrows(
+          IOException.class,
+          () -> dtpService.getMediaInputStreamWrapper(jobId, malformedUrl, false));
     }
   }
 }
