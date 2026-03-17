@@ -24,14 +24,26 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -48,6 +60,7 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okio.Buffer;
 import org.datatransferproject.api.launcher.Monitor;
+import org.datatransferproject.datatransfer.synology.service.SynologyDTPService.RequestBodyGenerator;
 import org.datatransferproject.datatransfer.synology.utils.TestConfigs;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
@@ -84,7 +97,7 @@ public class SynologyDTPServiceTest {
   @Mock protected TransferServiceConfig transferServiceConfig;
   @Mock protected JobStore jobStore;
   @Mock protected SynologyOAuthTokenManager tokenManager;
-  @Captor ArgumentCaptor<RequestBody> requestBodyCaptor;
+  @Captor ArgumentCaptor<RequestBodyGenerator> requestBodyCaptor;
   @Mock private OkHttpClient client;
 
   @BeforeEach
@@ -108,13 +121,15 @@ public class SynologyDTPServiceTest {
     public void shouldSendPostRequestWithCorrectFormBody() throws CopyExceptionWithFailureReason {
       SynologyDTPService spyService = Mockito.spy(dtpService);
 
-      doReturn(Map.of("success", true)).when(spyService).sendPostRequest(anyString(), any(), any());
+      doReturn(Map.of("success", true))
+          .when(spyService)
+          .sendPostRequest(anyString(), any(RequestBodyGenerator.class), any());
       Map<String, Object> result = spyService.addItemToAlbum(albumId, itemId, jobId);
 
       verify(spyService).sendPostRequest(anyString(), requestBodyCaptor.capture(), any());
       assertEquals(result.get("success"), true);
 
-      RequestBody capturedBody = requestBodyCaptor.getValue();
+      RequestBody capturedBody = requestBodyCaptor.getValue().get();
       assertTrue(capturedBody instanceof FormBody);
       FormBody formBody = (FormBody) capturedBody;
 
@@ -136,7 +151,7 @@ public class SynologyDTPServiceTest {
 
       doThrow(new UploadErrorException("MockException", null))
           .when(spyService)
-          .sendPostRequest(anyString(), any(), any());
+          .sendPostRequest(anyString(), any(RequestBodyGenerator.class), any());
 
       assertThrows(
           UploadErrorException.class,
@@ -158,14 +173,14 @@ public class SynologyDTPServiceTest {
 
       doReturn(Map.of("success", true, "data", dataMap))
           .when(spyService)
-          .sendPostRequest(anyString(), any(), any());
+          .sendPostRequest(anyString(), any(RequestBodyGenerator.class), any());
       Map<String, Object> result = spyService.createAlbum(album, jobId);
 
       verify(spyService).sendPostRequest(anyString(), requestBodyCaptor.capture(), any());
       assertEquals(result.get("success"), null);
       assertEquals(result.get("album_id"), albumId);
 
-      RequestBody capturedBody = requestBodyCaptor.getValue();
+      RequestBody capturedBody = requestBodyCaptor.getValue().get();
       assertTrue(capturedBody instanceof FormBody);
       FormBody formBody = (FormBody) capturedBody;
 
@@ -187,7 +202,7 @@ public class SynologyDTPServiceTest {
 
       doThrow(new UploadErrorException("MockException", null))
           .when(spyService)
-          .sendPostRequest(anyString(), any(), any());
+          .sendPostRequest(anyString(), any(RequestBodyGenerator.class), any());
 
       assertThrows(
           UploadErrorException.class, () -> spyService.createAlbum(album, jobId), "MockException");
@@ -224,108 +239,6 @@ public class SynologyDTPServiceTest {
           new VideoModel(itemName, fetchUrl, description, "format", itemId, null, false, null));
     }
 
-    @ParameterizedTest(name = "shouldGetStreamFromJobStoreIfMediaItemIsInTempStore [{index}] {0}")
-    @MethodSource("provideMediaObjectsInTempStore")
-    public void shouldGetStreamFromJobStoreIfMediaItemIsInTempStore(DownloadableFile item)
-        throws IOException, CopyExceptionWithFailureReason {
-      byte[] mockImage = new byte[] {1, 2, 3};
-      InputStream mockInputStream = new ByteArrayInputStream(mockImage);
-      InputStreamWrapper streamWrapper = mock(InputStreamWrapper.class);
-      SynologyDTPService spyService = Mockito.spy(dtpService);
-
-      when(jobStore.getStream(jobId, fetchUrl)).thenReturn(streamWrapper);
-      when(streamWrapper.getStream()).thenReturn(mockInputStream);
-      doReturn(mock(Map.class)).when(spyService).sendPostRequest(anyString(), any(), any());
-
-      if (item instanceof PhotoModel) {
-        spyService.createPhoto((PhotoModel) item, jobId);
-      } else if (item instanceof VideoModel) {
-        spyService.createVideo((VideoModel) item, jobId);
-      }
-
-      verify(spyService).sendPostRequest(anyString(), any(), any());
-      verify(streamWrapper).getStream();
-      verify(spyService, never()).getInputStream(fetchUrl);
-    }
-
-    @ParameterizedTest(name = "shouldGetStreamFromUrlIfPhotoIsNotInTempStore [{index}] {0}")
-    @MethodSource("provideMediaObjectsNotInTempStore")
-    public void shouldGetStreamFromUrlIfPhotoIsNotInTempStore(DownloadableFile item)
-        throws IOException, CopyExceptionWithFailureReason {
-      byte[] mockImage = new byte[] {1, 2, 3};
-      SynologyDTPService spyService = Mockito.spy(dtpService);
-      InputStream mockInputStream = new ByteArrayInputStream(mockImage);
-
-      doReturn(mockInputStream).when(spyService).getInputStream(fetchUrl);
-      doReturn(mock(Map.class)).when(spyService).sendPostRequest(anyString(), any(), any());
-
-      if (item instanceof PhotoModel) {
-        spyService.createPhoto((PhotoModel) item, jobId);
-      } else if (item instanceof VideoModel) {
-        spyService.createVideo((VideoModel) item, jobId);
-      }
-
-      verify(spyService).sendPostRequest(anyString(), any(), any());
-      verify(spyService).getInputStream(fetchUrl);
-      verifyNoInteractions(jobStore);
-    }
-
-    // VideoModel.contentUrl can't be null
-    @Test
-    public void shouldReturnNullWhenPhotoIsNotInTempStoreAndHasNoUrl()
-        throws CopyExceptionWithFailureReason {
-      PhotoModel photo =
-          new PhotoModel(itemName, null, description, "mediaType", itemId, null, false);
-      SynologyDTPService spyService = Mockito.spy(dtpService);
-      assertEquals(null, spyService.createPhoto((PhotoModel) photo, jobId));
-      verify(spyService, never()).sendPostRequest(anyString(), any(), any());
-    }
-
-    @ParameterizedTest(name = "shouldThrowExceptionIfNewURLFailed [{index}] {0}")
-    @MethodSource("provideMediaObjectsNotInTempStore")
-    public void shouldThrowExceptionIfNewURLFailed(DownloadableFile item)
-        throws IOException, CopyExceptionWithFailureReason {
-      SynologyDTPService spyService = Mockito.spy(dtpService);
-      doThrow(new MalformedURLException("Failed to create url for photo"))
-          .when(spyService)
-          .getInputStream(fetchUrl);
-
-      if (item instanceof PhotoModel) {
-        assertThrows(
-            UploadErrorException.class,
-            () -> spyService.createPhoto((PhotoModel) item, jobId),
-            "Failed to create url for photo");
-      } else if (item instanceof VideoModel) {
-        assertThrows(
-            UploadErrorException.class,
-            () -> spyService.createVideo((VideoModel) item, jobId),
-            "Failed to create url for video");
-      }
-
-      verify(spyService, never()).sendPostRequest(anyString(), any(), any());
-    }
-
-    @ParameterizedTest(name = "shouldThrowExceptionIfFailedToGetStream [{index}] {0}")
-    @MethodSource("provideMediaObjectsInTempStore")
-    public void shouldThrowExceptionIfFailedToGetStream(DownloadableFile item)
-        throws IOException, CopyExceptionWithFailureReason {
-      SynologyDTPService spyService = Mockito.spy(dtpService);
-      when(jobStore.getStream(jobId, fetchUrl)).thenThrow(new IOException("Failed to get stream"));
-
-      if (item instanceof PhotoModel) {
-        assertThrows(
-            UploadErrorException.class,
-            () -> spyService.createPhoto((PhotoModel) item, jobId),
-            "Failed to create input stream for photo");
-      } else if (item instanceof VideoModel) {
-        assertThrows(
-            UploadErrorException.class,
-            () -> spyService.createVideo((VideoModel) item, jobId),
-            "Failed to create input stream for video");
-      }
-      verify(spyService, never()).sendPostRequest(anyString(), any(), any());
-    }
-
     @ParameterizedTest(
         name =
             "shouldSendPostRequestWithCorrectFormBodyWithDescriptionAndUploadedTime [{index}] {0}")
@@ -340,22 +253,26 @@ public class SynologyDTPServiceTest {
 
       when(jobStore.getStream(jobId, fetchUrl)).thenReturn(streamWrapper);
       when(streamWrapper.getStream()).thenReturn(mockInputStream);
-      doReturn(Map.of("success", true, "data", dataMap))
-          .when(spyService)
-          .sendPostRequest(anyString(), any(), any());
-
       Map<String, Object> result = new HashMap();
       if (item instanceof PhotoModel) {
+        doReturn(Map.of("success", true, "data", dataMap))
+            .when(spyService)
+            .sendPostRequest(anyString(), any(RequestBodyGenerator.class), any());
         result = spyService.createPhoto((PhotoModel) item, jobId);
+        verify(spyService).sendPostRequest(anyString(), requestBodyCaptor.capture(), any());
       } else if (item instanceof VideoModel) {
+        doReturn(Map.of("success", true, "data", dataMap))
+            .when(spyService)
+            .sendPostRequest(anyString(), any(RequestBodyGenerator.class), any(), anyInt());
         result = spyService.createVideo((VideoModel) item, jobId);
+        verify(spyService)
+            .sendPostRequest(anyString(), requestBodyCaptor.capture(), any(), anyInt());
       }
 
-      verify(spyService).sendPostRequest(anyString(), requestBodyCaptor.capture(), any());
       assertEquals(result.get("item_id"), itemId);
       assertEquals(result.get("success"), null);
 
-      RequestBody capturedBody = requestBodyCaptor.getValue();
+      RequestBody capturedBody = requestBodyCaptor.getValue().get();
       MultipartBody multipartBody = (MultipartBody) capturedBody;
 
       Map<String, String> multipartFormAnswer =
@@ -401,22 +318,26 @@ public class SynologyDTPServiceTest {
 
       when(jobStore.getStream(jobId, fetchUrl)).thenReturn(streamWrapper);
       when(streamWrapper.getStream()).thenReturn(mockInputStream);
-      doReturn(Map.of("success", true, "data", dataMap))
-          .when(spyService)
-          .sendPostRequest(anyString(), any(), any());
-
       Map<String, Object> result = new HashMap();
       if (item instanceof PhotoModel) {
+        doReturn(Map.of("success", true, "data", dataMap))
+            .when(spyService)
+            .sendPostRequest(anyString(), any(RequestBodyGenerator.class), any());
         result = spyService.createPhoto((PhotoModel) item, jobId);
+        verify(spyService).sendPostRequest(anyString(), requestBodyCaptor.capture(), any());
       } else if (item instanceof VideoModel) {
+        doReturn(Map.of("success", true, "data", dataMap))
+            .when(spyService)
+            .sendPostRequest(anyString(), any(RequestBodyGenerator.class), any(), anyInt());
         result = spyService.createVideo((VideoModel) item, jobId);
+        verify(spyService)
+            .sendPostRequest(anyString(), requestBodyCaptor.capture(), any(), anyInt());
       }
 
-      verify(spyService).sendPostRequest(anyString(), requestBodyCaptor.capture(), any());
       assertEquals(result.get("item_id"), itemId);
       assertEquals(result.get("success"), null);
 
-      RequestBody capturedBody = requestBodyCaptor.getValue();
+      RequestBody capturedBody = requestBodyCaptor.getValue().get();
       MultipartBody multipartBody = (MultipartBody) capturedBody;
 
       Map<String, String> multipartFormAnswer =
@@ -446,6 +367,40 @@ public class SynologyDTPServiceTest {
       }
     }
 
+    @ParameterizedTest(name = "shouldThrowExceptionIfInputStreamIsConsumed [{index}] {0}")
+    @MethodSource("provideMediaObjectsInTempStore")
+    public void shouldThrowExceptionIfInputStreamIsConsumed(DownloadableFile item)
+        throws IOException, CopyExceptionWithFailureReason {
+      byte[] mockImage = new byte[] {1, 2, 3};
+      InputStream mockInputStream = new ByteArrayInputStream(mockImage);
+      InputStreamWrapper streamWrapper = mock(InputStreamWrapper.class);
+      SynologyDTPService spyService = Mockito.spy(dtpService);
+      Map<String, Object> dataMap = Map.of("item_id", itemId);
+
+      when(jobStore.getStream(jobId, fetchUrl)).thenReturn(streamWrapper);
+      when(streamWrapper.getStream()).thenReturn(mockInputStream);
+      if (item instanceof PhotoModel) {
+        doReturn(Map.of("success", true, "data", dataMap))
+            .when(spyService)
+            .sendPostRequest(anyString(), any(RequestBodyGenerator.class), any());
+        spyService.createPhoto((PhotoModel) item, jobId);
+        verify(spyService).sendPostRequest(anyString(), requestBodyCaptor.capture(), any());
+      } else if (item instanceof VideoModel) {
+        doReturn(Map.of("success", true, "data", dataMap))
+            .when(spyService)
+            .sendPostRequest(anyString(), any(RequestBodyGenerator.class), any(), anyInt());
+        spyService.createVideo((VideoModel) item, jobId);
+        verify(spyService)
+            .sendPostRequest(anyString(), requestBodyCaptor.capture(), any(), anyInt());
+      }
+
+      RequestBody capturedBody = requestBodyCaptor.getValue().get();
+      Buffer buffer = new Buffer();
+      capturedBody.writeTo(buffer);
+      IOException exception = assertThrows(IOException.class, () -> capturedBody.writeTo(buffer));
+      assertTrue(exception.getMessage().contains("InputStream has already been consumed"));
+    }
+
     @ParameterizedTest(name = "shouldThrowExceptionIfSendPostRequestFailed [{index}] {0}")
     @MethodSource("provideMediaObjectsInTempStore")
     public void shouldThrowExceptionIfSendPostRequestFailed(DownloadableFile item)
@@ -455,18 +410,18 @@ public class SynologyDTPServiceTest {
       InputStreamWrapper streamWrapper = mock(InputStreamWrapper.class);
       SynologyDTPService spyService = Mockito.spy(dtpService);
 
-      when(jobStore.getStream(jobId, fetchUrl)).thenReturn(streamWrapper);
-      when(streamWrapper.getStream()).thenReturn(mockInputStream);
-      doThrow(new UploadErrorException("MockException", null))
-          .when(spyService)
-          .sendPostRequest(anyString(), any(), any());
-
       if (item instanceof PhotoModel) {
+        doThrow(new UploadErrorException("MockException", null))
+            .when(spyService)
+            .sendPostRequest(anyString(), any(RequestBodyGenerator.class), any());
         assertThrows(
             UploadErrorException.class,
             () -> spyService.createPhoto((PhotoModel) item, jobId),
             "MockException");
       } else if (item instanceof VideoModel) {
+        doThrow(new UploadErrorException("MockException", null))
+            .when(spyService)
+            .sendPostRequest(anyString(), any(RequestBodyGenerator.class), any(), anyInt());
         assertThrows(
             UploadErrorException.class,
             () -> spyService.createVideo((VideoModel) item, jobId),
@@ -497,7 +452,7 @@ public class SynologyDTPServiceTest {
       when(mockCall.execute()).thenReturn(mockResponseFail).thenReturn(mockResponseSuccess);
 
       Map<String, Object> result =
-          dtpService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, requestBody, jobId);
+          dtpService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, () -> requestBody, jobId);
 
       assertEquals(Map.of("success", true), result);
 
@@ -519,7 +474,7 @@ public class SynologyDTPServiceTest {
 
       assertThrows(
           UploadErrorException.class,
-          () -> dtpService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, requestBody, jobId),
+          () -> dtpService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, () -> requestBody, jobId),
           String.format("Failed to send POST request %d times", TestConfigs.TEST_MAX_ATTEMPTS));
       verify(tokenManager, never())
           .refreshToken(any(UUID.class), eq(client), any(ObjectMapper.class));
@@ -547,7 +502,7 @@ public class SynologyDTPServiceTest {
           .thenReturn(true);
 
       Map<String, Object> result =
-          dtpService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, requestBody, jobId);
+          dtpService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, () -> requestBody, jobId);
 
       assertEquals(Map.of("success", true), result);
 
@@ -572,7 +527,7 @@ public class SynologyDTPServiceTest {
 
       assertThrows(
           UploadErrorException.class,
-          () -> dtpService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, requestBody, jobId),
+          () -> dtpService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, () -> requestBody, jobId),
           String.format("Failed to send POST request %d times", TestConfigs.TEST_MAX_ATTEMPTS));
 
       verify(tokenManager, times(1))
@@ -595,7 +550,7 @@ public class SynologyDTPServiceTest {
 
       assertThrows(
           UploadErrorException.class,
-          () -> dtpService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, requestBody, jobId),
+          () -> dtpService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, () -> requestBody, jobId),
           String.format("Failed to send POST request %d times", TestConfigs.TEST_MAX_ATTEMPTS));
       verify(tokenManager, never())
           .refreshToken(any(UUID.class), eq(client), any(ObjectMapper.class));
@@ -616,7 +571,7 @@ public class SynologyDTPServiceTest {
       when(mockResponseBody.string()).thenReturn("{\"success\": true}");
 
       Map<String, Object> result =
-          dtpService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, requestBody, jobId);
+          dtpService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, () -> requestBody, jobId);
       assertEquals(Map.of("success", true), result);
       verify(tokenManager, never())
           .refreshToken(any(UUID.class), eq(client), any(ObjectMapper.class));
@@ -636,7 +591,7 @@ public class SynologyDTPServiceTest {
 
       assertThrows(
           DestinationMemoryFullException.class,
-          () -> dtpService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, requestBody, jobId));
+          () -> dtpService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, () -> requestBody, jobId));
     }
 
     @Test
@@ -660,7 +615,7 @@ public class SynologyDTPServiceTest {
 
       assertThrows(
           NoNasInAccountException.class,
-          () -> spyService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, requestBody, jobId));
+          () -> spyService.sendPostRequest(TestConfigs.TEST_C2_BASE_URL, () -> requestBody, jobId));
     }
   }
 
@@ -713,6 +668,67 @@ public class SynologyDTPServiceTest {
       String jsonBody = "invalid-json";
       Response response = mockResponse(jsonBody);
       dtpService.throwExceptionIfNoQuota(response);
+    }
+  }
+
+  @Nested
+  public class GetMediaInputStreamWrapperTest {
+    @Test
+    public void shouldGetStreamFromJobStore() throws CopyExceptionWithFailureReason, IOException {
+      // setup
+      String fetchableUrl = "some_key";
+      InputStream inputStream = new ByteArrayInputStream("test data".getBytes());
+      long size = 100L;
+      InputStreamWrapper expected = new InputStreamWrapper(inputStream, size);
+      when(jobStore.getStream(jobId, fetchableUrl)).thenReturn(expected);
+
+      // act
+      InputStreamWrapper result = dtpService.getMediaInputStreamWrapper(jobId, fetchableUrl, true);
+
+      // assert
+      assertEquals(expected, result);
+    }
+
+    @Test
+    public void shouldGetStreamFromUrl() throws Exception {
+      // setup
+      Path tempFile = Files.createTempFile("test", ".txt");
+      tempFile.toFile().deleteOnExit();
+      byte[] testData = "test data".getBytes();
+      Files.write(tempFile, testData);
+      String fetchableUrl = tempFile.toUri().toURL().toString();
+
+      // act
+      InputStreamWrapper result = dtpService.getMediaInputStreamWrapper(jobId, fetchableUrl, false);
+
+      // assert
+      assertEquals(testData.length, result.getBytes());
+      try (InputStream is = result.getStream()) {
+        byte[] bytes = new byte[is.available()];
+        is.read(bytes);
+        assertArrayEquals(testData, bytes);
+      }
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenNoSource() {
+      UploadErrorException exception =
+          assertThrows(
+              UploadErrorException.class,
+              () -> dtpService.getMediaInputStreamWrapper(jobId, null, false));
+
+      assertEquals("No valid input stream source for media", exception.getMessage());
+    }
+
+    @Test
+    public void shouldThrowExceptionForMalformedUrl() {
+      String malformedUrl = "this is not a url";
+      UploadErrorException exception =
+          assertThrows(
+              UploadErrorException.class,
+              () -> dtpService.getMediaInputStreamWrapper(jobId, malformedUrl, false));
+      assertEquals(
+          "Failed to create url for fetchableUrl [this is not a url]", exception.getMessage());
     }
   }
 }

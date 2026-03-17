@@ -20,11 +20,10 @@ package org.datatransferproject.datatransfer.synology.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
-import com.google.common.io.ByteStreams;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
@@ -35,11 +34,15 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okio.BufferedSink;
+import okio.Okio;
+import okio.Source;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.synology.models.C2Api;
 import org.datatransferproject.datatransfer.synology.models.ServiceConfig;
 import org.datatransferproject.datatransfer.synology.utils.ServiceConfigParser;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.spi.transfer.types.NoNasInAccountException;
@@ -60,6 +63,11 @@ public class SynologyDTPService {
   private final SynologyOAuthTokenManager tokenManager;
   C2Api c2Api;
   ServiceConfig.Retry retryConfig;
+
+  @FunctionalInterface
+  protected interface RequestBodyGenerator {
+    RequestBody get() throws CopyExceptionWithFailureReason;
+  }
 
   /**
    * Constructs a new {@code SynologyDTPService} instance.
@@ -90,17 +98,6 @@ public class SynologyDTPService {
   }
 
   /**
-   * getInputStream
-   *
-   * @param url
-   * @return an InputStream Instance
-   * @throws IOException
-   */
-  protected InputStream getInputStream(String url) throws IOException {
-    return new URL(url).openStream();
-  }
-
-  /**
    * Creates album.
    *
    * @param album the album
@@ -115,8 +112,42 @@ public class SynologyDTPService {
     builder.add("service", exportingService);
     monitor.info(() -> "[SynologyImporter] Creating album", album.getName(), jobId);
 
+    RequestBody requestBody = builder.build();
     return (Map<String, Object>)
-        sendPostRequest(c2Api.getCreateAlbum(), builder.build(), jobId).get("data");
+        sendPostRequest(c2Api.getCreateAlbum(), () -> requestBody, jobId).get("data");
+  }
+
+  /**
+   * get InputStreamWrapper for media file, it can be from temp store or from fetchable url
+   *
+   * @param jobId the job ID
+   * @param fetchableUrl the url to fetch media file, can be null if the file is in temp store
+   * @return an InputStreamWrapper instance
+   * @throws CopyExceptionWithFailureReason
+   */
+  @VisibleForTesting
+  protected InputStreamWrapper getMediaInputStreamWrapper(
+      UUID jobId, String fetchableUrl, boolean isInTempStore)
+      throws CopyExceptionWithFailureReason {
+    try {
+      if (isInTempStore) {
+        return jobStore.getStream(jobId, fetchableUrl);
+      } else if (fetchableUrl != null) {
+        URL url = new URL(fetchableUrl);
+        URLConnection connection = url.openConnection();
+        return new InputStreamWrapper(
+            connection.getInputStream(), connection.getContentLengthLong());
+      }
+    } catch (MalformedURLException e) {
+      throw new UploadErrorException(
+          String.format("Failed to create url for fetchableUrl [%s]", fetchableUrl), e);
+    } catch (IOException e) {
+      throw new UploadErrorException(
+          String.format("Failed to create input stream for fetchableUrl [%s]", fetchableUrl), e);
+    }
+    throw new UploadErrorException(
+        "No valid input stream source for media",
+        new IOException("fetchableUrl is null and isInTempStore is false"));
   }
 
   /**
@@ -128,49 +159,77 @@ public class SynologyDTPService {
    */
   public Map<String, Object> createPhoto(PhotoModel photo, UUID jobId)
       throws CopyExceptionWithFailureReason {
-    byte[] imageBytes;
-    try {
-      InputStream inputStream = null;
-      if (photo.isInTempStore()) {
-        inputStream = jobStore.getStream(jobId, photo.getFetchableUrl()).getStream();
-      } else if (photo.getFetchableUrl() != null) {
-        inputStream = getInputStream(photo.getFetchableUrl());
-      } else {
-        monitor.severe(() -> "[SynologyImporter] Can't get inputStream for a photo");
-        return null;
-      }
-      imageBytes = ByteStreams.toByteArray(inputStream);
-    } catch (MalformedURLException e) {
-      throw new UploadErrorException("Failed to create url for photo", e);
-    } catch (IOException e) {
-      throw new UploadErrorException("Failed to create input stream for photo", e);
-    }
+    monitor.info(
+        () ->
+            String.format(
+                "[SynologyImporter] starts creating photo, dataId: [%s], name: [%s]",
+                photo.getDataId(), photo.getTitle()),
+        jobId);
 
-    RequestBody fileBody = RequestBody.create(MediaType.parse(photo.getMimeType()), imageBytes);
+    RequestBodyGenerator bodyGenerator =
+        () -> {
+          // Due to InputStream may not repeatable, we need to open it inside the generator function
+          // to make sure it can be read when retrying.
+          InputStreamWrapper inputStreamWrapper =
+              getMediaInputStreamWrapper(jobId, photo.getFetchableUrl(), photo.isInTempStore());
 
-    MultipartBody.Builder builder =
-        new MultipartBody.Builder()
-            .setType(MultipartBody.FORM)
-            .addFormDataPart("file", photo.getTitle(), fileBody)
-            .addFormDataPart("item_id", photo.getDataId())
-            .addFormDataPart("title", photo.getTitle())
-            .addFormDataPart("job_id", jobId.toString())
-            .addFormDataPart("service", exportingService);
+          RequestBody fileBody =
+              new RequestBody() {
+                private boolean isConsumed = false;
 
-    String imageDescription = photo.getDescription();
-    if (!Strings.isNullOrEmpty(imageDescription)) {
-      builder.addFormDataPart("description", imageDescription);
-    }
-    Date imageUploadedTime = photo.getUploadedTime();
-    if (imageUploadedTime != null) {
-      long timestampInSeconds = imageUploadedTime.getTime() / 1000;
-      builder.addFormDataPart("uploaded_time", String.valueOf(timestampInSeconds));
-    }
+                @Override
+                public MediaType contentType() {
+                  return MediaType.parse(photo.getMimeType());
+                }
+
+                @Override
+                public long contentLength() {
+                  return inputStreamWrapper.getBytes();
+                }
+
+                @Override
+                public void writeTo(BufferedSink sink) throws IOException {
+                  if (isConsumed) {
+                    throw new IOException("InputStream has already been consumed");
+                  }
+                  isConsumed = true;
+                  try (Source source = Okio.source(inputStreamWrapper.getStream())) {
+                    sink.writeAll(source);
+                  }
+                }
+              };
+
+          MultipartBody.Builder builder =
+              new MultipartBody.Builder()
+                  .setType(MultipartBody.FORM)
+                  .addFormDataPart("file", photo.getTitle(), fileBody)
+                  .addFormDataPart("item_id", photo.getDataId())
+                  .addFormDataPart("title", photo.getTitle())
+                  .addFormDataPart("job_id", jobId.toString())
+                  .addFormDataPart("service", exportingService);
+
+          String imageDescription = photo.getDescription();
+          if (!Strings.isNullOrEmpty(imageDescription)) {
+            builder.addFormDataPart("description", imageDescription);
+          }
+          Date imageUploadedTime = photo.getUploadedTime();
+          if (imageUploadedTime != null) {
+            long timestampInSeconds = imageUploadedTime.getTime() / 1000;
+            builder.addFormDataPart("uploaded_time", String.valueOf(timestampInSeconds));
+          }
+
+          return builder.build();
+        };
 
     @SuppressWarnings("unchecked")
     Map<String, Object> responseData =
         (Map<String, Object>)
-            sendPostRequest(c2Api.getUploadItem(), builder.build(), jobId).get("data");
+            sendPostRequest(c2Api.getUploadItem(), bodyGenerator, jobId).get("data");
+    monitor.info(
+        () ->
+            String.format(
+                "[SynologyImporter] photo created successfully, name: [%s]", photo.getTitle()),
+        jobId);
     return responseData;
   }
 
@@ -183,49 +242,72 @@ public class SynologyDTPService {
    */
   public Map<String, Object> createVideo(VideoModel video, UUID jobId)
       throws CopyExceptionWithFailureReason {
-    byte[] videoBytes;
-    try {
-      InputStream inputStream = null;
-      if (video.isInTempStore()) {
-        inputStream = jobStore.getStream(jobId, video.getFetchableUrl()).getStream();
-      } else if (video.getFetchableUrl() != null) {
-        inputStream = getInputStream(video.getFetchableUrl());
-      } else {
-        monitor.severe(() -> "[SynologyImporter] Can't get inputStream for a video");
-        return null;
-      }
+    monitor.info(
+        () ->
+            String.format(
+                "[SynologyImporter] starts creating video, dataId: [%s], name: [%s]",
+                video.getDataId(), video.getName()),
+        jobId);
 
-      videoBytes = ByteStreams.toByteArray(inputStream);
-    } catch (MalformedURLException e) {
-      throw new UploadErrorException("Failed to create url for video", e);
-    } catch (IOException e) {
-      throw new UploadErrorException("Failed to create input stream for video", e);
-    }
+    RequestBodyGenerator bodyGenerator =
+        () -> {
+          // Due to InputStream may not repeatable, we need to open it inside the generator function
+          // to make sure it can be read when retrying.
+          InputStreamWrapper inputStreamWrapper =
+              getMediaInputStreamWrapper(jobId, video.getFetchableUrl(), video.isInTempStore());
 
-    RequestBody fileBody = RequestBody.create(MediaType.parse(video.getMimeType()), videoBytes);
-    MultipartBody.Builder builder =
-        new MultipartBody.Builder()
-            .setType(MultipartBody.FORM)
-            .addFormDataPart("file", video.getName(), fileBody)
-            .addFormDataPart("item_id", video.getDataId())
-            .addFormDataPart("title", video.getName())
-            .addFormDataPart("job_id", jobId.toString())
-            .addFormDataPart("service", exportingService);
+          RequestBody fileBody =
+              new RequestBody() {
+                private boolean isConsumed = false;
 
-    String imageDescription = video.getDescription();
-    if (!Strings.isNullOrEmpty(imageDescription)) {
-      builder.addFormDataPart("description", imageDescription);
-    }
-    Date videoUploadedTime = video.getUploadedTime();
-    if (videoUploadedTime != null) {
-      long timestampInSeconds = videoUploadedTime.getTime() / 1000;
-      builder.addFormDataPart("uploaded_time", String.valueOf(timestampInSeconds));
-    }
+                @Override
+                public MediaType contentType() {
+                  return MediaType.parse(video.getMimeType());
+                }
+
+                @Override
+                public long contentLength() {
+                  return inputStreamWrapper.getBytes();
+                }
+
+                @Override
+                public void writeTo(BufferedSink sink) throws IOException {
+                  if (isConsumed) {
+                    throw new IOException("InputStream has already been consumed");
+                  }
+                  isConsumed = true;
+                  try (Source source = Okio.source(inputStreamWrapper.getStream())) {
+                    sink.writeAll(source);
+                  }
+                }
+              };
+
+          MultipartBody.Builder builder =
+              new MultipartBody.Builder()
+                  .setType(MultipartBody.FORM)
+                  .addFormDataPart("file", video.getName(), fileBody)
+                  .addFormDataPart("item_id", video.getDataId())
+                  .addFormDataPart("title", video.getName())
+                  .addFormDataPart("job_id", jobId.toString())
+                  .addFormDataPart("service", exportingService);
+
+          String imageDescription = video.getDescription();
+          if (!Strings.isNullOrEmpty(imageDescription)) {
+            builder.addFormDataPart("description", imageDescription);
+          }
+          Date videoUploadedTime = video.getUploadedTime();
+          if (videoUploadedTime != null) {
+            long timestampInSeconds = videoUploadedTime.getTime() / 1000;
+            builder.addFormDataPart("uploaded_time", String.valueOf(timestampInSeconds));
+          }
+
+          return builder.build();
+        };
 
     @SuppressWarnings("unchecked")
     Map<String, Object> responseData =
         (Map<String, Object>)
-            sendPostRequest(c2Api.getUploadItem(), builder.build(), jobId).get("data");
+            sendPostRequest(c2Api.getUploadItem(), bodyGenerator, jobId, 300).get("data");
     return responseData;
   }
 
@@ -244,7 +326,8 @@ public class SynologyDTPService {
             .add("service", exportingService)
             .add("album_id", albumId)
             .add("item_id", itemId);
-    return sendPostRequest(c2Api.getAddItemToAlbum(), builder.build(), jobId);
+    RequestBody requestBody = builder.build();
+    return sendPostRequest(c2Api.getAddItemToAlbum(), () -> requestBody, jobId);
   }
 
   /**
@@ -265,7 +348,8 @@ public class SynologyDTPService {
       builder.add("end_reason", jobStatus.endReason().name());
     }
 
-    return sendPostRequest(c2Api.getSignalJob(), builder.build(), jobId);
+    RequestBody requestBody = builder.build();
+    return sendPostRequest(c2Api.getSignalJob(), () -> requestBody, jobId);
   }
 
   @VisibleForTesting
@@ -304,17 +388,43 @@ public class SynologyDTPService {
   }
 
   @VisibleForTesting
-  protected Map<String, Object> sendPostRequest(String url, RequestBody body, UUID jobId)
+  protected Map<String, Object> sendPostRequest(
+      String url, RequestBodyGenerator bodyGenerator, UUID jobId)
+      throws CopyExceptionWithFailureReason {
+    return sendPostRequest(url, bodyGenerator, jobId, -1);
+  }
+
+  /*
+   * @param url the URL to send the POST request to
+   * @param bodyGenerator a generator function that produces the request body, it will be called for each retry attempt
+   * @param jobId the job ID
+   * @param timeoutInSeconds the timeout for the request in seconds, -1 means do not modify the default timeout of OkHttpClient
+   */
+  @VisibleForTesting
+  protected Map<String, Object> sendPostRequest(
+      String url, RequestBodyGenerator bodyGenerator, UUID jobId, int timeoutInSeconds)
       throws CopyExceptionWithFailureReason {
     boolean triedRefreshToken = false;
-    Request.Builder requestBuilder = new Request.Builder().url(url).post(body);
 
     Exception lastException = null;
     for (int retry = retryConfig.getMaxAttempts(); retry > 0; retry--) {
       Response response = null;
       try {
+        RequestBody body = bodyGenerator.get();
+        Request.Builder requestBuilder = new Request.Builder().url(url).post(body);
         requestBuilder.header("Authorization", "Bearer " + tokenManager.getAccessToken(jobId));
-        response = client.newCall(requestBuilder.build()).execute();
+        if (timeoutInSeconds < 0) {
+          // Use default timeout of OkHttpClient
+          response = client.newCall(requestBuilder.build()).execute();
+        } else {
+          response =
+              client
+                  .newBuilder()
+                  .readTimeout(timeoutInSeconds, java.util.concurrent.TimeUnit.SECONDS)
+                  .build()
+                  .newCall(requestBuilder.build())
+                  .execute();
+        }
         if (!response.isSuccessful()) {
           int code = response.code();
           if (code == 401 && !triedRefreshToken) {

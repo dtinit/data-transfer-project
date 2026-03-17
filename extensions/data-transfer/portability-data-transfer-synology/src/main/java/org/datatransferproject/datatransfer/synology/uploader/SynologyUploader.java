@@ -72,10 +72,13 @@ public class SynologyUploader {
    */
   public void importAlbums(Collection<? extends ImportableItem> albums, UUID jobId)
       throws CopyExceptionWithFailureReason {
+    monitor.info(
+        () -> String.format("[SynologyImporter] starts importing albums, size: %d", albums.size()),
+        jobId);
     if (albums.isEmpty()) {
       return;
     }
-    monitor.info(() -> "[SynologyImporter] starts importing albums", jobId);
+
     for (ImportableItem album : albums) {
       try {
         MediaAlbum mediaAlbum;
@@ -118,6 +121,9 @@ public class SynologyUploader {
    */
   public void importPhotos(Collection<PhotoModel> photos, UUID jobId)
       throws CopyExceptionWithFailureReason {
+    monitor.info(
+        () -> String.format("[SynologyImporter] starts importing photos, size: %d", photos.size()),
+        jobId);
     if (photos.isEmpty()) {
       return;
     }
@@ -152,6 +158,9 @@ public class SynologyUploader {
    */
   public void importVideos(Collection<VideoModel> videos, UUID jobId)
       throws CopyExceptionWithFailureReason {
+    monitor.info(
+        () -> String.format("[SynologyImporter] starts importing videos, size: %d", videos.size()),
+        jobId);
     if (videos.isEmpty()) {
       return;
     }
@@ -199,11 +208,23 @@ public class SynologyUploader {
       throws CopyExceptionWithFailureReason {
     String newItemId = null;
     try {
+      monitor.info(
+          () ->
+              String.format(
+                  "[SynologyImporter] starts importing item, dataId: [%s], name: [%s]",
+                  dataIdFunction.apply(item), nameFunction.apply(item)),
+          jobId);
       newItemId =
           importItemWithCache(item, jobId, "item_id", createFunction, dataIdFunction, nameFunction);
     } catch (CopyExceptionWithFailureReason e) {
       throw e;
     } catch (Exception e) {
+      monitor.severe(
+          () ->
+              String.format(
+                  "[SynologyImporter] failed to import item, dataId: [%s], name: [%s]",
+                  dataIdFunction.apply(item), nameFunction.apply(item)),
+          jobId);
       throw new UploadErrorException(
           String.format(
               "Failed to import item [%s], name [%s]",
