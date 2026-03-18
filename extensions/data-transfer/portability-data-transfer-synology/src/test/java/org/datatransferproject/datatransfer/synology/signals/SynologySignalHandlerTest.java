@@ -30,13 +30,11 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.synology.service.SynologyDTPService;
 import org.datatransferproject.datatransfer.synology.service.SynologyOAuthTokenManager;
 import org.datatransferproject.spi.transfer.provider.SignalRequest;
-import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 import org.datatransferproject.spi.transfer.types.signals.JobLifeCycle;
 import org.datatransferproject.spi.transfer.types.signals.JobLifeCycle.EndReason;
 import org.datatransferproject.spi.transfer.types.signals.JobLifeCycle.State;
 import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.transfer.retry.RetryException;
 import org.datatransferproject.types.transfer.retry.RetryMapping;
 import org.datatransferproject.types.transfer.retry.RetryStrategy;
 import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
@@ -75,7 +73,7 @@ public class SynologySignalHandlerTest {
   }
 
   @Test
-  public void testSendSignal() throws RetryException, CopyExceptionWithFailureReason {
+  public void testSendSignal() throws Exception {
     JobLifeCycle jobStatus =
         JobLifeCycle.builder()
             .setState(State.ENDED)
@@ -100,7 +98,7 @@ public class SynologySignalHandlerTest {
   }
 
   @Test
-  public void testSendSignalRetry() throws RetryException, CopyExceptionWithFailureReason {
+  public void testSendSignalRetry() throws Exception {
     JobLifeCycle jobStatus =
         JobLifeCycle.builder()
             .setState(State.ENDED)

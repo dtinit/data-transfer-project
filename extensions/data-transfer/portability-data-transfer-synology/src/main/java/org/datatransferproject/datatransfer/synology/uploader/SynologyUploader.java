@@ -17,6 +17,7 @@
 
 package org.datatransferproject.datatransfer.synology.uploader;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
@@ -27,8 +28,6 @@ import org.datatransferproject.datatransfer.synology.service.SynologyDTPService;
 import org.datatransferproject.datatransfer.synology.utils.SynologyMediaAlbumBinder;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
-import org.datatransferproject.spi.transfer.types.UploadErrorException;
-import org.datatransferproject.types.common.DownloadableItem;
 import org.datatransferproject.types.common.ImportableItem;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
@@ -72,10 +71,13 @@ public class SynologyUploader {
    */
   public void importAlbums(Collection<? extends ImportableItem> albums, UUID jobId)
       throws CopyExceptionWithFailureReason {
+    monitor.info(
+        () -> String.format("[SynologyImporter] starts importing albums, size: %d.", albums.size()),
+        jobId);
     if (albums.isEmpty()) {
       return;
     }
-    monitor.info(() -> "[SynologyImporter] starts importing albums", jobId);
+
     for (ImportableItem album : albums) {
       try {
         MediaAlbum mediaAlbum;
@@ -86,9 +88,13 @@ public class SynologyUploader {
         } else if (album instanceof VideoAlbum) {
           mediaAlbum = MediaAlbum.videoToMediaAlbum(((VideoAlbum) album));
         } else {
-          throw new UploadErrorException(
-              "cannot convert to MediaAlbum",
-              new IllegalArgumentException("Unsupported ImportableItem type: " + album.getClass()));
+          monitor.severe(
+              () ->
+                  String.format(
+                      "[SynologyImporter] unsupported album type: %s, album name: %s.",
+                      album.getClass(), album.getName()),
+              jobId);
+          continue;
         }
         String newAlbumId =
             importItemWithCache(
@@ -104,10 +110,9 @@ public class SynologyUploader {
         throw e;
       } catch (Exception e) {
         monitor.severe(e::toString, jobId);
-        throw new UploadErrorException("Failed to import albums", e);
       }
     }
-    monitor.info(() -> "[SynologyImporter] imported albums successfully", jobId);
+    monitor.info(() -> "[SynologyImporter] ended importing albums.", jobId);
   }
 
   /**
@@ -118,17 +123,26 @@ public class SynologyUploader {
    */
   public void importPhotos(Collection<PhotoModel> photos, UUID jobId)
       throws CopyExceptionWithFailureReason {
+    monitor.info(
+        () -> String.format("[SynologyImporter] starts importing photos, size: %d.", photos.size()),
+        jobId);
     if (photos.isEmpty()) {
       return;
     }
-    monitor.info(() -> "[SynologyImporter] starts importing photos", jobId);
+    monitor.info(() -> "[SynologyImporter] starts importing photos.", jobId);
     for (PhotoModel photo : photos) {
+      monitor.info(
+          () ->
+              String.format(
+                  "[SynologyImporter] starts importing photo, dataId: [%s], name: [%s]",
+                  photo.getDataId(), photo.getName()),
+          jobId);
       try {
         String newPhotoId =
-            importDownloadableItemWithCache(
+            importItemWithCache(
                 photo,
                 jobId,
-                PhotoModel::getAlbumId,
+                "item_id",
                 synologyDTPService::createPhoto,
                 PhotoModel::getDataId,
                 PhotoModel::getName);
@@ -138,10 +152,9 @@ public class SynologyUploader {
         throw e;
       } catch (Exception e) {
         monitor.severe(e::toString, jobId);
-        throw new UploadErrorException("Failed to import photos", e);
       }
     }
-    monitor.info(() -> "[SynologyImporter] imported photos successfully", jobId);
+    monitor.info(() -> "[SynologyImporter] ended importing photos.", jobId);
   }
 
   /**
@@ -152,17 +165,26 @@ public class SynologyUploader {
    */
   public void importVideos(Collection<VideoModel> videos, UUID jobId)
       throws CopyExceptionWithFailureReason {
+    monitor.info(
+        () -> String.format("[SynologyImporter] starts importing videos, size: %d", videos.size()),
+        jobId);
     if (videos.isEmpty()) {
       return;
     }
     monitor.info(() -> "[SynologyImporter] starts importing videos", jobId);
     for (VideoModel video : videos) {
+      monitor.info(
+          () ->
+              String.format(
+                  "[SynologyImporter] starts importing video, dataId: [%s], name: [%s]",
+                  video.getDataId(), video.getName()),
+          jobId);
       try {
         String newVideoId =
-            importDownloadableItemWithCache(
+            importItemWithCache(
                 video,
                 jobId,
-                VideoModel::getAlbumId,
+                "item_id",
                 synologyDTPService::createVideo,
                 VideoModel::getDataId,
                 VideoModel::getName);
@@ -172,46 +194,14 @@ public class SynologyUploader {
         throw e;
       } catch (Exception e) {
         monitor.severe(e::toString, jobId);
-        throw new UploadErrorException("Failed to import videos", e);
       }
     }
-    monitor.info(() -> "[SynologyImporter] imported videos successfully", jobId);
+    monitor.info(() -> "[SynologyImporter] ended importing videos.", jobId);
   }
 
   @FunctionalInterface
   private interface SynologyBiFunction<T, U, R> {
-    R apply(T t, U u) throws CopyExceptionWithFailureReason;
-  }
-
-  /**
-   * Imports a item
-   *
-   * @param item the item
-   * @return the item ID
-   */
-  private <T extends DownloadableItem> String importDownloadableItemWithCache(
-      T item,
-      UUID jobId,
-      Function<T, String> albumIdFunction,
-      SynologyBiFunction<T, UUID, Map<String, Object>> createFunction,
-      Function<T, String> dataIdFunction,
-      Function<T, String> nameFunction)
-      throws CopyExceptionWithFailureReason {
-    String newItemId = null;
-    try {
-      newItemId =
-          importItemWithCache(item, jobId, "item_id", createFunction, dataIdFunction, nameFunction);
-    } catch (CopyExceptionWithFailureReason e) {
-      throw e;
-    } catch (Exception e) {
-      throw new UploadErrorException(
-          String.format(
-              "Failed to import item [%s], name [%s]",
-              dataIdFunction.apply(item), nameFunction.apply(item)),
-          e);
-    }
-
-    return newItemId;
+    R apply(T t, U u) throws CopyExceptionWithFailureReason, IOException;
   }
 
   private <T> String importItemWithCache(
@@ -250,16 +240,22 @@ public class SynologyUploader {
                   (Boolean)
                       synologyDTPService.addItemToAlbum(albumId, itemId, jobId).get("success"));
       if (Boolean.FALSE.equals(createResult)) {
-        throw new UploadErrorException(
-            String.format(
-                "Unsuccessful result from adding item [%s] to album [%s]", itemId, albumId),
-            null);
+        monitor.severe(
+            () ->
+                String.format(
+                    "[SynologyImporter] failed to add item to album, albumId: [%s], itemId: [%s].",
+                    albumId, itemId));
       }
     } catch (CopyExceptionWithFailureReason e) {
       throw e;
     } catch (Exception e) {
-      throw new UploadErrorException(
-          String.format("Failed to add item [%s] to album [%s]", itemId, albumId), e);
+      monitor.severe(
+          () ->
+              String.format(
+                  "[SynologyImporter] failed to add item to album, albumId: [%s], itemId: [%s].",
+                  albumId, itemId),
+          e);
+      return;
     }
     monitor.info(
         () -> "[SynologyImporter] added item to album successfully",
