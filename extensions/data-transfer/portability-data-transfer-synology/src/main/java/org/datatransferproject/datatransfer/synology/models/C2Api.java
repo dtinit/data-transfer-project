@@ -27,6 +27,8 @@ public class C2Api extends ServiceConfig.Service {
 
   private final String createAlbum;
   private final String uploadItem;
+  private final String chunkUploadItem;
+  private final String completeUploadItem;
   private final String addItemToAlbum;
   private final String signalJob;
 
@@ -38,6 +40,8 @@ public class C2Api extends ServiceConfig.Service {
 
     this.createAlbum = UrlUtils.join(baseUrl, apiPath.getCreateAlbumPath());
     this.uploadItem = UrlUtils.join(baseUrl, apiPath.getUploadItemPath());
+    this.chunkUploadItem = UrlUtils.join(baseUrl, apiPath.getChunkUploadItemPath());
+    this.completeUploadItem = UrlUtils.join(baseUrl, apiPath.getCompleteUploadItemPath());
     this.addItemToAlbum = UrlUtils.join(baseUrl, apiPath.getAddItemToAlbumPath());
     this.signalJob = UrlUtils.join(baseUrl, apiPath.getSignalJobPath());
   }
@@ -54,6 +58,14 @@ public class C2Api extends ServiceConfig.Service {
     return uploadItem;
   }
 
+  public String getChunkUploadItem() {
+    return chunkUploadItem;
+  }
+
+  public String getCompleteUploadItem() {
+    return completeUploadItem;
+  }
+
   public String getAddItemToAlbum() {
     return addItemToAlbum;
   }
@@ -65,6 +77,8 @@ public class C2Api extends ServiceConfig.Service {
   public static class ApiPath {
     private final String createAlbumPath;
     private final String uploadItemPath;
+    private final String chunkUploadItemPath;
+    private final String completeUploadItemPath;
     private final String addItemToAlbumPath;
     private final String signalJobPath;
 
@@ -72,10 +86,14 @@ public class C2Api extends ServiceConfig.Service {
     public ApiPath(
         @JsonProperty("createAlbum") String createAlbumPath,
         @JsonProperty("uploadItem") String uploadItemPath,
+        @JsonProperty("chunkUploadItem") String chunkUploadItemPath,
+        @JsonProperty("completeUploadItem") String completeUploadItemPath,
         @JsonProperty("addItemToAlbum") String addItemToAlbumPath,
         @JsonProperty("signalJob") String signalJobPath) {
       this.createAlbumPath = createAlbumPath;
       this.uploadItemPath = uploadItemPath;
+      this.chunkUploadItemPath = chunkUploadItemPath;
+      this.completeUploadItemPath = completeUploadItemPath;
       this.addItemToAlbumPath = addItemToAlbumPath;
       this.signalJobPath = signalJobPath;
     }
@@ -86,6 +104,14 @@ public class C2Api extends ServiceConfig.Service {
 
     public String getUploadItemPath() {
       return uploadItemPath;
+    }
+
+    public String getChunkUploadItemPath() {
+      return chunkUploadItemPath;
+    }
+
+    public String getCompleteUploadItemPath() {
+      return completeUploadItemPath;
     }
 
     public String getAddItemToAlbumPath() {

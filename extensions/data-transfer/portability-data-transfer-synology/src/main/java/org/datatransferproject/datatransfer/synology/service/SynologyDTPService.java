@@ -21,8 +21,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
@@ -93,7 +95,16 @@ public class SynologyDTPService {
     this.objectMapper = new ObjectMapper();
     this.jobStore = jobStore;
     this.tokenManager = tokenManager;
-    this.client = client;
+    this.client = configureClient(client);
+  }
+
+  @VisibleForTesting
+  protected OkHttpClient configureClient(OkHttpClient client) {
+    return client
+        .newBuilder()
+        .protocols(Arrays.asList(okhttp3.Protocol.HTTP_1_1))
+        .readTimeout(120, java.util.concurrent.TimeUnit.SECONDS)
+        .build();
   }
 
   /**
@@ -237,70 +248,97 @@ public class SynologyDTPService {
                 video.getDataId(), video.getName()),
         jobId);
 
-    RequestBodyGenerator bodyGenerator =
-        () -> {
-          // Due to InputStream may not repeatable, we need to open it inside the generator function
-          // to make sure it can be read when retrying.
-          InputStreamWrapper inputStreamWrapper =
-              getMediaInputStreamWrapper(jobId, video.getFetchableUrl(), video.isInTempStore());
+    InputStreamWrapper inputStreamWrapper =
+        getMediaInputStreamWrapper(jobId, video.getFetchableUrl(), video.isInTempStore());
 
-          RequestBody fileBody =
-              new RequestBody() {
-                private boolean isConsumed = false;
+    int actualChunkCount;
+    try (InputStream inputStream = inputStreamWrapper.getStream()) {
+      actualChunkCount = uploadVideoChunks(video, jobId, inputStream);
+    }
 
-                @Override
-                public MediaType contentType() {
-                  return MediaType.parse(video.getMimeType());
-                }
+    Map<String, Object> responseData = completeVideoUpload(video, jobId, actualChunkCount);
 
-                @Override
-                public long contentLength() {
-                  return inputStreamWrapper.getBytes();
-                }
-
-                @Override
-                public void writeTo(BufferedSink sink) throws IOException {
-                  if (isConsumed) {
-                    throw new IOException("InputStream has already been consumed");
-                  }
-                  isConsumed = true;
-                  try (Source source = Okio.source(inputStreamWrapper.getStream())) {
-                    sink.writeAll(source);
-                  }
-                }
-              };
-
-          MultipartBody.Builder builder =
-              new MultipartBody.Builder()
-                  .setType(MultipartBody.FORM)
-                  .addFormDataPart("file", video.getName(), fileBody)
-                  .addFormDataPart("item_id", video.getDataId())
-                  .addFormDataPart("title", video.getName())
-                  .addFormDataPart("job_id", jobId.toString())
-                  .addFormDataPart("service", exportingService);
-
-          String imageDescription = video.getDescription();
-          if (!Strings.isNullOrEmpty(imageDescription)) {
-            builder.addFormDataPart("description", imageDescription);
-          }
-          Date videoUploadedTime = video.getUploadedTime();
-          if (videoUploadedTime != null) {
-            long timestampInSeconds = videoUploadedTime.getTime() / 1000;
-            builder.addFormDataPart("uploaded_time", String.valueOf(timestampInSeconds));
-          }
-
-          return builder.build();
-        };
-
-    @SuppressWarnings("unchecked")
-    Map<String, Object> responseData =
-        (Map<String, Object>)
-            sendPostRequest(c2Api.getUploadItem(), bodyGenerator, jobId, 300).get("data");
     monitor.info(
         () ->
             String.format(
                 "[SynologyImporter] video created successfully, name: [%s].", video.getName()),
         jobId);
+    return responseData;
+  }
+
+  private int uploadVideoChunks(VideoModel video, UUID jobId, InputStream inputStream)
+      throws CopyExceptionWithFailureReason, IOException {
+    final int CHUNK_SIZE = 50 * 1024 * 1024; // 50MB
+    int actualChunkCount = 0;
+
+    // reuse the same byte array for each chunk to reduce memory usage,
+    // since we are uploading in sequential, there is no concurrency issue
+    byte[] chunkData = new byte[CHUNK_SIZE];
+    while (true) {
+      int bytesRead = inputStream.readNBytes(chunkData, 0, CHUNK_SIZE);
+      if (bytesRead == 0) {
+        break;
+      }
+
+      RequestBody fileBody =
+          new RequestBody() {
+            @Override
+            public MediaType contentType() {
+              return MediaType.parse(video.getMimeType());
+            }
+
+            @Override
+            public long contentLength() {
+              return bytesRead;
+            }
+
+            @Override
+            public void writeTo(BufferedSink sink) throws IOException {
+              // write the actual bytes read for the last chunk, which may be smaller than
+              // CHUNK_SIZE
+              sink.write(chunkData, 0, bytesRead);
+            }
+          };
+
+      MultipartBody.Builder builder =
+          new MultipartBody.Builder()
+              .setType(MultipartBody.FORM)
+              .addFormDataPart("file", video.getName(), fileBody)
+              .addFormDataPart("item_id", video.getDataId())
+              .addFormDataPart("index", String.valueOf(actualChunkCount))
+              .addFormDataPart("job_id", jobId.toString())
+              .addFormDataPart("service", exportingService);
+
+      RequestBody requestBody = builder.build();
+      sendPostRequest(c2Api.getChunkUploadItem(), () -> requestBody, jobId);
+
+      actualChunkCount++;
+    }
+    return actualChunkCount;
+  }
+
+  private Map<String, Object> completeVideoUpload(VideoModel video, UUID jobId, int totalChunks)
+      throws CopyExceptionWithFailureReason, IOException {
+    FormBody.Builder builder =
+        new FormBody.Builder()
+            .add("item_id", video.getDataId())
+            .add("title", video.getName())
+            .add("total_chunks", String.valueOf(totalChunks))
+            .add("job_id", jobId.toString())
+            .add("service", exportingService);
+
+    if (!Strings.isNullOrEmpty(video.getDescription())) {
+      builder.add("description", video.getDescription());
+    }
+    if (video.getUploadedTime() != null) {
+      builder.add("uploaded_time", String.valueOf(video.getUploadedTime().getTime() / 1000));
+    }
+    RequestBody requestBody = builder.build();
+
+    @SuppressWarnings("unchecked")
+    Map<String, Object> responseData =
+        (Map<String, Object>)
+            sendPostRequest(c2Api.getCompleteUploadItem(), () -> requestBody, jobId).get("data");
     return responseData;
   }
 
@@ -380,13 +418,6 @@ public class SynologyDTPService {
     }
   }
 
-  @VisibleForTesting
-  protected Map<String, Object> sendPostRequest(
-      String url, RequestBodyGenerator bodyGenerator, UUID jobId)
-      throws CopyExceptionWithFailureReason, IOException {
-    return sendPostRequest(url, bodyGenerator, jobId, -1);
-  }
-
   /*
    * @param url the URL to send the POST request to
    * @param bodyGenerator a generator function that produces the request body, it will be called for each retry attempt
@@ -395,29 +426,23 @@ public class SynologyDTPService {
    */
   @VisibleForTesting
   protected Map<String, Object> sendPostRequest(
-      String url, RequestBodyGenerator bodyGenerator, UUID jobId, int timeoutInSeconds)
+      String url, RequestBodyGenerator bodyGenerator, UUID jobId)
       throws CopyExceptionWithFailureReason, IOException {
     boolean triedRefreshToken = false;
 
     Exception lastException = null;
     for (int retry = retryConfig.getMaxAttempts(); retry > 0; retry--) {
+      final String methodInfo =
+          String.format(
+              "[SynologyImporter] Sending POST request to url: [%s], attempts left: [%d]",
+              url, retry);
+      monitor.info(() -> methodInfo, jobId);
       Response response = null;
       try {
         RequestBody body = bodyGenerator.get();
         Request.Builder requestBuilder = new Request.Builder().url(url).post(body);
         requestBuilder.header("Authorization", "Bearer " + tokenManager.getAccessToken(jobId));
-        if (timeoutInSeconds < 0) {
-          // Use default timeout of OkHttpClient
-          response = client.newCall(requestBuilder.build()).execute();
-        } else {
-          response =
-              client
-                  .newBuilder()
-                  .readTimeout(timeoutInSeconds, java.util.concurrent.TimeUnit.SECONDS)
-                  .build()
-                  .newCall(requestBuilder.build())
-                  .execute();
-        }
+        response = client.newCall(requestBuilder.build()).execute();
         if (!response.isSuccessful()) {
           int code = response.code();
           if (code == 401) {
