@@ -312,6 +312,13 @@ public class SynologyDTPService {
               .addFormDataPart("file", video.getName(), fileBody);
 
       RequestBody requestBody = builder.build();
+
+      final String chunkInfo =
+          String.format(
+              "[SynologyImporter] uploading video chunk, video name: [%s], chunk index: [%d], chunk"
+                  + " size: [%d].",
+              video.getName(), actualChunkCount, bytesRead);
+      monitor.info(() -> chunkInfo, jobId);
       sendPostRequest(c2Api.getChunkUploadItem(), () -> requestBody, jobId);
 
       actualChunkCount++;
@@ -337,6 +344,11 @@ public class SynologyDTPService {
     }
     RequestBody requestBody = builder.build();
 
+    final String completeInfo =
+        String.format(
+            "[SynologyImporter] completing video upload, video name: [%s], total chunks: [%d].",
+            video.getName(), totalChunks);
+    monitor.info(() -> completeInfo, jobId);
     @SuppressWarnings("unchecked")
     Map<String, Object> responseData =
         (Map<String, Object>)
