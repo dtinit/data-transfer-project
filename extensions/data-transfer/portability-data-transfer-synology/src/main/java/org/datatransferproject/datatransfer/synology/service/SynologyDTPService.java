@@ -201,7 +201,6 @@ public class SynologyDTPService {
           MultipartBody.Builder builder =
               new MultipartBody.Builder()
                   .setType(MultipartBody.FORM)
-                  .addFormDataPart("file", photo.getTitle(), fileBody)
                   .addFormDataPart("item_id", photo.getDataId())
                   .addFormDataPart("title", photo.getTitle())
                   .addFormDataPart("job_id", jobId.toString())
@@ -217,6 +216,8 @@ public class SynologyDTPService {
             builder.addFormDataPart("uploaded_time", String.valueOf(timestampInSeconds));
           }
 
+          builder.addFormDataPart("file_size", String.valueOf(inputStreamWrapper.getBytes()));
+          builder.addFormDataPart("file", photo.getTitle(), fileBody);
           return builder.build();
         };
 
@@ -303,11 +304,12 @@ public class SynologyDTPService {
       MultipartBody.Builder builder =
           new MultipartBody.Builder()
               .setType(MultipartBody.FORM)
-              .addFormDataPart("file", video.getName(), fileBody)
               .addFormDataPart("item_id", video.getDataId())
               .addFormDataPart("index", String.valueOf(actualChunkCount))
               .addFormDataPart("job_id", jobId.toString())
-              .addFormDataPart("service", exportingService);
+              .addFormDataPart("service", exportingService)
+              .addFormDataPart("file_size", String.valueOf(bytesRead))
+              .addFormDataPart("file", video.getName(), fileBody);
 
       RequestBody requestBody = builder.build();
       sendPostRequest(c2Api.getChunkUploadItem(), () -> requestBody, jobId);
