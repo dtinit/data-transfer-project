@@ -19,13 +19,13 @@ package org.datatransferproject.datatransfer.synology.service;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import okhttp3.OkHttpClient;
@@ -136,7 +136,12 @@ public class SynologyDTPServiceOOMTest {
         .thenReturn(TestConfigs.createServiceConfigJson());
     dtpService =
         new SynologyDTPService(
-            monitor, transferServiceConfig, exportingService, jobStore, tokenManager, client);
+            monitor, transferServiceConfig, exportingService, jobStore, tokenManager, client) {
+          @Override
+          protected OkHttpClient configureClient(OkHttpClient client) {
+            return client;
+          }
+        };
   }
 
   @Test
@@ -198,29 +203,36 @@ public class SynologyDTPServiceOOMTest {
     SynologyDTPService spyService = Mockito.spy(dtpService);
     doReturn(Map.of("success", true, "data", Map.of("item_id", "video-id")))
         .when(spyService)
-        .sendPostRequest(anyString(), requestBodyCaptor.capture(), any(), anyInt());
+        .sendPostRequest(anyString(), requestBodyCaptor.capture(), any());
 
     // act
     spyService.createVideo(video, jobId);
 
-    // Get the generated request body
-    RequestBody requestBody = requestBodyCaptor.getValue().get();
+    // Get the generated request bodies
+    List<SynologyDTPService.RequestBodyGenerator> generators = requestBodyCaptor.getAllValues();
 
     // assert
-    // The content length is not asserted to be equal to 1GB because it includes multipart
-    // boundaries and headers,
-    // making it larger than the raw file size. The main purpose of this test is to ensure that
-    // the file is streamed without causing an OutOfMemoryError.
-    assertTrue(requestBody.contentLength() > oneGB);
+    // The total content length across all chunks should be at least 1GB
+    long totalContentLength = 0;
 
-    // Simulate writing the body to a sink that discards the data.
+    // Simulate writing the bodies to a sink that discards the data.
     // This will throw OutOfMemoryError if the whole stream is loaded into memory.
     okio.BufferedSink discardingSink = Okio.buffer(new BlackholeSink());
 
-    // The MultipartBody will try to read the stream to write it.
-    // If it buffers the whole 1GB in memory, this will OOM.
-    requestBody.writeTo(discardingSink);
+    for (SynologyDTPService.RequestBodyGenerator generator : generators) {
+      RequestBody requestBody = generator.get();
+      long length = requestBody.contentLength();
+      // Only count chunks which are significantly large to avoid counting the "complete" request
+      if (length > 1024 * 1024) {
+        totalContentLength += length;
+      }
+      requestBody.writeTo(discardingSink);
+    }
     discardingSink.flush();
+
+    // The total content length should be at least 1GB (actually more due to multipart boundaries
+    // and headers)
+    assertTrue(totalContentLength > oneGB);
 
     // If we reach here, it means we streamed the data without OOM.
   }

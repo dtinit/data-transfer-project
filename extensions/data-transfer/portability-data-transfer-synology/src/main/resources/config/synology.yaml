@@ -10,5 +10,7 @@ serviceConfig:
       apiPath:
         createAlbum: "/import/album"
         uploadItem: "/import/item"
+        chunkUploadItem: "/import/item/chunk"
+        completeUploadItem: "/import/item/complete"
         addItemToAlbum: "/import/album/item"
         signalJob: "/import/job/signal"

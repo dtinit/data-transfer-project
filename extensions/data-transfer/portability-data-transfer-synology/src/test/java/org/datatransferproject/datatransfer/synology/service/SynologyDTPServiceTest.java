@@ -25,7 +25,6 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -109,7 +108,12 @@ public class SynologyDTPServiceTest {
 
     dtpService =
         new SynologyDTPService(
-            monitor, transferServiceConfig, exportingService, jobStore, tokenManager, client);
+            monitor, transferServiceConfig, exportingService, jobStore, tokenManager, client) {
+          @Override
+          protected OkHttpClient configureClient(OkHttpClient client) {
+            return client;
+          }
+        };
   }
 
   @Nested
@@ -262,45 +266,103 @@ public class SynologyDTPServiceTest {
             .sendPostRequest(anyString(), any(RequestBodyGenerator.class), any());
         result = spyService.createPhoto((PhotoModel) item, jobId);
         verify(spyService).sendPostRequest(anyString(), requestBodyCaptor.capture(), any());
+
+        assertEquals(result.get("item_id"), itemId);
+        assertEquals(result.get("success"), null);
+
+        RequestBody capturedBody = requestBodyCaptor.getValue().get();
+        MultipartBody multipartBody = (MultipartBody) capturedBody;
+
+        Map<String, String> multipartFormAnswer =
+            Map.of(
+                "job_id", jobId.toString(),
+                "service", exportingService,
+                "item_id", itemId,
+                "title", itemName,
+                "description", description,
+                "uploaded_time", String.valueOf(uploadedTimestampInSeconds));
+
+        for (MultipartBody.Part part : multipartBody.parts()) {
+          String partName =
+              part.headers()
+                  .get("Content-Disposition")
+                  .split(";")[1]
+                  .split("=")[1]
+                  .replace("\"", "");
+          Buffer buffer = new Buffer();
+          part.body().writeTo(buffer);
+          if (partName.equals("file")) {
+            byte[] partBytes = buffer.readByteArray();
+
+            assertArrayEquals(mockImage, partBytes);
+            String fileName = item.getName();
+            String contentDisposition = part.headers().get("Content-Disposition");
+            assertTrue(contentDisposition.contains("filename=\"" + fileName + "\""));
+          } else if (multipartFormAnswer.containsKey(partName)) {
+            String partValue = buffer.readUtf8();
+            assertEquals(multipartFormAnswer.get(partName), partValue);
+          }
+        }
       } else if (item instanceof VideoModel) {
         doReturn(Map.of("success", true, "data", dataMap))
             .when(spyService)
-            .sendPostRequest(anyString(), any(RequestBodyGenerator.class), any(), anyInt());
+            .sendPostRequest(anyString(), any(RequestBodyGenerator.class), any());
         result = spyService.createVideo((VideoModel) item, jobId);
-        verify(spyService)
-            .sendPostRequest(anyString(), requestBodyCaptor.capture(), any(), anyInt());
-      }
+        verify(spyService, times(2))
+            .sendPostRequest(anyString(), requestBodyCaptor.capture(), any());
 
-      assertEquals(result.get("item_id"), itemId);
-      assertEquals(result.get("success"), null);
+        assertEquals(result.get("item_id"), itemId);
+        assertEquals(result.get("success"), null);
 
-      RequestBody capturedBody = requestBodyCaptor.getValue().get();
-      MultipartBody multipartBody = (MultipartBody) capturedBody;
+        java.util.List<RequestBodyGenerator> capturedGenerators = requestBodyCaptor.getAllValues();
+        assertEquals(2, capturedGenerators.size());
 
-      Map<String, String> multipartFormAnswer =
-          Map.of(
-              "job_id", jobId.toString(),
-              "service", exportingService,
-              "item_id", itemId,
-              "title", itemName,
-              "description", description,
-              "uploaded_time", String.valueOf(uploadedTimestampInSeconds));
+        // Check first call (chunk)
+        RequestBody chunkBody = capturedGenerators.get(0).get();
+        assertTrue(chunkBody instanceof MultipartBody);
+        MultipartBody chunkMultipart = (MultipartBody) chunkBody;
+        Map<String, String> chunkAnswer =
+            Map.of(
+                "job_id",
+                jobId.toString(),
+                "service",
+                exportingService,
+                "item_id",
+                itemId,
+                "index",
+                "0");
+        for (MultipartBody.Part part : chunkMultipart.parts()) {
+          String partName =
+              part.headers()
+                  .get("Content-Disposition")
+                  .split(";")[1]
+                  .split("=")[1]
+                  .replace("\"", "");
+          Buffer buffer = new Buffer();
+          part.body().writeTo(buffer);
+          if (partName.equals("file")) {
+            byte[] partBytes = buffer.readByteArray();
+            assertArrayEquals(mockImage, partBytes);
+          } else if (chunkAnswer.containsKey(partName)) {
+            assertEquals(chunkAnswer.get(partName), buffer.readUtf8());
+          }
+        }
 
-      for (MultipartBody.Part part : multipartBody.parts()) {
-        String partName =
-            part.headers().get("Content-Disposition").split(";")[1].split("=")[1].replace("\"", "");
-        Buffer buffer = new Buffer();
-        part.body().writeTo(buffer);
-        if (partName.equals("file")) {
-          byte[] partBytes = buffer.readByteArray();
-
-          assertArrayEquals(mockImage, partBytes);
-          String fileName = item.getName();
-          String contentDisposition = part.headers().get("Content-Disposition");
-          assertTrue(contentDisposition.contains("filename=\"" + fileName + "\""));
-        } else if (multipartFormAnswer.containsKey(partName)) {
-          String partValue = buffer.readUtf8();
-          assertEquals(multipartFormAnswer.get(partName), partValue);
+        // Check second call (complete)
+        RequestBody completeBody = capturedGenerators.get(1).get();
+        assertTrue(completeBody instanceof FormBody);
+        FormBody completeForm = (FormBody) completeBody;
+        Map<String, String> completeAnswer =
+            Map.of(
+                "job_id", jobId.toString(),
+                "service", exportingService,
+                "item_id", itemId,
+                "title", itemName,
+                "total_chunks", "1",
+                "description", description,
+                "uploaded_time", String.valueOf(uploadedTimestampInSeconds));
+        for (int i = 0; i < completeForm.size(); i++) {
+          assertEquals(completeAnswer.get(completeForm.name(i)), completeForm.value(i));
         }
       }
     }
@@ -327,45 +389,65 @@ public class SynologyDTPServiceTest {
             .sendPostRequest(anyString(), any(RequestBodyGenerator.class), any());
         result = spyService.createPhoto((PhotoModel) item, jobId);
         verify(spyService).sendPostRequest(anyString(), requestBodyCaptor.capture(), any());
+
+        assertEquals(result.get("item_id"), itemId);
+        assertEquals(result.get("success"), null);
+
+        RequestBody capturedBody = requestBodyCaptor.getValue().get();
+        MultipartBody multipartBody = (MultipartBody) capturedBody;
+
+        Map<String, String> multipartFormAnswer =
+            Map.of(
+                "job_id", jobId.toString(),
+                "service", exportingService,
+                "item_id", itemId,
+                "title", itemName);
+
+        for (MultipartBody.Part part : multipartBody.parts()) {
+          String partName =
+              part.headers()
+                  .get("Content-Disposition")
+                  .split(";")[1]
+                  .split("=")[1]
+                  .replace("\"", "");
+          Buffer buffer = new Buffer();
+          part.body().writeTo(buffer);
+          assertNotEquals("description", partName);
+          if (partName.equals("file")) {
+            byte[] partBytes = buffer.readByteArray();
+
+            assertArrayEquals(mockImage, partBytes);
+            String fileName = item.getName();
+            String contentDisposition = part.headers().get("Content-Disposition");
+            assertTrue(contentDisposition.contains("filename=\"" + fileName + "\""));
+          } else if (multipartFormAnswer.containsKey(partName)) {
+            String partValue = buffer.readUtf8();
+            assertEquals(multipartFormAnswer.get(partName), partValue);
+          }
+        }
       } else if (item instanceof VideoModel) {
         doReturn(Map.of("success", true, "data", dataMap))
             .when(spyService)
-            .sendPostRequest(anyString(), any(RequestBodyGenerator.class), any(), anyInt());
+            .sendPostRequest(anyString(), any(RequestBodyGenerator.class), any());
         result = spyService.createVideo((VideoModel) item, jobId);
-        verify(spyService)
-            .sendPostRequest(anyString(), requestBodyCaptor.capture(), any(), anyInt());
-      }
+        verify(spyService, times(2))
+            .sendPostRequest(anyString(), requestBodyCaptor.capture(), any());
 
-      assertEquals(result.get("item_id"), itemId);
-      assertEquals(result.get("success"), null);
+        assertEquals(result.get("item_id"), itemId);
+        assertEquals(result.get("success"), null);
 
-      RequestBody capturedBody = requestBodyCaptor.getValue().get();
-      MultipartBody multipartBody = (MultipartBody) capturedBody;
+        java.util.List<RequestBodyGenerator> capturedGenerators = requestBodyCaptor.getAllValues();
+        assertEquals(2, capturedGenerators.size());
 
-      Map<String, String> multipartFormAnswer =
-          Map.of(
-              "job_id", jobId.toString(),
-              "service", exportingService,
-              "item_id", itemId,
-              "title", itemName);
+        // Check first call (chunk)
+        RequestBody chunkBody = capturedGenerators.get(0).get();
+        assertTrue(chunkBody instanceof MultipartBody);
 
-      for (MultipartBody.Part part : multipartBody.parts()) {
-        String partName =
-            part.headers().get("Content-Disposition").split(";")[1].split("=")[1].replace("\"", "");
-        Buffer buffer = new Buffer();
-        part.body().writeTo(buffer);
-        assertNotEquals("description", partName);
-        if (partName.equals("file")) {
-          byte[] partBytes = buffer.readByteArray();
-
-          assertArrayEquals(mockImage, partBytes);
-          String fileName = item.getName();
-          String contentDisposition = part.headers().get("Content-Disposition");
-          assertTrue(contentDisposition.contains("filename=\"" + fileName + "\""));
-        } else if (multipartFormAnswer.containsKey(partName)) {
-          String partValue = buffer.readUtf8();
-          assertEquals(multipartFormAnswer.get(partName), partValue);
-        }
+        // Check second call (complete)
+        RequestBody completeBody = capturedGenerators.get(1).get();
+        assertTrue(completeBody instanceof FormBody);
+        FormBody completeForm = (FormBody) completeBody;
+        assertEquals("1", completeForm.value(2)); // total_chunks
       }
     }
 
@@ -373,6 +455,11 @@ public class SynologyDTPServiceTest {
     @MethodSource("provideMediaObjectsInTempStore")
     public void shouldThrowExceptionIfInputStreamIsConsumed(DownloadableFile item)
         throws IOException, CopyExceptionWithFailureReason {
+      if (item instanceof VideoModel) {
+        // VideoModel uses chunked upload with buffered byte arrays for retries,
+        // so RequestBody can be written multiple times.
+        return;
+      }
       byte[] mockImage = new byte[] {1, 2, 3};
       InputStream mockInputStream = new ByteArrayInputStream(mockImage);
       InputStreamWrapper streamWrapper = mock(InputStreamWrapper.class);
@@ -387,13 +474,6 @@ public class SynologyDTPServiceTest {
             .sendPostRequest(anyString(), any(RequestBodyGenerator.class), any());
         spyService.createPhoto((PhotoModel) item, jobId);
         verify(spyService).sendPostRequest(anyString(), requestBodyCaptor.capture(), any());
-      } else if (item instanceof VideoModel) {
-        doReturn(Map.of("success", true, "data", dataMap))
-            .when(spyService)
-            .sendPostRequest(anyString(), any(RequestBodyGenerator.class), any(), anyInt());
-        spyService.createVideo((VideoModel) item, jobId);
-        verify(spyService)
-            .sendPostRequest(anyString(), requestBodyCaptor.capture(), any(), anyInt());
       }
 
       RequestBody capturedBody = requestBodyCaptor.getValue().get();
@@ -401,6 +481,62 @@ public class SynologyDTPServiceTest {
       capturedBody.writeTo(buffer);
       IOException exception = assertThrows(IOException.class, () -> capturedBody.writeTo(buffer));
       assertTrue(exception.getMessage().contains("InputStream has already been consumed"));
+    }
+
+    @Test
+    public void shouldSendMultipleChunksForLargeVideo()
+        throws IOException, CopyExceptionWithFailureReason {
+      // 50MB + 1 byte to trigger 2 chunks
+      int firstChunkSize = 50 * 1024 * 1024;
+      byte[] mockImage = new byte[firstChunkSize + 1];
+
+      InputStream mockInputStream = new ByteArrayInputStream(mockImage);
+      InputStreamWrapper streamWrapper = mock(InputStreamWrapper.class);
+      SynologyDTPService spyService = Mockito.spy(dtpService);
+      Map<String, Object> dataMap = Map.of("item_id", itemId);
+      VideoModel video =
+          new VideoModel(itemName, fetchUrl, description, "format", itemId, null, true, null);
+
+      when(jobStore.getStream(jobId, fetchUrl)).thenReturn(streamWrapper);
+      when(streamWrapper.getStream()).thenReturn(mockInputStream);
+      doReturn(Map.of("success", true, "data", dataMap))
+          .when(spyService)
+          .sendPostRequest(anyString(), any(RequestBodyGenerator.class), any());
+
+      spyService.createVideo(video, jobId);
+
+      // Should call sendPostRequest 3 times: chunk 0, chunk 1, complete
+      verify(spyService, times(3)).sendPostRequest(anyString(), requestBodyCaptor.capture(), any());
+
+      java.util.List<RequestBodyGenerator> capturedGenerators = requestBodyCaptor.getAllValues();
+      assertEquals(3, capturedGenerators.size());
+
+      // Check chunk 0
+      RequestBody chunk0Body = capturedGenerators.get(0).get();
+      assertEquals("0", getMultipartPartValue((MultipartBody) chunk0Body, "index"));
+
+      // Check chunk 1
+      RequestBody chunk1Body = capturedGenerators.get(1).get();
+      assertEquals("1", getMultipartPartValue((MultipartBody) chunk1Body, "index"));
+
+      // Check complete
+      RequestBody completeBody = capturedGenerators.get(2).get();
+      FormBody completeForm = (FormBody) completeBody;
+      assertEquals("2", completeForm.value(2)); // total_chunks
+    }
+
+    private String getMultipartPartValue(MultipartBody multipartBody, String partName)
+        throws IOException {
+      for (MultipartBody.Part part : multipartBody.parts()) {
+        String name =
+            part.headers().get("Content-Disposition").split(";")[1].split("=")[1].replace("\"", "");
+        if (name.equals(partName)) {
+          Buffer buffer = new Buffer();
+          part.body().writeTo(buffer);
+          return buffer.readUtf8();
+        }
+      }
+      return null;
     }
 
     @ParameterizedTest(name = "shouldThrowExceptionIfSendPostRequestFailed [{index}] {0}")
@@ -421,9 +557,11 @@ public class SynologyDTPServiceTest {
             () -> spyService.createPhoto((PhotoModel) item, jobId),
             "MockException");
       } else if (item instanceof VideoModel) {
+        when(jobStore.getStream(jobId, fetchUrl)).thenReturn(streamWrapper);
+        when(streamWrapper.getStream()).thenReturn(mockInputStream);
         doThrow(new UploadErrorException("MockException", null))
             .when(spyService)
-            .sendPostRequest(anyString(), any(RequestBodyGenerator.class), any(), anyInt());
+            .sendPostRequest(anyString(), any(RequestBodyGenerator.class), any());
         assertThrows(
             UploadErrorException.class,
             () -> spyService.createVideo((VideoModel) item, jobId),
