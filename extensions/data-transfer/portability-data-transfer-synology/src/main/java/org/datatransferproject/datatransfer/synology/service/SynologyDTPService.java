@@ -20,6 +20,7 @@ package org.datatransferproject.datatransfer.synology.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -276,7 +277,7 @@ public class SynologyDTPService {
     // since we are uploading in sequential, there is no concurrency issue
     byte[] chunkData = new byte[CHUNK_SIZE];
     while (true) {
-      int bytesRead = inputStream.readNBytes(chunkData, 0, CHUNK_SIZE);
+      int bytesRead = ByteStreams.read(inputStream, chunkData, 0, CHUNK_SIZE);
       if (bytesRead == 0) {
         break;
       }
