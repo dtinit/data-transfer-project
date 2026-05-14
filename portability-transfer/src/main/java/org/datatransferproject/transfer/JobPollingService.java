@@ -152,6 +152,19 @@ class JobPollingService extends AbstractScheduledService {
   private boolean tryToClaimJob(UUID jobId, WorkerKeyPair keyPair) {
     // Lookup the job so we can append to its existing properties.
     PortabilityJob existingJob = store.findJob(jobId);
+    if (existingJob == null) {
+      monitor.debug(() -> format("JobPollingService: tryToClaimJob: jobId: %s not found", jobId));
+      return false;
+    }
+    if (existingJob.state() == PortabilityJob.State.CANCELED) {
+      monitor.debug(
+          () ->
+              format(
+                  "JobPollingService: tryToClaimJob: jobId: %s is canceled (likely instance"
+                      + " mismatch)",
+                  jobId));
+      return false;
+    }
     monitor.debug(() -> format("JobPollingService: tryToClaimJob: jobId: %s", existingJob));
 
     // TODO: Consider moving this check earlier in the flow
@@ -166,18 +179,29 @@ class JobPollingService extends AbstractScheduledService {
     }
     String serializedKey = publicKeySerializer.serialize(keyPair.getEncodedPublicKey());
 
-    PortabilityJob updatedJob =
-        existingJob
-            .toBuilder()
-            .setAndValidateJobAuthorization(
-                existingJob
-                    .jobAuthorization()
-                    .toBuilder()
-                    .setInstanceId(keyPair.getInstanceId())
-                    .setAuthPublicKey(serializedKey)
-                    .setState(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED)
-                    .build())
-            .build();
+    PortabilityJob updatedJob;
+    try {
+      updatedJob =
+          existingJob.toBuilder()
+              .setAndValidateJobAuthorization(
+                  existingJob
+                      .jobAuthorization()
+                      .toBuilder()
+                      .setInstanceId(keyPair.getInstanceId())
+                      .setAuthPublicKey(serializedKey)
+                      .setState(JobAuthorization.State.CREDS_ENCRYPTION_KEY_GENERATED)
+                      .build())
+              .build();
+    } catch (IllegalStateException e) {
+      monitor.debug(
+          () ->
+              format(
+                  "Could not build updated job object for %s. Validation failed. Error msg: %s",
+                  jobId, e.getMessage()),
+          e);
+      return false;
+    }
+
     // Attempt to 'claim' this job by validating it is still in state CREDS_AVAILABLE as we
     // update it to state CREDS_ENCRYPTION_KEY_GENERATED, along with our key. If another transfer
     // instance polled the same job, and already claimed it, it will have updated the job's state
