@@ -16,13 +16,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Set up JDK 11
-      uses: actions/setup-java@v4
-      with:
-        java-version: '11'
-        distribution: 'adopt'
-        cache: gradle
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+    - name: Build dev image
+      run: docker build -t datatransferproject/dev .
     - name: Build and Test with Gradle
-      run: ./gradlew build test
+      run: docker run --rm -v "$PWD":/workspace datatransferproject/dev build test
