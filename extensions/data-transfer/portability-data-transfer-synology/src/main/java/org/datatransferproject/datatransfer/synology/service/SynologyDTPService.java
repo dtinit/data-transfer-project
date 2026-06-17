@@ -307,6 +307,11 @@ public class SynologyDTPService {
     } finally {
       consumerAborted.set(true);
       producerFuture.cancel(true);
+      try {
+        producerFuture.get(5, TimeUnit.SECONDS);
+      } catch (Exception ignored) {
+        // Expected: CancellationException if cancelled, or timeout -- producer is stopping
+      }
     }
   }
 
