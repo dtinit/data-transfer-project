@@ -89,24 +89,18 @@ the Java test suite without installing a JDK locally. The `Dockerfile` at the re
 `gradle:8.10.2-jdk11`; the source is bind-mounted at run time rather than baked into the image, so a
 rebuild isn't needed after every code change.
 
-Build the image once:
-```bash
-docker build -t datatransferproject/dev .
-```
-
 Run the full check task against the current working tree:
 ```bash
-docker run --rm -v "$PWD":/workspace -v gradle-cache:/home/gradle/.gradle datatransferproject/dev
+docker compose run --rm test
 ```
 
-The `gradle-cache` named volume persists resolved dependencies across runs, so only the first run pays
-the full resolution cost. `/home/gradle/.gradle` is the `gradle:*` image's default `GRADLE_USER_HOME` --
-no extra configuration is needed to point the cache there.
-
-To run something other than `check`, override the default command, e.g.:
+To run a specific Gradle task or test, override the default command:
 ```bash
-docker run --rm -v "$PWD":/workspace -v gradle-cache:/home/gradle/.gradle datatransferproject/dev test --tests SomeTest
+docker compose run --rm test test --tests SomeTest
 ```
+
+The `gradle-cache` named volume (defined in `docker-compose.yml`) persists resolved dependencies across
+runs, so only the first run pays the full resolution cost.
 
 The JDK is pinned to 11 because the Gradle wrapper (6.9.2) can't parse Java 17 bytecode when compiling
 `build.gradle`/`settings.gradle` -- a `gradle:*-jdk17` image fails outright for this reason.
