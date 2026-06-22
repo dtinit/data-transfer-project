@@ -28,4 +28,11 @@ dependencies {
     compile "com.google.guava:guava:${guavaVersion}"
 }
 
+test {
+    // uploadVideoChunks pre-allocates two 50MB buffers per call; the large-video test
+    // uses ~150MB total (content + pool), and the following test allocates another 100MB
+    // pool before GC clears the previous one -- OOM on the default heap.
+    maxHeapSize = "1g"
+}
+
 configurePublication(project)
