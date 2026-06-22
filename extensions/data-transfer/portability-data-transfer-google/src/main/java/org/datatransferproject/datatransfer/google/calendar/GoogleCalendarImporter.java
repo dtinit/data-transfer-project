@@ -1,6 +1,8 @@
 package org.datatransferproject.datatransfer.google.calendar;
 
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.auth.oauth2.TokenErrorResponse;
+import com.google.api.client.auth.oauth2.TokenResponseException;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
@@ -12,6 +14,7 @@ import org.datatransferproject.datatransfer.google.common.GoogleStaticObjects;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.types.common.models.calendar.CalendarAttendeeModel;
 import org.datatransferproject.types.common.models.calendar.CalendarContainerResource;
 import org.datatransferproject.types.common.models.calendar.CalendarEventModel;
@@ -113,26 +116,42 @@ public class GoogleCalendarImporter implements
 
   @VisibleForTesting
   String importSingleCalendar(TokensAndUrlAuthData authData, CalendarModel calendarModel)
-      throws IOException {
+      throws IOException, InvalidTokenException {
     com.google.api.services.calendar.model.Calendar toInsert = convertToGoogleCalendar(
         calendarModel);
-    com.google.api.services.calendar.model.Calendar calendarResult =
-        getOrCreateCalendarInterface(authData).calendars().insert(toInsert).execute();
-    return calendarResult.getId();
+    try {
+      com.google.api.services.calendar.model.Calendar calendarResult =
+          getOrCreateCalendarInterface(authData).calendars().insert(toInsert).execute();
+      return calendarResult.getId();
+    } catch (TokenResponseException e) {
+      TokenErrorResponse details = e.getDetails();
+      if (details != null && details.getError().equals("invalid_grant")) {
+        throw new InvalidTokenException("Unable to refresh token.", e);
+      }
+      throw e;
+    }
   }
 
   @VisibleForTesting
   String importSingleEvent(IdempotentImportExecutor idempotentImportExecutor,
       TokensAndUrlAuthData authData,
       CalendarEventModel eventModel)
-      throws IOException {
+      throws IOException, InvalidTokenException {
     Event event = convertToGoogleCalendarEvent(eventModel);
     String newCalendarId = idempotentImportExecutor.getCachedValue(eventModel.getCalendarId());
-    return getOrCreateCalendarInterface(authData)
-        .events()
-        .insert(newCalendarId, event)
-        .execute()
-        .getId();
+    try {
+      return getOrCreateCalendarInterface(authData)
+          .events()
+          .insert(newCalendarId, event)
+          .execute()
+          .getId();
+    } catch (TokenResponseException e) {
+      TokenErrorResponse details = e.getDetails();
+      if (details != null && details.getError().equals("invalid_grant")) {
+        throw new InvalidTokenException("Unable to refresh token.", e);
+      }
+      throw e;
+    }
   }
 
   private Calendar getOrCreateCalendarInterface(TokensAndUrlAuthData authData) {
