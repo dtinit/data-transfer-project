@@ -17,30 +17,23 @@
 package org.datatransferproject.datatransfer.apple.signals;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 import java.util.UUID;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.SerializationUtils;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.apple.AppleBaseInterface;
-import org.datatransferproject.datatransfer.apple.AppleInterfaceFactory;
 import org.datatransferproject.datatransfer.apple.constants.AuditKeys;
 import org.datatransferproject.datatransfer.apple.constants.Headers;
 import org.datatransferproject.spi.transfer.provider.SignalRequest;
-import org.datatransferproject.spi.transfer.types.CopyException;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 import org.datatransferproject.spi.transfer.types.PermissionDeniedException;
 import org.datatransferproject.spi.transfer.types.UnconfirmedUserException;
 import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
-import org.datatransferproject.types.transfer.retry.RetryStrategyLibrary;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -48,6 +41,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class AppleSignalInterface implements AppleBaseInterface {
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final String MEDIA_TYPE_JSON = "application/json";
+  private static final String MEDIA_TYPE_FORM = "application/x-www-form-urlencoded";
 
   protected String baseUrl;
   protected AppCredentials appCredentials;
@@ -89,8 +84,12 @@ public class AppleSignalInterface implements AppleBaseInterface {
       con.setRequestMethod("POST");
       con.setRequestProperty(Headers.AUTHORIZATION.getValue(), authData.getAccessToken());
       con.setRequestProperty(Headers.CORRELATION_ID.getValue(), correlationId);
-      con.setRequestProperty(Headers.CONTENT_TYPE.getValue(), "application/json");
-      con.setRequestProperty(Headers.ACCEPT.getValue(), "application/json");
+      con.setRequestProperty(Headers.ACCEPT.getValue(), MEDIA_TYPE_JSON);
+      if (url.equals(authData.getTokenServerEncodedUrl())) {
+        con.setRequestProperty(Headers.CONTENT_TYPE.getValue(), MEDIA_TYPE_FORM);
+      } else {
+        con.setRequestProperty(Headers.CONTENT_TYPE.getValue(), MEDIA_TYPE_JSON);
+      }
 
       IOUtils.write(requestData, con.getOutputStream());
       responseString = IOUtils.toString(con.getInputStream(), StandardCharsets.ISO_8859_1);
@@ -106,15 +105,17 @@ public class AppleSignalInterface implements AppleBaseInterface {
             AuditKeys.error,
             e.getMessage(),
             AuditKeys.errorCode,
-            con.getResponseCode(),
+            (con != null ? con.getResponseCode() : -1),
             e);
         convertAndThrowException(e, con);
       } finally {
-        con.disconnect();
+        if (con != null) {
+          con.disconnect();
+        }
       }
-      return responseString;
     }
-    return null;
+
+    return responseString;
   }
 
   public byte[] sendSignal(@NotNull final SignalRequest signalRequest)
