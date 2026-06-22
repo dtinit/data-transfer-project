@@ -23,11 +23,17 @@ import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import okhttp3.FormBody;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -35,15 +41,20 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okio.BufferedSink;
+import okio.Okio;
+import okio.Source;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.datatransfer.synology.models.C2Api;
 import org.datatransferproject.datatransfer.synology.models.ServiceConfig;
 import org.datatransferproject.datatransfer.synology.utils.ServiceConfigParser;
 import org.datatransferproject.spi.cloud.storage.JobStore;
+import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore.InputStreamWrapper;
 import org.datatransferproject.spi.transfer.types.CopyExceptionWithFailureReason;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
+import org.datatransferproject.spi.transfer.types.InvalidTokenException;
 import org.datatransferproject.spi.transfer.types.NoNasInAccountException;
-import org.datatransferproject.spi.transfer.types.UploadErrorException;
+import org.datatransferproject.spi.transfer.types.signals.JobLifeCycle;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.videos.VideoModel;
@@ -59,6 +70,11 @@ public class SynologyDTPService {
   private final SynologyOAuthTokenManager tokenManager;
   C2Api c2Api;
   ServiceConfig.Retry retryConfig;
+
+  @FunctionalInterface
+  protected interface RequestBodyGenerator {
+    RequestBody get() throws CopyExceptionWithFailureReason, IOException;
+  }
 
   /**
    * Constructs a new {@code SynologyDTPService} instance.
@@ -85,18 +101,16 @@ public class SynologyDTPService {
     this.objectMapper = new ObjectMapper();
     this.jobStore = jobStore;
     this.tokenManager = tokenManager;
-    this.client = client;
+    this.client = configureClient(client);
   }
 
-  /**
-   * getInputStream
-   *
-   * @param url
-   * @return an InputStream Instance
-   * @throws IOException
-   */
-  protected InputStream getInputStream(String url) throws IOException {
-    return new URL(url).openStream();
+  @VisibleForTesting
+  protected OkHttpClient configureClient(OkHttpClient client) {
+    return client
+        .newBuilder()
+        .protocols(Arrays.asList(okhttp3.Protocol.HTTP_1_1))
+        .readTimeout(120, java.util.concurrent.TimeUnit.SECONDS)
+        .build();
   }
 
   /**
@@ -107,15 +121,38 @@ public class SynologyDTPService {
    * @return a map of shape {"data": {"album_id": <album_id>}}
    */
   public Map<String, Object> createAlbum(MediaAlbum album, UUID jobId)
-      throws CopyExceptionWithFailureReason {
+      throws CopyExceptionWithFailureReason, IOException {
     FormBody.Builder builder = new FormBody.Builder().add("title", album.getName());
     builder.add("album_id", album.getId());
     builder.add("job_id", jobId.toString());
     builder.add("service", exportingService);
     monitor.info(() -> "[SynologyImporter] Creating album", album.getName(), jobId);
 
+    RequestBody requestBody = builder.build();
     return (Map<String, Object>)
-        sendPostRequest(c2Api.getCreateAlbum(), builder.build(), jobId).get("data");
+        sendPostRequest(c2Api.getCreateAlbum(), () -> requestBody, jobId).get("data");
+  }
+
+  /**
+   * get InputStreamWrapper for media file, it can be from temp store or from fetchable url
+   *
+   * @param jobId the job ID
+   * @param fetchableUrl the url to fetch media file, can be null if the file is in temp store
+   * @return an InputStreamWrapper instance
+   * @throws CopyExceptionWithFailureReason
+   */
+  @VisibleForTesting
+  protected InputStreamWrapper getMediaInputStreamWrapper(
+      UUID jobId, String fetchableUrl, boolean isInTempStore) throws IOException {
+    if (isInTempStore) {
+      return jobStore.getStream(jobId, fetchableUrl);
+    } else if (fetchableUrl != null) {
+      URL url = new URL(fetchableUrl);
+      URLConnection connection = url.openConnection();
+      return new InputStreamWrapper(connection.getInputStream(), connection.getContentLengthLong());
+    }
+
+    throw new IllegalArgumentException("fetchableUrl is null and isInTempStore is false");
   }
 
   /**
@@ -126,50 +163,79 @@ public class SynologyDTPService {
    * @return a map of shape {"data": {"item_id": <item_id>}}
    */
   public Map<String, Object> createPhoto(PhotoModel photo, UUID jobId)
-      throws CopyExceptionWithFailureReason {
-    byte[] imageBytes;
-    try {
-      InputStream inputStream = null;
-      if (photo.isInTempStore()) {
-        inputStream = jobStore.getStream(jobId, photo.getFetchableUrl()).getStream();
-      } else if (photo.getFetchableUrl() != null) {
-        inputStream = getInputStream(photo.getFetchableUrl());
-      } else {
-        monitor.severe(() -> "[SynologyImporter] Can't get inputStream for a photo");
-        return null;
-      }
-      imageBytes = ByteStreams.toByteArray(inputStream);
-    } catch (MalformedURLException e) {
-      throw new UploadErrorException("Failed to create url for photo", e);
-    } catch (IOException e) {
-      throw new UploadErrorException("Failed to create input stream for photo", e);
-    }
+      throws CopyExceptionWithFailureReason, IOException {
+    monitor.info(
+        () ->
+            String.format(
+                "[SynologyImporter] starts creating photo, dataId: [%s], name: [%s].",
+                photo.getDataId(), photo.getTitle()),
+        jobId);
 
-    RequestBody fileBody = RequestBody.create(MediaType.parse(photo.getMimeType()), imageBytes);
+    RequestBodyGenerator bodyGenerator =
+        () -> {
+          // Due to InputStream may not repeatable, we need to open it inside the generator function
+          // to make sure it can be read when retrying.
+          InputStreamWrapper inputStreamWrapper =
+              getMediaInputStreamWrapper(jobId, photo.getFetchableUrl(), photo.isInTempStore());
 
-    MultipartBody.Builder builder =
-        new MultipartBody.Builder()
-            .setType(MultipartBody.FORM)
-            .addFormDataPart("file", photo.getTitle(), fileBody)
-            .addFormDataPart("item_id", photo.getDataId())
-            .addFormDataPart("title", photo.getTitle())
-            .addFormDataPart("job_id", jobId.toString())
-            .addFormDataPart("service", exportingService);
+          RequestBody fileBody =
+              new RequestBody() {
+                private boolean isConsumed = false;
 
-    String imageDescription = photo.getDescription();
-    if (!Strings.isNullOrEmpty(imageDescription)) {
-      builder.addFormDataPart("description", imageDescription);
-    }
-    Date imageUploadedTime = photo.getUploadedTime();
-    if (imageUploadedTime != null) {
-      long timestampInSeconds = imageUploadedTime.getTime() / 1000;
-      builder.addFormDataPart("uploaded_time", String.valueOf(timestampInSeconds));
-    }
+                @Override
+                public MediaType contentType() {
+                  return MediaType.parse(photo.getMimeType());
+                }
+
+                @Override
+                public long contentLength() {
+                  return inputStreamWrapper.getBytes();
+                }
+
+                @Override
+                public void writeTo(BufferedSink sink) throws IOException {
+                  if (isConsumed) {
+                    throw new IOException("InputStream has already been consumed");
+                  }
+                  isConsumed = true;
+                  try (Source source = Okio.source(inputStreamWrapper.getStream())) {
+                    sink.writeAll(source);
+                  }
+                }
+              };
+
+          MultipartBody.Builder builder =
+              new MultipartBody.Builder()
+                  .setType(MultipartBody.FORM)
+                  .addFormDataPart("item_id", photo.getDataId())
+                  .addFormDataPart("title", photo.getTitle())
+                  .addFormDataPart("job_id", jobId.toString())
+                  .addFormDataPart("service", exportingService);
+
+          String imageDescription = photo.getDescription();
+          if (!Strings.isNullOrEmpty(imageDescription)) {
+            builder.addFormDataPart("description", imageDescription);
+          }
+          Date imageUploadedTime = photo.getUploadedTime();
+          if (imageUploadedTime != null) {
+            long timestampInSeconds = imageUploadedTime.getTime() / 1000;
+            builder.addFormDataPart("uploaded_time", String.valueOf(timestampInSeconds));
+          }
+
+          builder.addFormDataPart("file_size", String.valueOf(inputStreamWrapper.getBytes()));
+          builder.addFormDataPart("file", photo.getTitle(), fileBody);
+          return builder.build();
+        };
 
     @SuppressWarnings("unchecked")
     Map<String, Object> responseData =
         (Map<String, Object>)
-            sendPostRequest(c2Api.getUploadItem(), builder.build(), jobId).get("data");
+            sendPostRequest(c2Api.getUploadItem(), bodyGenerator, jobId).get("data");
+    monitor.info(
+        () ->
+            String.format(
+                "[SynologyImporter] photo created successfully, name: [%s].", photo.getTitle()),
+        jobId);
     return responseData;
   }
 
@@ -181,50 +247,250 @@ public class SynologyDTPService {
    * @return a map of shape {"data": {"item_id": <item_id>}}
    */
   public Map<String, Object> createVideo(VideoModel video, UUID jobId)
-      throws CopyExceptionWithFailureReason {
-    byte[] videoBytes;
+      throws CopyExceptionWithFailureReason, IOException {
+    monitor.info(
+        () ->
+            String.format(
+                "[SynologyImporter] starts creating video, dataId: [%s], name: [%s].",
+                video.getDataId(), video.getName()),
+        jobId);
+
+    InputStreamWrapper inputStreamWrapper =
+        getMediaInputStreamWrapper(jobId, video.getFetchableUrl(), video.isInTempStore());
+
+    int actualChunkCount;
+    try (InputStream inputStream = inputStreamWrapper.getStream()) {
+      actualChunkCount = uploadVideoChunks(video, jobId, inputStream);
+    }
+
+    Map<String, Object> responseData = completeVideoUpload(video, jobId, actualChunkCount);
+
+    monitor.info(
+        () ->
+            String.format(
+                "[SynologyImporter] video created successfully, name: [%s].", video.getName()),
+        jobId);
+    return responseData;
+  }
+
+  private int uploadVideoChunks(VideoModel video, UUID jobId, InputStream inputStream)
+      throws CopyExceptionWithFailureReason, IOException {
+    final int CHUNK_SIZE = 50 * 1024 * 1024; // 50MB
+    // Use a pool of 2 buffers to limit memory usage to ~100MB regardless of video
+    BlockingQueue<byte[]> bufferPool = new LinkedBlockingQueue<>(2);
+    bufferPool.add(new byte[CHUNK_SIZE]);
+    bufferPool.add(new byte[CHUNK_SIZE]);
+
+    // Pass video chunks from producer to consumer using a blocking queue
+    // the producer will put a VideoChunk with null data to indicate the end of stream or an error.
+    BlockingQueue<VideoChunk> chunkQueue = new LinkedBlockingQueue<>();
+    AtomicBoolean consumerAborted = new AtomicBoolean(false);
+
+    // Start a producer thread to read the input stream.
+    CompletableFuture<Void> producerFuture =
+        CompletableFuture.runAsync(
+            () ->
+                produceVideoChunks(
+                    video,
+                    jobId,
+                    inputStream,
+                    bufferPool,
+                    chunkQueue,
+                    consumerAborted,
+                    CHUNK_SIZE));
+
     try {
-      InputStream inputStream = null;
-      if (video.isInTempStore()) {
-        inputStream = jobStore.getStream(jobId, video.getFetchableUrl()).getStream();
-      } else if (video.getFetchableUrl() != null) {
-        inputStream = getInputStream(video.getFetchableUrl());
-      } else {
-        monitor.severe(() -> "[SynologyImporter] Can't get inputStream for a video");
-        return null;
+      return consumeAndUploadVideoChunks(video, jobId, bufferPool, chunkQueue);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new IOException("Video upload interrupted", e);
+    } finally {
+      consumerAborted.set(true);
+      producerFuture.cancel(true);
+    }
+  }
+
+  private void produceVideoChunks(
+      VideoModel video,
+      UUID jobId,
+      InputStream inputStream,
+      BlockingQueue<byte[]> bufferPool,
+      BlockingQueue<VideoChunk> chunkQueue,
+      AtomicBoolean consumerAborted,
+      int chunkSize) {
+    try {
+      int index = 0;
+      while (!consumerAborted.get()) {
+        byte[] chunkData = bufferPool.poll(500, TimeUnit.MILLISECONDS);
+        if (chunkData == null) {
+          continue;
+        }
+
+        int bytesRead = ByteStreams.read(inputStream, chunkData, 0, chunkSize);
+        if (bytesRead == 0) {
+          bufferPool.add(chunkData); // Return unused buffer
+          chunkQueue.add(new VideoChunk(null, 0, -1));
+          break;
+        }
+
+        final int fIndex = index;
+        monitor.info(
+            () ->
+                String.format(
+                    "[SynologyImporter] fetched video chunk, video name: [%s], chunk index: [%d],"
+                        + " chunk size: [%d].",
+                    video.getName(), fIndex, bytesRead),
+            jobId);
+
+        chunkQueue.add(new VideoChunk(chunkData, bytesRead, index++));
+
+        monitor.info(
+            () ->
+                String.format(
+                    "[SynologyImporter] video chunk put into queue, video name: [%s], chunk index:"
+                        + " [%d], chunk size: [%d].",
+                    video.getName(), fIndex, bytesRead),
+            jobId);
+      }
+    } catch (Exception e) {
+      chunkQueue.add(new VideoChunk(e));
+    }
+  }
+
+  private int consumeAndUploadVideoChunks(
+      VideoModel video,
+      UUID jobId,
+      BlockingQueue<byte[]> bufferPool,
+      BlockingQueue<VideoChunk> chunkQueue)
+      throws CopyExceptionWithFailureReason, IOException, InterruptedException {
+    int actualChunkCount = 0;
+    while (true) {
+      VideoChunk chunk = chunkQueue.take();
+      if (chunk.error != null) {
+        throw new IOException("Error reading video stream", chunk.error);
+      }
+      if (chunk.data == null) {
+        final int finalActualChunkCount = actualChunkCount;
+        monitor.info(
+            () ->
+                String.format(
+                    "[SynologyImporter] finished reading video stream, total chunks: [%d].",
+                    finalActualChunkCount),
+            jobId);
+        return actualChunkCount;
       }
 
-      videoBytes = ByteStreams.toByteArray(inputStream);
-    } catch (MalformedURLException e) {
-      throw new UploadErrorException("Failed to create url for video", e);
-    } catch (IOException e) {
-      throw new UploadErrorException("Failed to create input stream for video", e);
+      monitor.info(
+          () ->
+              String.format(
+                  "[SynologyImporter] get video chunk, video name: [%s], chunk index: [%d], chunk"
+                      + " size: [%d].",
+                  video.getName(), chunk.index, chunk.size),
+          jobId);
+
+      try {
+        uploadVideoChunk(video, jobId, chunk);
+      } finally {
+        bufferPool.add(chunk.data);
+      }
+      actualChunkCount++;
+    }
+  }
+
+  private void uploadVideoChunk(VideoModel video, UUID jobId, VideoChunk chunk)
+      throws CopyExceptionWithFailureReason, IOException {
+    final int bytesRead = chunk.size;
+    final byte[] data = chunk.data;
+
+    RequestBodyGenerator bodyGenerator =
+        () -> {
+          RequestBody fileBody =
+              new RequestBody() {
+                @Override
+                public MediaType contentType() {
+                  return MediaType.parse(video.getMimeType());
+                }
+
+                @Override
+                public long contentLength() {
+                  return bytesRead;
+                }
+
+                @Override
+                public void writeTo(BufferedSink sink) throws IOException {
+                  sink.write(data, 0, bytesRead);
+                }
+              };
+
+          return new MultipartBody.Builder()
+              .setType(MultipartBody.FORM)
+              .addFormDataPart("item_id", video.getDataId())
+              .addFormDataPart("index", String.valueOf(chunk.index))
+              .addFormDataPart("job_id", jobId.toString())
+              .addFormDataPart("service", exportingService)
+              .addFormDataPart("file_size", String.valueOf(bytesRead))
+              .addFormDataPart("file", video.getName(), fileBody)
+              .build();
+        };
+
+    monitor.info(
+        () ->
+            String.format(
+                "[SynologyImporter] uploading video chunk, video name: [%s], chunk index: [%d],"
+                    + " chunk size: [%d].",
+                video.getName(), chunk.index, bytesRead),
+        jobId);
+    sendPostRequest(c2Api.getChunkUploadItem(), bodyGenerator, jobId);
+  }
+
+  private static class VideoChunk {
+    final byte[] data;
+    final int size;
+    final int index;
+    final Throwable error;
+
+    VideoChunk(byte[] data, int size, int index) {
+      this.data = data;
+      this.size = size;
+      this.index = index;
+      this.error = null;
     }
 
-    RequestBody fileBody = RequestBody.create(MediaType.parse(video.getMimeType()), videoBytes);
-    MultipartBody.Builder builder =
-        new MultipartBody.Builder()
-            .setType(MultipartBody.FORM)
-            .addFormDataPart("file", video.getName(), fileBody)
-            .addFormDataPart("item_id", video.getDataId())
-            .addFormDataPart("title", video.getName())
-            .addFormDataPart("job_id", jobId.toString())
-            .addFormDataPart("service", exportingService);
-
-    String imageDescription = video.getDescription();
-    if (!Strings.isNullOrEmpty(imageDescription)) {
-      builder.addFormDataPart("description", imageDescription);
+    VideoChunk(Throwable error) {
+      this.data = null;
+      this.size = 0;
+      this.index = -1;
+      this.error = error;
     }
-    Date videoUploadedTime = video.getUploadedTime();
-    if (videoUploadedTime != null) {
-      long timestampInSeconds = videoUploadedTime.getTime() / 1000;
-      builder.addFormDataPart("uploaded_time", String.valueOf(timestampInSeconds));
-    }
+  }
 
+  private Map<String, Object> completeVideoUpload(VideoModel video, UUID jobId, int totalChunks)
+      throws CopyExceptionWithFailureReason, IOException {
+    FormBody.Builder builder =
+        new FormBody.Builder()
+            .add("item_id", video.getDataId())
+            .add("title", video.getName())
+            .add("total_chunks", String.valueOf(totalChunks))
+            .add("job_id", jobId.toString())
+            .add("service", exportingService);
+
+    if (!Strings.isNullOrEmpty(video.getDescription())) {
+      builder.add("description", video.getDescription());
+    }
+    if (video.getUploadedTime() != null) {
+      builder.add("uploaded_time", String.valueOf(video.getUploadedTime().getTime() / 1000));
+    }
+    RequestBody requestBody = builder.build();
+
+    final String completeInfo =
+        String.format(
+            "[SynologyImporter] completing video upload, video name: [%s], total chunks: [%d].",
+            video.getName(), totalChunks);
+    monitor.info(() -> completeInfo, jobId);
     @SuppressWarnings("unchecked")
     Map<String, Object> responseData =
         (Map<String, Object>)
-            sendPostRequest(c2Api.getUploadItem(), builder.build(), jobId).get("data");
+            sendPostRequest(c2Api.getCompleteUploadItem(), () -> requestBody, jobId).get("data");
     return responseData;
   }
 
@@ -236,14 +502,37 @@ public class SynologyDTPService {
    * @return a map of shape {"success": <bool>}
    */
   public Map<String, Object> addItemToAlbum(String albumId, String itemId, UUID jobId)
-      throws CopyExceptionWithFailureReason {
+      throws CopyExceptionWithFailureReason, IOException {
     FormBody.Builder builder =
         new FormBody.Builder()
             .add("job_id", jobId.toString())
             .add("service", exportingService)
             .add("album_id", albumId)
             .add("item_id", itemId);
-    return sendPostRequest(c2Api.getAddItemToAlbum(), builder.build(), jobId);
+    RequestBody requestBody = builder.build();
+    return sendPostRequest(c2Api.getAddItemToAlbum(), () -> requestBody, jobId);
+  }
+
+  /**
+   * Updates job status.
+   *
+   * @param jobStatus the job status
+   * @param jobId the job ID
+   * @return a map of shape {"success": <bool>}
+   */
+  public Map<String, Object> sendJobSignal(JobLifeCycle jobStatus, UUID jobId)
+      throws CopyExceptionWithFailureReason, IOException {
+    FormBody.Builder builder =
+        new FormBody.Builder()
+            .add("job_id", jobId.toString())
+            .add("service", exportingService)
+            .add("state", jobStatus.state().name());
+    if (jobStatus.endReason() != null) {
+      builder.add("end_reason", jobStatus.endReason().name());
+    }
+
+    RequestBody requestBody = builder.build();
+    return sendPostRequest(c2Api.getSignalJob(), () -> requestBody, jobId);
   }
 
   @VisibleForTesting
@@ -281,21 +570,39 @@ public class SynologyDTPService {
     }
   }
 
+  /*
+   * @param url the URL to send the POST request to
+   * @param bodyGenerator a generator function that produces the request body, it will be called for each retry attempt
+   * @param jobId the job ID
+   * @param timeoutInSeconds the timeout for the request in seconds, -1 means do not modify the default timeout of OkHttpClient
+   */
   @VisibleForTesting
-  protected Map<String, Object> sendPostRequest(String url, RequestBody body, UUID jobId)
-      throws CopyExceptionWithFailureReason {
+  protected Map<String, Object> sendPostRequest(
+      String url, RequestBodyGenerator bodyGenerator, UUID jobId)
+      throws CopyExceptionWithFailureReason, IOException {
     boolean triedRefreshToken = false;
-    Request.Builder requestBuilder = new Request.Builder().url(url).post(body);
 
     Exception lastException = null;
     for (int retry = retryConfig.getMaxAttempts(); retry > 0; retry--) {
+      final String methodInfo =
+          String.format(
+              "[SynologyImporter] Sending POST request to url: [%s], attempts left: [%d]",
+              url, retry);
+      monitor.info(() -> methodInfo, jobId);
       Response response = null;
       try {
+        RequestBody body = bodyGenerator.get();
+        Request.Builder requestBuilder = new Request.Builder().url(url).post(body);
         requestBuilder.header("Authorization", "Bearer " + tokenManager.getAccessToken(jobId));
         response = client.newCall(requestBuilder.build()).execute();
         if (!response.isSuccessful()) {
           int code = response.code();
-          if (code == 401 && !triedRefreshToken) {
+          if (code == 401) {
+            if (triedRefreshToken) {
+              throw new InvalidTokenException(
+                  "Synology access token is invalid even after refresh",
+                  new IOException("SynologyDTPService get http 401 unauthorized"));
+            }
             triedRefreshToken = true;
             if (tokenManager.refreshToken(jobId, client, objectMapper)) {
               continue;
@@ -345,7 +652,7 @@ public class SynologyDTPService {
         lastException = e;
       }
     }
-    throw new UploadErrorException(
+    throw new IOException(
         String.format(
             "Failed to send POST request after %d retries: %s",
             retryConfig.getMaxAttempts(), lastException.getMessage()),
