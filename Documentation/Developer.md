@@ -79,6 +79,32 @@ limitations under the License.
 
 See [Running Locally](RunningLocally.md) for instructions.
 
+## Running tests in Docker without a local JDK
+
+> **Experimental.** This workflow is new and is intended to gradually become the standard way to build
+> and test the project, eventually replacing the requirement for a local JDK. Feedback welcome.
+
+This is unrelated to the demo image built by `dockerize` above -- it's a separate, additive way to run
+the Java test suite without installing a JDK locally. The `Dockerfile` at the repo root pins
+`gradle:8.10.2-jdk11`; the source is bind-mounted at run time rather than baked into the image, so a
+rebuild isn't needed after every code change.
+
+Run the full check task against the current working tree:
+```bash
+docker compose run --rm test
+```
+
+To run a specific Gradle task or test, override the default command:
+```bash
+docker compose run --rm test test --tests SomeTest
+```
+
+The `gradle-cache` named volume (defined in `docker-compose.yml`) persists resolved dependencies across
+runs, so only the first run pays the full resolution cost.
+
+The JDK is pinned to 11 because the Gradle wrapper (6.9.2) can't parse Java 17 bytecode when compiling
+`build.gradle`/`settings.gradle` -- a `gradle:*-jdk17` image fails outright for this reason.
+
 ## Deploying in production
 
 A demo distribution for Google Cloud Platform is available at

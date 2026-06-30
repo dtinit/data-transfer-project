@@ -1,0 +1,9 @@
+services:
+  test:
+    build: .
+    volumes:
+      - .:/workspace
+      - gradle-cache:/home/gradle/.gradle
+
+volumes:
+  gradle-cache:
