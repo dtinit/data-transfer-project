@@ -1,0 +1,22 @@
+# Runs the Gradle build/test suite inside the Dockerfile as an alternative
+# to the local-JDK path in gradle.yml. Both workflows run on the same events so their results
+# can be compared directly on a PR.
+# See Documentation/Developer.md#running-tests-in-docker-without-a-local-jdk for details.
+
+name: Docker CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build and test in Docker
+      run: docker compose run --rm test
