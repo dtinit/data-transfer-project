@@ -250,7 +250,6 @@ components:
         transferDataType: "PHOTOS"
         exportServices:
         - "Flickr"
-        - "Instagram"
         - "SmugMug"
         - "Facebook"
         - "Twitter"
