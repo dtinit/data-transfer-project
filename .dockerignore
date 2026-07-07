@@ -1,0 +1,8 @@
+.git
+.gradle
+build
+out
+generated
+target
+node_modules
+client-rest/dist
