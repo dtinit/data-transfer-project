@@ -68,6 +68,8 @@ dependencies {
 
     // TODO: depend on these based on list in flag values.
 
+    compile project(':extensions:auth:portability-auth-amazon')
+    compile project(':extensions:data-transfer:portability-data-transfer-amazon')
     compile project(':extensions:auth:portability-auth-apple')
     compile project(':extensions:auth:portability-auth-daybook')
     compile project(':extensions:auth:portability-auth-deezer')
