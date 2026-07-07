@@ -16,6 +16,6 @@ Apply for a key at [www.rememberthemilk.com/services/api/keys.rtm](https://www.r
 
 ## Maintained By
 
-The Instagram extension was created by the
+The Remember the Milk extension was created by the
 [DTP maintainers](mailto:portability-maintainers@googlegroups.com)
 and is not an official product of Remember the Milk.

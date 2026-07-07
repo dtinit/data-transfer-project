@@ -46,9 +46,6 @@ include ':extensions:data-transfer:portability-data-transfer-flickr'
 // Google
 include ':extensions:auth:portability-auth-google'
 include ':extensions:data-transfer:portability-data-transfer-google'
-// Instagram
-include ':extensions:auth:portability-auth-instagram'
-include ':extensions:data-transfer:portability-data-transfer-instagram'
 // Imgur
 include ':extensions:auth:portability-auth-imgur'
 include ':extensions:data-transfer:portability-data-transfer-imgur'
