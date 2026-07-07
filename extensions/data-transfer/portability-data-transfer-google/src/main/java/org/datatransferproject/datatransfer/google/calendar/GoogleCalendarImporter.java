@@ -125,7 +125,7 @@ public class GoogleCalendarImporter implements
       return calendarResult.getId();
     } catch (TokenResponseException e) {
       TokenErrorResponse details = e.getDetails();
-      if (details != null && details.getError().equals("invalid_grant")) {
+      if (details != null && "invalid_grant".equals(details.getError())) {
         throw new InvalidTokenException("Unable to refresh token.", e);
       }
       throw e;
@@ -147,7 +147,7 @@ public class GoogleCalendarImporter implements
           .getId();
     } catch (TokenResponseException e) {
       TokenErrorResponse details = e.getDetails();
-      if (details != null && details.getError().equals("invalid_grant")) {
+      if (details != null && "invalid_grant".equals(details.getError())) {
         throw new InvalidTokenException("Unable to refresh token.", e);
       }
       throw e;
