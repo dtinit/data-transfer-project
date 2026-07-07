@@ -101,7 +101,7 @@ Auth Extensions are located in the [extensions/auth module](https://github.com/g
 
 3. Create the test directory for the FooAuthDataGeneratorTest
 
-  * `$mkdir -p extensions/auth/portability-auth-instagram/src/test/java/org/datatransferproject/auth/foo`
+  * `$mkdir -p extensions/auth/portability-auth-foo/src/test/java/org/datatransferproject/auth/foo`
 
 4. Create FooAuthDataGeneratorTest with appropriate tests
 

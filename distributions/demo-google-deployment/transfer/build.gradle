@@ -59,7 +59,6 @@ dependencies {
     // TODO: depend on these based on list in flag values.
     compile project(':extensions:data-transfer:portability-data-transfer-deezer')
     compile project(':extensions:data-transfer:portability-data-transfer-google')
-    compile project(':extensions:data-transfer:portability-data-transfer-instagram')
     compile project(':extensions:data-transfer:portability-data-transfer-microsoft')
     compile project(':extensions:data-transfer:portability-data-transfer-flickr')
     compile project(':extensions:data-transfer:portability-data-transfer-rememberthemilk')

@@ -29,7 +29,6 @@ authorization technology each providers uses.
  - [Flickr](../extensions/data-transfer/portability-data-transfer-flickr#keys--auth)
  - [Google](../extensions/data-transfer/portability-data-transfer-google#keys--auth)
  - [Imgur](../extensions/data-transfer/portability-data-transfer-imgur#keys--auth)
- - [Instagram](../extensions/data-transfer/portability-data-transfer-instagram#keys--auth)
  - [Microsoft](../extensions/data-transfer/portability-data-transfer-microsoft#keys--auth)
  - [Remember The Milk](../extensions/data-transfer/portability-data-transfer-rememberthemilk#keys--auth)
  - [SmugMug](../extensions/data-transfer/portability-data-transfer-smugmug#keys--auth)
