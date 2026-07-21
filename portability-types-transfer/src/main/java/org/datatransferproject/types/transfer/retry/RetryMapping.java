@@ -17,7 +17,7 @@
 package org.datatransferproject.types.transfer.retry;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Throwables.getStackTraceAsString;
+import static org.datatransferproject.types.common.ExceptionUtils.getStackTraceAsString;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Arrays;

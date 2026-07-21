@@ -1,7 +1,7 @@
 package org.datatransferproject.datatransfer.google.common;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import org.datatransferproject.types.common.ExceptionUtils;
 import java.io.IOException;
 import java.util.UUID;
 import org.datatransferproject.spi.cloud.storage.JobStore;
@@ -30,7 +30,7 @@ public class GoogleErrorLogger {
     return ErrorDetail.builder()
         .setId(idempotentId)
         .setTitle(title)
-        .setException(Throwables.getStackTraceAsString(e))
+        .setException(ExceptionUtils.getStackTraceAsString(e))
         .setCanSkip(canSkip).build();
   }
 }
