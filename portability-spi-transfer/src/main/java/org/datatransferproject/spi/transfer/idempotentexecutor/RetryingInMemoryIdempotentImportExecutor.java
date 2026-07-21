@@ -19,8 +19,8 @@ package org.datatransferproject.spi.transfer.idempotentexecutor;
 import static java.lang.String.format;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import org.datatransferproject.types.common.ExceptionUtils;
 import java.io.IOException;
 import java.io.Serializable;
 import java.time.Clock;
@@ -90,10 +90,10 @@ public class RetryingInMemoryIdempotentImportExecutor implements IdempotentImpor
       errors.remove(idempotentId);
       return result;
     } catch (RetryException e) {
-      ErrorDetail.Builder errorDetailBuilder = ErrorDetail.builder();
-      errorDetailBuilder.setId(idempotentId)
+      ErrorDetail.Builder errorDetailBuilder = ErrorDetail.builder()
+          .setId(idempotentId)
           .setTitle(itemName)
-          .setException(Throwables.getStackTraceAsString(e));
+          .setException(ExceptionUtils.getStackTraceAsString(e));
       if(e.canSkip()){
         ErrorDetail errorDetail = errorDetailBuilder.setCanSkip(true).build();
         errors.put(idempotentId, errorDetail);
