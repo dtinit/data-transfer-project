@@ -16,7 +16,7 @@
 package org.datatransferproject.launcher.monitor;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static com.google.common.base.Throwables.getStackTraceAsString;
+import static org.datatransferproject.types.common.ExceptionUtils.getStackTraceAsString;
 
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;

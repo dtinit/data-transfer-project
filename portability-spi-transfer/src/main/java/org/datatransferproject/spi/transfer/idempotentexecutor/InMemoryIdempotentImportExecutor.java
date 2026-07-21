@@ -19,8 +19,8 @@ package org.datatransferproject.spi.transfer.idempotentexecutor;
 import static java.lang.String.format;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import org.datatransferproject.types.common.ExceptionUtils;
 import java.util.UUID;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.types.transfer.errors.ErrorDetail;
@@ -81,7 +81,7 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
           ErrorDetail.builder()
               .setId(idempotentId)
               .setTitle(itemName)
-              .setException(Throwables.getStackTraceAsString(e))
+              .setException(ExceptionUtils.getStackTraceAsString(e))
               .build();
       errors.put(idempotentId, errorDetail);
       recentErrors.put(idempotentId, errorDetail);
