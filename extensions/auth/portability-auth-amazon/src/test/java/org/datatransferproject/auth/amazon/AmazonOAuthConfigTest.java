@@ -35,29 +35,22 @@ class AmazonOAuthConfigTest {
   void importScopesForPhotos() {
     assertThat(config.getImportScopes().get(PHOTOS))
         .containsExactly(
-            "photos::images:create",
-            "photos::albums:create",
-            "photos::albums:update");
+            "amazonphotos::images:create",
+            "amazonphotos::albums:create",
+            "amazonphotos::albums:update");
   }
 
   @Test
   void importScopesForVideos() {
     assertThat(config.getImportScopes().get(VIDEOS))
         .containsExactly(
-            "photos::videos:create",
-            "photos::albums:create",
-            "photos::albums:update");
+            "amazonphotos::videos:create",
+            "amazonphotos::albums:create",
+            "amazonphotos::albums:update");
   }
 
   @Test
-  void exportScopesForPhotos() {
-    assertThat(config.getExportScopes().get(PHOTOS))
-        .containsExactly("photos::images:read", "photos::albums:read");
-  }
-
-  @Test
-  void exportScopesForVideos() {
-    assertThat(config.getExportScopes().get(VIDEOS))
-        .containsExactly("photos::videos:read", "photos::albums:read");
+  void exportScopesEmpty() {
+    assertThat(config.getExportScopes()).isEmpty();
   }
 }

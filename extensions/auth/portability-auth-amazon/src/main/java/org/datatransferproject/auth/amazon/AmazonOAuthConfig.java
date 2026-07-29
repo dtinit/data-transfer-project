@@ -33,23 +33,19 @@ public class AmazonOAuthConfig implements OAuth2Config {
 
   @Override
   public Map<DataVertical, Set<String>> getImportScopes() {
-    return ImmutableMap.<DataVertical, Set<String>>builder()
-        .put(PHOTOS, ImmutableSet.of(
-            "photos::images:create",
-            "photos::albums:create",
-            "photos::albums:update"))
-        .put(VIDEOS, ImmutableSet.of(
-            "photos::videos:create",
-            "photos::albums:create",
-            "photos::albums:update"))
-        .build();
+    return ImmutableMap.of(
+        PHOTOS, ImmutableSet.of(
+            "amazonphotos::images:create",
+            "amazonphotos::albums:create",
+            "amazonphotos::albums:update"),
+        VIDEOS, ImmutableSet.of(
+            "amazonphotos::videos:create",
+            "amazonphotos::albums:create",
+            "amazonphotos::albums:update"));
   }
 
   @Override
   public Map<DataVertical, Set<String>> getExportScopes() {
-    return ImmutableMap.<DataVertical, Set<String>>builder()
-        .put(PHOTOS, ImmutableSet.of("photos::images:read", "photos::albums:read"))
-        .put(VIDEOS, ImmutableSet.of("photos::videos:read", "photos::albums:read"))
-        .build();
+    return ImmutableMap.of();
   }
 }
