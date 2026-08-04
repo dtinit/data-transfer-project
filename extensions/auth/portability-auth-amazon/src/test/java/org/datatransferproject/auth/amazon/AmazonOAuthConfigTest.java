@@ -50,7 +50,14 @@ class AmazonOAuthConfigTest {
   }
 
   @Test
-  void exportScopesEmpty() {
-    assertThat(config.getExportScopes()).isEmpty();
+  void exportScopesForPhotos() {
+    assertThat(config.getExportScopes().get(PHOTOS))
+        .containsExactly("amazonphotos::images:read", "amazonphotos::albums:read");
+  }
+
+  @Test
+  void exportScopesForVideos() {
+    assertThat(config.getExportScopes().get(VIDEOS))
+        .containsExactly("amazonphotos::videos:read", "amazonphotos::albums:read");
   }
 }
