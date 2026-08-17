@@ -12,7 +12,7 @@ import org.datatransferproject.types.common.models.DataModel;
 public class ExportResult<T extends DataModel> {
 
   public static final ExportResult CONTINUE = new ExportResult(ResultType.CONTINUE);
-  public static final ExportResult END = new ExportResult(ResultType.CONTINUE);
+  public static final ExportResult END = new ExportResult(ResultType.END);
 
   private ResultType type;
   private T exportedData;
