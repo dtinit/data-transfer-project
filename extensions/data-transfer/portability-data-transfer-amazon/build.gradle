@@ -30,7 +30,7 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
     implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
     implementation "com.google.guava:guava:${guavaVersion}"
-    implementation "com.squareup.okhttp3:okhttp:4.9.0"
+    implementation "com.squareup.okhttp3:okhttp:${okHttpVersion}"
 
-    testImplementation "com.squareup.okhttp3:mockwebserver:4.9.0"
+    testImplementation "com.squareup.okhttp3:mockwebserver:${okHttpVersion}"
 }

@@ -18,7 +18,12 @@ package org.datatransferproject.transfer.amazon.photos;
 
 import org.datatransferproject.types.common.models.TransmogrificationConfig;
 
-/** Transmogrification config for Amazon Photos imports. */
+/**
+ * Defines the Amazon Photos-specific limits that the DTP transmogrification step applies to
+ * incoming data before import — here, the maximum album-name and photo-title lengths. DTP invokes
+ * this config (via {@code data.transmogrify(...)}) to normalize/trim source data so it conforms to
+ * Amazon Photos constraints.
+ */
 public class AmazonPhotosTransmogrificationConfig extends TransmogrificationConfig {
 
   private static final int MAX_ALBUM_NAME_LENGTH = 200;

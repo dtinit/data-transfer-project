@@ -41,20 +41,23 @@ public interface AmazonPhotosInterface {
   AmazonPhotosNode createAlbum(String name) throws IOException;
 
   /**
-   * Uploads a photo to Amazon Photos using the multiform upload API.
-   * If albumId is provided, the photo is linked to the album atomically.
+   * Uploads content (photo or video) to Amazon Photos.
+   * Uses multipart upload for files exceeding the threshold, otherwise simple multiform upload.
+   * If albumId is provided, the content is linked to the album atomically.
    *
-   * @param fileName the photo filename
-   * @param fileContent raw file bytes
+   * @param fileName the content filename
+   * @param fileContent the file to upload
    * @param md5Hex hex-encoded MD5 of the file content
    * @param fileSize size in bytes
-   * @param contentDate fallback content date (ISO 8601) if EXIF is unavailable
-   * @param isFavorite whether to mark the photo as favorite
-   * @param albumId album to link the photo to, or null for no album
+   * @param fallbackContentDate fallback content date (ISO 8601) if EXIF is unavailable
+   * @param isFavorite whether to mark as favorite
+   * @param albumId album to link the content to, or null for no album
    * @return the created node with id and name
    * @throws IOException on API errors (4xx/5xx)
    */
-  AmazonPhotosNode uploadPhoto(String fileName, File fileContent,
-                               String md5Hex, long fileSize, String contentDate,
-                               boolean isFavorite, String albumId) throws IOException;
+  AmazonPhotosNode uploadContent(String fileName, File fileContent,
+                                 String md5Hex, long fileSize, String fallbackContentDate,
+                                 boolean isFavorite, String albumId) throws IOException;
+
+
 }
