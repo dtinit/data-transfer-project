@@ -27,6 +27,7 @@ import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportE
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.amazon.photos.AmazonPhotosImporter;
+import org.datatransferproject.transfer.amazon.photos.AmazonVideosImporter;
 import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 
@@ -37,6 +38,7 @@ public class AmazonTransferExtension implements TransferExtension {
   private static final String SERVICE_ID = "Amazon";
 
   private AmazonPhotosImporter photosImporter;
+  private AmazonVideosImporter videosImporter;
   private volatile boolean initialized = false;
 
   @Override
@@ -55,6 +57,8 @@ public class AmazonTransferExtension implements TransferExtension {
     Preconditions.checkArgument(initialized, "Extension not initialized");
     if (transferDataType == DataVertical.PHOTOS) {
       return photosImporter;
+    } else if (transferDataType == DataVertical.VIDEOS) {
+      return videosImporter;
     }
     throw new IllegalArgumentException("Unsupported data type: " + transferDataType);
   }
@@ -80,6 +84,11 @@ public class AmazonTransferExtension implements TransferExtension {
     boolean enableRetrying = context.getSetting("enableRetrying", false);
 
     photosImporter = new AmazonPhotosImporter(
+        monitor, appCredentials.getKey(), appCredentials.getSecret(),
+        context.getService(TemporaryPerJobDataStore.class),
+        retryingIdempotentExecutor, enableRetrying);
+
+    videosImporter = new AmazonVideosImporter(
         monitor, appCredentials.getKey(), appCredentials.getSecret(),
         context.getService(TemporaryPerJobDataStore.class),
         retryingIdempotentExecutor, enableRetrying);
