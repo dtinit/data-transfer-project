@@ -46,6 +46,12 @@ public class AmazonOAuthConfig implements OAuth2Config {
 
   @Override
   public Map<DataVertical, Set<String>> getExportScopes() {
-    return ImmutableMap.of();
+    return ImmutableMap.of(
+        PHOTOS, ImmutableSet.of(
+            "amazonphotos::images:read",
+            "amazonphotos::albums:read"),
+        VIDEOS, ImmutableSet.of(
+            "amazonphotos::videos:read",
+            "amazonphotos::albums:read"));
   }
 }
