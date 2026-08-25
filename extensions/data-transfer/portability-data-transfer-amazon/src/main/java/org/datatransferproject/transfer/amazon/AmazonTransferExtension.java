@@ -22,9 +22,12 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.AppCredentialStore;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutorExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.transfer.amazon.photos.AmazonPhotosImporter;
+import org.datatransferproject.transfer.amazon.photos.AmazonVideosImporter;
 import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.types.transfer.auth.AppCredentials;
 
@@ -34,7 +37,8 @@ public class AmazonTransferExtension implements TransferExtension {
 
   private static final String SERVICE_ID = "Amazon";
 
-  private AmazonPhotosImporter importer;
+  private AmazonPhotosImporter photosImporter;
+  private AmazonVideosImporter videosImporter;
   private volatile boolean initialized = false;
 
   @Override
@@ -51,8 +55,12 @@ public class AmazonTransferExtension implements TransferExtension {
   @Override
   public Importer<?, ?> getImporter(DataVertical transferDataType) {
     Preconditions.checkArgument(initialized, "Extension not initialized");
-    Preconditions.checkArgument(transferDataType == DataVertical.PHOTOS);
-    return importer;
+    if (transferDataType == DataVertical.PHOTOS) {
+      return photosImporter;
+    } else if (transferDataType == DataVertical.VIDEOS) {
+      return videosImporter;
+    }
+    throw new IllegalArgumentException("Unsupported data type: " + transferDataType);
   }
 
   @Override
@@ -70,9 +78,20 @@ public class AmazonTransferExtension implements TransferExtension {
       return;
     }
 
-    importer = new AmazonPhotosImporter(
+    IdempotentImportExecutor retryingIdempotentExecutor =
+        context.getService(IdempotentImportExecutorExtension.class)
+            .getRetryingIdempotentImportExecutor(context);
+    boolean enableRetrying = context.getSetting("enableRetrying", false);
+
+    photosImporter = new AmazonPhotosImporter(
         monitor, appCredentials.getKey(), appCredentials.getSecret(),
-        context.getService(TemporaryPerJobDataStore.class));
+        context.getService(TemporaryPerJobDataStore.class),
+        retryingIdempotentExecutor, enableRetrying);
+
+    videosImporter = new AmazonVideosImporter(
+        monitor, appCredentials.getKey(), appCredentials.getSecret(),
+        context.getService(TemporaryPerJobDataStore.class),
+        retryingIdempotentExecutor, enableRetrying);
 
     initialized = true;
   }

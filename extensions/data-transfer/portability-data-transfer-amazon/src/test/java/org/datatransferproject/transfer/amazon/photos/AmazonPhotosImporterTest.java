@@ -18,8 +18,11 @@ package org.datatransferproject.transfer.amazon.photos;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -31,6 +34,10 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
+import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
+import org.datatransferproject.transfer.JobMetadata;
+import org.datatransferproject.transfer.amazon.photos.model.AmazonPhotosNode;
+import org.datatransferproject.types.common.models.FavoriteInfo;
 import org.datatransferproject.types.common.models.photos.PhotoAlbum;
 import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
@@ -39,6 +46,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.File;
@@ -53,6 +61,7 @@ public class AmazonPhotosImporterTest {
   @Mock private Monitor monitor;
   @Mock private TemporaryPerJobDataStore dataStore;
   @Mock private IdempotentImportExecutor executor;
+  @Mock private IdempotentImportExecutor retryingExecutor;
   @Mock private AmazonPhotosInterface client;
 
   private TokensAndUrlAuthData authData;
@@ -92,7 +101,13 @@ public class AmazonPhotosImporterTest {
     ImportResult result = importer.importItem(jobId, executor, authData, resource);
 
     assertEquals(ImportResult.OK, result);
-    // Verify album + 2 photos registered with executor
+    // Album + both photos are registered with the executor under their own keys/names.
+    verify(executor).executeAndSwallowIOExceptions(eq("a1"), eq("Album"), any());
+    verify(executor).executeAndSwallowIOExceptions(
+        eq(photo1.getIdempotentId()), eq("pic1.jpg"), any());
+    verify(executor).executeAndSwallowIOExceptions(
+        eq(photo2.getIdempotentId()), eq("pic2.jpg"), any());
+    // ...and nothing else.
     verify(executor, times(3)).executeAndSwallowIOExceptions(any(), any(), any());
   }
 
@@ -146,7 +161,7 @@ public class AmazonPhotosImporterTest {
         Collections.emptyList(), Collections.singletonList(photo));
 
     InputStream fakeStream = new java.io.ByteArrayInputStream(new byte[]{1, 2, 3});
-    when(dataStore.getStream(any(), eq("tempkey")))
+    when(dataStore.getStream(eq(jobId), eq("tempkey")))
         .thenReturn(new TemporaryPerJobDataStore.InputStreamWrapper(fakeStream));
     File tempFile = File.createTempFile("test", ".tmp");
     tempFile.deleteOnExit();
@@ -156,8 +171,7 @@ public class AmazonPhotosImporterTest {
           java.util.concurrent.Callable<?> callable = invocation.getArgument(2);
           return callable.call();
         });
-    when(executor.isKeyCached(any())).thenReturn(false);
-    when(client.uploadPhoto(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any()))
+    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any()))
         .thenReturn(new org.datatransferproject.transfer.amazon.photos.model.AmazonPhotosNode());
 
     importer.importItem(jobId, executor, authData, resource);
@@ -207,7 +221,7 @@ public class AmazonPhotosImporterTest {
         Collections.emptyList(), Collections.singletonList(photo));
 
     InputStream fakeStream = new java.io.ByteArrayInputStream(new byte[]{1, 2, 3});
-    when(dataStore.getStream(any(), eq("tempkey")))
+    when(dataStore.getStream(eq(jobId), eq("tempkey")))
         .thenReturn(new TemporaryPerJobDataStore.InputStreamWrapper(fakeStream));
     File tempFile = File.createTempFile("test", ".tmp");
     tempFile.deleteOnExit();
@@ -217,8 +231,7 @@ public class AmazonPhotosImporterTest {
           java.util.concurrent.Callable<?> callable = invocation.getArgument(2);
           return callable.call();
         });
-    when(executor.isKeyCached(any())).thenReturn(false);
-    when(client.uploadPhoto(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any()))
+    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any()))
         .thenReturn(new org.datatransferproject.transfer.amazon.photos.model.AmazonPhotosNode());
 
     importer.importItem(jobId, executor, authData, resource);
@@ -273,5 +286,216 @@ public class AmazonPhotosImporterTest {
   @Test
   void downloadToTempFile_dotSegmentsWithoutSeparatorInDataId_isContained() throws Exception {
     assertPrefixIsContained(captureTempPrefixForDataId("....etc....passwd"));
+  }
+
+  // Verifies that if album creation failed, photo upload also fails rather than
+  // silently uploading without album (preventing data loss of album organization).
+  @Test
+  void importItem_albumCreationFailed_photoUploadAlsoFails() throws Exception {
+    PhotoModel photo = new PhotoModel("pic.jpg", "tempkey",
+        null, "image/jpeg", "photo-1", "failed-album", true, (Date) null);
+
+    PhotosContainerResource resource = new PhotosContainerResource(
+        Collections.emptyList(), Collections.singletonList(photo));
+
+    when(executor.getCachedValue("failed-album"))
+        .thenThrow(new IllegalStateException("Album creation failed"));
+    when(executor.executeAndSwallowIOExceptions(any(), any(), any()))
+        .thenAnswer(invocation -> {
+          java.util.concurrent.Callable<?> callable = invocation.getArgument(2);
+          try {
+            return callable.call();
+          } catch (Exception e) {
+            return null;
+          }
+        });
+
+    importer.importItem(jobId, executor, authData, resource);
+
+    verify(client, never())
+        .uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any());
+  }
+
+  // ---------------------------------------------------------------------------
+  // Retrying-executor selection (platform retry opt-in).
+  // ---------------------------------------------------------------------------
+
+  @Test
+  void importItem_usesRetryingExecutorWhenEnabled() throws Exception {
+    AmazonPhotosImporter retryingImporter =
+        new AmazonPhotosImporter(monitor, dataStore, client, retryingExecutor, true);
+    PhotoAlbum album = new PhotoAlbum("a1", "Album", null);
+    PhotosContainerResource resource = new PhotosContainerResource(
+        Collections.singletonList(album), Collections.emptyList());
+
+    retryingImporter.importItem(jobId, executor, authData, resource);
+
+    verify(retryingExecutor).executeAndSwallowIOExceptions(eq("a1"), eq("Album"), any());
+    verifyNoInteractions(executor);
+  }
+
+  @Test
+  void importItem_usesDefaultExecutorWhenRetryingDisabled() throws Exception {
+    AmazonPhotosImporter retryingImporter =
+        new AmazonPhotosImporter(monitor, dataStore, client, retryingExecutor, false);
+    PhotoAlbum album = new PhotoAlbum("a1", "Album", null);
+    PhotosContainerResource resource = new PhotosContainerResource(
+        Collections.singletonList(album), Collections.emptyList());
+
+    retryingImporter.importItem(jobId, executor, authData, resource);
+
+    verify(executor).executeAndSwallowIOExceptions(eq("a1"), eq("Album"), any());
+    verifyNoInteractions(retryingExecutor);
+  }
+
+  @Test
+  void importItem_usesDefaultExecutorWhenNoRetryingExecutorProvided() throws Exception {
+    AmazonPhotosImporter retryingImporter =
+        new AmazonPhotosImporter(monitor, dataStore, client, null, true);
+    PhotoAlbum album = new PhotoAlbum("a1", "Album", null);
+    PhotosContainerResource resource = new PhotosContainerResource(
+        Collections.singletonList(album), Collections.emptyList());
+
+    retryingImporter.importItem(jobId, executor, authData, resource);
+
+    verify(executor).executeAndSwallowIOExceptions(eq("a1"), eq("Album"), any());
+  }
+
+  // ---------------------------------------------------------------------------
+  // Storage-quota classification -> terminal DestinationMemoryFullException.
+  // ---------------------------------------------------------------------------
+
+  @Test
+  void importItem_noActiveSubscription_throwsDestinationMemoryFull() throws Exception {
+    PhotoModel photo = new PhotoModel("pic.jpg", "tempkey",
+        null, "image/jpeg", "p1", null, true, (Date) null);
+    PhotosContainerResource resource = new PhotosContainerResource(
+        Collections.emptyList(), Collections.singletonList(photo));
+
+    InputStream fakeStream = new java.io.ByteArrayInputStream(new byte[]{1, 2, 3});
+    when(dataStore.getStream(eq(jobId), eq("tempkey")))
+        .thenReturn(new TemporaryPerJobDataStore.InputStreamWrapper(fakeStream));
+    File tempFile = File.createTempFile("test", ".tmp");
+    tempFile.deleteOnExit();
+    when(dataStore.getTempFileFromInputStream(any(), any(), any())).thenReturn(tempFile);
+    when(executor.executeAndSwallowIOExceptions(any(), any(), any()))
+        .thenAnswer(invocation -> {
+          java.util.concurrent.Callable<?> callable = invocation.getArgument(2);
+          return callable.call();
+        });
+    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any()))
+        .thenThrow(new AmazonPhotosApiException(403, "NoActiveSubscriptionFound", "no subscription"));
+
+    assertThrows(DestinationMemoryFullException.class,
+        () -> importer.importItem(jobId, executor, authData, resource));
+  }
+
+  // ---------------------------------------------------------------------------
+  // createAlbum body (requires the JobMetadata worker singleton, mocked statically).
+  // ---------------------------------------------------------------------------
+
+  @Test
+  void importItem_createAlbum_invokesClientWithSuffixedNameAndReturnsId() throws Exception {
+    PhotoAlbum album = new PhotoAlbum("a1", "Vacation", "desc");
+    PhotosContainerResource resource = new PhotosContainerResource(
+        Collections.singletonList(album), Collections.emptyList());
+
+    AmazonPhotosNode node = new AmazonPhotosNode();
+    node.setId("amazon-album-1");
+    when(client.createAlbum(any())).thenReturn(node);
+    executorRunsCallable();
+
+    try (MockedStatic<JobMetadata> jm = mockStatic(JobMetadata.class)) {
+      jm.when(JobMetadata::getExportService).thenReturn("Google");
+      importer.importItem(jobId, executor, authData, resource);
+    }
+
+    org.mockito.ArgumentCaptor<String> name = org.mockito.ArgumentCaptor.forClass(String.class);
+    verify(client).createAlbum(name.capture());
+    assertEquals("Vacation" + AmazonImportHelper.IMPORTED_SUFFIX + "Google", name.getValue());
+  }
+
+  // ---------------------------------------------------------------------------
+  // uploadPhoto happy path (covers uploadedTime + favorite mapping, upload, temp cleanup).
+  // ---------------------------------------------------------------------------
+
+  @Test
+  void importItem_uploadPhoto_happyPath_withUploadedTimeAndFavorite() throws Exception {
+    Date uploaded = new Date(1_700_000_000_000L);
+    PhotoModel photo = new PhotoModel("pic.jpg", "tempkey", null, "image/jpeg",
+        "p1", null, true, null, uploaded, new FavoriteInfo(true, uploaded));
+    PhotosContainerResource resource = new PhotosContainerResource(
+        Collections.emptyList(), Collections.singletonList(photo));
+
+    stubDownload();
+    executorRunsCallable();
+    AmazonPhotosNode node = new AmazonPhotosNode();
+    node.setId("uploaded-1");
+    when(client.uploadContent(eq("pic.jpg"), any(), any(), any(Long.class),
+        eq(uploaded.toInstant().toString()), eq(true), eq(null))).thenReturn(node);
+
+    importer.importItem(jobId, executor, authData, resource);
+
+    verify(client).uploadContent(eq("pic.jpg"), any(), any(), any(Long.class),
+        eq(uploaded.toInstant().toString()), eq(true), eq(null));
+    // inTempStore == true -> temp data is cleaned up after upload.
+    verify(dataStore).removeData(jobId, "tempkey");
+  }
+
+  @Test
+  void importItem_uploadPhoto_duplicate_isSkippedWithoutError() throws Exception {
+    PhotoModel photo = new PhotoModel("pic.jpg", "tempkey",
+        null, "image/jpeg", "p1", null, true, (Date) null);
+    PhotosContainerResource resource = new PhotosContainerResource(
+        Collections.emptyList(), Collections.singletonList(photo));
+
+    stubDownload();
+    executorRunsCallable();
+    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any()))
+        .thenThrow(new AmazonPhotosApiException(409, "DuplicatesConflictError", "dup"));
+
+    // Duplicate is swallowed as success -> importItem completes without throwing.
+    ImportResult result = importer.importItem(jobId, executor, authData, resource);
+
+    assertEquals(ImportResult.OK, result);
+    verify(client).uploadContent(eq("pic.jpg"), any(), any(), any(Long.class), any(), any(Boolean.class), any());
+  }
+
+  @Test
+  void importItem_uploadPhoto_nonDuplicateNonQuotaError_propagates() throws Exception {
+    PhotoModel photo = new PhotoModel("pic.jpg", "tempkey",
+        null, "image/jpeg", "p1", null, true, (Date) null);
+    PhotosContainerResource resource = new PhotosContainerResource(
+        Collections.emptyList(), Collections.singletonList(photo));
+
+    stubDownload();
+    executorRunsCallable();
+    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any()))
+        .thenThrow(new AmazonPhotosApiException(403, "ForbiddenAccess", "denied"));
+
+    assertThrows(AmazonPhotosApiException.class,
+        () -> importer.importItem(jobId, executor, authData, resource));
+  }
+
+  @Test
+  void productionConstructor_buildsWithoutNetwork() {
+    // Exercises the production wiring; the client is built lazily per job, not at construction.
+    assertNotNull(new AmazonPhotosImporter(
+        monitor, "client-id", "client-secret", dataStore, null, false));
+  }
+
+  private void stubDownload() throws Exception {
+    InputStream stream = new java.io.ByteArrayInputStream(new byte[]{1, 2, 3});
+    when(dataStore.getStream(eq(jobId), eq("tempkey")))
+        .thenReturn(new TemporaryPerJobDataStore.InputStreamWrapper(stream));
+    File tempFile = File.createTempFile("test", ".tmp");
+    tempFile.deleteOnExit();
+    when(dataStore.getTempFileFromInputStream(any(), any(), any())).thenReturn(tempFile);
+  }
+
+  private void executorRunsCallable() throws Exception {
+    when(executor.executeAndSwallowIOExceptions(any(), any(), any()))
+        .thenAnswer(invocation ->
+            ((java.util.concurrent.Callable<?>) invocation.getArgument(2)).call());
   }
 }

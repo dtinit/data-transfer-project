@@ -16,29 +16,20 @@
 
 package org.datatransferproject.transfer.amazon.photos.model;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/** Request body for node creation API (POST /nodes) and upload metadata. */
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class CreateNodeRequest {
+/** Response from the multipart upload initiate API. */
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class MultipartUploadInitResponse {
 
-  @JsonProperty("name")
-  private final String name;
+  @JsonProperty("nodeId") private String nodeId;
+  @JsonProperty("uploadId") private String uploadId;
+  @JsonProperty("partSize") private long partSize;
+  @JsonProperty("totalNumberOfParts") private int totalNumberOfParts;
 
-  @JsonProperty("kind")
-  private final String kind;
-
-  @JsonProperty("conflictResolution")
-  private final String conflictResolution;
-
-  public CreateNodeRequest(String name, String kind) {
-    this(name, kind, null);
-  }
-
-  public CreateNodeRequest(String name, String kind, String conflictResolution) {
-    this.name = name;
-    this.kind = kind;
-    this.conflictResolution = conflictResolution;
-  }
+  public String getNodeId() { return nodeId; }
+  public String getUploadId() { return uploadId; }
+  public long getPartSize() { return partSize; }
+  public int getTotalNumberOfParts() { return totalNumberOfParts; }
 }

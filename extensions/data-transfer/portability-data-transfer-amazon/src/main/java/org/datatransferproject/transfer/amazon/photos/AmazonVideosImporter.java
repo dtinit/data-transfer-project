@@ -24,10 +24,9 @@ import org.datatransferproject.spi.transfer.provider.Importer;
 import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.transfer.amazon.photos.model.AmazonPhotosNode;
-import org.datatransferproject.types.common.models.FavoriteInfo;
-import org.datatransferproject.types.common.models.photos.PhotoAlbum;
-import org.datatransferproject.types.common.models.photos.PhotoModel;
-import org.datatransferproject.types.common.models.photos.PhotosContainerResource;
+import org.datatransferproject.types.common.models.videos.VideoAlbum;
+import org.datatransferproject.types.common.models.videos.VideoModel;
+import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 import java.io.File;
@@ -38,23 +37,17 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Imports photos into Amazon Photos from other DTP-supported services.
- *
- * <p>For each photo: downloads to a temp file (computing MD5 in a single pass via
- * DigestInputStream), then uploads via the Upload Service. Duplicate detection and
- * fallback album placement are handled server-side.
+ * Imports videos into Amazon Photos from other DTP-supported services.
  */
-public class AmazonPhotosImporter
-    implements Importer<TokensAndUrlAuthData, PhotosContainerResource> {
+public class AmazonVideosImporter
+    implements Importer<TokensAndUrlAuthData, VideosContainerResource> {
 
   private final Monitor monitor;
   private final AmazonImportHelper importHelper;
-  private final AmazonPhotosTransmogrificationConfig transmogrificationConfig =
-      new AmazonPhotosTransmogrificationConfig();
   private final IdempotentImportExecutor retryingIdempotentExecutor;
   private final boolean enableRetrying;
 
-  public AmazonPhotosImporter(Monitor monitor, String clientId, String clientSecret,
+  public AmazonVideosImporter(Monitor monitor, String clientId, String clientSecret,
                               TemporaryPerJobDataStore dataStore,
                               IdempotentImportExecutor retryingIdempotentExecutor,
                               boolean enableRetrying) {
@@ -64,12 +57,12 @@ public class AmazonPhotosImporter
     this.enableRetrying = enableRetrying;
   }
 
-  AmazonPhotosImporter(Monitor monitor, TemporaryPerJobDataStore dataStore,
+  AmazonVideosImporter(Monitor monitor, TemporaryPerJobDataStore dataStore,
                        AmazonPhotosInterface client) {
     this(monitor, dataStore, client, null, false);
   }
 
-  AmazonPhotosImporter(Monitor monitor, TemporaryPerJobDataStore dataStore,
+  AmazonVideosImporter(Monitor monitor, TemporaryPerJobDataStore dataStore,
                        AmazonPhotosInterface client,
                        IdempotentImportExecutor retryingIdempotentExecutor,
                        boolean enableRetrying) {
@@ -82,9 +75,8 @@ public class AmazonPhotosImporter
   @Override
   public ImportResult importItem(UUID jobId, IdempotentImportExecutor idempotentImportExecutor,
                                  TokensAndUrlAuthData authData,
-                                 PhotosContainerResource data) throws Exception {
+                                 VideosContainerResource data) throws Exception {
     AmazonPhotosInterface client = importHelper.getOrCreateClient(jobId, authData);
-    data.transmogrify(transmogrificationConfig);
 
     // Prefer the platform's retrying executor when enabled so transient failures are retried
     // (per the host-configured RetryStrategyLibrary) before being recorded and skipped.
@@ -93,53 +85,49 @@ public class AmazonPhotosImporter
             ? retryingIdempotentExecutor
             : idempotentImportExecutor;
 
-    for (PhotoAlbum album : data.getAlbums()) {
+    for (VideoAlbum album : data.getAlbums()) {
       executor.executeAndSwallowIOExceptions(
           album.getId(), album.getName(), () -> createAlbum(client, album));
     }
 
-    for (PhotoModel photo : data.getPhotos()) {
+    for (VideoModel video : data.getVideos()) {
       executor.executeAndSwallowIOExceptions(
-          photo.getIdempotentId(), photo.getTitle(),
-          () -> uploadPhoto(client, jobId, photo, executor));
+          video.getIdempotentId(), video.getName(),
+          () -> uploadVideo(client, jobId, video, executor));
     }
 
     return ImportResult.OK;
   }
 
-  private String createAlbum(AmazonPhotosInterface client, PhotoAlbum album) throws IOException {
+  private String createAlbum(AmazonPhotosInterface client, VideoAlbum album) throws IOException {
     String albumName = album.getName() + AmazonImportHelper.IMPORTED_SUFFIX + JobMetadata.getExportService();
     AmazonPhotosNode node = client.createAlbum(albumName);
-    monitor.info(() -> "Created album " + album.getId() + " -> " + node.getId());
+    monitor.info(() -> "Created video album " + album.getId() + " -> " + node.getId());
     return node.getId();
   }
 
-  private String uploadPhoto(AmazonPhotosInterface client, UUID jobId, PhotoModel photo,
+  private String uploadVideo(AmazonPhotosInterface client, UUID jobId, VideoModel video,
                              IdempotentImportExecutor executor) throws Exception {
-    String targetAlbumId = importHelper.resolveTargetAlbumId(photo.getAlbumId(), executor);
+    String targetAlbumId = importHelper.resolveTargetAlbumId(video.getAlbumId(), executor);
     MessageDigest md5 = importHelper.newMd5Digest();
-    File tempFile = importHelper.downloadToTempFile(jobId, photo, photo.getDataId(), md5);
+    File tempFile = importHelper.downloadToTempFile(jobId, video, video.getDataId(), md5);
 
     try {
       String md5Hex = importHelper.toHexString(md5.digest());
       long fileSize = tempFile.length();
-      String fallbackContentDate = Optional.ofNullable(photo.getUploadedTime())
+      String fallbackContentDate = Optional.ofNullable(video.getUploadedTime())
           .map(d -> d.toInstant().toString())
           .orElse(Instant.now().toString());
-      boolean isFavorite = Optional.ofNullable(photo.getFavoriteInfo())
-          .map(FavoriteInfo::getFavorited)
-          .orElse(false);
 
       AmazonPhotosNode uploadedNode = client.uploadContent(
-          photo.getTitle(), tempFile, md5Hex,
-          fileSize, fallbackContentDate, isFavorite, targetAlbumId);
+          video.getName(), tempFile, md5Hex, fileSize, fallbackContentDate, false, targetAlbumId);
 
       return uploadedNode.getId();
 
     } catch (AmazonPhotosApiException e) {
       if (importHelper.isDuplicate(e)) {
-        monitor.info(() -> "Duplicate photo skipped: " + photo.getDataId());
-        return photo.getDataId();
+        monitor.info(() -> "Duplicate video skipped: " + video.getDataId());
+        return video.getDataId();
       }
       if (importHelper.isStorageQuotaExceeded(e)) {
         throw new DestinationMemoryFullException("Amazon Photos storage full", e);
@@ -147,8 +135,8 @@ public class AmazonPhotosImporter
       throw e;
     } finally {
       tempFile.delete();
-      if (photo.isInTempStore()) {
-        importHelper.cleanupTempData(jobId, photo.getFetchableUrl());
+      if (video.isInTempStore()) {
+        importHelper.cleanupTempData(jobId, video.getFetchableUrl());
       }
     }
   }
