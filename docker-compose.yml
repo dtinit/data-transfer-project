@@ -1,9 +1,85 @@
+# Three services; `gradle` and `dtp` share this repo's one Dockerfile.
+#
+# `gradle` runs the Gradle build (see Dockerfile) -- its ENTRYPOINT is
+# ./gradlew, so arguments passed to it are Gradle arguments. `dtp` runs the
+# packaged demo-server jar that build produces, and `e2e` drives a transfer
+# against it.
+#
+# `dtp` deliberately reuses `build: .` rather than defining an image of its
+# own -- the repo publishes no server image today, so the harness pins a
+# *contract* (an API on 8080 plus a log stream) rather than an artifact. When a
+# real server image exists, replace `build`/`entrypoint`/`command` on `dtp`
+# with `image:` and nothing else here changes.
+#
+#   docker compose run --rm gradle      # the build
+#   docker compose up dtp               # the server, on https://localhost:8080
+#   ./e2e/run.sh                        # the end-to-end transfer
 services:
-  test:
+  gradle:
     build: .
     volumes:
       - .:/workspace
       - gradle-cache:/home/gradle/.gradle
 
+  # The system under test: API + transfer worker in one JVM, as SingleVMMain
+  # requires (LocalJobStore shares state through private static maps, so the
+  # two only ever see the same job when co-located).
+  dtp:
+    build: .
+    volumes:
+      - .:/workspace
+      - dtp-logs:/var/log/dtp
+    environment:
+      # LocalAppCredentialStore reads secrets from the environment and ApiMain
+      # builds a JWTTokenManager unconditionally, so it will not boot without
+      # these. The values are never checked against anything -- offline-demo
+      # bypasses OAuth entirely.
+      JWT_KEY: e2e-key
+      JWT_SECRET: e2e-secret
+    # Published so `docker compose up dtp` is also the credential-free way to
+    # poke at a running DTP by hand. JettyTransport hardcodes 8080.
+    ports:
+      - "8080:8080"
+    # The image's ENTRYPOINT is ./gradlew; override it to run the jar that
+    # `gradle` built. Not `:distributions:demo-server:run` -- that task reads
+    # build/resources/main but nothing makes it depend on createApiFile, so
+    # api.yaml is missing and ApiExtensionContext fails on a null baseUrl.
+    # shadowJar.dependsOn(createApiFile), so the jar is self-contained.
+    #
+    # Globbed because the jar name depends on the version, and root
+    # build.gradle sets `version = System.getenv('RELEASE_VERSION')` -- unset
+    # locally, so the artifact is plain `demo-server-all.jar`, but versioned in
+    # a release build. A glob needs a shell, hence bash -c.
+    #
+    # tee, not `>`: the e2e service reads the file, humans read `docker compose
+    # logs dtp`, and run.sh captures the same stream to e2e/.logs/ afterwards.
+    # Merging stderr matters -- ConsoleMonitor writes the server log to stderr
+    # while OfflineDemoImporter prints the delivered payload to stdout.
+    entrypoint: ["bash", "-c"]
+    command:
+      - "java -jar distributions/demo-server/build/libs/*-all.jar 2>&1 | tee /var/log/dtp/dtp.log"
+
+  # Stock python image, no Dockerfile. Deps install into a cached volume.
+  e2e:
+    image: python:3.12-slim
+    working_dir: /workspace
+    depends_on:
+      - dtp
+    volumes:
+      - .:/workspace
+      - dtp-logs:/var/log/dtp:ro
+      - pip-cache:/root/.cache/pip
+    environment:
+      DTP_BASE_URL: https://dtp:8080
+      DTP_LOG: /var/log/dtp/dtp.log
+      # Keep the container from littering the bind-mounted repo with
+      # root-owned __pycache__ directories.
+      PYTHONDONTWRITEBYTECODE: "1"
+    entrypoint: ["bash", "-c"]
+    command:
+      - "pip install --quiet --root-user-action=ignore -r e2e/driver/requirements.txt && pytest e2e/driver -v -p no:cacheprovider"
+
 volumes:
   gradle-cache:
+  dtp-logs:
+  pip-cache:

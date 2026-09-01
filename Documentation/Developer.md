@@ -86,17 +86,20 @@ See [Running Locally](RunningLocally.md) for instructions.
 
 This is unrelated to the demo image built by `dockerize` above -- it's a separate, additive way to run
 the Java test suite without installing a JDK locally. The `Dockerfile` at the repo root pins
-`gradle:8.10.2-jdk11`; the source is bind-mounted at run time rather than baked into the image, so a
-rebuild isn't needed after every code change.
+`eclipse-temurin:11-jdk-jammy` and resolves the wrapper-pinned Gradle 6.9.2 into an image layer at
+build time; the source is bind-mounted at run time rather than baked into the image, so a rebuild
+isn't needed after every code change.
+
+The `gradle` service's `ENTRYPOINT` is `./gradlew`, so anything you pass it is a Gradle argument.
 
 Run the full check task against the current working tree:
 ```bash
-docker compose run --rm test
+docker compose run --rm gradle
 ```
 
 To run a specific Gradle task or test, override the default command:
 ```bash
-docker compose run --rm test test --tests SomeTest
+docker compose run --rm gradle test --tests SomeTest
 ```
 
 The `gradle-cache` named volume (defined in `docker-compose.yml`) persists resolved dependencies across
@@ -104,6 +107,31 @@ runs, so only the first run pays the full resolution cost.
 
 The JDK is pinned to 11 because the Gradle wrapper (6.9.2) can't parse Java 17 bytecode when compiling
 `build.gradle`/`settings.gradle` -- a `gradle:*-jdk17` image fails outright for this reason.
+
+## Running the end-to-end transfer test
+
+The `gradle` service above runs unit tests. To run a real transfer end to end -- job creation, auth,
+worker claim, export, import -- against the packaged `demo-server` jar:
+
+```bash
+./e2e/run.sh
+```
+
+No provider credentials, no local JDK and no local Python; about 35 seconds with a warm Gradle cache.
+It uses the `dtp` and `e2e` services in `docker-compose.yml`, and leaves the server log in
+`e2e/.logs/dtp.log` whether the run passes or fails.
+
+The same services are the shortest way to watch DTP actually do something without acquiring a single
+API key:
+
+```bash
+docker compose run --rm gradle --no-daemon \
+  :distributions:demo-server:shadowJar -PofflineData=true -PencryptionScheme=cleartext
+docker compose up dtp          # API on https://localhost:8080 (self-signed cert)
+```
+
+See [e2e/README.md](../e2e/README.md) for what a green run does and does not prove, and for how to
+add an adapter.
 
 ## Deploying in production
 
