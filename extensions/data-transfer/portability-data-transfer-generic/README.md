@@ -35,6 +35,8 @@ The job continues until all items have been sent.
 > [!NOTE]
 > The Generic Importers extension currently provides no mechanism for informing an importer service of the beginning or end of a transfer job.
 
+Every request carries the id of the job it belongs to, and the id of the exporter service the data came from, in HTTP headers; see [Request Headers](#request-headers). Jobs that the hosting platform has marked as part of a recurring transfer series may additionally carry the id of that series.
+
 #### Ordering
 
 Data items are sent to your importer service in the same order that they are exported from the exporter service. This makes the order of data items transferred in a job an implementation detail of the `Exporter` module and corresponding exporter service, however there are is a helpful convention that Exporters tend to follow; for data items that are containers of other items, such as photo albums, these items are conventionally exported before the data items contained inside them (or at most in the same page). \
@@ -75,6 +77,25 @@ The Generic `Importer` module maps each data item in a job to one HTTP request m
 Data will be POSTed to your endpoint with a `Content-Type` of either `application/json` for basic data-types, or `multipart/related` for file-based data-types. See below for how to interpret each of these. \
 Your endpoint should return a 20x status code if the resource has been created, 40x for errors caused by the Importer, or 50x for service errors. See [Endpoint Errors](#endpoint-errors) below for details on returning errors.
 
+#### Request Headers
+
+Alongside the headers set by the HTTP client, the Generic `Importer` module sets the following headers on every request. Their values are taken from the transfer job the worker is processing, so they do not depend on the exporter service, its extension, or any per-exporter configuration:
+
+| Header | Sent | Description |
+| --- | --- | --- |
+| `Authorization` | Always | `Bearer <access token>`, see [Authentication and Authorization](#authentication-and-authorization). |
+| `X-DTP-Export-Service` | Always | Id of the service the data is being exported from, e.g. `Google`, `Microsoft`. |
+| `X-DTP-Job-Id` | Always | UUID of the transfer job this data item belongs to. |
+| `X-DTP-Recurring-Job-Id` | Recurring transfers only | UUID identifying a recurring transfer series. |
+
+`X-DTP-Export-Service` identifies the source of the data, which lets your service branch on it, for example to apply exporter-specific handling or reporting. It matches the service id registered by that exporter's auth extension.
+
+`X-DTP-Job-Id` is the same for every request of a given transfer job, including [retries](#retries) of an individual item, so it can be used to group data items belonging to the same transfer. Combined with the note above about the [job life-cycle](#job-life-cycle), a previously unseen job id is currently the only signal your service gets that a new transfer has started.
+
+`X-DTP-Recurring-Job-Id` is only sent when the platform hosting the transfer worker has marked the job as part of a recurring transfer series. Jobs in the series each have their own `X-DTP-Job-Id`; where the recurring job id is sent, it is the same across the series, which allows your service to relate a new job to data imported by earlier runs of that series. Whether recurring transfers are used at all, and how and when a series id is assigned, are decisions of the platform hosting the transfer worker; DTP itself neither generates nor validates this id.
+
+These headers are set on requests to your import endpoint only. The token refresh request described in [Token Refresh](#token-refresh) is made to the configured token server and carries none of them.
+
 #### Basic data types
 
 For basic data-types the Importer will send a POST request with a `Content-Type: application/json` header. The body of the POST request will be a UTF-8 encoded JSON payload conforming to the relevant data-type schema detailed in the [Schemas](#schemas) section.
@@ -92,6 +113,9 @@ Connection: Keep-Alive
 Accept-Encoding: gzip
 User-Agent: okhttp/3.9.1
 Authorization: Bearer accessToken
+X-DTP-Export-Service: Google
+X-DTP-Job-Id: 8ce9ea27-f4b0-4b64-9b8b-1a15f0b8a6f9
+X-DTP-Recurring-Job-Id: 0f2d1f5a-2d4b-4d0a-8c6f-2b7b7f4a1c33
 
 {
   "@type": "GenericPayload",
@@ -151,6 +175,8 @@ Connection: Keep-Alive
 Accept-Encoding: gzip
 User-Agent: okhttp/3.9.1
 Authorization: Bearer accessToken
+X-DTP-Export-Service: Google
+X-DTP-Job-Id: b71ea6f4-3f3c-45a1-8a2e-6c1d5f0e9a24
 
 --1581c5eb-05d0-42fe-bfb3-472151f366cd
 Content-Type: application/json
