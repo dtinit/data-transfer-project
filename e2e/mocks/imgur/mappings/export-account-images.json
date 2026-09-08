@@ -1,0 +1,111 @@
+{
+  "mappings": [
+    {
+      "name": "account images page 0",
+      "metadata": {
+        "comment": [
+          "ImgurPhotosExporter.requestNonAlbumPhotos: the account-wide listing, which returns album",
+          "photos *and* loose ones. The exporter keeps only ids it has not already seen in an album,",
+          "so the album photos repeated here are expected to be filtered out -- if they are not,",
+          "they get imported twice and the per-image assertion catches it.",
+          "This page is also where the synthetic 'Non-album photos' album is emitted."
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "urlPath": "/3/account/me/images/0",
+        "queryParameters": { "perPage": { "equalTo": "10" } }
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+          "success": true,
+          "status": 200,
+          "data": [
+            {
+              "id": "album1Photo1",
+              "name": "album1Photo1",
+              "description": "First photo in Album 1",
+              "type": "image/jpeg",
+              "link": "http://wiremock-imgur:8080/files/album1Photo1.jpg"
+            },
+            {
+              "id": "album1Photo2",
+              "name": "album1Photo2",
+              "description": null,
+              "type": "image/jpeg",
+              "link": "http://wiremock-imgur:8080/files/album1Photo2.jpg"
+            },
+            {
+              "id": "album2Photo1",
+              "name": "album2Photo1",
+              "description": "First photo in Album 2",
+              "type": "image/jpeg",
+              "link": "http://wiremock-imgur:8080/files/album2Photo1.jpg"
+            },
+            {
+              "id": "album3Photo1",
+              "name": "album3Photo1",
+              "description": "First photo in Album 3",
+              "type": "image/jpeg",
+              "link": "http://wiremock-imgur:8080/files/album3Photo1.jpg"
+            },
+            {
+              "id": "nonAlbumPhoto1",
+              "name": "nonAlbumPhoto1",
+              "description": "Loose photo one",
+              "type": "image/jpeg",
+              "link": "http://wiremock-imgur:8080/files/nonAlbumPhoto1.jpg"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "account images page 1",
+      "metadata": {
+        "comment": [
+          "A second page on the *other* pagination axis. Its photos reference the synthetic album",
+          "cached during page 0, so this also exercises IdempotentImportExecutor.getCachedValue",
+          "across copy iterations rather than within one."
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "urlPath": "/3/account/me/images/1",
+        "queryParameters": { "perPage": { "equalTo": "10" } }
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+          "success": true,
+          "status": 200,
+          "data": [
+            {
+              "id": "nonAlbumPhoto2",
+              "name": "nonAlbumPhoto2",
+              "description": "Loose photo two",
+              "type": "image/jpeg",
+              "link": "http://wiremock-imgur:8080/files/nonAlbumPhoto2.jpg"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "account images page 2 (empty terminator)",
+      "request": {
+        "method": "GET",
+        "urlPath": "/3/account/me/images/2",
+        "queryParameters": { "perPage": { "equalTo": "10" } }
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": { "success": true, "status": 200, "data": [] }
+      }
+    }
+  ]
+}
