@@ -1,0 +1,28 @@
+{
+  "name": "OAuth2 token exchange",
+  "metadata": {
+    "comment": [
+      "The token exchange OAuth2DataGenerator performs during POST /api/transfer/{id}/generate.",
+      "Field names must be access_token and refresh_token: OAuth2TokenResponse maps exactly those",
+      "and is @JsonIgnoreProperties(ignoreUnknown = true), so the extra fields here are ignored",
+      "but kept because Imgur really does return them.",
+      "Note that WireMock rejects unknown top-level keys in a mapping, so commentary has to live",
+      "under metadata -- there is no comment syntax in JSON and no '//' escape hatch."
+    ]
+  },
+  "request": {
+    "method": "POST",
+    "urlPath": "/oauth2/token"
+  },
+  "response": {
+    "status": 200,
+    "headers": { "Content-Type": "application/json" },
+    "jsonBody": {
+      "access_token": "e2e-access-token",
+      "refresh_token": "e2e-refresh-token",
+      "expires_in": 3600,
+      "token_type": "bearer",
+      "account_username": "e2e"
+    }
+  }
+}
