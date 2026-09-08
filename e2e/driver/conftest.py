@@ -9,9 +9,11 @@ import os
 import pytest
 
 from dtp import DtpClient, ServerLog
+from wiremock import WireMock
 
 BASE_URL = os.environ.get("DTP_BASE_URL", "https://localhost:8080")
 LOG_PATH = os.environ.get("DTP_LOG", "/var/log/dtp/dtp.log")
+WIREMOCK_IMGUR_URL = os.environ.get("WIREMOCK_IMGUR_URL", "http://wiremock-imgur:8080")
 
 # Boot covers a JVM start plus every unconfigured provider adapter logging
 # "Did you set X_KEY and X_SECRET?" on the way past.
@@ -28,3 +30,10 @@ def client() -> DtpClient:
 @pytest.fixture(scope="session")
 def server_log() -> ServerLog:
     return ServerLog(LOG_PATH)
+
+
+@pytest.fixture(scope="session")
+def imgur_mock() -> WireMock:
+    """Only started when run.sh brings up the `imgur` compose profile, which is
+    also the only time an @pytest.mark.imgur test is selected."""
+    return WireMock(WIREMOCK_IMGUR_URL)

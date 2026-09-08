@@ -1,0 +1,112 @@
+{
+  "mappings": [
+    {
+      "name": "create album: Album 1",
+      "metadata": {
+        "comment": [
+          "ImgurPhotosImporter.importAlbum posts an x-www-form-urlencoded body and reads back",
+          "data.id, which IdempotentImportExecutor caches under the *original* album id. Every",
+          "photo in that album then looks the new id up. Returning a distinct id per album is what",
+          "makes that mapping assertable: a photo carrying the wrong `album` value means the cache",
+          "returned the wrong entry.",
+          "The regex tolerates both %20 and + for the space, since which one OkHttp's FormBody",
+          "emits is an implementation detail we should not pin a test to."
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "urlPath": "/3/album",
+        "bodyPatterns": [{ "matches": ".*title=Album(%20|\\+)1(&.*)?" }]
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+          "success": true,
+          "status": 200,
+          "data": { "id": "imported-album-1", "deletehash": "hash1" }
+        }
+      }
+    },
+    {
+      "name": "create album: Album 2",
+      "request": {
+        "method": "POST",
+        "urlPath": "/3/album",
+        "bodyPatterns": [{ "matches": ".*title=Album(%20|\\+)2(&.*)?" }]
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+          "success": true,
+          "status": 200,
+          "data": { "id": "imported-album-2", "deletehash": "hash2" }
+        }
+      }
+    },
+    {
+      "name": "create album: Album 3",
+      "request": {
+        "method": "POST",
+        "urlPath": "/3/album",
+        "bodyPatterns": [{ "matches": ".*title=Album(%20|\\+)3(&.*)?" }]
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+          "success": true,
+          "status": 200,
+          "data": { "id": "imported-album-3", "deletehash": "hash3" }
+        }
+      }
+    },
+    {
+      "name": "create album: Non-album photos",
+      "metadata": {
+        "comment": [
+          "The synthetic album ImgurPhotosExporter invents for loose photos. Its title is hardcoded",
+          "in requestNonAlbumPhotos, not taken from the provider."
+        ]
+      },
+      "request": {
+        "method": "POST",
+        "urlPath": "/3/album",
+        "bodyPatterns": [{ "matches": ".*title=Non-album(%20|\\+)photos(&.*)?" }]
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+          "success": true,
+          "status": 200,
+          "data": { "id": "imported-album-default", "deletehash": "hash0" }
+        }
+      }
+    },
+    {
+      "name": "upload image",
+      "metadata": {
+        "comment": [
+          "A catch-all: ImgurPhotosImporter.importPhoto only checks the status code, so there is",
+          "nothing to vary per photo. The interesting content is in the *request* -- base64 image",
+          "bytes plus the resolved album id -- which the driver reads back from the journal."
+        ]
+      },
+      "request": { "method": "POST", "urlPath": "/3/image" },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+          "success": true,
+          "status": 200,
+          "data": {
+            "id": "imported-image",
+            "link": "http://wiremock-imgur:8080/files/imported.jpg"
+          }
+        }
+      }
+    }
+  ]
+}
