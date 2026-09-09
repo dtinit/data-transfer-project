@@ -18,23 +18,20 @@ package org.datatransferproject.transfer.offline;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.transfer.microsoft.spi.types.MicrosoftOfflineData;
 import org.datatransferproject.types.transfer.auth.TokenAuthData;
 
 import java.util.UUID;
 
 /**
  * Simulates importing offline data. For demo purposes only!
- *
- * <p>Microsoft offline data is used since that is the only form currently supported.
  */
-public class OfflineDemoImporter implements Importer<TokenAuthData, MicrosoftOfflineData> {
+public class OfflineDemoImporter implements Importer<TokenAuthData, DemoOfflineData> {
 
   @Override
   public ImportResult importItem(UUID jobId,
       IdempotentImportExecutor idempotentExecutor,
       TokenAuthData authData,
-      MicrosoftOfflineData data) {
+      DemoOfflineData data) {
     // Print to the console to simulate an import
     System.out.println("Received offline data:\n" + data.getContents());
     return ImportResult.OK;
