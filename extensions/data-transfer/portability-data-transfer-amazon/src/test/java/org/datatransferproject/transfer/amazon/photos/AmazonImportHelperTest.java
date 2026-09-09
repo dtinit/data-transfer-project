@@ -19,6 +19,8 @@ package org.datatransferproject.transfer.amazon.photos;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -27,9 +29,12 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
+import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -92,7 +97,7 @@ class AmazonImportHelperTest {
   void getOrCreateClient_returnsInjectedClientWithoutBuilding() throws Exception {
     AmazonPhotosInterface injected = mock(AmazonPhotosInterface.class);
     AmazonImportHelper h =
-        new AmazonImportHelper(mock(TemporaryPerJobDataStore.class), injected);
+        new AmazonImportHelper(mock(TemporaryPerJobDataStore.class), injected, mock(Monitor.class));
 
     assertEquals(injected, h.getOrCreateClient(UUID.randomUUID(), AUTH_DATA));
     // Injected clients are supplied ready-to-use; the helper must not resolve endpoints itself.
@@ -125,5 +130,36 @@ class AmazonImportHelperTest {
         mock(TemporaryPerJobDataStore.class), "client-id", "client-secret", mock(Monitor.class));
     // Constructing the client does no network I/O (endpoint resolution is a separate call).
     assertNotNull(h.createClient(AUTH_DATA));
+  }
+
+  // ---------------------------------------------------------------------------
+  // Album resolution: items resolve their parent album from the executor cache, which is
+  // populated because albums are always created before any item that references them.
+  // ---------------------------------------------------------------------------
+
+  @Test
+  void resolveTargetAlbumId_nullAlbumId_returnsNull() throws Exception {
+    IdempotentImportExecutor executor = mock(IdempotentImportExecutor.class);
+    // An albumless item has no parent to resolve.
+    assertNull(helper.resolveTargetAlbumId(null, executor));
+    verifyNoInteractions(executor);
+  }
+
+  @Test
+  void resolveTargetAlbumId_cachedAlbum_returnsAmazonNodeId() throws Exception {
+    IdempotentImportExecutor executor = mock(IdempotentImportExecutor.class);
+    // Album was created earlier this job, so its source id maps to the Amazon node id.
+    when(executor.getCachedValue("google-album")).thenReturn("amazon-node-1");
+    assertEquals("amazon-node-1", helper.resolveTargetAlbumId("google-album", executor));
+  }
+
+  @Test
+  void resolveTargetAlbumId_uncachedAlbum_propagates() throws Exception {
+    IdempotentImportExecutor executor = mock(IdempotentImportExecutor.class);
+    // No silent root fallback: an album id that wasn't created (not cached) fails the item so its
+    // album organization isn't silently lost, rather than reassigning it to some default album.
+    when(executor.getCachedValue("missing")).thenThrow(new IllegalArgumentException("not found"));
+    assertThrows(IllegalArgumentException.class,
+        () -> helper.resolveTargetAlbumId("missing", executor));
   }
 }
