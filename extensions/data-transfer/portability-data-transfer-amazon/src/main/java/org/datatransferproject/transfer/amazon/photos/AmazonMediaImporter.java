@@ -21,45 +21,51 @@ import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.spi.transfer.provider.Importer;
-import org.datatransferproject.types.common.models.videos.VideoAlbum;
+import org.datatransferproject.types.common.models.media.MediaAlbum;
+import org.datatransferproject.types.common.models.media.MediaContainerResource;
+import org.datatransferproject.types.common.models.photos.PhotoModel;
 import org.datatransferproject.types.common.models.videos.VideoModel;
-import org.datatransferproject.types.common.models.videos.VideosContainerResource;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 import java.util.UUID;
 
 /**
- * Imports videos into Amazon Photos from other DTP-supported services.
+ * Imports the unified MEDIA vertical (albums + photos + videos in one {@link
+ * MediaContainerResource}) into Amazon Photos.
  *
- * <p>The per-job client, album creation, download+MD5, upload, and duplicate/quota handling live in
- * {@link AmazonImportHelper} and are shared with the photos and media importers; this class only
- * iterates the videos container and maps each video onto those shared operations.
+ * <p>Albums are created first so photos and videos can resolve their parent album from the {@link
+ * IdempotentImportExecutor} cache. All the actual work — per-job client provisioning, album
+ * creation, download+MD5, upload, and duplicate/quota handling — lives in {@link
+ * AmazonImportHelper} and is shared with the photos and videos importers; this class only maps the
+ * MEDIA container's three item types onto those shared operations.
  */
-public class AmazonVideosImporter
-    implements Importer<TokensAndUrlAuthData, VideosContainerResource> {
+public class AmazonMediaImporter
+    implements Importer<TokensAndUrlAuthData, MediaContainerResource> {
 
   private final AmazonImportHelper importHelper;
+  private final AmazonMediaTransmogrificationConfig transmogrificationConfig =
+      new AmazonMediaTransmogrificationConfig();
   private final IdempotentImportExecutor retryingIdempotentExecutor;
   private final boolean enableRetrying;
 
-  public AmazonVideosImporter(Monitor monitor, String clientId, String clientSecret,
-                              TemporaryPerJobDataStore dataStore,
-                              IdempotentImportExecutor retryingIdempotentExecutor,
-                              boolean enableRetrying) {
+  public AmazonMediaImporter(Monitor monitor, String clientId, String clientSecret,
+                             TemporaryPerJobDataStore dataStore,
+                             IdempotentImportExecutor retryingIdempotentExecutor,
+                             boolean enableRetrying) {
     this.importHelper = new AmazonImportHelper(dataStore, clientId, clientSecret, monitor);
     this.retryingIdempotentExecutor = retryingIdempotentExecutor;
     this.enableRetrying = enableRetrying;
   }
 
-  AmazonVideosImporter(Monitor monitor, TemporaryPerJobDataStore dataStore,
-                       AmazonPhotosInterface client) {
+  AmazonMediaImporter(Monitor monitor, TemporaryPerJobDataStore dataStore,
+                      AmazonPhotosInterface client) {
     this(monitor, dataStore, client, null, false);
   }
 
-  AmazonVideosImporter(Monitor monitor, TemporaryPerJobDataStore dataStore,
-                       AmazonPhotosInterface client,
-                       IdempotentImportExecutor retryingIdempotentExecutor,
-                       boolean enableRetrying) {
+  AmazonMediaImporter(Monitor monitor, TemporaryPerJobDataStore dataStore,
+                      AmazonPhotosInterface client,
+                      IdempotentImportExecutor retryingIdempotentExecutor,
+                      boolean enableRetrying) {
     this.importHelper = new AmazonImportHelper(dataStore, client, monitor);
     this.retryingIdempotentExecutor = retryingIdempotentExecutor;
     this.enableRetrying = enableRetrying;
@@ -68,8 +74,9 @@ public class AmazonVideosImporter
   @Override
   public ImportResult importItem(UUID jobId, IdempotentImportExecutor idempotentImportExecutor,
                                  TokensAndUrlAuthData authData,
-                                 VideosContainerResource data) throws Exception {
+                                 MediaContainerResource data) throws Exception {
     AmazonPhotosInterface client = importHelper.getOrCreateClient(jobId, authData);
+    data.transmogrify(transmogrificationConfig);
 
     // Prefer the platform's retrying executor when enabled so transient failures are retried
     // (per the host-configured RetryStrategyLibrary) before being recorded and skipped.
@@ -78,10 +85,17 @@ public class AmazonVideosImporter
             ? retryingIdempotentExecutor
             : idempotentImportExecutor;
 
-    for (VideoAlbum album : data.getAlbums()) {
+    // Albums first: photos and videos resolve their parent album from the executor cache.
+    for (MediaAlbum album : data.getAlbums()) {
       executor.executeAndSwallowIOExceptions(
           album.getId(), album.getName(),
           () -> importHelper.createAlbum(client, album.getId(), album.getName()));
+    }
+
+    for (PhotoModel photo : data.getPhotos()) {
+      executor.executeAndSwallowIOExceptions(
+          photo.getIdempotentId(), photo.getTitle(),
+          () -> importHelper.uploadItem(client, jobId, UploadItemRequest.forPhoto(photo), executor));
     }
 
     for (VideoModel video : data.getVideos()) {

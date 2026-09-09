@@ -8,6 +8,7 @@ import org.datatransferproject.types.common.models.DataVertical;
 import java.util.Map;
 import java.util.Set;
 
+import static org.datatransferproject.types.common.models.DataVertical.MEDIA;
 import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
 import static org.datatransferproject.types.common.models.DataVertical.VIDEOS;
 
@@ -41,6 +42,13 @@ public class AmazonOAuthConfig implements OAuth2Config {
         VIDEOS, ImmutableSet.of(
             "amazonphotos::videos:create",
             "amazonphotos::albums:create",
+            "amazonphotos::albums:update"),
+        // MEDIA is the unified vertical (photos + videos + albums), so it needs the union of the
+        // image, video and album scopes.
+        MEDIA, ImmutableSet.of(
+            "amazonphotos::images:create",
+            "amazonphotos::videos:create",
+            "amazonphotos::albums:create",
             "amazonphotos::albums:update"));
   }
 
@@ -51,6 +59,12 @@ public class AmazonOAuthConfig implements OAuth2Config {
             "amazonphotos::images:read",
             "amazonphotos::albums:read"),
         VIDEOS, ImmutableSet.of(
+            "amazonphotos::videos:read",
+            "amazonphotos::albums:read"),
+        // MEDIA is the unified vertical (photos + videos + albums); declare the union so the auth
+        // framework can build import/export generators symmetrically with PHOTOS/VIDEOS.
+        MEDIA, ImmutableSet.of(
+            "amazonphotos::images:read",
             "amazonphotos::videos:read",
             "amazonphotos::albums:read"));
   }

@@ -20,6 +20,9 @@ import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
+import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
+import org.datatransferproject.transfer.JobMetadata;
+import org.datatransferproject.transfer.amazon.photos.model.AmazonPhotosNode;
 import org.datatransferproject.types.common.DownloadableItem;
 import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
@@ -28,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -72,8 +76,9 @@ class AmazonImportHelper {
   }
 
   /** Test helper: {@code injectedClient} is always returned by {@link #getOrCreateClient}. */
-  AmazonImportHelper(TemporaryPerJobDataStore dataStore, AmazonPhotosInterface injectedClient) {
-    this(dataStore, null, null, null, injectedClient);
+  AmazonImportHelper(TemporaryPerJobDataStore dataStore, AmazonPhotosInterface injectedClient,
+                     Monitor monitor) {
+    this(dataStore, null, null, monitor, injectedClient);
   }
 
   private AmazonImportHelper(TemporaryPerJobDataStore dataStore, String clientId,
@@ -179,5 +184,68 @@ class AmazonImportHelper {
   /** Removes temp data from the job store. */
   void cleanupTempData(UUID jobId, String fetchableUrl) throws IOException {
     dataStore.removeData(jobId, fetchableUrl);
+  }
+
+  /**
+   * Creates an album named for the source service (e.g. "Trips - Imported from Google") and
+   * returns its Amazon node id. Shared by the photos, videos and media importers, which differ
+   * only in their album model type.
+   */
+  String createAlbum(AmazonPhotosInterface client, String albumId, String albumName)
+      throws IOException {
+    String name = albumName + IMPORTED_SUFFIX + JobMetadata.getExportService();
+    AmazonPhotosNode node = client.createAlbum(name);
+    monitor.info(() -> "Created album " + albumId + " -> " + node.getId());
+    return node.getId();
+  }
+
+  /**
+   * Downloads an item to a temp file (computing MD5 in a single pass), uploads it via the client,
+   * and cleans up. Shared by the photos, videos and media importers; the per-vertical values are
+   * carried by {@link UploadItemRequest}.
+   *
+   * <p>Returns the uploaded node id, or the item's {@code dataId} when the destination reports the
+   * content already exists (duplicate — skipped as success). A storage-quota error is rethrown as
+   * the terminal {@link DestinationMemoryFullException}; any other API error propagates.
+   */
+  String uploadItem(AmazonPhotosInterface client, UUID jobId, UploadItemRequest req,
+                    IdempotentImportExecutor executor) throws Exception {
+    String targetAlbumId = resolveTargetAlbumId(req.albumId, executor);
+    MessageDigest md5 = newMd5Digest();
+    File tempFile = downloadToTempFile(jobId, req.item, req.dataId, md5);
+
+    try {
+      String md5Hex = toHexString(md5.digest());
+      long fileSize = tempFile.length();
+      String fallbackContentDate = req.uploadedTime != null
+          ? req.uploadedTime.toInstant().toString()
+          : Instant.now().toString();
+
+      AmazonPhotosNode uploadedNode = client.uploadContent(
+          req.displayName, tempFile, md5Hex, fileSize, fallbackContentDate, req.isFavorite,
+          targetAlbumId);
+      return uploadedNode.getId();
+
+    } catch (AmazonPhotosApiException e) {
+      if (isDuplicate(e)) {
+        monitor.info(() -> "Duplicate item skipped: " + req.dataId);
+        return req.dataId;
+      }
+      if (isStorageQuotaExceeded(e)) {
+        throw new DestinationMemoryFullException("Amazon Photos storage full", e);
+      }
+      throw e;
+    } finally {
+      tempFile.delete();
+      if (req.item.isInTempStore()) {
+        try {
+          cleanupTempData(jobId, req.item.getFetchableUrl());
+        } catch (IOException cleanupError) {
+          // Best-effort cleanup: don't let it mask the real upload outcome (e.g. a terminal
+          // DestinationMemoryFullException) by throwing out of the finally block.
+          monitor.info(() -> "Failed to clean up temp data for " + req.dataId, cleanupError);
+        }
+      }
+    }
   }
 }
