@@ -19,4 +19,4 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build and test in Docker
-      run: docker compose run --rm test
+      run: docker compose run --rm gradle
