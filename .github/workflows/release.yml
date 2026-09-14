@@ -30,13 +30,24 @@ jobs:
       - id: tag
         name: "Release: Publish new semver Git Tag"
         run: |
-          NEW_VERSION=$(cz bump --get-next) || exit 1
+          # Exit code 21 (NO_INCREMENT) means no commits since the last
+          # tag are eligible for a bump (e.g. only test/docs/chore), so
+          # there is nothing to release.
+          NEW_VERSION=$(cz bump --get-next) || {
+            rc=$?
+            if [ "$rc" -eq 21 ]; then
+              echo "No eligible commits to bump; skipping release."
+              exit 0
+            fi
+            exit "$rc"
+          }
           TAG="v${NEW_VERSION}"
           git tag "${TAG}" &&
             git push origin "${TAG}" --tags &&
             echo "version=${NEW_VERSION}" | tee -a "$GITHUB_OUTPUT"
   release:
     needs: bump_version
+    if: needs.bump_version.outputs.version != ''
     runs-on: ubuntu-latest
     name: "Release"
     steps:
