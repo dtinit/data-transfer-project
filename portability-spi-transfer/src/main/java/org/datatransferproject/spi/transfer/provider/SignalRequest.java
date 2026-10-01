@@ -16,10 +16,15 @@
 
 package org.datatransferproject.spi.transfer.provider;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.auto.value.AutoValue;
+import javax.annotation.Nullable;
+import org.datatransferproject.spi.transfer.types.signals.EndTelemetry;
 import org.datatransferproject.spi.transfer.types.signals.JobLifeCycle;
+import org.datatransferproject.spi.transfer.types.signals.ProgressTelemetry;
+import org.datatransferproject.spi.transfer.types.signals.StartTelemetry;
 
 @AutoValue
 @JsonDeserialize(builder = SignalRequest.Builder.class)
@@ -39,6 +44,33 @@ public abstract class SignalRequest {
   @JsonProperty("importingService")
   public abstract String importingService();
 
+  /**
+   * Telemetry for a {@link JobLifeCycle.State#STARTED} signal. Only set for handlers that return
+   * true from {@link SignalHandler#supportsTelemetry()}; omitted from the JSON when unset.
+   */
+  @Nullable
+  @JsonProperty("startTelemetry")
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public abstract StartTelemetry startTelemetry();
+
+  /**
+   * Telemetry for a {@link JobLifeCycle.State#IN_PROGRESS} signal. Only set for handlers that
+   * return true from {@link SignalHandler#supportsTelemetry()}; omitted from the JSON when unset.
+   */
+  @Nullable
+  @JsonProperty("progressTelemetry")
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public abstract ProgressTelemetry progressTelemetry();
+
+  /**
+   * Telemetry for a {@link JobLifeCycle.State#ENDED} signal. Only set for handlers that return true
+   * from {@link SignalHandler#supportsTelemetry()}; omitted from the JSON when unset.
+   */
+  @Nullable
+  @JsonProperty("endTelemetry")
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  public abstract EndTelemetry endTelemetry();
+
   public static Builder builder() {
     return new AutoValue_SignalRequest.Builder();
   }
@@ -50,6 +82,9 @@ public abstract class SignalRequest {
     public abstract Builder setJobStatus(JobLifeCycle jobStatus);
     public abstract Builder setExportingService(String exportingService);
     public abstract Builder setImportingService(String importingService);
+    public abstract Builder setStartTelemetry(@Nullable StartTelemetry startTelemetry);
+    public abstract Builder setProgressTelemetry(@Nullable ProgressTelemetry progressTelemetry);
+    public abstract Builder setEndTelemetry(@Nullable EndTelemetry endTelemetry);
 
     public abstract SignalRequest build();
   }
