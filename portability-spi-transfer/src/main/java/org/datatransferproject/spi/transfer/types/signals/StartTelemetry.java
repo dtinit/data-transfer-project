@@ -56,6 +56,14 @@ public abstract class StartTelemetry {
   /**
    * When the destination should consider the job dead if no end signal has arrived, in epoch
    * milliseconds.
+   *
+   * <p>Set by the origin service that runs the DTP worker, based on how long it allows a worker to
+   * stay alive before stopping it. For example, if the origin stops workers after 7 days, this is
+   * this signal's {@link #timestamp()} plus 7 days. A worker can't still be running after this
+   * time, so a missing end signal means the job died.
+   *
+   * <p>A job can send more than one start signal, for example when it's resumed on a new worker.
+   * Each start signal carries its own expiration, and the latest one applies.
    */
   @JsonProperty("expirationTimestamp")
   public abstract Long expirationTimestamp();
