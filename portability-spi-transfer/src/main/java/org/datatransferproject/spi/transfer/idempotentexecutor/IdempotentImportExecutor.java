@@ -18,6 +18,7 @@ package org.datatransferproject.spi.transfer.idempotentexecutor;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.OptionalLong;
 import javax.annotation.Nullable;
 import org.datatransferproject.types.common.ImportableItem;
 
@@ -57,5 +58,27 @@ public interface IdempotentImportExecutor extends CachingExecutor {
     //   4. return the result that function returned
 
     throw new UnsupportedOperationException();
+  }
+
+  /**
+   * Returns how many distinct ids this executor has run successfully, or empty if it doesn't keep
+   * this count. Used for transfer telemetry.
+   *
+   * <p>Every id run through the executor counts, so containers such as albums count too.
+   * Implementations must keep this cheap and safe to call from another thread while imports run.
+   */
+  default OptionalLong getSuccessCount() {
+    return OptionalLong.empty();
+  }
+
+  /**
+   * Returns how many ids failed and didn't later succeed, the same ids as {@link #getErrors()}.
+   * Used for transfer telemetry.
+   *
+   * <p>The default returns {@code getErrors().size()}. Override it if that's expensive or isn't
+   * safe to call from another thread while imports run.
+   */
+  default long getErrorCount() {
+    return getErrors().size();
   }
 }

@@ -31,6 +31,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.OptionalLong;
 import java.util.concurrent.Callable;
 
 /** A {@link IdempotentImportExecutor} that stores known values in memory. */
@@ -40,6 +41,10 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
   private final Map<String, ErrorDetail> recentErrors = new HashMap<>();
   private final Monitor monitor;
   private UUID jobId;
+  // Copies of knownValues.size() and errors.size() that other threads can read safely. Only the
+  // thread running imports writes them.
+  private volatile int successCount;
+  private volatile int errorCount;
 
   public InMemoryIdempotentImportExecutor(Monitor monitor) {
     this.monitor = monitor;
@@ -75,6 +80,7 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
       monitor.debug(
           () -> jobIdPrefix + format("Storing key %s in cache for %s", idempotentId, itemName));
       errors.remove(idempotentId);
+      updateCounts();
       return result;
     } catch (Exception e) {
       ErrorDetail errorDetail =
@@ -85,6 +91,7 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
               .build();
       errors.put(idempotentId, errorDetail);
       recentErrors.put(idempotentId, errorDetail);
+      updateCounts();
       monitor.severe(() -> jobIdPrefix + "Problem with importing item: " + errorDetail);
       throw e;
     }
@@ -125,5 +132,20 @@ public class InMemoryIdempotentImportExecutor implements IdempotentImportExecuto
   @Override
   public void resetRecentErrors() {
     recentErrors.clear();
+  }
+
+  @Override
+  public OptionalLong getSuccessCount() {
+    return OptionalLong.of(successCount);
+  }
+
+  @Override
+  public long getErrorCount() {
+    return errorCount;
+  }
+
+  private void updateCounts() {
+    successCount = knownValues.size();
+    errorCount = errors.size();
   }
 }
