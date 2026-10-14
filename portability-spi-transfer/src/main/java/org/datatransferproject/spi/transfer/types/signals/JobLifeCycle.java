@@ -100,6 +100,9 @@ public abstract class JobLifeCycle {
      * 0% of the Data that Exporter could export was imported into Destination.
      * Failures observed in the process of transferring the data.
      * There may or may not have any associated Failure Reason.
+     *
+     * <p>Also sent to signal handlers that opt in to telemetry when the job is marked as errored
+     * while it runs; the end telemetry's counts show what was imported before then.
      */
     ERRORED,
 
