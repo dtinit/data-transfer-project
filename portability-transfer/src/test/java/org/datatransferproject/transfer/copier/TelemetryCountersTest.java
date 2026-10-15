@@ -18,7 +18,11 @@ package org.datatransferproject.transfer.copier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
@@ -43,7 +47,7 @@ public class TelemetryCountersTest {
   @Test
   public void newCounters_startAtZero_withListedAndBytesUnreported() {
     TelemetryCounters counters =
-        new TelemetryCounters(new InMemoryIdempotentImportExecutor(monitor()));
+        new TelemetryCounters(monitor(), new InMemoryIdempotentImportExecutor(monitor()));
 
     assertNull(counters.itemsListed());
     assertEquals(0, counters.itemsFetched());
@@ -53,7 +57,7 @@ public class TelemetryCountersTest {
 
   @Test
   public void itemsListed_sumsTheCountsOfEveryExportedPage() {
-    TelemetryCounters counters = new TelemetryCounters();
+    TelemetryCounters counters = new TelemetryCounters(monitor());
 
     counters.recordExportedPage(page(ImmutableMap.of("photos", 3, "albums", 1)));
     counters.recordExportedPage(page(ImmutableMap.of("photos", 2)));
@@ -63,7 +67,7 @@ public class TelemetryCountersTest {
 
   @Test
   public void itemsListed_staysUnreported_untilAPageReportsCounts() {
-    TelemetryCounters counters = new TelemetryCounters();
+    TelemetryCounters counters = new TelemetryCounters(monitor());
 
     counters.recordExportedPage(null);
     // DataModel.getCounts() returns null unless the model reports counts.
@@ -76,7 +80,7 @@ public class TelemetryCountersTest {
 
   @Test
   public void itemsListed_ignoresNullCountValues() {
-    TelemetryCounters counters = new TelemetryCounters();
+    TelemetryCounters counters = new TelemetryCounters(monitor());
     Map<String, Integer> countsWithNull = new HashMap<>();
     countsWithNull.put("photos", null);
     countsWithNull.put("videos", 2);
@@ -87,24 +91,28 @@ public class TelemetryCountersTest {
   }
 
   @Test
-  public void recordExportedPage_neverThrows() {
-    TelemetryCounters counters = new TelemetryCounters();
+  public void recordExportedPage_neverThrows_andLogsTheFailureAtDebug() {
+    Monitor monitor = mock(Monitor.class);
+    TelemetryCounters counters = new TelemetryCounters(monitor);
+    IllegalStateException failure = new IllegalStateException("broken page");
     DataModel brokenPage =
         new DataModel() {
           @Override
           public Map<String, Integer> getCounts() {
-            throw new IllegalStateException("broken page");
+            throw failure;
           }
         };
 
     counters.recordExportedPage(brokenPage);
 
     assertNull(counters.itemsListed());
+    verify(monitor).debug(any(), same(failure));
+    verifyNoMoreInteractions(monitor);
   }
 
   @Test
   public void bytesReceived_sumsTheBytesImportersReport() {
-    TelemetryCounters counters = new TelemetryCounters();
+    TelemetryCounters counters = new TelemetryCounters(monitor());
 
     counters.recordImportedPage(ImportResult.OK.copyWithBytes(100L));
     counters.recordImportedPage(ImportResult.OK);
@@ -115,7 +123,7 @@ public class TelemetryCountersTest {
 
   @Test
   public void bytesReceived_reportsZeroBytes() {
-    TelemetryCounters counters = new TelemetryCounters();
+    TelemetryCounters counters = new TelemetryCounters(monitor());
 
     counters.recordImportedPage(ImportResult.OK.copyWithBytes(0L));
 
@@ -123,21 +131,26 @@ public class TelemetryCountersTest {
   }
 
   @Test
-  public void recordImportedPage_neverThrows() {
-    TelemetryCounters counters = new TelemetryCounters();
+  public void recordImportedPage_neverThrows_andLogsTheFailureAtDebug() {
+    Monitor monitor = mock(Monitor.class);
+    TelemetryCounters counters = new TelemetryCounters(monitor);
 
     counters.recordImportedPage(null);
+    // Null Optionals make getCounts() return null, so counting this page throws.
     counters.recordImportedPage(new ImportResult(ResultType.OK, null, null, null));
 
     assertEquals(0, counters.itemsFetched());
     assertNull(counters.bytesReceived());
+    // Only the broken page is logged: a null page is skipped quietly.
+    verify(monitor).debug(any(), any(NullPointerException.class));
+    verifyNoMoreInteractions(monitor);
   }
 
   @Test
   public void itemsFetched_sumsExecutorSuccesses_insteadOfPageCounts() throws Exception {
     InMemoryIdempotentImportExecutor executor = new InMemoryIdempotentImportExecutor(monitor());
     RetryingInMemoryIdempotentImportExecutor retryingExecutor = retryingExecutor();
-    TelemetryCounters counters = new TelemetryCounters(executor, retryingExecutor);
+    TelemetryCounters counters = new TelemetryCounters(monitor(), executor, retryingExecutor);
 
     // The page lists 4 items, but one of them fails in the retrying executor.
     succeed(executor, "album");
@@ -157,7 +170,7 @@ public class TelemetryCountersTest {
     when(countingExecutor.getSuccessCount()).thenReturn(OptionalLong.of(100));
     IdempotentImportExecutor legacyExecutor = mock(IdempotentImportExecutor.class);
     when(legacyExecutor.getSuccessCount()).thenReturn(OptionalLong.empty());
-    TelemetryCounters counters = new TelemetryCounters(countingExecutor, legacyExecutor);
+    TelemetryCounters counters = new TelemetryCounters(monitor(), countingExecutor, legacyExecutor);
 
     counters.recordImportedPage(
         ImportResult.OK.copyWithCounts(ImmutableMap.of("albums", 1, "photos", 2)));
@@ -168,7 +181,7 @@ public class TelemetryCountersTest {
 
   @Test
   public void itemsFetched_usesPageCounts_whenThereAreNoExecutors() {
-    TelemetryCounters counters = new TelemetryCounters(null, null);
+    TelemetryCounters counters = new TelemetryCounters(monitor(), null, null);
 
     counters.recordImportedPage(ImportResult.OK.copyWithCounts(ImmutableMap.of("photos", 5)));
 
@@ -183,7 +196,9 @@ public class TelemetryCountersTest {
     IdempotentImportExecutor retryingExecutor = mock(IdempotentImportExecutor.class);
     when(retryingExecutor.getErrorCount()).thenReturn(3L);
 
-    assertEquals(5, new TelemetryCounters(executor, retryingExecutor).itemsFailedToFetch());
+    TelemetryCounters counters = new TelemetryCounters(monitor(), executor, retryingExecutor);
+
+    assertEquals(5, counters.itemsFailedToFetch());
   }
 
   @Test
@@ -193,7 +208,7 @@ public class TelemetryCountersTest {
     succeed(executor, "photo-2");
     fail(executor, "photo-3");
 
-    TelemetryCounters counters = new TelemetryCounters(executor, executor);
+    TelemetryCounters counters = new TelemetryCounters(monitor(), executor, executor);
 
     assertEquals(2, counters.itemsFetched());
     assertEquals(1, counters.itemsFailedToFetch());

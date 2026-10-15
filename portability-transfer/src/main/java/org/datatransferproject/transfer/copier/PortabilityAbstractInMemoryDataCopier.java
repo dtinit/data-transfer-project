@@ -93,7 +93,7 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
     // Some importers record items in the retrying executor instead of the one passed to them, so
     // count both.
     this.telemetryCounters =
-        new TelemetryCounters(idempotentImportExecutor, retryingIdempotentImportExecutor);
+        new TelemetryCounters(monitor, idempotentImportExecutor, retryingIdempotentImportExecutor);
   }
 
   public abstract void resetCopyIterationCounter();

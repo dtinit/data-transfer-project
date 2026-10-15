@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -72,7 +73,7 @@ public class TelemetryHeartbeatTest {
   }
 
   @Test
-  public void logsAFailedRun() throws Exception {
+  public void logsAFailedRun_atDebug() throws Exception {
     Monitor monitor = mock(Monitor.class);
     IllegalStateException failure = new IllegalStateException("Test exception");
 
@@ -83,7 +84,8 @@ public class TelemetryHeartbeatTest {
             },
             INTERVAL,
             monitor)) {
-      verify(monitor, timeout(10_000).atLeastOnce()).info(any(), same(failure));
+      verify(monitor, timeout(10_000).atLeastOnce()).debug(any(), same(failure));
+      verify(monitor, never()).info(any(), same(failure));
     }
   }
 

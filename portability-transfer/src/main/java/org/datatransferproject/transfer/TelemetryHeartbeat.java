@@ -30,7 +30,8 @@ import org.datatransferproject.api.launcher.Monitor;
  *
  * <p>The task never runs on the caller's thread, so a slow or failing task can't hold up the
  * transfer. The first run starts one interval after {@link #start}, and each later run starts one
- * interval after the previous run ends. A run that throws is logged and doesn't stop later runs.
+ * interval after the previous run ends. A run that throws is logged at debug level and doesn't stop
+ * later runs.
  */
 final class TelemetryHeartbeat implements AutoCloseable {
 
@@ -47,7 +48,11 @@ final class TelemetryHeartbeat implements AutoCloseable {
     this.executor = Executors.newSingleThreadScheduledExecutor(TelemetryHeartbeat::newThread);
   }
 
-  /** Starts running {@code task} every {@code interval}, which must be at least 1 millisecond. */
+  /**
+   * Starts running {@code task} once every {@code interval}, such as every 5 minutes.
+   *
+   * @throws IllegalArgumentException if {@code interval} is shorter than 1 millisecond
+   */
   static TelemetryHeartbeat start(Runnable task, Duration interval, Monitor monitor) {
     return start(task, interval, DEFAULT_SHUTDOWN_TIMEOUT, monitor);
   }
@@ -83,8 +88,9 @@ final class TelemetryHeartbeat implements AutoCloseable {
     try {
       task.run();
     } catch (Throwable t) {
-      // Catch everything: an exception that escapes cancels all later runs.
-      monitor.info(() -> "Telemetry heartbeat run failed", t);
+      // Catch everything: an exception that escapes cancels all later runs. Logged at debug, since
+      // a run that keeps failing would log the same error every interval.
+      monitor.debug(() -> "Telemetry heartbeat run failed", t);
     }
   }
 

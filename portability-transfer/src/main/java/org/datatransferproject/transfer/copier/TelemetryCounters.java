@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Nullable;
+import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
 import org.datatransferproject.types.common.models.DataModel;
@@ -35,10 +36,12 @@ import org.datatransferproject.types.common.models.DataModel;
  * counts at any time. Counts live in memory only. They're never read from or written to the
  * {@code JobStore}, so they start at 0 with each worker run.
  *
- * <p>Recording never throws, so counting can't fail a transfer.
+ * <p>Recording never throws, so counting can't fail a transfer. A page that can't be counted is
+ * logged at debug level and skipped.
  */
 public final class TelemetryCounters {
 
+  private final Monitor monitor;
   private final ImmutableList<IdempotentImportExecutor> executors;
   private final AtomicLong itemsListed = new AtomicLong();
   private volatile boolean listedReported;
@@ -49,10 +52,12 @@ public final class TelemetryCounters {
   /**
    * Creates counters that read item results from the given executors.
    *
+   * @param monitor logs, at debug level, a page that couldn't be counted
    * @param executors every executor importers record items in. Null executors are ignored, and an
    *     executor passed twice is counted once.
    */
-  TelemetryCounters(IdempotentImportExecutor... executors) {
+  TelemetryCounters(Monitor monitor, IdempotentImportExecutor... executors) {
+    this.monitor = monitor;
     List<IdempotentImportExecutor> distinct = new ArrayList<>();
     for (IdempotentImportExecutor executor : executors) {
       // Compare by identity: both executor bindings may return the same instance.
@@ -77,6 +82,7 @@ public final class TelemetryCounters {
       }
     } catch (RuntimeException e) {
       // Counting is best effort and must never fail a transfer.
+      monitor.debug(() -> "Couldn't count an exported page for transfer telemetry", e);
     }
   }
 
@@ -97,6 +103,7 @@ public final class TelemetryCounters {
       }
     } catch (RuntimeException e) {
       // Counting is best effort and must never fail a transfer.
+      monitor.debug(() -> "Couldn't count an imported page for transfer telemetry", e);
     }
   }
 
