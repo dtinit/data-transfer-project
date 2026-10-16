@@ -107,6 +107,19 @@ Auth Extensions are located in the [extensions/auth module](https://github.com/g
 
 
 
+## Generic API OAuth and job ID handling
+
+When integrating a generic API, the transfer job ID and OAuth credentials serve different purposes:
+
+* The **job ID** identifies the Data Transfer Project transfer job. It is generated when the transfer job is created and is used to correlate the authentication flow and subsequent transfer requests.
+* The **OAuth access token** authenticates the account whose data is being transferred. It must not be treated as the job ID or as a substitute for job correlation.
+* Generic API requests include the OAuth access token as a Bearer token in the `Authorization` header and the transfer job ID in the `X-DTP-Job-Id` header.
+* OAuth credentials must correspond to the account authorized for that transfer job. If a user has multiple accounts with the same service, credentials must be kept distinct so that credentials for one account cannot be used for another account's transfer.
+* OAuth access and refresh tokens are sensitive credentials and must be transmitted and stored securely. Use HTTPS for communication involving these credentials.
+* When access tokens expire, refreshed credentials should remain associated with the same transfer job and authorized account.
+
+The generic API implementation should use the job ID only for transfer correlation and the OAuth token for authentication. These values provide separate pieces of context and should not be treated as interchangeable.
+
 ## Integrate a new Data Model
 
 * The shared model classes for supported Transfer Data Types are located in the [portability-types-common](https://github.com/google/data-transfer-project/tree/master/portability-types-common) and [portability-types-transfer](https://github.com/google/data-transfer-project/tree/master/portability-types-transfer) modules
