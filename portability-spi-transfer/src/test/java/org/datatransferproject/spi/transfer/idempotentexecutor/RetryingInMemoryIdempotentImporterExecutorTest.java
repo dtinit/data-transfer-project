@@ -7,6 +7,8 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -263,5 +265,68 @@ public class RetryingInMemoryIdempotentImporterExecutorTest {
                         }
                 )
         );
+    }
+
+    @Test
+    public void counts_successesAndErrorsNotLaterFixed() throws Exception {
+        RetryingInMemoryIdempotentImportExecutor retryingExecutor = new RetryingInMemoryIdempotentImportExecutor(
+                mock(Monitor.class),
+                new RetryStrategyLibrary(ImmutableList.of(), new SkipRetryStrategy())
+        );
+        assertThat(retryingExecutor.getSuccessCount()).isEqualTo(OptionalLong.of(0L));
+        assertThat(retryingExecutor.getErrorCount()).isEqualTo(0L);
+
+        retryingExecutor.executeAndSwallowIOExceptions("ok", "name", () -> "result");
+        // A cached id isn't run or counted again.
+        retryingExecutor.executeAndSwallowIOExceptions("ok", "name", () -> "not run");
+        retryingExecutor.executeAndSwallowIOExceptions("skipped", "name",
+                () -> { throw new IOException("Test IO exception");});
+        retryingExecutor.executeAndSwallowIOExceptions("fixed", "name",
+                () -> { throw new IOException("Test IO exception");});
+        retryingExecutor.executeAndSwallowIOExceptions("fixed", "name", () -> "result");
+
+        assertThat(retryingExecutor.getSuccessCount()).isEqualTo(OptionalLong.of(2L));
+        assertThat(retryingExecutor.getErrorCount()).isEqualTo(1L);
+        assertThat(retryingExecutor.getErrorCount())
+                .isEqualTo((long) retryingExecutor.getErrors().size());
+    }
+
+    @Test
+    public void counts_errorThatCannotBeSkipped() {
+        RetryingInMemoryIdempotentImportExecutor retryingExecutor = new RetryingInMemoryIdempotentImportExecutor(
+                mock(Monitor.class),
+                new RetryStrategyLibrary(ImmutableList.of(), new NoRetryStrategy())
+        );
+
+        assertThrows(
+                IOException.class,
+                () -> retryingExecutor.executeOrThrowException("id", "name",
+                        () -> { throw new IOException("Test IO exception");}
+                )
+        );
+
+        assertThat(retryingExecutor.getSuccessCount()).isEqualTo(OptionalLong.of(0L));
+        assertThat(retryingExecutor.getErrorCount()).isEqualTo(1L);
+    }
+
+    @Test
+    public void counts_transientFailuresFixedByTheExecutorsRetriesAsOneSuccess() throws Exception {
+        RetryingInMemoryIdempotentImportExecutor retryingExecutor = new RetryingInMemoryIdempotentImportExecutor(
+                mock(Monitor.class),
+                new RetryStrategyLibrary(ImmutableList.of(), new UniformRetryStrategy(3, 1, "test"))
+        );
+        AtomicInteger attempts = new AtomicInteger();
+
+        // Fails twice, then succeeds on the executor's third attempt.
+        retryingExecutor.executeAndSwallowIOExceptions("flaky", "name", () -> {
+            if (attempts.incrementAndGet() < 3) {
+                throw new IOException("Test IO exception");
+            }
+            return "result";
+        });
+
+        assertThat(attempts.get()).isEqualTo(3);
+        assertThat(retryingExecutor.getSuccessCount()).isEqualTo(OptionalLong.of(1L));
+        assertThat(retryingExecutor.getErrorCount()).isEqualTo(0L);
     }
 }
