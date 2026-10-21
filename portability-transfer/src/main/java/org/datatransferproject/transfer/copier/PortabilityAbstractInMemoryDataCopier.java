@@ -71,6 +71,7 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
   protected final Monitor monitor;
   protected final DtpInternalMetricRecorder metricRecorder;
   protected final JobStore jobStore;
+  private final TelemetryCounters telemetryCounters;
 
   public PortabilityAbstractInMemoryDataCopier(
       Provider<Exporter> exporterProvider,
@@ -89,6 +90,10 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
     this.retryingIdempotentImportExecutor = retryingIdempotentImportExecutor;
     this.metricRecorder = dtpInternalMetricRecorder;
     this.jobStore = jobStore;
+    // Some importers record items in the retrying executor instead of the one passed to them, so
+    // count both.
+    this.telemetryCounters =
+        new TelemetryCounters(monitor, idempotentImportExecutor, retryingIdempotentImportExecutor);
   }
 
   public abstract void resetCopyIterationCounter();
@@ -109,6 +114,11 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
     return idempotentImportExecutor.getErrors();
   }
 
+  @Override
+  public Optional<TelemetryCounters> getTelemetryCounters() {
+    return Optional.of(telemetryCounters);
+  }
+
   protected ExportResult<?> copyIteration(
       UUID jobId,
       AuthData exportAuthData,
@@ -124,6 +134,7 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
 
     DataModel exportedData = exportResult.getExportedData();
     if (exportedData != null) {
+      telemetryCounters.recordExportedPage(exportedData);
       PortabilityJob job = jobStore.findJob(jobId);
       TransferMode transferMode =
           job.transferMode() == null ? TransferMode.DATA_TRANSFER : job.transferMode();
@@ -221,6 +232,7 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
       ImportResult importResult = retryingImporter.call();
       importSuccess = importResult.getType() == ImportResult.ResultType.OK;
       if (importSuccess) {
+        telemetryCounters.recordImportedPage(importResult);
         try {
           jobStore.addCounts(jobId, importResult.getCounts().orElse(null));
           jobStore.addBytes(jobId, importResult.getBytes().orElse(null));

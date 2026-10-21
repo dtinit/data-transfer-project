@@ -35,4 +35,12 @@ public interface InMemoryDataCopier {
       throws IOException, CopyException;
 
   Collection<ErrorDetail> getErrors(UUID jobId);
+
+  /**
+   * Returns this copier's counts for the current run, for transfer telemetry, or empty if the
+   * copier doesn't keep them.
+   */
+  default Optional<TelemetryCounters> getTelemetryCounters() {
+    return Optional.empty();
+  }
 }

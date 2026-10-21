@@ -39,6 +39,13 @@ public abstract class JobLifeCycle {
         .build();
   }
 
+  /** A mid-transfer progress signal. Only sent to handlers that opt in to telemetry. */
+  public static JobLifeCycle IN_PROGRESS() {
+    return JobLifeCycle.builder()
+        .setState(JobLifeCycle.State.IN_PROGRESS)
+        .build();
+  }
+
   @AutoValue.Builder
   public abstract static class Builder {
     public abstract Builder setState(JobLifeCycle.State state);
@@ -95,6 +102,13 @@ public abstract class JobLifeCycle {
      * There may or may not have any associated Failure Reason.
      */
     ERRORED,
+
+    /**
+     * The user cancelled the Job before it completed. Only reported to signal handlers that opt in
+     * to telemetry ({@code SignalHandler#supportsTelemetry()}); other handlers keep receiving the
+     * end reasons they receive today.
+     */
+    USER_CANCELLED,
     ;
   }
 }

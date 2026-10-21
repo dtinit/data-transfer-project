@@ -27,6 +27,7 @@ import java.time.Clock;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.OptionalLong;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import org.datatransferproject.api.launcher.Monitor;
@@ -44,6 +45,10 @@ public class RetryingInMemoryIdempotentImportExecutor implements IdempotentImpor
   private final Monitor monitor;
   private UUID jobId;
   private final RetryStrategyLibrary retryStrategyLibrary;
+  // Copies of knownValues.size() and errors.size() that other threads can read safely. Only the
+  // thread running imports writes them.
+  private volatile int successCount;
+  private volatile int errorCount;
 
   public RetryingInMemoryIdempotentImportExecutor(
       Monitor monitor, RetryStrategyLibrary  retryStrategyLibrary) {
@@ -88,6 +93,7 @@ public class RetryingInMemoryIdempotentImportExecutor implements IdempotentImpor
       monitor.debug(
           () -> jobIdPrefix + format("Storing key %s in cache for %s", idempotentId, itemName));
       errors.remove(idempotentId);
+      updateCounts();
       return result;
     } catch (RetryException e) {
       ErrorDetail.Builder errorDetailBuilder = ErrorDetail.builder();
@@ -98,12 +104,14 @@ public class RetryingInMemoryIdempotentImportExecutor implements IdempotentImpor
         ErrorDetail errorDetail = errorDetailBuilder.setCanSkip(true).build();
         errors.put(idempotentId, errorDetail);
         recentErrors.put(idempotentId, errorDetail);
+        updateCounts();
         monitor.severe(() -> jobIdPrefix + "Problem with importing item, but skipping: " + errorDetail);
         return  null;
       } else {
         ErrorDetail errorDetail = errorDetailBuilder.build();
         errors.put(idempotentId, errorDetail);
         recentErrors.put(idempotentId, errorDetail);
+        updateCounts();
         monitor.severe(() -> jobIdPrefix + "Problem with importing item, cannot be skipped: " + errorDetail);
         // In RetryingCallable.call(), we wrap the exception in a RetryException.
         // We throw e.getCause() to get the original exception.
@@ -147,5 +155,20 @@ public class RetryingInMemoryIdempotentImportExecutor implements IdempotentImpor
   @Override
   public void resetRecentErrors() {
     recentErrors.clear();
+  }
+
+  @Override
+  public OptionalLong getSuccessCount() {
+    return OptionalLong.of(successCount);
+  }
+
+  @Override
+  public long getErrorCount() {
+    return errorCount;
+  }
+
+  private void updateCounts() {
+    successCount = knownValues.size();
+    errorCount = errors.size();
   }
 }

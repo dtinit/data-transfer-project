@@ -41,4 +41,16 @@ public interface SignalHandler<A extends AuthData> {
     throws CopyExceptionWithFailureReason, IOException, RetryException {
     monitor.info(() -> "Default Signaller::" + signalRequest.toString());
   }
+
+  /**
+   * Whether this handler wants transfer telemetry. Handlers that return true receive the
+   * telemetry blocks on {@link SignalRequest} ({@code startTelemetry}, {@code progressTelemetry},
+   * {@code endTelemetry}), periodic {@code IN_PROGRESS} signals, and the more detailed end
+   * reasons (e.g. {@code USER_CANCELLED}).
+   *
+   * <p>Defaults to false: the handler keeps receiving exactly the signals it receives today.
+   */
+  default boolean supportsTelemetry() {
+    return false;
+  }
 }
