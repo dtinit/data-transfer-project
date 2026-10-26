@@ -15,6 +15,7 @@
  */
 package org.datatransferproject.transfer;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
@@ -22,6 +23,7 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.launcher.monitor.events.EventCode;
 import org.datatransferproject.spi.cloud.storage.JobStore;
 import org.datatransferproject.spi.cloud.types.PortabilityJob;
+import org.datatransferproject.spi.transfer.types.signals.JobLifeCycle.EndReason;
 
 /** A service that polls storage to see if a job is canceled, if it is it kills the binary. */
 class JobCancelWatchingService extends AbstractScheduledService {
@@ -29,15 +31,28 @@ class JobCancelWatchingService extends AbstractScheduledService {
   private final Scheduler scheduler;
   private final Monitor monitor;
   private final DtpInternalMetricRecorder dtpInternalMetricRecorder;
+  private final TransferSignals signals;
+  private final Runnable exit;
 
   @Inject
   JobCancelWatchingService(
           JobStore store, @Annotations.CancelScheduler Scheduler scheduler,
-          Monitor monitor, DtpInternalMetricRecorder dtpInternalMetricRecorder) {
+          Monitor monitor, DtpInternalMetricRecorder dtpInternalMetricRecorder,
+          TransferSignals signals) {
+    this(store, scheduler, monitor, dtpInternalMetricRecorder, signals, () -> System.exit(0));
+  }
+
+  @VisibleForTesting
+  JobCancelWatchingService(
+          JobStore store, Scheduler scheduler, Monitor monitor,
+          DtpInternalMetricRecorder dtpInternalMetricRecorder, TransferSignals signals,
+          Runnable exit) {
     this.store = store;
     this.scheduler = scheduler;
     this.monitor = monitor;
     this.dtpInternalMetricRecorder = dtpInternalMetricRecorder;
+    this.signals = signals;
+    this.exit = exit;
   }
 
   @Override
@@ -59,7 +74,12 @@ class JobCancelWatchingService extends AbstractScheduledService {
             JobMetadata.getStopWatch().elapsed());
         monitor.flushLogs();
         store.abandonJob(JobMetadata.getJobId(), PortabilityJob.State.CANCELED.toString());
-        System.exit(0);
+        try {
+          // The worker exits before the job's finally block runs, so End is sent from here.
+          signals.sendEndOnCancel(EndReason.USER_CANCELLED);
+        } finally {
+          exit.run();
+        }
         break;
       case ERROR:
         monitor.severe(
@@ -68,7 +88,11 @@ class JobCancelWatchingService extends AbstractScheduledService {
         recordGeneralMetric(PortabilityJob.State.ERROR.toString());
         monitor.flushLogs();
         store.abandonJob(JobMetadata.getJobId(), PortabilityJob.State.ERROR.toString());
-        System.exit(0);
+        try {
+          signals.sendEndOnCancel(EndReason.ERRORED);
+        } finally {
+          exit.run();
+        }
         break;
       case PREEMPTED:
         monitor.info(
@@ -77,7 +101,7 @@ class JobCancelWatchingService extends AbstractScheduledService {
         recordGeneralMetric(PortabilityJob.State.PREEMPTED.toString());
         monitor.flushLogs();
         store.abandonJob(JobMetadata.getJobId(), PortabilityJob.State.PREEMPTED.toString());
-        System.exit(0);
+        exit.run();
         break;
       default:
         monitor.debug(
