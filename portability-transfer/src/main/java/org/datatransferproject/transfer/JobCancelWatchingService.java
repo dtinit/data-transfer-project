@@ -75,7 +75,8 @@ class JobCancelWatchingService extends AbstractScheduledService {
         monitor.flushLogs();
         store.abandonJob(JobMetadata.getJobId(), PortabilityJob.State.CANCELED.toString());
         try {
-          // The worker exits before the job's finally block runs, so End is sent from here.
+          // The worker exits right after this, so End is sent from here, unless the job's finally
+          // block already claimed it; then this waits for the job to send it.
           signals.sendEndOnCancel(EndReason.USER_CANCELLED);
         } finally {
           exit.run();
