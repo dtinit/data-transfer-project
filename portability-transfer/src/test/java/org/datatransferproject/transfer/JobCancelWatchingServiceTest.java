@@ -122,6 +122,16 @@ class JobCancelWatchingServiceTest {
   }
 
   @Test
+  void completedJob_sendsNothing_andKeepsRunning() {
+    // The job's own finally wrote COMPLETE and sends End itself.
+    jobIs(PortabilityJob.State.COMPLETE);
+
+    service.runOneIteration();
+
+    verifyNoInteractions(signals, exit);
+  }
+
+  @Test
   void beforeAJobIsClaimed_doesNothing() {
     JobMetadata.reset();
 

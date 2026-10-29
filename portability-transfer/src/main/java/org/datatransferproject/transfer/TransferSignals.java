@@ -29,7 +29,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.datatransferproject.api.launcher.Monitor;
@@ -83,10 +83,12 @@ final class TransferSignals {
   static final Duration MAX_HEARTBEAT_INTERVAL = Duration.ofMinutes(15);
 
   /**
-   * The longest the cancel watcher waits for End to go out before it stops the worker anyway, so a
-   * slow or stuck handler can't keep a cancelled job running. Leaves room for a handler that waits
-   * up to a minute for its End to go out, plus the heartbeat's shutdown timeout. When the job's
-   * {@code finally} overlaps with the cancel watcher, it waits the same time for that End.
+   * The longest the cancel watcher and the job's {@code finally} block wait for End to go out when
+   * they overlap, so a slow or stuck handler can't keep a cancelled or finishing job running.
+   * Leaves room for a handler that waits up to a minute for its End to go out, plus the heartbeat's
+   * shutdown timeout. When the job's {@code finally} block claimed End first, the cancel watcher's
+   * wait also covers the job's final store update and hooks, so if those and End together take
+   * longer, the handlers that opt in get no End.
    */
   static final Duration CANCEL_END_TIMEOUT = Duration.ofSeconds(90);
 
@@ -226,6 +228,23 @@ final class TransferSignals {
   }
 
   /**
+   * Claims End for the worker's {@code finally} block before the final state is written to the job
+   * store.
+   *
+   * <p>When a job finishes with errors, the worker writes {@code ERROR} to the store before calling
+   * {@link #sendEnd}. Claiming End first ensures that if the cancel watcher polls in between and
+   * sees {@code ERROR}, it waits for {@link #sendEnd} rather than sending {@link EndReason#ERRORED}
+   * or exiting early. If the {@code finally} block then fails before it gets to {@link #sendEnd},
+   * it must call {@link #sendEndOnFailure} instead.
+   */
+  void claimEnd() {
+    JobTelemetry telemetry = jobTelemetry;
+    if (telemetry != null) {
+      telemetry.endClaimer.compareAndSet(null, EndClaimer.JOB);
+    }
+  }
+
+  /**
    * Sends the End signal from the worker's {@code finally} block. Never throws.
    *
    * <p>The heartbeat stops first, so no Progress follows End. Handlers that opt in get the End
@@ -236,21 +255,21 @@ final class TransferSignals {
   void sendEnd(
       UUID jobId, AuthData exportAuthData, AuthData importAuthData, JobLifeCycle endStatus) {
     JobTelemetry telemetry = jobTelemetry;
-    jobTelemetry = null;
-    if (!signalsEnabled) {
-      monitor.info(() -> "Transfer Signal Disabled.");
-      return;
-    }
     try {
+      if (!signalsEnabled) {
+        monitor.info(() -> "Transfer Signal Disabled.");
+        return;
+      }
       SignalRequest request = request(jobId, endStatus).build();
       if (telemetry == null) {
         trySend(exportSignalHandlerProvider, request, exportAuthData);
         trySend(importSignalHandlerProvider, request, importAuthData);
         return;
       }
+      telemetry.endClaimer.compareAndSet(null, EndClaimer.JOB);
       // False if the cancel watcher already claimed End for the handlers that opt in. They then
       // get no second End, so withTelemetry stays null.
-      boolean claimed = telemetry.endClaimed.compareAndSet(false, true);
+      boolean claimed = telemetry.endClaimer.get() == EndClaimer.JOB;
       SignalRequest withTelemetry = claimed ? endRequest(telemetry, endStatus) : null;
       sendEndTo(
           telemetry.exportHandler, telemetry.exportOptedIn, request, withTelemetry, exportAuthData);
@@ -258,10 +277,46 @@ final class TransferSignals {
           telemetry.importHandler, telemetry.importOptedIn, request, withTelemetry, importAuthData);
       if (!claimed) {
         // The worker exits when this job ends, so let the cancel watcher finish sending End.
-        awaitCancelEnd(telemetry);
+        awaitEnd(telemetry.cancelEndSent, "End for the cancelled job");
       }
     } catch (RuntimeException e) {
       monitor.info(() -> "Errored while sending transfer signals.", e);
+    } finally {
+      if (telemetry != null) {
+        telemetry.jobEndSent.countDown();
+      }
+      jobTelemetry = null;
+    }
+  }
+
+  /**
+   * Sends End to the handlers that opt in when the worker's {@code finally} block fails after
+   * {@link #claimEnd} and before {@link #sendEnd}, since the cancel watcher won't send the End the
+   * job claimed. Other handlers get nothing, as when the {@code finally} block failed before
+   * telemetry. Does nothing if the job sends no telemetry. Never throws.
+   *
+   * <p>If the cancel watcher claimed End first, this sends nothing, and waits, as {@link #sendEnd}
+   * does, for the cancel watcher's End to go out.
+   *
+   * @param endStatus the job's end state
+   */
+  void sendEndOnFailure(JobLifeCycle endStatus) {
+    JobTelemetry telemetry = jobTelemetry;
+    if (telemetry == null) {
+      return;
+    }
+    try {
+      telemetry.endClaimer.compareAndSet(null, EndClaimer.JOB);
+      if (telemetry.endClaimer.get() == EndClaimer.JOB) {
+        sendToOptedIn(telemetry, endRequest(telemetry, endStatus));
+      } else {
+        awaitEnd(telemetry.cancelEndSent, "End for the cancelled job");
+      }
+    } catch (RuntimeException e) {
+      monitor.info(() -> "Errored while sending transfer signals.", e);
+    } finally {
+      telemetry.jobEndSent.countDown();
+      jobTelemetry = null;
     }
   }
 
@@ -271,22 +326,32 @@ final class TransferSignals {
    * End. Never throws.
    *
    * <p>End goes out on its own daemon thread, and this waits for it for at most {@link
-   * #CANCEL_END_TIMEOUT}. So a slow or stuck handler can delay a cancel, but can't stop it.
+   * #CANCEL_END_TIMEOUT}. If the job's {@code finally} claimed End first, this instead waits up to
+   * the same timeout for the job to send it. So a slow or stuck handler can delay a cancel, but
+   * can't stop it.
    *
    * @param endReason {@link EndReason#USER_CANCELLED} for a cancelled job, or {@link
    *     EndReason#ERRORED} for a job marked as errored
    */
   void sendEndOnCancel(EndReason endReason) {
     JobTelemetry telemetry = jobTelemetry;
-    if (telemetry == null || !telemetry.endClaimed.compareAndSet(false, true)) {
+    if (telemetry == null) {
       return;
     }
     try {
+      if (!telemetry.endClaimer.compareAndSet(null, EndClaimer.CANCEL_WATCHER)) {
+        if (telemetry.endClaimer.get() == EndClaimer.JOB) {
+          // The job's finally claimed End first; wait for it so System.exit doesn't cut it off.
+          awaitEnd(telemetry.jobEndSent, "End for the finishing job");
+          monitor.flushLogs();
+        }
+        return;
+      }
       Thread sender =
           new Thread(() -> sendCancelEnd(telemetry, endReason), CANCEL_END_THREAD_NAME);
       sender.setDaemon(true);
       sender.start();
-      awaitCancelEnd(telemetry);
+      awaitEnd(telemetry.cancelEndSent, "End for the cancelled job");
       monitor.flushLogs();
     } catch (Throwable t) {
       // Catch everything: the worker is about to stop, so give up on End rather than block the
@@ -310,11 +375,11 @@ final class TransferSignals {
     }
   }
 
-  /** Waits, for a bounded time, until the cancel path's End has gone out. */
-  private void awaitCancelEnd(JobTelemetry telemetry) {
+  /** Waits, for a bounded time, until {@code endSent} counts down. */
+  private void awaitEnd(CountDownLatch endSent, String what) {
     try {
-      if (!telemetry.cancelEndSent.await(cancelEndTimeout.toMillis(), MILLISECONDS)) {
-        monitor.info(() -> "End for the cancelled job didn't go out within " + cancelEndTimeout);
+      if (!endSent.await(cancelEndTimeout.toMillis(), MILLISECONDS)) {
+        monitor.info(() -> what + " didn't go out within " + cancelEndTimeout);
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -396,7 +461,7 @@ final class TransferSignals {
    * is logged at debug level, since one that keeps failing would log the same error every interval.
    */
   private void sendProgress(JobTelemetry telemetry) {
-    if (telemetry.endClaimed.get()) {
+    if (telemetry.endClaimer.get() != null) {
       return;
     }
     TelemetryCounters counters = telemetry.counters;
@@ -513,6 +578,12 @@ final class TransferSignals {
         .setImportingService(JobMetadata.getImportService());
   }
 
+  /** Which path claimed End for the handlers that opt in. */
+  private enum EndClaimer {
+    JOB,
+    CANCEL_WATCHER
+  }
+
   /** A job's telemetry state, from its Start to its End. */
   private static final class JobTelemetry {
     private final String jobId;
@@ -527,8 +598,10 @@ final class TransferSignals {
     private final boolean importOptedIn;
     private final TelemetryCounters counters;
     private final StartTelemetry startTelemetry;
-    /** Set by whichever sends End first: the worker's {@code finally} or the cancel watcher. */
-    private final AtomicBoolean endClaimed = new AtomicBoolean();
+    /** Set by whichever claims End first: the worker's {@code finally} or the cancel watcher. */
+    private final AtomicReference<EndClaimer> endClaimer = new AtomicReference<>();
+    /** Counted down once the worker's {@code finally} has sent End, or failed. */
+    private final CountDownLatch jobEndSent = new CountDownLatch(1);
     /** Counted down once the cancel path's End has gone out, or failed. */
     private final CountDownLatch cancelEndSent = new CountDownLatch(1);
     @Nullable private volatile TelemetryHeartbeat heartbeat;
