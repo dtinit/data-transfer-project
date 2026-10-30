@@ -305,6 +305,58 @@ public class MicrosoftMediaExporterTest {
         .containsExactly(FOLDER_ID);
   }
 
+  @Test
+  public void exportMediaWithSha1() throws IOException {
+    String photoSha1 = "0123456789ABCDEF0123456789ABCDEF01234567";
+    String videoSha1 = "fedcba9876543210fedcba9876543210fedcba98";
+
+    MicrosoftDriveItem photoItem = setUpSinglePhoto(PHOTO_FILENAME, PHOTO_URI, PHOTO_ID);
+    photoItem.file.hashes = new MicrosoftFileMetadata.MicrosoftFileHashes();
+    photoItem.file.hashes.sha1Hash = photoSha1;
+
+    MicrosoftDriveItem videoItem = setUpSingleVideo(VIDEO_FILENAME, VIDEO_URI, VIDEO_ID);
+    videoItem.file.hashes = new MicrosoftFileMetadata.MicrosoftFileHashes();
+    videoItem.file.hashes.sha1Hash = videoSha1;
+
+    when(driveItemsResponse.getDriveItems())
+        .thenReturn(new MicrosoftDriveItem[] {photoItem, videoItem});
+    when(driveItemsResponse.getNextPageLink()).thenReturn(null);
+
+    ExportResult<MediaContainerResource> result =
+        microsoftMediaExporter.exportOneDrivePhotos(
+            null, Optional.of(new IdOnlyContainerResource(FOLDER_ID)), Optional.empty(), uuid);
+
+    PhotoModel exportedPhoto = result.getExportedData().getPhotos().iterator().next();
+    assertThat(exportedPhoto.getSha1()).isEqualTo(photoSha1);
+    assertThat(exportedPhoto.getUploadedTime()).isNull();
+
+    VideoModel exportedVideo = result.getExportedData().getVideos().iterator().next();
+    assertThat(exportedVideo.getSha1()).isEqualTo(videoSha1);
+    assertThat(exportedVideo.getUploadedTime()).isNull();
+  }
+
+  @Test
+  public void exportMediaWithInvalidSha1LeavesSha1Unset() throws IOException {
+    MicrosoftDriveItem photoItem = setUpSinglePhoto(PHOTO_FILENAME, PHOTO_URI, PHOTO_ID);
+    photoItem.file.hashes = new MicrosoftFileMetadata.MicrosoftFileHashes();
+    photoItem.file.hashes.sha1Hash = "0123456789abcdef"; // Too short.
+
+    MicrosoftDriveItem videoItem = setUpSingleVideo(VIDEO_FILENAME, VIDEO_URI, VIDEO_ID);
+    videoItem.file.hashes = new MicrosoftFileMetadata.MicrosoftFileHashes();
+    videoItem.file.hashes.sha1Hash = "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"; // Not hex.
+
+    when(driveItemsResponse.getDriveItems())
+        .thenReturn(new MicrosoftDriveItem[] {photoItem, videoItem});
+    when(driveItemsResponse.getNextPageLink()).thenReturn(null);
+
+    ExportResult<MediaContainerResource> result =
+        microsoftMediaExporter.exportOneDrivePhotos(
+            null, Optional.of(new IdOnlyContainerResource(FOLDER_ID)), Optional.empty(), uuid);
+
+    assertThat(result.getExportedData().getPhotos().iterator().next().getSha1()).isNull();
+    assertThat(result.getExportedData().getVideos().iterator().next().getSha1()).isNull();
+  }
+
   /** Sets up a response with a single album, containing photos and/or videos. */
   private MicrosoftDriveItem setUpSingleAlbum() {
     MicrosoftDriveItem albumEntry = new MicrosoftDriveItem();
