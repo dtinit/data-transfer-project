@@ -167,8 +167,16 @@ class JobProcessor {
       monitor.debug(
           () -> format("Finished processing jobId: %s with %d error(s).", jobId, numErrors),
           EventCode.WORKER_JOB_FINISHED);
-      addErrorsAndMarkJobFinished(jobId, success, loggedErrors);
-      hooks.jobFinished(jobId, success);
+      signals.claimEnd();
+      try {
+        addErrorsAndMarkJobFinished(jobId, success, loggedErrors);
+        hooks.jobFinished(jobId, success);
+      } catch (RuntimeException | Error e) {
+        // The cancel watcher won't send the End claimed above, so the handlers that opt in get it
+        // here. The others get nothing, as before.
+        signals.sendEndOnFailure(deriveFinalJobStatus(success));
+        throw e;
+      }
       signals.sendEnd(jobId, exportAuthData, importAuthData, deriveFinalJobStatus(success));
       dtpInternalMetricRecorder.finishedJob(
           JobMetadata.getDataType(),

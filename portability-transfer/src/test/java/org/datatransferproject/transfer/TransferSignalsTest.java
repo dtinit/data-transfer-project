@@ -574,6 +574,294 @@ class TransferSignalsTest {
   }
 
   @Test
+  void cancelWhileFinallySendsEnd_waitsForItToFinish() throws Exception {
+    when(importHandler.supportsTelemetry()).thenReturn(true);
+    CountDownLatch jobEndStarted = new CountDownLatch(1);
+    CountDownLatch releaseJobEnd = new CountDownLatch(1);
+    doAnswer(
+            invocation -> {
+              jobEndStarted.countDown();
+              releaseJobEnd.await(10, TimeUnit.SECONDS);
+              return null;
+            })
+        .when(importHandler)
+        .sendSignal(withState(State.ENDED), any(), any());
+    TransferSignals signals = telemetrySignals();
+    signals.sendStart(jobId, exportAuthData, importAuthData, withCounters);
+    CompletableFuture<Void> finallyBlock =
+        CompletableFuture.runAsync(
+            () -> signals.sendEnd(jobId, exportAuthData, importAuthData, COMPLETED));
+    assertTrue(jobEndStarted.await(10, TimeUnit.SECONDS));
+
+    CompletableFuture<Void> cancel =
+        CompletableFuture.runAsync(() -> signals.sendEndOnCancel(EndReason.USER_CANCELLED));
+    Thread.sleep(100);
+    assertFalse(cancel.isDone());
+    releaseJobEnd.countDown();
+
+    finallyBlock.get(10, TimeUnit.SECONDS);
+    cancel.get(10, TimeUnit.SECONDS);
+    assertEquals(1, endsSentTo(importHandler, importAuthData));
+    assertEquals(COMPLETED, requestsTo(importHandler, importAuthData).get(1).jobStatus());
+    verify(monitor).flushLogs();
+  }
+
+  @Test
+  void claimEndBeforeWatcherPolls_watcherWaitsForSendEnd_andJobSendsPartiallyCompleted()
+      throws Exception {
+    when(importHandler.supportsTelemetry()).thenReturn(true);
+    JobLifeCycle partial = ended(EndReason.PARTIALLY_COMPLETED);
+    TransferSignals signals = telemetrySignals();
+    signals.sendStart(jobId, exportAuthData, importAuthData, withCounters);
+
+    // The job's finally claims End before writing ERROR to JobStore.
+    signals.claimEnd();
+    // The cancel watcher polls ERROR before sendEnd starts, loses the claim, and waits.
+    CompletableFuture<Void> watcher =
+        CompletableFuture.runAsync(() -> signals.sendEndOnCancel(EndReason.ERRORED));
+    Thread.sleep(100);
+    assertFalse(watcher.isDone());
+
+    signals.sendEnd(jobId, exportAuthData, importAuthData, partial);
+    // Well under CANCEL_WAIT, so this fails if the job's End doesn't wake the cancel watcher.
+    watcher.get(5, TimeUnit.SECONDS);
+
+    assertEquals(1, endsSentTo(importHandler, importAuthData));
+    assertEquals(partial, requestsTo(importHandler, importAuthData).get(1).jobStatus());
+  }
+
+  @Test
+  void cancelWhileFinallyIsStuckInEnd_onlyDelaysTheCancel() throws Exception {
+    when(importHandler.supportsTelemetry()).thenReturn(true);
+    CountDownLatch jobEndStarted = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+    doAnswer(
+            invocation -> {
+              jobEndStarted.countDown();
+              release.await(30, TimeUnit.SECONDS);
+              return null;
+            })
+        .when(importHandler)
+        .sendSignal(withState(State.ENDED), any(), any());
+    TransferSignals signals =
+        new TransferSignals(
+            () -> exportHandler,
+            () -> importHandler,
+            true,
+            true,
+            NO_PROGRESS,
+            Optional.of(LIFETIME),
+            Duration.ofMillis(200),
+            monitor,
+            CLOCK);
+    signals.sendStart(jobId, exportAuthData, importAuthData, withCounters);
+
+    try {
+      CompletableFuture<Void> finallyBlock =
+          CompletableFuture.runAsync(
+              () -> signals.sendEnd(jobId, exportAuthData, importAuthData, COMPLETED));
+      assertTrue(jobEndStarted.await(10, TimeUnit.SECONDS));
+
+      Stopwatch stopwatch = Stopwatch.createStarted();
+      signals.sendEndOnCancel(EndReason.USER_CANCELLED);
+
+      // It waited for the job's End, then gave up while the handler is still stuck.
+      assertTrue(stopwatch.elapsed().compareTo(Duration.ofMillis(200)) >= 0);
+      assertTrue(stopwatch.elapsed().compareTo(Duration.ofSeconds(10)) < 0);
+      assertFalse(finallyBlock.isDone());
+    } finally {
+      release.countDown();
+    }
+  }
+
+  @Test
+  void cancelThenClaimEnd_optedInHandlerGetsOnlyTheCancelEnd() throws Exception {
+    when(importHandler.supportsTelemetry()).thenReturn(true);
+    TransferSignals signals = telemetrySignals();
+    signals.sendStart(jobId, exportAuthData, importAuthData, withCounters);
+
+    signals.sendEndOnCancel(EndReason.USER_CANCELLED);
+    // The job's finally runs after the cancel watcher claimed End.
+    signals.claimEnd();
+    signals.sendEnd(jobId, exportAuthData, importAuthData, COMPLETED);
+
+    assertEquals(1, endsSentTo(importHandler, importAuthData));
+    assertEquals(
+        ended(EndReason.USER_CANCELLED),
+        requestsTo(importHandler, importAuthData).get(1).jobStatus());
+    assertEquals(
+        List.of(todaysRequest(JobLifeCycle.JOB_STARTED()), todaysRequest(COMPLETED)),
+        requestsTo(exportHandler, exportAuthData));
+  }
+
+  @Test
+  void claimEndThenTheJobIsSlowToSendEnd_cancelWaitsOnlyTheTimeout_andSendsNoEndOfItsOwn()
+      throws Exception {
+    when(importHandler.supportsTelemetry()).thenReturn(true);
+    Duration cancelWait = Duration.ofMillis(200);
+    TransferSignals signals = telemetrySignals(cancelWait);
+    signals.sendStart(jobId, exportAuthData, importAuthData, withCounters);
+    // The job's finally claims End, then is slow to write the final state or run its hooks.
+    signals.claimEnd();
+
+    Stopwatch stopwatch = Stopwatch.createStarted();
+    signals.sendEndOnCancel(EndReason.USER_CANCELLED);
+
+    assertTrue(stopwatch.elapsed().compareTo(cancelWait) >= 0);
+    assertEquals(0, endsSentTo(importHandler, importAuthData));
+    // If the worker is still running, the job's End still goes out, once.
+    signals.sendEnd(jobId, exportAuthData, importAuthData, COMPLETED);
+    assertEquals(1, endsSentTo(importHandler, importAuthData));
+    assertEquals(COMPLETED, requestsTo(importHandler, importAuthData).get(1).jobStatus());
+  }
+
+  @Test
+  void claimEnd_noProgressFollows() throws Exception {
+    when(importHandler.supportsTelemetry()).thenReturn(true);
+    CountDownLatch progressSending = new CountDownLatch(1);
+    CountDownLatch endClaimed = new CountDownLatch(1);
+    doAnswer(
+            invocation -> {
+              progressSending.countDown();
+              endClaimed.await(10, TimeUnit.SECONDS);
+              return null;
+            })
+        .when(importHandler)
+        .sendSignal(withState(State.IN_PROGRESS), any(), any());
+    TransferSignals signals = signals(true, Optional.of(LIFETIME), Duration.ofMillis(10));
+    signals.sendStart(jobId, exportAuthData, importAuthData, withCounters);
+    assertTrue(progressSending.await(10, TimeUnit.SECONDS));
+
+    // The job's finally claims End while a Progress is going out.
+    signals.claimEnd();
+    endClaimed.countDown();
+    Thread.sleep(200);
+
+    verify(importHandler, times(1)).sendSignal(withState(State.IN_PROGRESS), any(), any());
+    signals.sendEnd(jobId, exportAuthData, importAuthData, COMPLETED);
+    assertEquals(COMPLETED, requestsTo(importHandler, importAuthData).get(2).jobStatus());
+  }
+
+  @Test
+  void cancelWaitingForTheJobsEnd_isInterrupted_returnsAtOnce_andKeepsTheInterrupt()
+      throws Exception {
+    when(importHandler.supportsTelemetry()).thenReturn(true);
+    TransferSignals signals = telemetrySignals();
+    signals.sendStart(jobId, exportAuthData, importAuthData, withCounters);
+    signals.claimEnd();
+
+    Stopwatch stopwatch = Stopwatch.createStarted();
+    boolean stillInterrupted;
+    Thread.currentThread().interrupt();
+    try {
+      signals.sendEndOnCancel(EndReason.USER_CANCELLED);
+    } finally {
+      // Also clears the interrupt, so it can't leak into other tests.
+      stillInterrupted = Thread.interrupted();
+    }
+
+    assertTrue(stillInterrupted);
+    assertTrue(stopwatch.elapsed().compareTo(CANCEL_WAIT) < 0);
+    assertEquals(0, endsSentTo(importHandler, importAuthData));
+    signals.sendEnd(jobId, exportAuthData, importAuthData, COMPLETED);
+  }
+
+  @Test
+  void cancelWaitingForTheJobsEnd_neverThrows() throws Exception {
+    when(importHandler.supportsTelemetry()).thenReturn(true);
+    IllegalStateException failure = new IllegalStateException("broken monitor");
+    doThrow(failure).when(monitor).flushLogs();
+    TransferSignals signals = telemetrySignals(Duration.ofMillis(1));
+    signals.sendStart(jobId, exportAuthData, importAuthData, withCounters);
+    signals.claimEnd();
+
+    signals.sendEndOnCancel(EndReason.USER_CANCELLED);
+
+    verify(monitor).info(any(), same(failure));
+    signals.sendEnd(jobId, exportAuthData, importAuthData, COMPLETED);
+  }
+
+  @Test
+  void endOnFailure_optedInHandlerGetsTheClaimedEnd_otherHandlerGetsNothing() throws Exception {
+    when(importHandler.supportsTelemetry()).thenReturn(true);
+    JobLifeCycle partial = ended(EndReason.PARTIALLY_COMPLETED);
+    TransferSignals signals = telemetrySignals();
+    signals.sendStart(jobId, exportAuthData, importAuthData, withCounters);
+    signals.claimEnd();
+    // The cancel watcher polls the job's own ERROR, loses the claim, and waits for the job's End.
+    CompletableFuture<Void> watcher =
+        CompletableFuture.runAsync(() -> signals.sendEndOnCancel(EndReason.ERRORED));
+    Thread.sleep(100);
+    assertFalse(watcher.isDone());
+
+    // Then the job's finally fails before it gets to sendEnd.
+    signals.sendEndOnFailure(partial);
+    // Well under CANCEL_WAIT, so this fails if the job's End doesn't wake the cancel watcher.
+    watcher.get(5, TimeUnit.SECONDS);
+
+    assertEquals(1, endsSentTo(importHandler, importAuthData));
+    SignalRequest end = requestsTo(importHandler, importAuthData).get(1);
+    assertEquals(partial, end.jobStatus());
+    assertNotNull(end.endTelemetry());
+    assertEquals(
+        List.of(todaysRequest(JobLifeCycle.JOB_STARTED())),
+        requestsTo(exportHandler, exportAuthData));
+  }
+
+  @Test
+  void endOnFailure_whileTheCancelWatcherSendsEnd_sendsNoSecondEnd_andWaitsForIt()
+      throws Exception {
+    when(importHandler.supportsTelemetry()).thenReturn(true);
+    CountDownLatch cancelEndStarted = new CountDownLatch(1);
+    CountDownLatch releaseCancelEnd = new CountDownLatch(1);
+    doAnswer(
+            invocation -> {
+              cancelEndStarted.countDown();
+              releaseCancelEnd.await(10, TimeUnit.SECONDS);
+              return null;
+            })
+        .when(importHandler)
+        .sendSignal(withState(State.ENDED), any(), any());
+    TransferSignals signals = telemetrySignals();
+    signals.sendStart(jobId, exportAuthData, importAuthData, withCounters);
+    CompletableFuture<Void> cancel =
+        CompletableFuture.runAsync(() -> signals.sendEndOnCancel(EndReason.USER_CANCELLED));
+    assertTrue(cancelEndStarted.await(10, TimeUnit.SECONDS));
+
+    CompletableFuture<Void> failedFinally =
+        CompletableFuture.runAsync(
+            () -> {
+              signals.claimEnd();
+              signals.sendEndOnFailure(ended(EndReason.PARTIALLY_COMPLETED));
+            });
+    Thread.sleep(100);
+    assertFalse(failedFinally.isDone());
+    releaseCancelEnd.countDown();
+
+    failedFinally.get(10, TimeUnit.SECONDS);
+    cancel.get(10, TimeUnit.SECONDS);
+    assertEquals(1, endsSentTo(importHandler, importAuthData));
+    assertEquals(
+        ended(EndReason.USER_CANCELLED),
+        requestsTo(importHandler, importAuthData).get(1).jobStatus());
+    assertEquals(
+        List.of(todaysRequest(JobLifeCycle.JOB_STARTED())),
+        requestsTo(exportHandler, exportAuthData));
+  }
+
+  @Test
+  void endOnFailure_withoutTelemetry_sendsNothing() throws Exception {
+    TransferSignals signals = signals(false, Optional.of(LIFETIME), NO_PROGRESS);
+    signals.sendStart(jobId, exportAuthData, importAuthData, withCounters);
+
+    signals.claimEnd();
+    signals.sendEndOnFailure(COMPLETED);
+
+    assertEquals(0, endsSentTo(exportHandler, exportAuthData));
+    assertEquals(0, endsSentTo(importHandler, importAuthData));
+  }
+
+  @Test
   void cancel_stuckHandler_onlyDelaysTheCancel_andTheJobsEnd() throws Exception {
     when(importHandler.supportsTelemetry()).thenReturn(true);
     CountDownLatch release = new CountDownLatch(1);
@@ -688,6 +976,19 @@ class TransferSignalsTest {
 
   private TransferSignals telemetrySignals() {
     return signals(true, Optional.of(LIFETIME), NO_PROGRESS);
+  }
+
+  private TransferSignals telemetrySignals(Duration cancelWait) {
+    return new TransferSignals(
+        () -> exportHandler,
+        () -> importHandler,
+        true,
+        true,
+        NO_PROGRESS,
+        Optional.of(LIFETIME),
+        cancelWait,
+        monitor,
+        CLOCK);
   }
 
   private TransferSignals signals(
