@@ -26,4 +26,13 @@ public class MicrosoftFileMetadata {
 
   @JsonProperty("mimeType")
   public String mimeType;
+
+  @JsonProperty("hashes")
+  public MicrosoftFileHashes hashes;
+
+  /** Hashes resource type in Microsoft Graph API. */
+  public static class MicrosoftFileHashes {
+    @JsonProperty("sha1Hash")
+    public String sha1Hash;
+  }
 }
