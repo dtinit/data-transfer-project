@@ -12,20 +12,20 @@ No provider credentials, no local JDK, no local Python. About 35 seconds with a
 warm Gradle cache. Each adapter's server log lands in
 `e2e/.logs/dtp-<adapter>.log` afterwards, whether the run passed or failed.
 
-**Each adapter gets its own freshly started `dtp` container.** `LocalJobStore`
-keeps jobs in `private static` maps and `LocalTempFileStore` keeps files on
-disk, and nothing clears either between jobs, so a shared server would make
-isolation a matter of luck and ordering. `dtp` is therefore in one compose
-profile per adapter, and `run.sh` starts and tears it down around each suite.
-Every adapter runs even if an earlier one fails, and the exit code reflects all
-of them.
+**One dtp per adapter.** `run.sh` starts a fresh `dtp` for each adapter's
+suite and tears it down after, which costs about 17 seconds per adapter. Job
+data itself is already keyed by job id, so this isn't about the stores. It is
+about how the driver observes DTP: through one server log shared by every job,
+and a single worker that a job left behind by a failed suite could hold. Every
+adapter runs even if an earlier one fails, and the exit code reflects all of
+them.
 
 This is also the shortest path to watching DTP do something real:
 
 ```bash
 docker compose run --rm gradle --no-daemon \
   :distributions:demo-server:shadowJar -PofflineData=true -PencryptionScheme=cleartext
-docker compose --profile offline-demo up dtp   # API on https://localhost:8080 (self-signed)
+docker compose up dtp          # API on https://localhost:8080 (self-signed)
 ```
 
 ## How it fits together
@@ -106,14 +106,13 @@ service and a directory of JSON, not a driver change:
 
 1. Add a **WireMock standalone** service to `docker-compose.yml` with the
    adapter's endpoints as `mappings/` (and `__files/` for any binary payloads).
-   No code — WireMock is configured entirely by JSON. Put it, and `dtp`, in a
-   compose profile named after the adapter.
+   No code — WireMock is configured entirely by JSON.
 2. Make the adapter's base URL configurable. Most are a single
    `private static final` constant, e.g. `ImgurTransferExtension.BASE_URL`;
    they should read from `TransferServiceConfig`, defaulting to today's value.
-3. Add a test module beside `test_offline_demo.py` with that adapter's ids and
-   fixtures, marked `@pytest.mark.<adapter>` (registered in `pytest.ini`), and
-   one line in `run.sh`'s `MOCKS` table and `ALL_ADAPTERS`.
+3. Add `e2e/driver/test_<adapter>.py` with that adapter's ids and fixtures —
+   `run.sh` picks up every `test_*.py` as an adapter — and list its mock service
+   in `run.sh`'s `mocks_for`.
 
 For the import side, WireMock's `/__admin/requests` admin API returns every
 request it received with bodies intact — that is the assertion surface for

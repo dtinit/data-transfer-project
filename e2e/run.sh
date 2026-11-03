@@ -6,55 +6,52 @@
 #   ./e2e/run.sh                  # every adapter
 #   ./e2e/run.sh offline-demo     # just the ones named
 #
-# Each adapter gets its own freshly started `dtp` container. That is not
-# tidiness: LocalJobStore keeps jobs in private static maps and LocalTempFileStore
-# keeps files on disk, and nothing clears either between jobs, so a shared
-# server would make isolation a matter of luck and ordering. A cold JVM per
-# adapter costs a few seconds and removes the question.
-#
-# Server logs land in e2e/.logs/dtp-<adapter>.log afterwards, whether the run
-# passed or failed.
+# An adapter is a suite at e2e/driver/test_<adapter>.py (hyphens become
+# underscores). Each gets a fresh dtp -- see "One dtp per adapter" in
+# e2e/README.md. Server logs land in e2e/.logs/dtp-<adapter>.log afterwards,
+# whether the run passed or failed.
 set -uo pipefail    # deliberately not -e: every adapter runs, then we report
 
-cd "$(dirname "${BASH_SOURCE[0]}")/.."
+cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 1
 
 LOG_DIR="e2e/.logs"
 
-# Services to start alongside `dtp`, per adapter -- typically its mock provider.
-# Adding an adapter is one line here; the driver itself stays free of provider
-# names.
-declare -A MOCKS=( [offline-demo]="" )
+# Services an adapter needs beside dtp, typically its mock provider. None yet.
+mocks_for() { :; }
 
-ALL_ADAPTERS=(offline-demo)
+suite_for() { echo "e2e/driver/test_${1//-/_}.py"; }
+
 ADAPTERS=("$@")
-[[ ${#ADAPTERS[@]} -eq 0 ]] && ADAPTERS=("${ALL_ADAPTERS[@]}")
+if [[ ${#ADAPTERS[@]} -eq 0 ]]; then
+  for suite in e2e/driver/test_*.py; do
+    name=${suite#e2e/driver/test_}
+    name=${name%.py}
+    ADAPTERS+=("${name//_/-}")
+  done
+fi
 
 for adapter in "${ADAPTERS[@]}"; do
-  if [[ -z ${MOCKS[$adapter]+set} ]]; then
-    echo "Unknown adapter '$adapter'. Known: ${ALL_ADAPTERS[*]}" >&2
+  if [[ ! -f $(suite_for "$adapter") ]]; then
+    echo "Unknown adapter '$adapter': no $(suite_for "$adapter")" >&2
     exit 2
   fi
 done
 
 teardown() {
   # No -v: that would also delete gradle-cache and make every run a cold build.
-  docker compose --profile "$1" down --remove-orphans >/dev/null 2>&1 || true
+  docker compose down --remove-orphans >/dev/null 2>&1 || true
 }
 
-# Capture before teardown, and on the host so the log ends up owned by you
-# rather than by root. `dtp` tees to a fixed path on a shared volume and
-# truncates on restart, so there is no second chance once the next adapter starts.
+# On the host, so the file ends up owned by you rather than by root. dtp
+# truncates its log on restart, so this has to happen before the next adapter.
 capture() {
-  local adapter=$1
   mkdir -p "$LOG_DIR"
   docker compose logs --no-color --no-log-prefix dtp \
-    > "$LOG_DIR/dtp-$adapter.log" 2>/dev/null || true
+    > "$LOG_DIR/dtp-$1.log" 2>/dev/null || true
 }
 
-cleanup_all() { for a in "${ADAPTERS[@]}"; do teardown "$a"; done; }
-trap cleanup_all EXIT
-
-cleanup_all
+trap teardown EXIT
+teardown
 
 # Built through the `gradle` service, whose ENTRYPOINT is already ./gradlew, so
 # these arguments pass straight through. That single-sources the pinned Gradle
@@ -73,18 +70,15 @@ failed=()
 for adapter in "${ADAPTERS[@]}"; do
   echo
   echo "==> $adapter"
-  teardown "$adapter"
-  # shellcheck disable=SC2086 # MOCKS entries are deliberately word-split
-  docker compose --profile "$adapter" up -d dtp ${MOCKS[$adapter]} >/dev/null || {
-    failed+=("$adapter"); continue
-  }
-
-  # Marker names use underscores: `-m offline-demo` would parse as the
-  # expression `offline and (not demo)`.
-  E2E_MARKER="${adapter//-/_}" docker compose run --rm e2e || failed+=("$adapter")
-
+  # shellcheck disable=SC2046 # mocks_for's output is deliberately word-split
+  if docker compose up -d dtp $(mocks_for "$adapter") >/dev/null; then
+    E2E_TESTS=$(suite_for "$adapter") docker compose run --rm e2e \
+      || failed+=("$adapter")
+  else
+    failed+=("$adapter")
+  fi
   capture "$adapter"
-  teardown "$adapter"
+  teardown
 done
 
 echo
