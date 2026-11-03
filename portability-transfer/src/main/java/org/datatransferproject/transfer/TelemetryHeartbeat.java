@@ -23,6 +23,7 @@ import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import org.datatransferproject.api.launcher.Monitor;
 
 /**
@@ -63,8 +64,10 @@ final class TelemetryHeartbeat implements AutoCloseable {
     long intervalMillis = interval.toMillis();
     checkArgument(intervalMillis > 0, "interval must be at least 1 millisecond: %s", interval);
     TelemetryHeartbeat heartbeat = new TelemetryHeartbeat(shutdownTimeout, monitor);
-    heartbeat.executor.scheduleWithFixedDelay(
-        () -> heartbeat.runSafely(task), intervalMillis, intervalMillis, MILLISECONDS);
+    // No need to keep the future: runSafely catches every failure, and close() stops the runs.
+    ScheduledFuture<?> unused =
+        heartbeat.executor.scheduleWithFixedDelay(
+            () -> heartbeat.runSafely(task), intervalMillis, intervalMillis, MILLISECONDS);
     return heartbeat;
   }
 
