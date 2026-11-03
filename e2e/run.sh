@@ -10,9 +10,9 @@
 # underscores). Each gets a fresh dtp -- see "One dtp per adapter" in
 # e2e/README.md. Server logs land in e2e/.logs/dtp-<adapter>.log afterwards,
 # whether the run passed or failed.
-set -uo pipefail    # deliberately not -e: every adapter runs, then we report
+set -euo pipefail
 
-cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 1
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 LOG_DIR="e2e/.logs"
 
@@ -42,8 +42,8 @@ teardown() {
   docker compose down --remove-orphans >/dev/null 2>&1 || true
 }
 
-# On the host, so the file ends up owned by you rather than by root. dtp
-# truncates its log on restart, so this has to happen before the next adapter.
+# Before teardown, since `down` removes the container and its logs. On the
+# host, so the file ends up owned by you rather than by root.
 capture() {
   mkdir -p "$LOG_DIR"
   docker compose logs --no-color --no-log-prefix dtp \
@@ -64,21 +64,24 @@ echo "==> Building the demo-server jar (offline-demo, cleartext)"
 docker compose run --rm gradle --no-daemon \
   :distributions:demo-server:shadowJar \
   -PofflineData=true \
-  -PencryptionScheme=cleartext || exit 1
+  -PencryptionScheme=cleartext
 
 failed=()
 for adapter in "${ADAPTERS[@]}"; do
   echo
   echo "==> $adapter"
+  rc=0
   # shellcheck disable=SC2046 # mocks_for's output is deliberately word-split
   if docker compose up -d dtp $(mocks_for "$adapter") >/dev/null; then
-    E2E_TESTS=$(suite_for "$adapter") docker compose run --rm e2e \
-      || failed+=("$adapter")
+    docker compose run --rm e2e "$(suite_for "$adapter")" || rc=$?
   else
-    failed+=("$adapter")
+    rc=1
   fi
   capture "$adapter"
   teardown
+  # compose exits 130 on Ctrl-C, and bash never sees the signal itself.
+  if [[ $rc -eq 130 ]]; then exit 130; fi
+  if [[ $rc -ne 0 ]]; then failed+=("$adapter"); fi
 done
 
 echo

@@ -72,14 +72,16 @@ services:
     environment:
       DTP_BASE_URL: https://dtp:8080
       DTP_LOG: /var/log/dtp/dtp.log
-      # The suite to run; run.sh sets it per adapter.
-      E2E_TESTS: "${E2E_TESTS:-e2e/driver/test_offline_demo.py}"
       # Keep the container from littering the bind-mounted repo with
       # root-owned __pycache__ directories.
       PYTHONDONTWRITEBYTECODE: "1"
-    entrypoint: ["bash", "-c"]
-    command:
-      - "pip install --quiet --root-user-action=ignore -r e2e/driver/requirements.txt && pytest $$E2E_TESTS -v -p no:cacheprovider"
+    # Arguments are the suite(s) to run; run.sh passes one per adapter.
+    entrypoint:
+      - bash
+      - -c
+      - "pip install --quiet --root-user-action=ignore -r e2e/driver/requirements.txt && exec pytest -v -p no:cacheprovider \"$$@\""
+      - e2e
+    command: ["e2e/driver/test_offline_demo.py"]
 
 volumes:
   gradle-cache:

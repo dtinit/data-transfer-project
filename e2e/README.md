@@ -16,9 +16,9 @@ warm Gradle cache. Each adapter's server log lands in
 suite and tears it down after, which costs about 17 seconds per adapter. Job
 data itself is already keyed by job id, so this isn't about the stores. It is
 about how the driver observes DTP: through one server log shared by every job,
-and a single worker that a job left behind by a failed suite could hold. Every
-adapter runs even if an earlier one fails, and the exit code reflects all of
-them.
+and a single worker that a job left behind by a failed suite could hold. Note
+that `run.sh` runs `docker compose down` for the whole project, so it also stops
+a `dtp` you started by hand.
 
 This is also the shortest path to watching DTP do something real:
 
@@ -107,9 +107,10 @@ service and a directory of JSON, not a driver change:
 1. Add a **WireMock standalone** service to `docker-compose.yml` with the
    adapter's endpoints as `mappings/` (and `__files/` for any binary payloads).
    No code — WireMock is configured entirely by JSON.
-2. Make the adapter's base URL configurable. Most are a single
-   `private static final` constant, e.g. `ImgurTransferExtension.BASE_URL`;
-   they should read from `TransferServiceConfig`, defaulting to today's value.
+2. Make the adapter's base URL configurable: read it from
+   `TransferServiceConfig`, defaulting to today's value. `ImgurTransferExtension`
+   is the pattern to copy (#1519); most other adapters still hardcode a single
+   `private static final`, e.g. `MicrosoftTransferExtension.BASE_GRAPH_URL`.
 3. Add `e2e/driver/test_<adapter>.py` with that adapter's ids and fixtures —
    `run.sh` picks up every `test_*.py` as an adapter — and list its mock service
    in `run.sh`'s `mocks_for`.
