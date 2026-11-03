@@ -118,8 +118,8 @@ worker claim, export, import -- against the packaged `demo-server` jar:
 ```
 
 No provider credentials, no local JDK and no local Python; about 35 seconds with a warm Gradle cache.
-It uses the `dtp` and `e2e` services in `docker-compose.yml`, and leaves the server log in
-`e2e/.logs/dtp.log` whether the run passes or fails.
+It uses the `dtp` and `e2e` services in `docker-compose.yml`, and leaves each adapter's server log in
+`e2e/.logs/dtp-<adapter>.log` whether the run passes or fails.
 
 The same services are the shortest way to watch DTP actually do something without acquiring a single
 API key:
@@ -127,7 +127,7 @@ API key:
 ```bash
 docker compose run --rm gradle --no-daemon \
   :distributions:demo-server:shadowJar -PofflineData=true -PencryptionScheme=cleartext
-docker compose up dtp          # API on https://localhost:8080 (self-signed cert)
+docker compose --profile offline-demo up dtp   # API on https://localhost:8080 (self-signed cert)
 ```
 
 See [e2e/README.md](../e2e/README.md) for what a green run does and does not prove, and for how to

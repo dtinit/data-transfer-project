@@ -8,6 +8,8 @@ token -- so no provider API keys are involved at any step.
 
 import re
 
+import pytest
+
 from dtp import decode_job_id
 
 # OfflineDemoAuthServiceExtension declares "OFFLINE-DEMO" while
@@ -39,6 +41,7 @@ EXPECTED_PAYLOAD = "offline-demo data"
 TRANSFER_TIMEOUT = 120.0
 
 
+@pytest.mark.offline_demo
 def test_api_advertises_the_credential_free_vertical(client):
     services = client.services_for(DATA_TYPE_ENUM)
 
@@ -46,6 +49,7 @@ def test_api_advertises_the_credential_free_vertical(client):
     assert SERVICE in services["importServices"]
 
 
+@pytest.mark.offline_demo
 def test_transfer_completes_and_delivers_the_payload(client, server_log):
     encoded_job_id = client.create_job(
         export_service=SERVICE,

@@ -26,6 +26,11 @@ services:
   # two only ever see the same job when co-located).
   dtp:
     build: .
+    # In every adapter profile: run.sh brings up a *fresh* dtp per adapter, so
+    # no suite can see another's jobs or temp files. LocalJobStore's static maps
+    # and LocalTempFileStore's files accumulate across jobs and nothing clears
+    # them, so a shared container would make test isolation a matter of luck.
+    profiles: ["offline-demo"]
     volumes:
       - .:/workspace
       - dtp-logs:/var/log/dtp
@@ -36,8 +41,9 @@ services:
       # bypasses OAuth entirely.
       JWT_KEY: e2e-key
       JWT_SECRET: e2e-secret
-    # Published so `docker compose up dtp` is also the credential-free way to
-    # poke at a running DTP by hand. JettyTransport hardcodes 8080.
+    # Published so `docker compose --profile offline-demo up dtp` is also the
+    # credential-free way to poke at a running DTP by hand. JettyTransport
+    # hardcodes 8080.
     ports:
       - "8080:8080"
     # The image's ENTRYPOINT is ./gradlew; override it to run the jar that
@@ -63,8 +69,9 @@ services:
   e2e:
     image: python:3.12-slim
     working_dir: /workspace
-    depends_on:
-      - dtp
+    # No depends_on: `dtp` is now profiled and run.sh starts it explicitly, one
+    # fresh container per adapter. The driver's await_ready() is the readiness
+    # gate regardless -- there has never been a healthcheck.
     volumes:
       - .:/workspace
       - dtp-logs:/var/log/dtp:ro
@@ -72,12 +79,15 @@ services:
     environment:
       DTP_BASE_URL: https://dtp:8080
       DTP_LOG: /var/log/dtp/dtp.log
+      # Which adapter's suite to run, as a pytest marker. Empty runs all of
+      # them, which is what a bare `docker compose run --rm e2e` does.
+      E2E_MARKER: "${E2E_MARKER:-}"
       # Keep the container from littering the bind-mounted repo with
       # root-owned __pycache__ directories.
       PYTHONDONTWRITEBYTECODE: "1"
     entrypoint: ["bash", "-c"]
     command:
-      - "pip install --quiet --root-user-action=ignore -r e2e/driver/requirements.txt && pytest e2e/driver -v -p no:cacheprovider"
+      - "pip install --quiet --root-user-action=ignore -r e2e/driver/requirements.txt && pytest e2e/driver -v -p no:cacheprovider $${E2E_MARKER:+-m $$E2E_MARKER}"
 
 volumes:
   gradle-cache:
