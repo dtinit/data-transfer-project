@@ -47,19 +47,15 @@ public class TelemetryTest {
 
   @Test
   public void startTelemetry_omitsUnsetOptionalFields() throws Exception {
-    StartTelemetry start =
-        StartTelemetry.builder().setTimestamp(1000L).setExpirationTimestamp(2000L).build();
+    StartTelemetry start = StartTelemetry.builder().setTimestamp(1000L).build();
 
     assertEquals(
-        MAPPER.readTree("{\"timestamp\":1000,\"expirationTimestamp\":2000}"),
-        MAPPER.readTree(MAPPER.writeValueAsString(start)));
+        MAPPER.readTree("{\"timestamp\":1000}"), MAPPER.readTree(MAPPER.writeValueAsString(start)));
+    assertEquals(start, MAPPER.readValue("{\"timestamp\":1000}", StartTelemetry.class));
   }
 
   @Test
-  public void startTelemetry_requiresTimestampAndExpiration() {
-    assertThrows(
-        IllegalStateException.class,
-        () -> StartTelemetry.builder().setTimestamp(1000L).build());
+  public void startTelemetry_requiresTimestamp() {
     assertThrows(
         IllegalStateException.class,
         () -> StartTelemetry.builder().setExpirationTimestamp(2000L).build());

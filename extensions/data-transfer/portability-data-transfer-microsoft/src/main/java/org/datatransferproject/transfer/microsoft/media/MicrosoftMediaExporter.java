@@ -36,6 +36,7 @@ import org.datatransferproject.transfer.microsoft.driveModels.MicrosoftSpecialFo
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.PaginationData;
 import org.datatransferproject.types.common.StringPaginationToken;
+import org.datatransferproject.types.common.models.FavoriteInfo;
 import org.datatransferproject.types.common.models.IdOnlyContainerResource;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
@@ -165,7 +166,8 @@ public class MicrosoftMediaExporter
 
     PhotoModel photo =
         new PhotoModel(driveItem.name, driveItem.downloadUrl, driveItem.description,
-            driveItem.file.mimeType, driveItem.id, albumId.orElse(null), false /*inTempStore*/);
+            driveItem.file.mimeType, driveItem.id, albumId.orElse(null), false /*inTempStore*/,
+            extractSha1(driveItem));
     monitor.debug(
         () -> String.format("%s: Microsoft OneDrive exporting photo: %s", jobId, photo));
     return photo;
@@ -179,10 +181,22 @@ public class MicrosoftMediaExporter
 
     VideoModel video =
         new VideoModel(driveItem.name, driveItem.downloadUrl, driveItem.description,
-            driveItem.file.mimeType, driveItem.id, albumId.orElse(null), false /*inTempStore*/, null);
+            driveItem.file.mimeType, driveItem.id, albumId.orElse(null), false /*inTempStore*/,
+            extractSha1(driveItem), null /*uploadedTime*/, FavoriteInfo.unknown());
     monitor.debug(
         () -> String.format("%s: Microsoft OneDrive exporting video: %s", jobId, video));
     return video;
+  }
+
+  private static String extractSha1(MicrosoftDriveItem driveItem) {
+    if (driveItem.file == null
+        || driveItem.file.hashes == null
+        || Strings.isNullOrEmpty(driveItem.file.hashes.sha1Hash)) {
+      return null;
+    }
+    // Importers decode sha1 as hex, so pass on only well-formed values.
+    String sha1 = driveItem.file.hashes.sha1Hash.trim();
+    return sha1.matches("[0-9a-fA-F]{40}") ? sha1 : null;
   }
 
   private PaginationData setNextPageToken(MicrosoftDriveItemsResponse driveItemsResponse) {

@@ -55,7 +55,10 @@ public abstract class EndTelemetry {
   @JsonProperty("totalItemsFetched")
   public abstract Long totalItemsFetched();
 
-  /** Bytes copied to the destination, if known. */
+  /**
+   * Bytes copied to the destination, if known. Best effort: can be lower than the real total when
+   * pages are retried.
+   */
   @Nullable
   @JsonProperty("totalBytesReceived")
   public abstract Long totalBytesReceived();

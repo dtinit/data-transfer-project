@@ -31,8 +31,9 @@ import javax.annotation.Nullable;
  * <p>Only sent to signal handlers that opt in to telemetry (see {@code
  * SignalHandler#supportsTelemetry()}). Unset optional fields are omitted from the JSON.
  *
- * <p>An item counts as failed only after a terminal failure, once all retries are exhausted.
- * Transient errors that later succeed are not counted.
+ * <p>An item that fails and is then fixed by a retry doesn't count as failed. But while the worker
+ * waits to retry a page, that page's failed items still count, so {@code totalItemsFailedToFetch}
+ * can go down in a later snapshot. The counts in {@link EndTelemetry} are final.
  */
 @AutoValue
 @JsonDeserialize(builder = ProgressTelemetry.Builder.class)
@@ -56,7 +57,10 @@ public abstract class ProgressTelemetry {
   @JsonProperty("totalItemsFetched")
   public abstract Long totalItemsFetched();
 
-  /** Bytes copied to the destination so far, if known. */
+  /**
+   * Bytes copied to the destination so far, if known. Best effort: can be lower than the real total
+   * when pages are retried.
+   */
   @Nullable
   @JsonProperty("totalBytesReceived")
   public abstract Long totalBytesReceived();
@@ -68,7 +72,10 @@ public abstract class ProgressTelemetry {
   @JsonProperty("totalItemsFailedToList")
   public abstract Long totalItemsFailedToList();
 
-  /** Items that failed terminally while being downloaded from the origin or uploaded. */
+  /**
+   * Items whose latest attempt failed, while being downloaded from the origin or uploaded. Can go
+   * down in a later snapshot if a retry succeeds.
+   */
   @JsonProperty("totalItemsFailedToFetch")
   public abstract Long totalItemsFailedToFetch();
 
