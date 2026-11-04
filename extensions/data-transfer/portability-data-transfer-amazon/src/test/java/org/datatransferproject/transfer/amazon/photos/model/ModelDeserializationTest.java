@@ -17,6 +17,7 @@
 package org.datatransferproject.transfer.amazon.photos.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -86,5 +87,35 @@ public class ModelDeserializationTest {
 
     assertTrue(json.contains("\"name\":\"My Album\""));
     assertTrue(json.contains("\"kind\":\"VISUAL_COLLECTION\""));
+  }
+
+  @Test
+  void createNodeRequest_serializesLabelsWhenPresent() throws Exception {
+    CreateNodeRequest request = new CreateNodeRequest(
+        "My Album", "VISUAL_COLLECTION", null,
+        java.util.Collections.singletonList("job-123"));
+
+    String json = objectMapper.writeValueAsString(request);
+
+    assertTrue(json.contains("\"labels\":[\"job-123\"]"));
+  }
+
+  @Test
+  void createNodeRequest_omitsLabelsKeyWhenNull() throws Exception {
+    CreateNodeRequest request = new CreateNodeRequest("My Album", "VISUAL_COLLECTION", null, null);
+
+    String json = objectMapper.writeValueAsString(request);
+
+    assertFalse(json.contains("labels"));
+  }
+
+  @Test
+  void createNodeRequest_omitsLabelsKeyWhenEmpty() throws Exception {
+    CreateNodeRequest request = new CreateNodeRequest(
+        "My Album", "VISUAL_COLLECTION", null, java.util.Collections.emptyList());
+
+    String json = objectMapper.writeValueAsString(request);
+
+    assertFalse(json.contains("labels"));
   }
 }

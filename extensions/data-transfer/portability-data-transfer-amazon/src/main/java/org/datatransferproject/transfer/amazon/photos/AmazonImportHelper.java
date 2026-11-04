@@ -34,6 +34,7 @@ import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -189,12 +190,13 @@ class AmazonImportHelper {
   /**
    * Creates an album named for the source service (e.g. "Trips - Imported from Google") and
    * returns its Amazon node id. Shared by the photos, videos and media importers, which differ
-   * only in their album model type.
+   * only in their album model type. The {@code jobId} is forwarded so the album is labelled with
+   * the import job that created it.
    */
-  String createAlbum(AmazonPhotosInterface client, String albumId, String albumName)
+  String createAlbum(AmazonPhotosInterface client, UUID jobId, String albumId, String albumName)
       throws IOException {
     String name = albumName + IMPORTED_SUFFIX + JobMetadata.getExportService();
-    AmazonPhotosNode node = client.createAlbum(name);
+    AmazonPhotosNode node = client.createAlbum(name, Objects.toString(jobId, null));
     monitor.info(() -> "Created album " + albumId + " -> " + node.getId());
     return node.getId();
   }
@@ -223,7 +225,7 @@ class AmazonImportHelper {
 
       AmazonPhotosNode uploadedNode = client.uploadContent(
           req.displayName, tempFile, md5Hex, fileSize, fallbackContentDate, req.isFavorite,
-          targetAlbumId);
+          targetAlbumId, Objects.toString(jobId, null));
       return uploadedNode.getId();
 
     } catch (AmazonPhotosApiException e) {

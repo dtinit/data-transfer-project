@@ -84,7 +84,7 @@ public class AmazonPhotosImporter
     for (PhotoAlbum album : data.getAlbums()) {
       executor.executeAndSwallowIOExceptions(
           album.getId(), album.getName(),
-          () -> importHelper.createAlbum(client, album.getId(), album.getName()));
+          () -> importHelper.createAlbum(client, jobId, album.getId(), album.getName()));
     }
 
     for (PhotoModel photo : data.getPhotos()) {

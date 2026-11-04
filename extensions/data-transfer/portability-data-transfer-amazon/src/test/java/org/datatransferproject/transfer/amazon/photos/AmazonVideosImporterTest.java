@@ -127,13 +127,13 @@ public class AmazonVideosImporterTest {
           return callable.call();
         });
     when(executor.getCachedValue("album1")).thenReturn("amazon-album-id");
-    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), eq("amazon-album-id")))
+    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), eq("amazon-album-id"), any()))
         .thenReturn(new AmazonPhotosNode());
 
     importer.importItem(jobId, executor, authData, resource);
 
     // Verifies albumId is passed to uploadContent
-    verify(client).uploadContent(eq("clip.mp4"), any(), any(), any(Long.class), any(), any(Boolean.class), eq("amazon-album-id"));
+    verify(client).uploadContent(eq("clip.mp4"), any(), any(), any(Long.class), any(), any(Boolean.class), eq("amazon-album-id"), any());
   }
 
   @Test
@@ -155,13 +155,13 @@ public class AmazonVideosImporterTest {
           java.util.concurrent.Callable<?> callable = invocation.getArgument(2);
           return callable.call();
         });
-    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), eq(null)))
+    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), eq(null), any()))
         .thenReturn(new AmazonPhotosNode());
 
     importer.importItem(jobId, executor, authData, resource);
 
     // Verifies null albumId when no album provided
-    verify(client).uploadContent(eq("clip.mp4"), any(), any(), any(Long.class), any(), any(Boolean.class), eq(null));
+    verify(client).uploadContent(eq("clip.mp4"), any(), any(), any(Long.class), any(), any(Boolean.class), eq(null), any());
   }
 
   // Path traversal protection: dataId is used as temp-file prefix, separators are sanitized.
@@ -184,7 +184,7 @@ public class AmazonVideosImporterTest {
           java.util.concurrent.Callable<?> callable = invocation.getArgument(2);
           return callable.call();
         });
-    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any()))
+    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any(), any()))
         .thenReturn(new AmazonPhotosNode());
 
     importer.importItem(jobId, executor, authData, resource);
@@ -224,7 +224,7 @@ public class AmazonVideosImporterTest {
 
     // uploadContent should never be called since album resolution threw before upload
     verify(client, org.mockito.Mockito.never())
-        .uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any());
+        .uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any(), any());
   }
 
   // ---------------------------------------------------------------------------
@@ -295,7 +295,7 @@ public class AmazonVideosImporterTest {
           java.util.concurrent.Callable<?> callable = invocation.getArgument(2);
           return callable.call();
         });
-    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any()))
+    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any(), any()))
         .thenThrow(new AmazonPhotosApiException(403, "NoActiveSubscriptionFound", "no subscription"));
 
     assertThrows(DestinationMemoryFullException.class,
@@ -314,7 +314,7 @@ public class AmazonVideosImporterTest {
 
     AmazonPhotosNode node = new AmazonPhotosNode();
     node.setId("amazon-album-1");
-    when(client.createAlbum(any())).thenReturn(node);
+    when(client.createAlbum(any(), any())).thenReturn(node);
     executorRunsCallable();
 
     try (MockedStatic<JobMetadata> jm = mockStatic(JobMetadata.class)) {
@@ -323,7 +323,7 @@ public class AmazonVideosImporterTest {
     }
 
     org.mockito.ArgumentCaptor<String> name = org.mockito.ArgumentCaptor.forClass(String.class);
-    verify(client).createAlbum(name.capture());
+    verify(client).createAlbum(name.capture(), eq(jobId.toString()));
     assertEquals("Trips" + AmazonImportHelper.IMPORTED_SUFFIX + "Google", name.getValue());
   }
 
@@ -344,12 +344,12 @@ public class AmazonVideosImporterTest {
     AmazonPhotosNode node = new AmazonPhotosNode();
     node.setId("uploaded-1");
     when(client.uploadContent(eq("clip.mp4"), any(), any(), any(Long.class),
-        eq(uploaded.toInstant().toString()), eq(false), eq(null))).thenReturn(node);
+        eq(uploaded.toInstant().toString()), eq(false), eq(null), any())).thenReturn(node);
 
     importer.importItem(jobId, executor, authData, resource);
 
     verify(client).uploadContent(eq("clip.mp4"), any(), any(), any(Long.class),
-        eq(uploaded.toInstant().toString()), eq(false), eq(null));
+        eq(uploaded.toInstant().toString()), eq(false), eq(null), any());
     verify(dataStore).removeData(jobId, "tempkey");
   }
 
@@ -362,13 +362,13 @@ public class AmazonVideosImporterTest {
 
     stubDownload();
     executorRunsCallable();
-    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any()))
+    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any(), any()))
         .thenThrow(new AmazonPhotosApiException(409, "DuplicatesConflictError", "dup"));
 
     ImportResult result = importer.importItem(jobId, executor, authData, resource);
 
     assertEquals(ImportResult.OK, result);
-    verify(client).uploadContent(eq("clip.mp4"), any(), any(), any(Long.class), any(), any(Boolean.class), any());
+    verify(client).uploadContent(eq("clip.mp4"), any(), any(), any(Long.class), any(), any(Boolean.class), any(), any());
   }
 
   @Test
@@ -380,7 +380,7 @@ public class AmazonVideosImporterTest {
 
     stubDownload();
     executorRunsCallable();
-    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any()))
+    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any(), any()))
         .thenThrow(new AmazonPhotosApiException(403, "ForbiddenAccess", "denied"));
 
     assertThrows(AmazonPhotosApiException.class,

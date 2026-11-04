@@ -35,10 +35,11 @@ public interface AmazonPhotosInterface {
    * Creates an album in Amazon Photos.
    *
    * @param name album name
+   * @param jobId the import job id to label the created album with, or {@code null} for no label
    * @return the created node with id and name
    * @throws IOException on API errors (4xx/5xx)
    */
-  AmazonPhotosNode createAlbum(String name) throws IOException;
+  AmazonPhotosNode createAlbum(String name, String jobId) throws IOException;
 
   /**
    * Uploads content (photo or video) to Amazon Photos.
@@ -52,12 +53,14 @@ public interface AmazonPhotosInterface {
    * @param fallbackContentDate fallback content date (ISO 8601) if EXIF is unavailable
    * @param isFavorite whether to mark as favorite
    * @param albumId album to link the content to, or null for no album
+   * @param jobId the import job id to label the created node with, or {@code null} for no label
    * @return the created node with id and name
    * @throws IOException on API errors (4xx/5xx)
    */
   AmazonPhotosNode uploadContent(String fileName, File fileContent,
                                  String md5Hex, long fileSize, String fallbackContentDate,
-                                 boolean isFavorite, String albumId) throws IOException;
+                                 boolean isFavorite, String albumId, String jobId)
+      throws IOException;
 
 
 }

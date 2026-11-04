@@ -165,7 +165,7 @@ public class AmazonMediaImporterTest {
 
     stubDownload();
     executorRunsCallable();
-    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any()))
+    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any(), any()))
         .thenThrow(new AmazonPhotosApiException(403, "NoActiveSubscriptionFound", "no subscription"));
 
     assertThrows(DestinationMemoryFullException.class,
@@ -184,7 +184,7 @@ public class AmazonMediaImporterTest {
 
     AmazonPhotosNode node = new AmazonPhotosNode();
     node.setId("amazon-album-1");
-    when(client.createAlbum(any())).thenReturn(node);
+    when(client.createAlbum(any(), any())).thenReturn(node);
     executorRunsCallable();
 
     try (MockedStatic<JobMetadata> jm = mockStatic(JobMetadata.class)) {
@@ -193,7 +193,7 @@ public class AmazonMediaImporterTest {
     }
 
     org.mockito.ArgumentCaptor<String> name = org.mockito.ArgumentCaptor.forClass(String.class);
-    verify(client).createAlbum(name.capture());
+    verify(client).createAlbum(name.capture(), eq(jobId.toString()));
     assertEquals("Vacation" + AmazonImportHelper.IMPORTED_SUFFIX + "Google", name.getValue());
   }
 
@@ -214,12 +214,12 @@ public class AmazonMediaImporterTest {
     AmazonPhotosNode node = new AmazonPhotosNode();
     node.setId("uploaded-1");
     when(client.uploadContent(eq("pic.jpg"), any(), any(), any(Long.class),
-        eq(uploaded.toInstant().toString()), eq(true), eq(null))).thenReturn(node);
+        eq(uploaded.toInstant().toString()), eq(true), eq(null), any())).thenReturn(node);
 
     importer.importItem(jobId, executor, authData, resource);
 
     verify(client).uploadContent(eq("pic.jpg"), any(), any(), any(Long.class),
-        eq(uploaded.toInstant().toString()), eq(true), eq(null));
+        eq(uploaded.toInstant().toString()), eq(true), eq(null), any());
     // inTempStore == true -> temp data is cleaned up after upload.
     verify(dataStore).removeData(jobId, "tempkey");
   }
@@ -241,12 +241,12 @@ public class AmazonMediaImporterTest {
     AmazonPhotosNode node = new AmazonPhotosNode();
     node.setId("uploaded-1");
     when(client.uploadContent(eq("clip.mp4"), any(), any(), any(Long.class),
-        eq(uploaded.toInstant().toString()), eq(false), eq(null))).thenReturn(node);
+        eq(uploaded.toInstant().toString()), eq(false), eq(null), any())).thenReturn(node);
 
     importer.importItem(jobId, executor, authData, resource);
 
     verify(client).uploadContent(eq("clip.mp4"), any(), any(), any(Long.class),
-        eq(uploaded.toInstant().toString()), eq(false), eq(null));
+        eq(uploaded.toInstant().toString()), eq(false), eq(null), any());
     verify(dataStore).removeData(jobId, "tempkey");
   }
 
@@ -263,13 +263,13 @@ public class AmazonMediaImporterTest {
     AmazonPhotosNode node = new AmazonPhotosNode();
     node.setId("uploaded-1");
     when(client.uploadContent(eq("clip.mp4"), any(), any(), any(Long.class), any(),
-        eq(true), any())).thenReturn(node);
+        eq(true), any(), any())).thenReturn(node);
 
     importer.importItem(jobId, executor, authData, resource);
 
     // Guards the fix: a favorited video is uploaded with isFavorite=true, not a hardcoded false.
     verify(client).uploadContent(eq("clip.mp4"), any(), any(), any(Long.class), any(),
-        eq(true), any());
+        eq(true), any(), any());
   }
 
   // ---------------------------------------------------------------------------
@@ -285,13 +285,13 @@ public class AmazonMediaImporterTest {
 
     stubDownload();
     executorRunsCallable();
-    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any()))
+    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any(), any()))
         .thenThrow(new AmazonPhotosApiException(409, "DuplicatesConflictError", "dup"));
 
     ImportResult result = importer.importItem(jobId, executor, authData, resource);
 
     assertEquals(ImportResult.OK, result);
-    verify(client).uploadContent(eq("pic.jpg"), any(), any(), any(Long.class), any(), any(Boolean.class), any());
+    verify(client).uploadContent(eq("pic.jpg"), any(), any(), any(Long.class), any(), any(Boolean.class), any(), any());
   }
 
   @Test
@@ -303,13 +303,13 @@ public class AmazonMediaImporterTest {
 
     stubDownload();
     executorRunsCallable();
-    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any()))
+    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any(), any()))
         .thenThrow(new AmazonPhotosApiException(409, "DuplicatesConflictError", "dup"));
 
     ImportResult result = importer.importItem(jobId, executor, authData, resource);
 
     assertEquals(ImportResult.OK, result);
-    verify(client).uploadContent(eq("clip.mp4"), any(), any(), any(Long.class), any(), any(Boolean.class), any());
+    verify(client).uploadContent(eq("clip.mp4"), any(), any(), any(Long.class), any(), any(Boolean.class), any(), any());
   }
 
   @Test
@@ -321,7 +321,7 @@ public class AmazonMediaImporterTest {
 
     stubDownload();
     executorRunsCallable();
-    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any()))
+    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any(), any()))
         .thenThrow(new AmazonPhotosApiException(403, "ForbiddenAccess", "denied"));
 
     assertThrows(AmazonPhotosApiException.class,
@@ -350,12 +350,12 @@ public class AmazonMediaImporterTest {
     AmazonPhotosNode node = new AmazonPhotosNode();
     node.setId("uploaded-1");
     when(client.uploadContent(eq("pic.jpg"), any(), any(), any(Long.class), any(),
-        any(Boolean.class), eq("amazon-album-1"))).thenReturn(node);
+        any(Boolean.class), eq("amazon-album-1"), any())).thenReturn(node);
 
     importer.importItem(jobId, executor, authData, resource);
 
     verify(client).uploadContent(eq("pic.jpg"), any(), any(), any(Long.class), any(),
-        any(Boolean.class), eq("amazon-album-1"));
+        any(Boolean.class), eq("amazon-album-1"), any());
   }
 
   private void stubDownload() throws Exception {
