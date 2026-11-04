@@ -20,7 +20,6 @@ import org.datatransferproject.spi.cloud.connection.ConnectionProvider;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
-import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.transfer.amazon.photos.model.AmazonPhotosNode;
 import org.datatransferproject.types.common.DownloadableItem;
@@ -207,8 +206,7 @@ class AmazonImportHelper {
    * carried by {@link UploadItemRequest}.
    *
    * <p>Returns the uploaded node id, or the item's {@code dataId} when the destination reports the
-   * content already exists (duplicate — skipped as success). A storage-quota error is rethrown as
-   * the terminal {@link DestinationMemoryFullException}; any other API error propagates.
+   * content already exists (duplicate — skipped as success). Any other API error propagates.
    */
   String uploadItem(AmazonPhotosInterface client, UUID jobId, UploadItemRequest req,
                     IdempotentImportExecutor executor) throws Exception {
@@ -234,7 +232,9 @@ class AmazonImportHelper {
         return req.dataId;
       }
       if (isStorageQuotaExceeded(e)) {
-        throw new DestinationMemoryFullException("Amazon Photos storage full", e);
+        // Photo and video quota are separate, so keeping this an IOException for now for the
+        // media use case.
+        throw new IOException("Amazon Photos storage quota exceeded", e);
       }
       throw e;
     } finally {
@@ -243,8 +243,8 @@ class AmazonImportHelper {
         try {
           cleanupTempData(jobId, req.item.getFetchableUrl());
         } catch (IOException cleanupError) {
-          // Best-effort cleanup: don't let it mask the real upload outcome (e.g. a terminal
-          // DestinationMemoryFullException) by throwing out of the finally block.
+          // Best-effort cleanup: don't let it mask the real upload outcome by throwing out of
+          // the finally block.
           monitor.info(() -> "Failed to clean up temp data for " + req.dataId, cleanupError);
         }
       }

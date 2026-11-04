@@ -34,7 +34,6 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
-import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.transfer.amazon.photos.model.AmazonPhotosNode;
 import org.datatransferproject.types.common.models.FavoriteInfo;
@@ -50,6 +49,7 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.Date;
@@ -362,11 +362,11 @@ public class AmazonPhotosImporterTest {
   }
 
   // ---------------------------------------------------------------------------
-  // Storage-quota classification -> terminal DestinationMemoryFullException.
+  // Storage-quota classification -> non-terminal IOException.
   // ---------------------------------------------------------------------------
 
   @Test
-  void importItem_noActiveSubscription_throwsDestinationMemoryFull() throws Exception {
+  void importItem_noActiveSubscription_throwsIoException() throws Exception {
     PhotoModel photo = new PhotoModel("pic.jpg", "tempkey",
         null, "image/jpeg", "p1", null, true, (Date) null);
     PhotosContainerResource resource = new PhotosContainerResource(
@@ -386,8 +386,11 @@ public class AmazonPhotosImporterTest {
     when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any(), any()))
         .thenThrow(new AmazonPhotosApiException(403, "NoActiveSubscriptionFound", "no subscription"));
 
-    assertThrows(DestinationMemoryFullException.class,
+    IOException ex = assertThrows(IOException.class,
         () -> importer.importItem(jobId, executor, authData, resource));
+
+    // Retry config keys off this message, so keep it asserted.
+    assertEquals("Amazon Photos storage quota exceeded", ex.getMessage());
   }
 
   // ---------------------------------------------------------------------------
