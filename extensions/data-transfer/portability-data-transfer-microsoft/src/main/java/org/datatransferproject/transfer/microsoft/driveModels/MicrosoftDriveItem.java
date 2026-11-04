@@ -45,6 +45,10 @@ public class MicrosoftDriveItem {
   @JsonProperty("description")
   public String description;
 
+  /** When the item was created in OneDrive, that is, when it was uploaded. */
+  @JsonProperty("createdDateTime")
+  public String createdDateTime;
+
   @JsonProperty("@microsoft.graph.downloadUrl")
   public String downloadUrl;
 

@@ -23,7 +23,9 @@ import static org.mockito.Mockito.*;
 
 import com.google.api.client.json.jackson2.JacksonFactory;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -54,6 +56,7 @@ public class MicrosoftMediaExporterTest {
   private String VIDEO_FILENAME = "cats-dancing.ogg";
   private String FOLDER_ID = "microsoftOneDriveFolderId";
   private String DRIVE_PAGE_URL = "driveToken";
+  private String UPLOAD_TIME = "2024-01-02T03:04:05.123Z";
   private UUID uuid = UUID.randomUUID();
 
   private TokensAndUrlAuthData token;
@@ -355,6 +358,96 @@ public class MicrosoftMediaExporterTest {
 
     assertThat(result.getExportedData().getPhotos().iterator().next().getSha1()).isNull();
     assertThat(result.getExportedData().getVideos().iterator().next().getSha1()).isNull();
+  }
+
+  @Test
+  public void exportMediaWithTakenDateTimeUsesTakenTime() throws IOException {
+    MicrosoftDriveItem photoItem = setUpSinglePhoto(PHOTO_FILENAME, PHOTO_URI, PHOTO_ID);
+    photoItem.photo.takenDateTime = "2023-05-14T15:30:00Z";
+    photoItem.createdDateTime = UPLOAD_TIME;
+
+    MicrosoftDriveItem videoItem = setUpSingleVideo(VIDEO_FILENAME, VIDEO_URI, VIDEO_ID);
+    videoItem.photo.takenDateTime = "2023-05-14T15:30:00+02:00";
+    videoItem.createdDateTime = UPLOAD_TIME;
+
+    ExportResult<MediaContainerResource> result = exportPhotoAndVideo(photoItem, videoItem);
+
+    PhotoModel exportedPhoto = result.getExportedData().getPhotos().iterator().next();
+    assertThat(exportedPhoto.getUploadedTime())
+        .isEqualTo(Date.from(Instant.parse("2023-05-14T15:30:00Z")));
+    // Favorite info stays unknown, as it was before the time was exported.
+    assertThat(exportedPhoto.getFavoriteInfo().getFavorited()).isFalse();
+    assertThat(exportedPhoto.getFavoriteInfo().getLastUpdateTime()).isNull();
+
+    VideoModel exportedVideo = result.getExportedData().getVideos().iterator().next();
+    assertThat(exportedVideo.getUploadedTime())
+        .isEqualTo(Date.from(Instant.parse("2023-05-14T13:30:00Z")));
+    assertThat(exportedVideo.getFavoriteInfo().getFavorited()).isFalse();
+    assertThat(exportedVideo.getFavoriteInfo().getLastUpdateTime()).isNull();
+  }
+
+  @Test
+  public void exportMediaWithoutTakenDateTimeUsesUploadTime() throws IOException {
+    MicrosoftDriveItem photoItem = setUpSinglePhoto(PHOTO_FILENAME, PHOTO_URI, PHOTO_ID);
+    photoItem.photo.takenDateTime = null;
+    photoItem.createdDateTime = UPLOAD_TIME;
+
+    MicrosoftDriveItem videoItem = setUpSingleVideo(VIDEO_FILENAME, VIDEO_URI, VIDEO_ID);
+    videoItem.photo = null; // No photo facet, so no taken time.
+    videoItem.createdDateTime = UPLOAD_TIME;
+
+    ExportResult<MediaContainerResource> result = exportPhotoAndVideo(photoItem, videoItem);
+
+    Date uploadTime = Date.from(Instant.parse(UPLOAD_TIME));
+    assertThat(result.getExportedData().getPhotos().iterator().next().getUploadedTime())
+        .isEqualTo(uploadTime);
+    assertThat(result.getExportedData().getVideos().iterator().next().getUploadedTime())
+        .isEqualTo(uploadTime);
+  }
+
+  @Test
+  public void exportMediaWithEmptyOrInvalidTakenDateTimeUsesUploadTime() throws IOException {
+    MicrosoftDriveItem photoItem = setUpSinglePhoto(PHOTO_FILENAME, PHOTO_URI, PHOTO_ID);
+    photoItem.photo.takenDateTime = "not a date";
+    photoItem.createdDateTime = UPLOAD_TIME;
+
+    MicrosoftDriveItem videoItem = setUpSingleVideo(VIDEO_FILENAME, VIDEO_URI, VIDEO_ID);
+    videoItem.photo.takenDateTime = "";
+    videoItem.createdDateTime = UPLOAD_TIME;
+
+    ExportResult<MediaContainerResource> result = exportPhotoAndVideo(photoItem, videoItem);
+
+    Date uploadTime = Date.from(Instant.parse(UPLOAD_TIME));
+    assertThat(result.getExportedData().getPhotos().iterator().next().getUploadedTime())
+        .isEqualTo(uploadTime);
+    assertThat(result.getExportedData().getVideos().iterator().next().getUploadedTime())
+        .isEqualTo(uploadTime);
+  }
+
+  @Test
+  public void exportMediaWithoutValidTimesLeavesUploadedTimeUnset() throws IOException {
+    MicrosoftDriveItem photoItem = setUpSinglePhoto(PHOTO_FILENAME, PHOTO_URI, PHOTO_ID);
+    photoItem.photo.takenDateTime = "not a date";
+    photoItem.createdDateTime = "also not a date";
+
+    MicrosoftDriveItem videoItem = setUpSingleVideo(VIDEO_FILENAME, VIDEO_URI, VIDEO_ID);
+    videoItem.photo = null; // No taken time, and no upload time either.
+
+    ExportResult<MediaContainerResource> result = exportPhotoAndVideo(photoItem, videoItem);
+
+    assertThat(result.getExportedData().getPhotos().iterator().next().getUploadedTime()).isNull();
+    assertThat(result.getExportedData().getVideos().iterator().next().getUploadedTime()).isNull();
+  }
+
+  /** Exports one page of a folder that contains the given photo and video. */
+  private ExportResult<MediaContainerResource> exportPhotoAndVideo(
+      MicrosoftDriveItem photoItem, MicrosoftDriveItem videoItem) throws IOException {
+    when(driveItemsResponse.getDriveItems())
+        .thenReturn(new MicrosoftDriveItem[] {photoItem, videoItem});
+    when(driveItemsResponse.getNextPageLink()).thenReturn(null);
+
+    return microsoftMediaExporter.exportOneDrivePhotos(
+        null, Optional.of(new IdOnlyContainerResource(FOLDER_ID)), Optional.empty(), uuid);
   }
 
   /** Sets up a response with a single album, containing photos and/or videos. */
