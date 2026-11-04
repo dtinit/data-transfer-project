@@ -172,8 +172,8 @@ class JobProcessor {
         addErrorsAndMarkJobFinished(jobId, success, loggedErrors);
         hooks.jobFinished(jobId, success);
       } catch (RuntimeException | Error e) {
-        // The cancel watcher won't send the End claimed above, so the handlers that opt in get it
-        // here. The others get nothing, as before.
+        // The cancel watcher won't send the End claimed above, so an import handler that opts in
+        // gets it here. The others get nothing, as before.
         signals.sendEndOnFailure(deriveFinalJobStatus(success));
         throw e;
       }

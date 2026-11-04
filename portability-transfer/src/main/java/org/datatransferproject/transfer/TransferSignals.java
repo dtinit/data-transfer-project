@@ -49,22 +49,26 @@ import org.datatransferproject.types.transfer.retry.RetryException;
 
 /**
  * Sends a job's lifecycle signals to its export and import signal handlers, and transfer telemetry
- * to the handlers that opt in.
+ * to the import handler if it opts in.
  *
  * <p>Each handler is called in its own {@code try}, so one handler's failure can't stop the other
  * handler's signal. Handler failures are logged at info, except Progress failures: Progress repeats
  * every heartbeat interval, so those are logged at debug.
  *
+ * <p>Telemetry goes only to the import handler, the transfer's destination, since the export side
+ * already has these numbers. The export handler is never asked, and always gets exactly the
+ * signals it got before telemetry existed.
+ *
  * <p>Whether a job sends telemetry is decided once, at Start. It does when {@code
  * transferSignalEnabled} and {@code transferTelemetryEnabled} are on (both are by default), the
- * copier keeps counters, and at least one handler returns true from {@link
- * SignalHandler#supportsTelemetry()}. Handlers that don't opt in always get exactly the signals
- * they got before telemetry existed. Start carries an expiration only if {@code
+ * copier keeps counters, and the import handler returns true from {@link
+ * SignalHandler#supportsTelemetry()}. An import handler that doesn't opt in also gets exactly the
+ * signals it got before telemetry existed. Start carries an expiration only if {@code
  * maxWorkerLifetimeSeconds} is set.
  *
- * <p>When a job sends telemetry, the handlers that opt in also get the telemetry blocks, a
- * Progress signal every heartbeat interval, and an End when the cancel watcher stops the job. They
- * get at most one End per job.
+ * <p>When a job sends telemetry, the import handler also gets the telemetry blocks, a Progress
+ * signal every heartbeat interval, and an End when the cancel watcher stops the job. It gets at
+ * most one End per job.
  */
 @Singleton
 final class TransferSignals {
@@ -88,7 +92,7 @@ final class TransferSignals {
    * Leaves room for a handler that waits up to a minute for its End to go out, plus the heartbeat's
    * shutdown timeout. When the job's {@code finally} block claimed End first, the cancel watcher's
    * wait also covers the job's final store update and hooks, so if those and End together take
-   * longer, the handlers that opt in get no End.
+   * longer, the import handler gets no End.
    */
   static final Duration CANCEL_END_TIMEOUT = Duration.ofSeconds(90);
 
@@ -179,8 +183,8 @@ final class TransferSignals {
    * the exception is rethrown, so the job fails as it did before telemetry. Setting up telemetry
    * never throws.
    *
-   * @param counters the copier's telemetry counters. Only read when telemetry is enabled and a
-   *     handler opts in.
+   * @param counters the copier's telemetry counters. Only read when telemetry is enabled and the
+   *     import handler opts in.
    */
   void sendStart(
       UUID jobId,
@@ -195,27 +199,17 @@ final class TransferSignals {
     JobLifeCycle started = JobLifeCycle.JOB_STARTED();
     SignalRequest request = request(jobId, started).build();
     JobTelemetry telemetry =
-        telemetryEnabled ? setUpTelemetry(jobId, exportAuthData, importAuthData, counters) : null;
+        telemetryEnabled ? setUpTelemetry(jobId, importAuthData, counters) : null;
 
-    RuntimeException failure;
+    // The export handler always gets today's Start.
+    RuntimeException failure =
+        trySendStart(exportSignalHandlerProvider, request, exportAuthData, null);
     if (telemetry == null) {
-      failure = trySendStart(exportSignalHandlerProvider, request, exportAuthData, null);
       failure = trySendStart(importSignalHandlerProvider, request, importAuthData, failure);
     } else {
       SignalRequest withTelemetry =
           telemetry.request(started).setStartTelemetry(telemetry.startTelemetry).build();
-      failure =
-          trySendStart(
-              telemetry.exportHandler,
-              telemetry.exportOptedIn ? withTelemetry : request,
-              exportAuthData,
-              null);
-      failure =
-          trySendStart(
-              telemetry.importHandler,
-              telemetry.importOptedIn ? withTelemetry : request,
-              importAuthData,
-              failure);
+      failure = trySendStart(telemetry.importHandler, withTelemetry, importAuthData, failure);
       if (failure == null) {
         startHeartbeat(telemetry);
       }
@@ -247,8 +241,8 @@ final class TransferSignals {
   /**
    * Sends the End signal from the worker's {@code finally} block. Never throws.
    *
-   * <p>The heartbeat stops first, so no Progress follows End. Handlers that opt in get the End
-   * telemetry block, unless the cancel watcher already sent them End.
+   * <p>The heartbeat stops first, so no Progress follows End. An import handler that opts in gets
+   * the End telemetry block, unless the cancel watcher already sent it End.
    *
    * @param endStatus the job's end state, the same for every handler
    */
@@ -267,14 +261,15 @@ final class TransferSignals {
         return;
       }
       telemetry.endClaimer.compareAndSet(null, EndClaimer.JOB);
-      // False if the cancel watcher already claimed End for the handlers that opt in. They then
-      // get no second End, so withTelemetry stays null.
+      // False if the cancel watcher already claimed End for the import handler. It then gets no
+      // second End, so withTelemetry stays null.
       boolean claimed = telemetry.endClaimer.get() == EndClaimer.JOB;
       SignalRequest withTelemetry = claimed ? endRequest(telemetry, endStatus) : null;
-      sendEndTo(
-          telemetry.exportHandler, telemetry.exportOptedIn, request, withTelemetry, exportAuthData);
-      sendEndTo(
-          telemetry.importHandler, telemetry.importOptedIn, request, withTelemetry, importAuthData);
+      // The export handler always gets today's End.
+      trySend(exportSignalHandlerProvider, request, exportAuthData);
+      if (withTelemetry != null) {
+        trySend(telemetry.importHandler, withTelemetry, importAuthData);
+      }
       if (!claimed) {
         // The worker exits when this job ends, so let the cancel watcher finish sending End.
         awaitEnd(telemetry.cancelEndSent, "End for the cancelled job");
@@ -290,10 +285,10 @@ final class TransferSignals {
   }
 
   /**
-   * Sends End to the handlers that opt in when the worker's {@code finally} block fails after
-   * {@link #claimEnd} and before {@link #sendEnd}, since the cancel watcher won't send the End the
-   * job claimed. Other handlers get nothing, as when the {@code finally} block failed before
-   * telemetry. Does nothing if the job sends no telemetry. Never throws.
+   * Sends End to the import handler, if it opts in, when the worker's {@code finally} block fails
+   * after {@link #claimEnd} and before {@link #sendEnd}, since the cancel watcher won't send the
+   * End the job claimed. Other handlers get nothing, as when the {@code finally} block failed
+   * before telemetry. Does nothing if the job sends no telemetry. Never throws.
    *
    * <p>If the cancel watcher claimed End first, this sends nothing, and waits, as {@link #sendEnd}
    * does, for the cancel watcher's End to go out.
@@ -308,7 +303,7 @@ final class TransferSignals {
     try {
       telemetry.endClaimer.compareAndSet(null, EndClaimer.JOB);
       if (telemetry.endClaimer.get() == EndClaimer.JOB) {
-        sendToOptedIn(telemetry, endRequest(telemetry, endStatus));
+        sendToImporter(telemetry, endRequest(telemetry, endStatus));
       } else {
         awaitEnd(telemetry.cancelEndSent, "End for the cancelled job");
       }
@@ -321,9 +316,9 @@ final class TransferSignals {
   }
 
   /**
-   * Sends End to the handlers that opt in, just before the cancel watcher stops the worker. Other
-   * handlers get nothing, as before. Does nothing if the job sends no telemetry or already sent
-   * End. Never throws.
+   * Sends End to the import handler, if it opts in, just before the cancel watcher stops the
+   * worker. Other handlers get nothing, as before. Does nothing if the job sends no telemetry or
+   * already sent End. Never throws.
    *
    * <p>End goes out on its own daemon thread, and this waits for it for at most {@link
    * #CANCEL_END_TIMEOUT}. If the job's {@code finally} claimed End first, this instead waits up to
@@ -361,12 +356,12 @@ final class TransferSignals {
     }
   }
 
-  /** Sends the cancel path's End to the handlers that opt in. Runs on its own thread. */
+  /** Sends the cancel path's End to the import handler. Runs on its own thread. */
   private void sendCancelEnd(JobTelemetry telemetry, EndReason endReason) {
     try {
       JobLifeCycle endStatus =
           JobLifeCycle.builder().setState(JobLifeCycle.State.ENDED).setEndReason(endReason).build();
-      sendToOptedIn(telemetry, endRequest(telemetry, endStatus));
+      sendToImporter(telemetry, endRequest(telemetry, endStatus));
     } catch (Throwable t) {
       // Catch everything: this thread only sends End, and the worker is stopping anyway.
       monitor.info(() -> "Errored while sending transfer signals.", t);
@@ -389,25 +384,20 @@ final class TransferSignals {
   /** Decides whether this job sends telemetry, and returns its state if it does. Never throws. */
   @Nullable
   private JobTelemetry setUpTelemetry(
-      UUID jobId,
-      AuthData exportAuthData,
-      AuthData importAuthData,
-      Supplier<Optional<TelemetryCounters>> counters) {
+      UUID jobId, AuthData importAuthData, Supplier<Optional<TelemetryCounters>> counters) {
     try {
-      // Opt-in first: telemetry is on by default, so jobs whose handlers don't opt in should
-      // cost nothing more and log nothing new.
-      SignalHandler exportHandler = exportSignalHandlerProvider.get();
+      // Opt-in first: telemetry is on by default, so jobs whose import handler doesn't opt in
+      // should cost nothing more and log nothing new. Only the destination gets telemetry, so the
+      // export handler isn't asked.
       SignalHandler importHandler = importSignalHandlerProvider.get();
-      boolean exportOptedIn = supportsTelemetry(exportHandler);
-      boolean importOptedIn = supportsTelemetry(importHandler);
-      if (!exportOptedIn && !importOptedIn) {
+      if (!supportsTelemetry(importHandler)) {
         return null;
       }
       Optional<TelemetryCounters> jobCounters = counters.get();
       if (jobCounters.isEmpty()) {
         monitor.info(
             () ->
-                "A signal handler opts in to transfer telemetry, but the copier keeps no"
+                "The import signal handler opts in to transfer telemetry, but the copier keeps no"
                     + " telemetry counters, so this job sends none.");
         return null;
       }
@@ -420,15 +410,7 @@ final class TransferSignals {
               .setRecurringJobId(JobMetadata.getRecurringJobId().map(UUID::toString).orElse(null))
               .build();
       return new JobTelemetry(
-          jobId,
-          exportHandler,
-          exportAuthData,
-          exportOptedIn,
-          importHandler,
-          importAuthData,
-          importOptedIn,
-          jobCounters.get(),
-          startTelemetry);
+          jobId, importHandler, importAuthData, jobCounters.get(), startTelemetry);
     } catch (RuntimeException e) {
       monitor.info(() -> "Couldn't set up transfer telemetry, so this job sends none.", e);
       return null;
@@ -457,8 +439,8 @@ final class TransferSignals {
   }
 
   /**
-   * Sends Progress to the handlers that opt in. Runs on the heartbeat thread. A handler's failure
-   * is logged at debug level, since one that keeps failing would log the same error every interval.
+   * Sends Progress to the import handler. Runs on the heartbeat thread. A failure is logged at
+   * debug level, since a handler that keeps failing would log the same error every interval.
    */
   private void sendProgress(JobTelemetry telemetry) {
     if (telemetry.endClaimer.get() != null) {
@@ -475,12 +457,7 @@ final class TransferSignals {
             .build();
     SignalRequest request =
         telemetry.request(JobLifeCycle.IN_PROGRESS()).setProgressTelemetry(progress).build();
-    if (telemetry.exportOptedIn) {
-      trySendProgress(telemetry.exportHandler, request, telemetry.exportAuthData);
-    }
-    if (telemetry.importOptedIn) {
-      trySendProgress(telemetry.importHandler, request, telemetry.importAuthData);
-    }
+    trySendProgress(telemetry.importHandler, request, telemetry.importAuthData);
   }
 
   private void trySendProgress(
@@ -492,7 +469,7 @@ final class TransferSignals {
     }
   }
 
-  /** Stops the heartbeat, then builds the End request for the handlers that opt in. */
+  /** Stops the heartbeat, then builds the import handler's End request. */
   private SignalRequest endRequest(JobTelemetry telemetry, JobLifeCycle endStatus) {
     telemetry.stopHeartbeat();
     SignalRequest.Builder request = telemetry.request(endStatus);
@@ -513,27 +490,8 @@ final class TransferSignals {
     return request.build();
   }
 
-  /** Sends End to one handler: today's request, or the telemetry one if the handler opts in. */
-  private void sendEndTo(
-      Provider<SignalHandler> handler,
-      boolean optedIn,
-      SignalRequest request,
-      @Nullable SignalRequest withTelemetry,
-      AuthData authData) {
-    if (!optedIn) {
-      trySend(handler, request, authData);
-    } else if (withTelemetry != null) {
-      trySend(handler, withTelemetry, authData);
-    }
-  }
-
-  private void sendToOptedIn(JobTelemetry telemetry, SignalRequest request) {
-    if (telemetry.exportOptedIn) {
-      trySend(telemetry.exportHandler, request, telemetry.exportAuthData);
-    }
-    if (telemetry.importOptedIn) {
-      trySend(telemetry.importHandler, request, telemetry.importAuthData);
-    }
+  private void sendToImporter(JobTelemetry telemetry, SignalRequest request) {
+    trySend(telemetry.importHandler, request, telemetry.importAuthData);
   }
 
   /**
@@ -578,7 +536,7 @@ final class TransferSignals {
         .setImportingService(JobMetadata.getImportService());
   }
 
-  /** Which path claimed End for the handlers that opt in. */
+  /** Which path claimed End for the import handler. */
   private enum EndClaimer {
     JOB,
     CANCEL_WATCHER
@@ -590,12 +548,8 @@ final class TransferSignals {
     private final String dataType;
     private final String exportingService;
     private final String importingService;
-    private final Provider<SignalHandler> exportHandler;
-    private final AuthData exportAuthData;
-    private final boolean exportOptedIn;
     private final Provider<SignalHandler> importHandler;
     private final AuthData importAuthData;
-    private final boolean importOptedIn;
     private final TelemetryCounters counters;
     private final StartTelemetry startTelemetry;
     /** Set by whichever claims End first: the worker's {@code finally} or the cancel watcher. */
@@ -608,12 +562,8 @@ final class TransferSignals {
 
     private JobTelemetry(
         UUID jobId,
-        SignalHandler exportHandler,
-        AuthData exportAuthData,
-        boolean exportOptedIn,
         SignalHandler importHandler,
         AuthData importAuthData,
-        boolean importOptedIn,
         TelemetryCounters counters,
         StartTelemetry startTelemetry) {
       this.jobId = jobId.toString();
@@ -622,12 +572,8 @@ final class TransferSignals {
       this.dataType = JobMetadata.getDataType().getDataType();
       this.exportingService = JobMetadata.getExportService();
       this.importingService = JobMetadata.getImportService();
-      this.exportHandler = () -> exportHandler;
-      this.exportAuthData = exportAuthData;
-      this.exportOptedIn = exportOptedIn;
       this.importHandler = () -> importHandler;
       this.importAuthData = importAuthData;
-      this.importOptedIn = importOptedIn;
       this.counters = counters;
       this.startTelemetry = startTelemetry;
     }
