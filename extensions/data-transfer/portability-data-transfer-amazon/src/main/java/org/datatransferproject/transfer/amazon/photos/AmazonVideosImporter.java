@@ -81,7 +81,7 @@ public class AmazonVideosImporter
     for (VideoAlbum album : data.getAlbums()) {
       executor.executeAndSwallowIOExceptions(
           album.getId(), album.getName(),
-          () -> importHelper.createAlbum(client, album.getId(), album.getName()));
+          () -> importHelper.createAlbum(client, jobId, album.getId(), album.getName()));
     }
 
     for (VideoModel video : data.getVideos()) {
