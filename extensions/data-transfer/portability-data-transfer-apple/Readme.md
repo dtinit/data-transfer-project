@@ -3,8 +3,21 @@ This folder contains the extension implementation for the [Apple](https://www.ap
 
 ## Data Supported
 
- - Photos Import
+ - Photos Import (JPEG, PNG, HEIC/HEIF, GIF, WebP, TIFF, RAW, and others)
+ - Videos Import (MP4, MOV, and others)
  - Music Playlists Import
+
+## Transfer Limits
+
+| Parameter | Limit |
+|---|---|
+| Max file size | 50 GB (`ApplePhotosConstants.maxMediaTransferByteSize`) |
+| Upload chunk size | 50 MB (`ApplePhotosConstants.contentRequestLength`) |
+| Albums per API batch | 50 (`ApplePhotosConstants.maxNewAlbumRequests`) |
+| Photos/videos per API batch | 50 (`ApplePhotosConstants.maxNewMediaRequests`) |
+
+See [`Documentation/PhotoTransferExpectations.md`](../../../../Documentation/PhotoTransferExpectations.md)
+for full guidance on expected file types, file sizes, and total job sizes.
  
 ## Current State
 
