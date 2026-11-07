@@ -211,6 +211,17 @@ class ServerLog:
     def tail(self, lines: int = 40) -> str:
         return "\n".join(self.read().splitlines()[-lines:])
 
+    def count_matches(self, pattern: str) -> int:
+        """How many lines match ``pattern``.
+
+        Exists for the copy-iteration assertion: PortabilityAbstractInMemoryDataCopier
+        logs "Copy iteration: N" once per recursion, so counting those lines is how
+        an adapter proves the copier actually recursed rather than returning
+        everything in one pass. Without it, an under-seeded fixture passes green
+        while covering none of what it claims to.
+        """
+        return len(re.findall(pattern, self.read()))
+
     def assert_contains(self, needle: str, why: str) -> None:
         """Assert on the log without pytest dumping all of it into the report.
 

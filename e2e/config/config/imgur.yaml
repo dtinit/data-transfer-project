@@ -1,0 +1,15 @@
+# Points the Imgur adapter at the WireMock stand-in instead of api.imgur.com.
+#
+# The doubled `config/` in the path is not a typo: e2e/config is what goes on
+# the classpath (see the `dtp` service in docker-compose.yml), and the resource
+# TransferServiceConfig.getForService("Imgur") looks up is `config/imgur.yaml`.
+#
+# This is additive -- the demo-server jar ships no imgur.yaml -- so it is inert
+# for every other adapter, which is why the `dtp` service can prepend this
+# directory unconditionally. Shadowing would be a different matter: config
+# resolution is first-match-per-filename, so an imgur.yaml here would replace a
+# jar one wholesale rather than merging with it.
+serviceConfig:
+  baseUrl: "http://wiremock-imgur:8080/3"
+  authUrl: "http://wiremock-imgur:8080/oauth2/authorize"
+  tokenUrl: "http://wiremock-imgur:8080/oauth2/token"
