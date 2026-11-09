@@ -34,7 +34,6 @@ import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.cloud.storage.TemporaryPerJobDataStore;
 import org.datatransferproject.spi.transfer.idempotentexecutor.IdempotentImportExecutor;
 import org.datatransferproject.spi.transfer.provider.ImportResult;
-import org.datatransferproject.spi.transfer.types.DestinationMemoryFullException;
 import org.datatransferproject.transfer.JobMetadata;
 import org.datatransferproject.transfer.amazon.photos.model.AmazonPhotosNode;
 import org.datatransferproject.types.common.models.FavoriteInfo;
@@ -50,6 +49,7 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.Date;
@@ -171,7 +171,7 @@ public class AmazonPhotosImporterTest {
           java.util.concurrent.Callable<?> callable = invocation.getArgument(2);
           return callable.call();
         });
-    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any()))
+    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any(), any()))
         .thenReturn(new org.datatransferproject.transfer.amazon.photos.model.AmazonPhotosNode());
 
     importer.importItem(jobId, executor, authData, resource);
@@ -231,7 +231,7 @@ public class AmazonPhotosImporterTest {
           java.util.concurrent.Callable<?> callable = invocation.getArgument(2);
           return callable.call();
         });
-    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any()))
+    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any(), any()))
         .thenReturn(new org.datatransferproject.transfer.amazon.photos.model.AmazonPhotosNode());
 
     importer.importItem(jobId, executor, authData, resource);
@@ -313,7 +313,7 @@ public class AmazonPhotosImporterTest {
     importer.importItem(jobId, executor, authData, resource);
 
     verify(client, never())
-        .uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any());
+        .uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any(), any());
   }
 
   // ---------------------------------------------------------------------------
@@ -362,11 +362,11 @@ public class AmazonPhotosImporterTest {
   }
 
   // ---------------------------------------------------------------------------
-  // Storage-quota classification -> terminal DestinationMemoryFullException.
+  // Storage-quota classification -> non-terminal IOException.
   // ---------------------------------------------------------------------------
 
   @Test
-  void importItem_noActiveSubscription_throwsDestinationMemoryFull() throws Exception {
+  void importItem_noActiveSubscription_throwsIoException() throws Exception {
     PhotoModel photo = new PhotoModel("pic.jpg", "tempkey",
         null, "image/jpeg", "p1", null, true, (Date) null);
     PhotosContainerResource resource = new PhotosContainerResource(
@@ -383,11 +383,14 @@ public class AmazonPhotosImporterTest {
           java.util.concurrent.Callable<?> callable = invocation.getArgument(2);
           return callable.call();
         });
-    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any()))
+    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any(), any()))
         .thenThrow(new AmazonPhotosApiException(403, "NoActiveSubscriptionFound", "no subscription"));
 
-    assertThrows(DestinationMemoryFullException.class,
+    IOException ex = assertThrows(IOException.class,
         () -> importer.importItem(jobId, executor, authData, resource));
+
+    // Retry config keys off this message, so keep it asserted.
+    assertEquals("Amazon Photos storage quota exceeded", ex.getMessage());
   }
 
   // ---------------------------------------------------------------------------
@@ -402,7 +405,7 @@ public class AmazonPhotosImporterTest {
 
     AmazonPhotosNode node = new AmazonPhotosNode();
     node.setId("amazon-album-1");
-    when(client.createAlbum(any())).thenReturn(node);
+    when(client.createAlbum(any(), any())).thenReturn(node);
     executorRunsCallable();
 
     try (MockedStatic<JobMetadata> jm = mockStatic(JobMetadata.class)) {
@@ -411,7 +414,7 @@ public class AmazonPhotosImporterTest {
     }
 
     org.mockito.ArgumentCaptor<String> name = org.mockito.ArgumentCaptor.forClass(String.class);
-    verify(client).createAlbum(name.capture());
+    verify(client).createAlbum(name.capture(), any());
     assertEquals("Vacation" + AmazonImportHelper.IMPORTED_SUFFIX + "Google", name.getValue());
   }
 
@@ -432,12 +435,12 @@ public class AmazonPhotosImporterTest {
     AmazonPhotosNode node = new AmazonPhotosNode();
     node.setId("uploaded-1");
     when(client.uploadContent(eq("pic.jpg"), any(), any(), any(Long.class),
-        eq(uploaded.toInstant().toString()), eq(true), eq(null))).thenReturn(node);
+        eq(uploaded.toInstant().toString()), eq(true), eq(null), any())).thenReturn(node);
 
     importer.importItem(jobId, executor, authData, resource);
 
     verify(client).uploadContent(eq("pic.jpg"), any(), any(), any(Long.class),
-        eq(uploaded.toInstant().toString()), eq(true), eq(null));
+        eq(uploaded.toInstant().toString()), eq(true), eq(null), any());
     // inTempStore == true -> temp data is cleaned up after upload.
     verify(dataStore).removeData(jobId, "tempkey");
   }
@@ -451,14 +454,14 @@ public class AmazonPhotosImporterTest {
 
     stubDownload();
     executorRunsCallable();
-    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any()))
+    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any(), any()))
         .thenThrow(new AmazonPhotosApiException(409, "DuplicatesConflictError", "dup"));
 
     // Duplicate is swallowed as success -> importItem completes without throwing.
     ImportResult result = importer.importItem(jobId, executor, authData, resource);
 
     assertEquals(ImportResult.OK, result);
-    verify(client).uploadContent(eq("pic.jpg"), any(), any(), any(Long.class), any(), any(Boolean.class), any());
+    verify(client).uploadContent(eq("pic.jpg"), any(), any(), any(Long.class), any(), any(Boolean.class), any(), any());
   }
 
   @Test
@@ -470,7 +473,7 @@ public class AmazonPhotosImporterTest {
 
     stubDownload();
     executorRunsCallable();
-    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any()))
+    when(client.uploadContent(any(), any(), any(), any(Long.class), any(), any(Boolean.class), any(), any()))
         .thenThrow(new AmazonPhotosApiException(403, "ForbiddenAccess", "denied"));
 
     assertThrows(AmazonPhotosApiException.class,

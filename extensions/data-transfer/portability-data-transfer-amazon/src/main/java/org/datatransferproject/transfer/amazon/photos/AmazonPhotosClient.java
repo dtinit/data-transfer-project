@@ -35,7 +35,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.security.MessageDigest;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -74,6 +77,7 @@ public class AmazonPhotosClient implements AmazonPhotosInterface {
   private static final String PARAM_PARENT_NODE_ID = "visualCollectionParentNodeId";
   private static final String PARAM_FALLBACK_CONTENT_DATE = "fallbackContentDate";
   private static final String PARAM_FAVORITE = "isFavorite";
+  private static final String PARAM_LABELS = "labels";
   private static final String KIND_FILE = "FILE";
   private static final String KIND_ALBUM = "VISUAL_COLLECTION";
   private static final String CONFLICT_RESOLUTION_RENAME = "RENAME";
@@ -183,10 +187,11 @@ public class AmazonPhotosClient implements AmazonPhotosInterface {
    * Creates an album in Amazon Photos.
    */
   @Override
-  public AmazonPhotosNode createAlbum(String name) throws IOException {
+  public AmazonPhotosNode createAlbum(String name, String jobId) throws IOException {
     ensureEndpointsResolved();
     return executeWithTokenRefresh(token -> {
-      CreateNodeRequest nodeRequest = new CreateNodeRequest(name, KIND_ALBUM);
+      CreateNodeRequest nodeRequest = new CreateNodeRequest(
+          name, KIND_ALBUM, null, buildJobLabels(jobId).orElse(null));
 
       HttpUrl url = HttpUrl.parse(metadataUrl + NODES_PATH).newBuilder()
           .addQueryParameter(PARAM_RESOURCE_VERSION, RESOURCE_VERSION)
@@ -217,16 +222,18 @@ public class AmazonPhotosClient implements AmazonPhotosInterface {
   public AmazonPhotosNode uploadContent(String fileName, File fileContent,
                                       String md5Hex, long fileSize, String fallbackContentDate,
                                       boolean isFavorite,
-                                      String albumId) throws IOException {
+                                      String albumId, String jobId) throws IOException {
     ensureEndpointsResolved();
     if (fileSize > multipartThreshold) {
-      return uploadMultipart(fileName, fileContent, md5Hex, fileSize, fallbackContentDate, isFavorite, albumId);
+      return uploadMultipart(fileName, fileContent, md5Hex, fileSize, fallbackContentDate,
+          isFavorite, albumId, jobId);
     }
     return executeWithTokenRefresh(token -> {
       HttpUrl url = buildUploadUrl(fileName, fileSize, fallbackContentDate, isFavorite, albumId);
 
       String metadataJson = objectMapper.writeValueAsString(
-          new CreateNodeRequest(fileName, KIND_FILE, CONFLICT_RESOLUTION_RENAME));
+          new CreateNodeRequest(fileName, KIND_FILE, CONFLICT_RESOLUTION_RENAME,
+              buildJobLabels(jobId).orElse(null)));
 
       RequestBody multipartBody = new okhttp3.MultipartBody.Builder()
           .setType(okhttp3.MultipartBody.FORM)
@@ -252,9 +259,10 @@ public class AmazonPhotosClient implements AmazonPhotosInterface {
 
   private AmazonPhotosNode uploadMultipart(String fileName, File fileContent,
                                            String md5Hex, long fileSize, String fallbackContentDate,
-                                           boolean isFavorite, String albumId) throws IOException {
+                                           boolean isFavorite, String albumId, String jobId)
+      throws IOException {
     MultipartUploadInitResponse init = initiateMultipartUpload(
-        fileName, md5Hex, fileSize, fallbackContentDate, isFavorite, albumId);
+        fileName, md5Hex, fileSize, fallbackContentDate, isFavorite, albumId, jobId);
     uploadAllParts(fileContent, fileSize, init);
     completeMultipartUpload(init);
     pollUntilUploadComplete(init.getNodeId(), init.getUploadId());
@@ -267,7 +275,7 @@ public class AmazonPhotosClient implements AmazonPhotosInterface {
 
   private MultipartUploadInitResponse initiateMultipartUpload(
       String fileName, String md5Hex, long fileSize, String fallbackContentDate,
-      boolean isFavorite, String albumId) throws IOException {
+      boolean isFavorite, String albumId, String jobId) throws IOException {
     return executeWithTokenRefresh(token -> {
       HttpUrl.Builder initUrl = HttpUrl.parse(uploadServiceUrl + MULTIPART_UPLOAD_PATH).newBuilder()
           .addQueryParameter(PARAM_NAME, fileName)
@@ -283,6 +291,8 @@ public class AmazonPhotosClient implements AmazonPhotosInterface {
       if (isFavorite) {
         initUrl.addQueryParameter(PARAM_FAVORITE, "true");
       }
+      buildJobLabels(jobId).ifPresent(labels ->
+          labels.forEach(label -> initUrl.addQueryParameter(PARAM_LABELS, label)));
 
       Request initRequest = new Request.Builder()
           .url(initUrl.build())
@@ -565,6 +575,15 @@ public class AmazonPhotosClient implements AmazonPhotosInterface {
       builder.addQueryParameter(PARAM_FAVORITE, "true");
     }
     return builder.build();
+  }
+
+  /**
+   * Returns the job id as a single-element label list, or empty when there is no job id. These
+   * labels can be associated with the data we import. Never returns null, so callers cannot
+   * dereference a missing value; requests omit labels rather than sending an empty array.
+   */
+  private static Optional<List<String>> buildJobLabels(String jobId) {
+    return Optional.ofNullable(jobId).map(Collections::singletonList);
   }
 
   private static String normalizeUrl(String url) {
