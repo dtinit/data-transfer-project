@@ -75,9 +75,13 @@ services:
       # Keep the container from littering the bind-mounted repo with
       # root-owned __pycache__ directories.
       PYTHONDONTWRITEBYTECODE: "1"
-    entrypoint: ["bash", "-c"]
-    command:
-      - "pip install --quiet --root-user-action=ignore -r e2e/driver/requirements.txt && pytest e2e/driver -v -p no:cacheprovider"
+    # Arguments are the suite(s) to run; run.sh passes one per adapter.
+    entrypoint:
+      - bash
+      - -c
+      - "pip install --quiet --root-user-action=ignore -r e2e/driver/requirements.txt && exec pytest -v -p no:cacheprovider \"$$@\""
+      - e2e
+    command: ["e2e/driver/test_offline_demo.py"]
 
 volumes:
   gradle-cache:
