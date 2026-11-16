@@ -31,6 +31,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Stopwatch;
+import com.google.common.util.concurrent.AbstractScheduledService.Scheduler;
 import com.google.inject.Provider;
 import java.io.IOException;
 import java.time.Clock;
@@ -39,6 +40,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -67,6 +69,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mockito;
 
 public class JobProcessorTest {
@@ -511,6 +514,127 @@ public class JobProcessorTest {
         .sendSignal(withState(State.ENDED), any(), any());
     Mockito.verify(importSignalHandler, Mockito.never())
         .sendSignal(withState(State.ENDED), any(), any());
+  }
+
+  @Test
+  public void jobWithErrors_watcherPollsWhileEndGoesOut_leavesTheJobToFinish() throws Exception {
+    initJobMetadata();
+    TelemetryCounters counters = Mockito.mock(TelemetryCounters.class);
+    Mockito.when(copier.getTelemetryCounters()).thenReturn(Optional.of(counters));
+    Mockito.when(copier.getErrors(jobId))
+        .thenReturn(
+            List.of(ErrorDetail.builder().setId("item-1").setTitle("t").setException("e").build()));
+    Mockito.when(importSignalHandler.supportsTelemetry()).thenReturn(true);
+    TransferSignals signals = transferSignals(true);
+    Runnable exit = Mockito.mock(Runnable.class);
+    DtpInternalMetricRecorder watcherMetrics = Mockito.mock(DtpInternalMetricRecorder.class);
+    JobCancelWatchingService watcher =
+        new JobCancelWatchingService(
+            jobStore,
+            Scheduler.newFixedDelaySchedule(0, 1, TimeUnit.HOURS),
+            Mockito.mock(Monitor.class),
+            watcherMetrics,
+            signals,
+            exit);
+    // The watcher polls right after the job writes ERROR to the store, and sees it.
+    CountDownLatch watcherSawError = new CountDownLatch(1);
+    Mockito.when(job.state())
+        .thenAnswer(
+            invocation -> {
+              watcherSawError.countDown();
+              return PortabilityJob.State.ERROR;
+            });
+    AtomicReference<CompletableFuture<Void>> watcherRun = new AtomicReference<>();
+    Mockito.doAnswer(
+            invocation -> {
+              watcherRun.set(CompletableFuture.runAsync(watcher::runOneIteration));
+              return null;
+            })
+        .when(jobStore)
+        .markJobAsFinished(jobId, PortabilityJob.State.ERROR);
+    // The opted-in handler is still sending End when the watcher acts, as a handler that waits for
+    // its End to go out can be.
+    Mockito.doAnswer(
+            invocation -> {
+              assertTrue(watcherSawError.await(10, TimeUnit.SECONDS));
+              Thread.sleep(200);
+              return null;
+            })
+        .when(importSignalHandler)
+        .sendSignal(withState(State.ENDED), any(), any());
+    DtpInternalMetricRecorder metrics = Mockito.mock(DtpInternalMetricRecorder.class);
+    JobProcessor jobProcessor =
+        new JobProcessor(
+            jobStore,
+            Mockito.mock(JobHooks.class),
+            objectMapper,
+            copier,
+            decryptionService,
+            signals,
+            Mockito.mock(Monitor.class),
+            metrics);
+
+    jobProcessor.processJob();
+    watcherRun.get().get(10, TimeUnit.SECONDS);
+
+    // The watcher left the job to finish, rather than handling an errored job and stopping the
+    // worker as soon as End was out.
+    Mockito.verify(exit, Mockito.never()).run();
+    Mockito.verify(jobStore, Mockito.never()).abandonJob(any(), any());
+    Mockito.verifyNoInteractions(watcherMetrics);
+    Mockito.verify(metrics).finishedJob(any(), any(), any(), eq(false), any());
+  }
+
+  @Test
+  public void jobIsMarkedDoneLast_afterEndAndTheJobsMetrics() throws Exception {
+    initJobMetadata();
+    TransferSignals signals = Mockito.spy(transferSignals(false));
+    DtpInternalMetricRecorder metrics = Mockito.mock(DtpInternalMetricRecorder.class);
+    JobProcessor jobProcessor =
+        new JobProcessor(
+            jobStore,
+            Mockito.mock(JobHooks.class),
+            objectMapper,
+            copier,
+            decryptionService,
+            signals,
+            Mockito.mock(Monitor.class),
+            metrics);
+
+    jobProcessor.processJob();
+
+    InOrder order = Mockito.inOrder(signals, jobStore, metrics);
+    order.verify(signals).claimEnd();
+    order.verify(jobStore).markJobAsFinished(eq(jobId), any());
+    order.verify(signals).sendEnd(any(), any(), any(), any());
+    order.verify(metrics).finishedJob(any(), any(), any(), Mockito.anyBoolean(), any());
+    order.verify(signals).jobDone();
+    // Only then: marking it done earlier would let a waiting cancel watcher stop waiting while a
+    // handler is still stuck sending End.
+    Mockito.verify(signals, Mockito.times(1)).jobDone();
+  }
+
+  @Test
+  public void hooksThrow_jobIsStillMarkedDone() throws Exception {
+    initJobMetadata();
+    JobHooks hooks = Mockito.mock(JobHooks.class);
+    Mockito.doThrow(new IllegalStateException("hook bug")).when(hooks).jobFinished(jobId, true);
+    TransferSignals signals = Mockito.spy(transferSignals(false));
+    JobProcessor jobProcessor =
+        new JobProcessor(
+            jobStore,
+            hooks,
+            objectMapper,
+            copier,
+            decryptionService,
+            signals,
+            Mockito.mock(Monitor.class),
+            Mockito.mock(DtpInternalMetricRecorder.class));
+
+    assertThrows(IllegalStateException.class, jobProcessor::processJob);
+
+    // So a cancel watcher waiting for the job to finish doesn't wait out its timeout.
+    Mockito.verify(signals).jobDone();
   }
 
   private TransferSignals transferSignals(boolean telemetryEnabled) {

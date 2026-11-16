@@ -974,6 +974,55 @@ class TransferSignalsTest {
     assertNull(onlyRequestTo(importHandler, importAuthData).startTelemetry().recurringJobId());
   }
 
+  @Test
+  void jobIsFinishing_onceItsFinallyBlockClaimsEnd() {
+    TransferSignals signals = signals(false, Optional.empty(), NO_PROGRESS);
+    assertFalse(signals.isJobFinishing());
+
+    signals.claimEnd();
+
+    assertTrue(signals.isJobFinishing());
+  }
+
+  @Test
+  void awaitJobDone_returnsTrue_onceTheJobIsDone() throws Exception {
+    TransferSignals signals = signals(false, Optional.empty(), NO_PROGRESS);
+    signals.claimEnd();
+    CompletableFuture<Boolean> waiting = CompletableFuture.supplyAsync(signals::awaitJobDone);
+
+    signals.jobDone();
+
+    assertTrue(waiting.get(10, TimeUnit.SECONDS));
+  }
+
+  @Test
+  void awaitJobDone_returnsFalse_afterTheTimeout_ifTheJobIsntDone() {
+    Duration cancelWait = Duration.ofMillis(200);
+    TransferSignals signals = telemetrySignals(cancelWait);
+    signals.claimEnd();
+    Stopwatch stopwatch = Stopwatch.createStarted();
+
+    assertFalse(signals.awaitJobDone());
+
+    assertTrue(stopwatch.elapsed().compareTo(cancelWait) >= 0);
+  }
+
+  @Test
+  void awaitJobDone_returnsAtOnce_beforeTheJobIsFinishing() {
+    TransferSignals signals = telemetrySignals(Duration.ofHours(1));
+
+    assertTrue(signals.awaitJobDone());
+  }
+
+  @Test
+  void jobDone_beforeClaimEnd_doesNothing() {
+    TransferSignals signals = signals(false, Optional.empty(), NO_PROGRESS);
+
+    signals.jobDone();
+
+    assertFalse(signals.isJobFinishing());
+  }
+
   private TransferSignals telemetrySignals() {
     return signals(true, Optional.of(LIFETIME), NO_PROGRESS);
   }
