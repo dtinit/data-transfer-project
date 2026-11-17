@@ -84,10 +84,12 @@ public class GoogleOAuthConfig implements OAuth2Config {
         .put(CALENDAR, ImmutableSet.of("https://www.googleapis.com/auth/calendar"))
         .put(CONTACTS, ImmutableSet.of("https://www.googleapis.com/auth/contacts"))
         .put(MAIL, ImmutableSet.of("https://www.googleapis.com/auth/gmail.modify"))
+        // Google Photos imports (PHOTOS, VIDEOS, MEDIA) only add albums and media items, which
+        // appendonly allows.
         .put(PHOTOS, ImmutableSet.of("https://www.googleapis.com/auth/photoslibrary.appendonly"))
         .put(TASKS, ImmutableSet.of("https://www.googleapis.com/auth/tasks"))
-        .put(VIDEOS, ImmutableSet.of("https://www.googleapis.com/auth/photoslibrary"))
-        .put(MEDIA, ImmutableSet.of("https://www.googleapis.com/auth/photoslibrary"))
+        .put(VIDEOS, ImmutableSet.of("https://www.googleapis.com/auth/photoslibrary.appendonly"))
+        .put(MEDIA, ImmutableSet.of("https://www.googleapis.com/auth/photoslibrary.appendonly"))
         .put(MUSIC, ImmutableSet.of("https://www.googleapis.com/auth/music"))
 	.build();
   }
