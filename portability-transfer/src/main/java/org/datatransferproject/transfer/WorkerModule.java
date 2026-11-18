@@ -30,7 +30,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.OptionalLong;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import org.datatransferproject.api.launcher.DelegatingExtensionContext;
 import org.datatransferproject.api.launcher.DtpInternalMetricRecorder;
 import org.datatransferproject.api.launcher.ExtensionContext;
@@ -307,5 +309,73 @@ final class WorkerModule extends FlagBindingModule {
   @Named("transferSignalEnabled")
   public Boolean transferSignalEnabled() {
     return context.getSetting("transferSignalEnabled", Boolean.TRUE);
+  }
+
+  /**
+   * Whether jobs send transfer telemetry to the signal handlers that opt in. On when it isn't set;
+   * set it to false to send none. If it's set to anything other than true, it's off. Handlers that
+   * don't opt in never get telemetry. Also needs {@code transferSignalEnabled}.
+   */
+  @Provides
+  @Named("transferTelemetryEnabled")
+  public Boolean transferTelemetryEnabled() {
+    return onUnlessTurnedOff(context.getSetting("transferTelemetryEnabled", null));
+  }
+
+  /**
+   * How often, in milliseconds, a job sends Progress to the handlers that opt in to telemetry.
+   * Empty, or not a positive number, means every 15 minutes. Other values are kept between 1
+   * minute and 15 minutes.
+   */
+  @Provides
+  @Named("telemetryHeartbeatInterval")
+  public OptionalLong telemetryHeartbeatInterval() {
+    return toOptionalLong(context.getSetting("telemetryHeartbeatInterval", null));
+  }
+
+  /**
+   * How long, in seconds, this deployment lets a worker run before stopping it. Optional. If it's
+   * set, telemetry tells the destination this deadline, so it can tell a job that died from one
+   * still running. If it isn't, the destination relies on Progress signals instead.
+   */
+  @Provides
+  @Named("maxWorkerLifetimeSeconds")
+  public OptionalLong maxWorkerLifetimeSeconds() {
+    return toOptionalLong(context.getSetting("maxWorkerLifetimeSeconds", null));
+  }
+
+  /**
+   * Reads a setting that's on by default: on when it isn't set, and otherwise on only if it's true.
+   * YAML can give it as a Boolean or a String, so a quoted or mistyped value turns it off instead
+   * of stopping the worker at startup.
+   */
+  @VisibleForTesting
+  static boolean onUnlessTurnedOff(@Nullable Object value) {
+    if (value == null) {
+      return true;
+    }
+    if (value instanceof Boolean) {
+      return (Boolean) value;
+    }
+    return value instanceof String && ((String) value).trim().equalsIgnoreCase("true");
+  }
+
+  /**
+   * Reads a whole-number setting. YAML can give it as an Integer, a Long or a String; anything that
+   * isn't a number reads as empty.
+   */
+  @VisibleForTesting
+  static OptionalLong toOptionalLong(@Nullable Object value) {
+    if (value instanceof Number) {
+      return OptionalLong.of(((Number) value).longValue());
+    }
+    if (value instanceof String) {
+      try {
+        return OptionalLong.of(Long.parseLong(((String) value).trim()));
+      } catch (NumberFormatException e) {
+        return OptionalLong.empty();
+      }
+    }
+    return OptionalLong.empty();
   }
 }

@@ -21,7 +21,10 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,6 +39,7 @@ import org.datatransferproject.transfer.microsoft.driveModels.MicrosoftSpecialFo
 import org.datatransferproject.types.common.ExportInformation;
 import org.datatransferproject.types.common.PaginationData;
 import org.datatransferproject.types.common.StringPaginationToken;
+import org.datatransferproject.types.common.models.FavoriteInfo;
 import org.datatransferproject.types.common.models.IdOnlyContainerResource;
 import org.datatransferproject.types.common.models.media.MediaContainerResource;
 import org.datatransferproject.types.common.models.media.MediaAlbum;
@@ -165,7 +169,8 @@ public class MicrosoftMediaExporter
 
     PhotoModel photo =
         new PhotoModel(driveItem.name, driveItem.downloadUrl, driveItem.description,
-            driveItem.file.mimeType, driveItem.id, albumId.orElse(null), false /*inTempStore*/);
+            driveItem.file.mimeType, driveItem.id, albumId.orElse(null), false /*inTempStore*/,
+            extractSha1(driveItem), extractUploadedTime(driveItem), FavoriteInfo.unknown());
     monitor.debug(
         () -> String.format("%s: Microsoft OneDrive exporting photo: %s", jobId, photo));
     return photo;
@@ -179,10 +184,44 @@ public class MicrosoftMediaExporter
 
     VideoModel video =
         new VideoModel(driveItem.name, driveItem.downloadUrl, driveItem.description,
-            driveItem.file.mimeType, driveItem.id, albumId.orElse(null), false /*inTempStore*/, null);
+            driveItem.file.mimeType, driveItem.id, albumId.orElse(null), false /*inTempStore*/,
+            extractSha1(driveItem), extractUploadedTime(driveItem), FavoriteInfo.unknown());
     monitor.debug(
         () -> String.format("%s: Microsoft OneDrive exporting video: %s", jobId, video));
     return video;
+  }
+
+  private static String extractSha1(MicrosoftDriveItem driveItem) {
+    if (driveItem.file == null
+        || driveItem.file.hashes == null
+        || Strings.isNullOrEmpty(driveItem.file.hashes.sha1Hash)) {
+      return null;
+    }
+    // Importers decode sha1 as hex, so pass on only well-formed values.
+    String sha1 = driveItem.file.hashes.sha1Hash.trim();
+    return sha1.matches("[0-9a-fA-F]{40}") ? sha1 : null;
+  }
+
+  /**
+   * Returns the time to export as uploadedTime. That's when the photo or video was taken, from the
+   * photo facet's takenDateTime, which OneDrive reads from the file's own metadata. If that's
+   * missing or malformed, it's when the item was uploaded to OneDrive, from createdDateTime.
+   * Returns null if neither is a valid date-time.
+   */
+  private static Date extractUploadedTime(MicrosoftDriveItem driveItem) {
+    Date takenTime = driveItem.photo == null ? null : parseDateTime(driveItem.photo.takenDateTime);
+    return takenTime != null ? takenTime : parseDateTime(driveItem.createdDateTime);
+  }
+
+  private static Date parseDateTime(String dateTime) {
+    if (Strings.isNullOrEmpty(dateTime)) {
+      return null;
+    }
+    try {
+      return Date.from(OffsetDateTime.parse(dateTime.trim()).toInstant());
+    } catch (DateTimeParseException e) {
+      return null;
+    }
   }
 
   private PaginationData setNextPageToken(MicrosoftDriveItemsResponse driveItemsResponse) {

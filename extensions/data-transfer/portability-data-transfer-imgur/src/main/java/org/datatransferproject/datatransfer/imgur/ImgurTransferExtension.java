@@ -19,9 +19,12 @@ package org.datatransferproject.datatransfer.imgur;
 import static org.datatransferproject.types.common.models.DataVertical.PHOTOS;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import java.util.Optional;
 import okhttp3.OkHttpClient;
 import org.datatransferproject.api.launcher.ExtensionContext;
 import org.datatransferproject.api.launcher.Monitor;
@@ -32,11 +35,14 @@ import org.datatransferproject.types.common.models.DataVertical;
 import org.datatransferproject.spi.transfer.extension.TransferExtension;
 import org.datatransferproject.spi.transfer.provider.Exporter;
 import org.datatransferproject.spi.transfer.provider.Importer;
+import org.datatransferproject.types.transfer.serviceconfig.TransferServiceConfig;
 
 /** Extension for transferring Imgur data */
 public class ImgurTransferExtension implements TransferExtension {
   private static final String SERVICE_ID = "Imgur";
-  private static final String BASE_URL = "https://api.imgur.com/3";
+
+  @VisibleForTesting
+  static final String DEFAULT_BASE_URL = "https://api.imgur.com/3";
 
   private boolean initialized = false;
 
@@ -58,10 +64,26 @@ public class ImgurTransferExtension implements TransferExtension {
     OkHttpClient client = context.getService(OkHttpClient.class);
     TemporaryPerJobDataStore jobStore = context.getService(TemporaryPerJobDataStore.class);
 
-    exporter = new ImgurPhotosExporter(monitor, client, mapper, jobStore, BASE_URL);
-    importer = new ImgurPhotosImporter(monitor, client, mapper, jobStore, BASE_URL);
+    String baseUrl = baseUrl(context.getService(TransferServiceConfig.class));
+
+    exporter = new ImgurPhotosExporter(monitor, client, mapper, jobStore, baseUrl);
+    importer = new ImgurPhotosImporter(monitor, client, mapper, jobStore, baseUrl);
 
     initialized = true;
+  }
+
+  /**
+   * The API root, from {@code config/imgur.yaml} if one is on the classpath.
+   *
+   * <p>Follows the convention Flickr and Deezer already use, so a deployer can point the adapter at
+   * a staging endpoint or a test double without rebuilding. Defaults to Imgur's own.
+   */
+  @VisibleForTesting
+  static String baseUrl(TransferServiceConfig serviceConfig) {
+    Optional<JsonNode> config = serviceConfig.getServiceConfig();
+    return config
+        .map(node -> node.path("baseUrl").asText(DEFAULT_BASE_URL))
+        .orElse(DEFAULT_BASE_URL);
   }
 
   @Override

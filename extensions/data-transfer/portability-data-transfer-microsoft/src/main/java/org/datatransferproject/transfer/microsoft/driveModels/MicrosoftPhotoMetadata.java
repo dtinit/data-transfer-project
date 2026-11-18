@@ -44,4 +44,7 @@ public class MicrosoftPhotoMetadata {
 
   @JsonProperty("iso")
   public int iso;
+
+  @JsonProperty("takenDateTime")
+  public String takenDateTime;
 }

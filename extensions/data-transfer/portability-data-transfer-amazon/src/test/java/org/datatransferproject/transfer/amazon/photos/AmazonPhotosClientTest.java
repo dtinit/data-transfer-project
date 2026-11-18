@@ -99,7 +99,7 @@ public class AmazonPhotosClientTest {
     server.enqueue(new MockResponse()
         .setBody("{\"id\":\"node123\",\"name\":\"My Album\",\"kind\":\"VISUAL_COLLECTION\"}"));
 
-    AmazonPhotosNode node = client.createAlbum("My Album");
+    AmazonPhotosNode node = client.createAlbum("My Album", null);
 
     assertEquals("node123", node.getId());
     assertEquals("My Album", node.getName());
@@ -121,7 +121,7 @@ public class AmazonPhotosClientTest {
     server.enqueue(new MockResponse()
         .setBody("{\"id\":\"album2\",\"name\":\"Vacation\",\"kind\":\"VISUAL_COLLECTION\"}"));
 
-    AmazonPhotosNode node = client.createAlbum("Vacation");
+    AmazonPhotosNode node = client.createAlbum("Vacation", null);
 
     assertEquals("album2", node.getId());
 
@@ -141,7 +141,7 @@ public class AmazonPhotosClientTest {
 
     AmazonPhotosNode node = client.uploadContent(
         "test.jpg", tempFile, "md5hex", tempFile.length(),
-        "2024-01-15T10:00:00Z", false, null);
+        "2024-01-15T10:00:00Z", false, null, null);
 
     assertEquals("photo1", node.getId());
 
@@ -163,7 +163,7 @@ public class AmazonPhotosClientTest {
     server.enqueue(new MockResponse()
         .setBody("{\"id\":\"p1\",\"name\":\"pic.png\",\"kind\":\"FILE\"}"));
 
-    client.uploadContent("pic.png", tempFile, "md5", 1, null, false, "album1");
+    client.uploadContent("pic.png", tempFile, "md5", 1, null, false, "album1", null);
 
     RecordedRequest request = server.takeRequest();
     assertTrue(request.getPath().contains("visualCollectionParentNodeId=album1"));
@@ -176,7 +176,7 @@ public class AmazonPhotosClientTest {
     server.enqueue(new MockResponse()
         .setBody("{\"id\":\"f1\",\"name\":\"fav.jpg\",\"kind\":\"FILE\"}"));
 
-    client.uploadContent("fav.jpg", tempFile, "md5", 1, null, true, null);
+    client.uploadContent("fav.jpg", tempFile, "md5", 1, null, true, null, null);
 
     RecordedRequest request = server.takeRequest();
     assertTrue(request.getPath().contains("isFavorite=true"));
@@ -191,7 +191,7 @@ public class AmazonPhotosClientTest {
         .setBody("{\"access_token\":\"new-token\",\"token_type\":\"bearer\"}"));
     server.enqueue(new MockResponse().setBody("{\"id\":\"x\",\"name\":\"test\"}"));
 
-    client.createAlbum("test");
+    client.createAlbum("test", null);
 
     server.takeRequest(); // 401
     server.takeRequest(); // token refresh
@@ -206,7 +206,7 @@ public class AmazonPhotosClientTest {
     server.enqueue(new MockResponse().setResponseCode(500).setBody("{\"message\":\"ISE\"}"));
 
     IOException ex = assertThrows(IOException.class,
-        () -> client.createAlbum("test"));
+        () -> client.createAlbum("test", null));
 
     assertTrue(ex.getMessage().contains("500"));
   }
@@ -219,7 +219,7 @@ public class AmazonPhotosClientTest {
         "{\"errorCode\":\"DuplicatesConflictError\",\"errorDetails\":{\"conflictNodeIds\":[\"existingId\"]}}"));
 
     IOException ex = assertThrows(IOException.class,
-        () -> client.uploadContent("dup.jpg", tempFile, "md5", 1, null, false, "album1"));
+        () -> client.uploadContent("dup.jpg", tempFile, "md5", 1, null, false, "album1", null));
 
     assertTrue(ex.getMessage().contains("409"));
     assertTrue(ex.getMessage().contains("DuplicatesConflictError"));
@@ -256,7 +256,7 @@ public class AmazonPhotosClientTest {
     server.enqueue(new MockResponse().setResponseCode(401).setBody("Unauthorized"));
 
     IOException ex = assertThrows(IOException.class,
-        () -> client.createAlbum("test"));
+        () -> client.createAlbum("test", null));
 
     assertTrue(ex.getMessage().contains("Token refresh failed"));
   }
@@ -268,7 +268,7 @@ public class AmazonPhotosClientTest {
     server.enqueue(new MockResponse().setResponseCode(403).setBody("{\"message\":\"Forbidden\"}"));
 
     IOException ex = assertThrows(IOException.class,
-        () -> client.createAlbum("test"));
+        () -> client.createAlbum("test", null));
 
     assertTrue(ex.getMessage().contains("403"));
   }
@@ -327,7 +327,7 @@ public class AmazonPhotosClientTest {
 
     AmazonPhotosNode node = client.uploadContent(
         "video.mp4", file, "md5hex", file.length(),
-        "2024-01-15T10:00:00Z", false, "album-1");
+        "2024-01-15T10:00:00Z", false, "album-1", null);
 
     assertEquals("node-mp1", node.getId());
 
@@ -372,7 +372,7 @@ public class AmazonPhotosClientTest {
 
     AmazonPhotosNode node = client.uploadContent(
         "clip.mp4", file, "md5hex", file.length(),
-        "2024-01-15T10:00:00Z", false, null);
+        "2024-01-15T10:00:00Z", false, null, null);
 
     assertEquals("node-mp2", node.getId());
 
@@ -402,7 +402,7 @@ public class AmazonPhotosClientTest {
 
     IOException ex = assertThrows(IOException.class, () ->
         client.uploadContent("fail.mp4", file, "md5hex", file.length(),
-            "2024-01-15T10:00:00Z", false, null));
+            "2024-01-15T10:00:00Z", false, null, null));
 
     assertTrue(ex.getMessage().contains("Multipart upload failed"));
   }
@@ -425,7 +425,7 @@ public class AmazonPhotosClientTest {
 
     AmazonPhotosNode node = client.uploadContent(
         "slow.mp4", file, "md5hex", file.length(),
-        "2024-01-15T10:00:00Z", false, null);
+        "2024-01-15T10:00:00Z", false, null, null);
 
     assertEquals("node-mp4", node.getId());
   }
@@ -445,7 +445,7 @@ public class AmazonPhotosClientTest {
 
     IOException ex = assertThrows(IOException.class, () ->
         client.uploadContent("inprog.mp4", file, "md5hex", file.length(),
-            "2024-01-15T10:00:00Z", false, null));
+            "2024-01-15T10:00:00Z", false, null, null));
 
     assertTrue(ex.getMessage().contains("UPLOAD_IN_PROGRESS"));
     assertTrue(ex.getMessage().contains("Multipart upload failed"));
@@ -466,7 +466,7 @@ public class AmazonPhotosClientTest {
 
     IOException ex = assertThrows(IOException.class, () ->
         client.uploadContent("abort.mp4", file, "md5hex", file.length(),
-            "2024-01-15T10:00:00Z", false, null));
+            "2024-01-15T10:00:00Z", false, null, null));
 
     assertTrue(ex.getMessage().contains("UPLOAD_ABORTED"));
   }
@@ -486,7 +486,7 @@ public class AmazonPhotosClientTest {
 
     IOException ex = assertThrows(IOException.class, () ->
         client.uploadContent("expire.mp4", file, "md5hex", file.length(),
-            "2024-01-15T10:00:00Z", false, null));
+            "2024-01-15T10:00:00Z", false, null, null));
 
     assertTrue(ex.getMessage().contains("UPLOAD_EXPIRED"));
   }
@@ -523,7 +523,7 @@ public class AmazonPhotosClientTest {
 
     AmazonPhotosNode node = client.uploadContent(
         "retry.mp4", file, "md5hex", file.length(),
-        "2024-01-15T10:00:00Z", false, null);
+        "2024-01-15T10:00:00Z", false, null, null);
 
     assertEquals("node-mp8", node.getId());
   }
@@ -546,7 +546,7 @@ public class AmazonPhotosClientTest {
 
     IOException ex = assertThrows(IOException.class, () ->
         client.uploadContent("nf.mp4", file, "md5hex", file.length(),
-            "2024-01-15T10:00:00Z", false, null));
+            "2024-01-15T10:00:00Z", false, null, null));
 
     assertTrue(ex.getMessage().contains("404"));
   }
@@ -569,7 +569,7 @@ public class AmazonPhotosClientTest {
 
     AmazonPhotosNode node = client.uploadContent(
         "ms.mp4", file, "md5hex", file.length(),
-        "2024-01-15T10:00:00Z", false, null);
+        "2024-01-15T10:00:00Z", false, null, null);
 
     assertEquals("node-mp10", node.getId());
   }
@@ -581,7 +581,7 @@ public class AmazonPhotosClientTest {
     server.enqueue(new MockResponse().setResponseCode(403).setBody(
         "{\"errorCode\":\"ForbiddenAccess\",\"message\":\"App not authorized\"}"));
 
-    IOException ex = assertThrows(IOException.class, () -> client.createAlbum("test"));
+    IOException ex = assertThrows(IOException.class, () -> client.createAlbum("test", null));
 
     assertTrue(ex.getMessage().contains("403"));
     assertTrue(ex.getMessage().contains("ForbiddenAccess"));
@@ -623,7 +623,7 @@ public class AmazonPhotosClientTest {
 
     server.enqueue(new MockResponse().setResponseCode(500).setBody("not-json"));
 
-    IOException ex = assertThrows(IOException.class, () -> client.createAlbum("test"));
+    IOException ex = assertThrows(IOException.class, () -> client.createAlbum("test", null));
 
     assertTrue(ex.getMessage().contains("500"));
     // Body is not JSON, so errorCode/message cannot be extracted and are omitted.
@@ -648,7 +648,7 @@ public class AmazonPhotosClientTest {
 
     IOException ex = assertThrows(IOException.class, () ->
         client.uploadContent("be.mp4", file, "md5hex", file.length(),
-            "2024-01-15T10:00:00Z", false, null));
+            "2024-01-15T10:00:00Z", false, null, null));
 
     assertTrue(ex.getMessage().contains("did not complete within 2 retries"));
   }
@@ -672,7 +672,7 @@ public class AmazonPhotosClientTest {
 
     IOException ex = assertThrows(IOException.class, () ->
         client.uploadContent("be2.mp4", file, "md5hex", file.length(),
-            "2024-01-15T10:00:00Z", false, null));
+            "2024-01-15T10:00:00Z", false, null, null));
 
     assertTrue(ex.getMessage().contains("progress check did not succeed within 2 retries"));
   }
@@ -692,7 +692,7 @@ public class AmazonPhotosClientTest {
     enqueuePollResponse("UPLOAD_SUCCEEDED");
 
     client.uploadContent("fav.mp4", file, "md5hex", file.length(),
-        "2024-01-15T10:00:00Z", true, null);
+        "2024-01-15T10:00:00Z", true, null, null);
 
     RecordedRequest init = server.takeRequest();
     assertTrue(init.getPath().contains("isFavorite=true"));
@@ -704,7 +704,7 @@ public class AmazonPhotosClientTest {
 
     server.enqueue(new MockResponse().setResponseCode(500)); // no body -> ""
 
-    IOException ex = assertThrows(IOException.class, () -> client.createAlbum("test"));
+    IOException ex = assertThrows(IOException.class, () -> client.createAlbum("test", null));
 
     assertTrue(ex.getMessage().contains("500"));
     assertFalse(ex.getMessage().contains("errorCode"));
@@ -727,11 +727,114 @@ public class AmazonPhotosClientTest {
     enqueueEndpointResponse(); // served by the lazy ensureEndpointsResolved()
     server.enqueue(new MockResponse().setBody("{\"id\":\"n1\",\"name\":\"Lazy\"}"));
 
-    AmazonPhotosNode node = freshClient.createAlbum("Lazy");
+    AmazonPhotosNode node = freshClient.createAlbum("Lazy", null);
 
     assertEquals("n1", node.getId());
     RecordedRequest endpointReq = server.takeRequest();
     assertTrue(endpointReq.getPath().contains("/drive/v1/account/endpoint"));
+  }
+
+  // Import-job association: job id sent as a node label.
+
+  @Test
+  void createAlbum_withJobId_sendsJobLabelInBody() throws Exception {
+    server.takeRequest(); // endpoint
+
+    server.enqueue(new MockResponse()
+        .setBody("{\"id\":\"node123\",\"name\":\"My Album\",\"kind\":\"VISUAL_COLLECTION\"}"));
+
+    client.createAlbum("My Album", "job-abc-123");
+
+    RecordedRequest request = server.takeRequest();
+    String body = request.getBody().readUtf8();
+    assertTrue(body.contains("\"labels\":[\"job-abc-123\"]"),
+        "createAlbum body should carry the job id as a label: " + body);
+  }
+
+  @Test
+  void createAlbum_withoutJobId_omitsLabelsKey() throws Exception {
+    server.takeRequest(); // endpoint
+
+    server.enqueue(new MockResponse()
+        .setBody("{\"id\":\"node123\",\"name\":\"My Album\",\"kind\":\"VISUAL_COLLECTION\"}"));
+
+    client.createAlbum("My Album", null);
+
+    RecordedRequest request = server.takeRequest();
+    assertFalse(request.getBody().readUtf8().contains("labels"));
+  }
+
+  @Test
+  void uploadContent_simple_withJobId_sendsJobLabelInMetadata() throws Exception {
+    server.takeRequest(); // endpoint
+
+    server.enqueue(new MockResponse()
+        .setBody("{\"id\":\"p1\",\"name\":\"pic.jpg\",\"kind\":\"FILE\"}"));
+
+    client.uploadContent("pic.jpg", tempFile, "md5", tempFile.length(), null, false, null,
+        "job-xyz-9");
+
+    RecordedRequest request = server.takeRequest();
+    String body = request.getBody().readUtf8();
+    assertTrue(body.contains("\"labels\":[\"job-xyz-9\"]"),
+        "upload metadata part should carry the job id as a label: " + body);
+  }
+
+  @Test
+  void uploadContent_simple_withoutJobId_omitsLabels() throws Exception {
+    server.takeRequest(); // endpoint
+
+    server.enqueue(new MockResponse()
+        .setBody("{\"id\":\"p1\",\"name\":\"pic.jpg\",\"kind\":\"FILE\"}"));
+
+    client.uploadContent("pic.jpg", tempFile, "md5", tempFile.length(), null, false, null, null);
+
+    RecordedRequest request = server.takeRequest();
+    assertFalse(request.getBody().readUtf8().contains("labels"));
+  }
+
+  @Test
+  void uploadContent_multipart_withJobId_includesLabelsOnInitiate() throws Exception {
+    server.takeRequest(); // endpoint
+    client.multipartThreshold = 5;
+    client.initialPollDelayMs = 0;
+
+    File file = createMultipartTestFile(10);
+
+    enqueueInitiateResponse("node-ub", "upload-ub", 5, 2);
+    enqueuePartResponse();
+    enqueuePartResponse();
+    enqueueCompleteResponse();
+    enqueuePollResponse("UPLOAD_SUCCEEDED");
+
+    client.uploadContent("mp.mp4", file, "md5hex", file.length(),
+        "2024-01-15T10:00:00Z", false, null, "job-mp-7");
+
+    RecordedRequest init = server.takeRequest();
+    assertTrue(init.getPath().contains("labels=job-mp-7"),
+        "multipart initiate URL should carry the job id as a label: " + init.getPath());
+  }
+
+  @Test
+  void uploadContent_multipart_withoutJobId_omitsLabelsOnInitiate() throws Exception {
+    server.takeRequest(); // endpoint
+    client.multipartThreshold = 5;
+    client.initialPollDelayMs = 0;
+
+    File file = createMultipartTestFile(10);
+
+    enqueueInitiateResponse("node-nb", "upload-nb", 5, 2);
+    enqueuePartResponse();
+    enqueuePartResponse();
+    enqueueCompleteResponse();
+    enqueuePollResponse("UPLOAD_SUCCEEDED");
+
+    client.uploadContent("mp.mp4", file, "md5hex", file.length(),
+        "2024-01-15T10:00:00Z", false, null, null);
+
+    RecordedRequest init = server.takeRequest();
+    assertFalse(init.getPath().contains("labels"),
+        "multipart initiate URL must omit labels when jobId is null: " + init.getPath());
   }
 
 }

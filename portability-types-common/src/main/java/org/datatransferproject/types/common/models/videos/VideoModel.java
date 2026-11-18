@@ -27,6 +27,7 @@ import org.datatransferproject.types.common.DownloadableFile;
 import org.datatransferproject.types.common.models.FavoriteInfo;
 import org.datatransferproject.types.common.models.MediaObject;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 
 public class VideoModel extends MediaObject implements DownloadableFile {
@@ -34,6 +35,7 @@ public class VideoModel extends MediaObject implements DownloadableFile {
   private String dataId;
   private String albumId;
   private boolean inTempStore;
+  @Nullable private String sha1; // SHA-1 hash in Hex (base16).
 
   // TODO akshaysinghh - rename the field to creationTime since creation time is what all the
   //  services use to display the photos timeline, instead of uploadTime.
@@ -50,6 +52,7 @@ public class VideoModel extends MediaObject implements DownloadableFile {
       @JsonProperty("dataId") String dataId,
       @JsonProperty("albumId") String albumId,
       @JsonProperty("inTempStore") boolean inTempStore,
+      @Nullable @JsonProperty("sha1") String sha1,
       @JsonProperty("uploadedTime") Date uploadedTime,
       @JsonProperty("favoriteInfo") FavoriteInfo favoriteInfo) {
     super(dataId);
@@ -60,8 +63,32 @@ public class VideoModel extends MediaObject implements DownloadableFile {
     this.dataId = dataId;
     this.albumId = albumId;
     this.inTempStore = inTempStore;
+    this.sha1 = sha1;
     this.uploadedTime = uploadedTime;
     this.favoriteInfo = favoriteInfo;
+  }
+
+  public VideoModel(
+      String name,
+      String contentUrl,
+      String description,
+      String encodingFormat,
+      String dataId,
+      String albumId,
+      boolean inTempStore,
+      Date uploadedTime,
+      FavoriteInfo favoriteInfo) {
+    this(
+        name,
+        contentUrl,
+        description,
+        encodingFormat,
+        dataId,
+        albumId,
+        inTempStore,
+        /* sha1= */ null,
+        uploadedTime,
+        favoriteInfo);
   }
 
   public VideoModel(
@@ -80,6 +107,7 @@ public class VideoModel extends MediaObject implements DownloadableFile {
         dataId,
         albumId,
         inTempStore,
+        /* sha1= */ null,
         uploadedTime,
         FavoriteInfo.unfavoritedAt(uploadedTime)
     );
@@ -134,6 +162,11 @@ public class VideoModel extends MediaObject implements DownloadableFile {
     return uploadedTime;
   }
 
+  @Nullable
+  public String getSha1() {
+    return sha1;
+  }
+
   public FavoriteInfo getFavoriteInfo() {
     return favoriteInfo;
   }
@@ -147,6 +180,7 @@ public class VideoModel extends MediaObject implements DownloadableFile {
         .add("dataId", dataId)
         .add("albumId", albumId)
         .add("inTempStore", inTempStore)
+        .add("sha1", sha1)
         .add("uploadedTime", uploadedTime)
         .toString();
   }
@@ -166,6 +200,7 @@ public class VideoModel extends MediaObject implements DownloadableFile {
         Objects.equal(getEncodingFormat(), that.getEncodingFormat()) &&
         Objects.equal(getDataId(), that.getDataId()) &&
         Objects.equal(getAlbumId(), that.getAlbumId()) &&
+        Objects.equal(getSha1(), that.getSha1()) &&
         Objects.equal(getUploadedTime(), that.getUploadedTime());
   }
 
