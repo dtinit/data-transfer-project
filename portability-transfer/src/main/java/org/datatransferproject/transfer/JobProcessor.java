@@ -175,6 +175,7 @@ class JobProcessor {
         // The cancel watcher won't send the End claimed above, so the handlers that opt in get it
         // here. The others get nothing, as before.
         signals.sendEndOnFailure(deriveFinalJobStatus(success));
+        signals.jobDone();
         throw e;
       }
       signals.sendEnd(jobId, exportAuthData, importAuthData, deriveFinalJobStatus(success));
@@ -186,6 +187,9 @@ class JobProcessor {
           JobMetadata.getStopWatch().elapsed());
       monitor.flushLogs();
       JobMetadata.reset();
+      // Last, so a cancel watcher waiting for the job to finish can't stop the worker before the
+      // steps above are done.
+      signals.jobDone();
     }
   }
 

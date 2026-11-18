@@ -83,6 +83,15 @@ class JobCancelWatchingService extends AbstractScheduledService {
         }
         break;
       case ERROR:
+        if (signals.isJobFinishing()) {
+          // The job's own finally block wrote ERROR because the job had errors, and it sends End
+          // and records the job's metrics itself. So let it finish, and stop the worker only if it
+          // doesn't finish in time.
+          if (!signals.awaitJobDone()) {
+            exit.run();
+          }
+          break;
+        }
         monitor.severe(
             () -> String.format("Job %s is errored", JobMetadata.getJobId()),
             EventCode.WATCHING_SERVICE_JOB_ERRORED);
