@@ -19,6 +19,11 @@ public class ConnectionProvider {
   public InputStreamWrapper getInputStreamForItem(UUID jobId, DownloadableItem item)
       throws IOException {
 
+    // An item that performs its own authenticated fetch resolves itself; no store is involved.
+    if (item instanceof SelfFetchingItem) {
+      return ((SelfFetchingItem) item).openStream(jobId);
+    }
+
     String fetchableUrl = item.getFetchableUrl();
     if (item.isInTempStore()) {
       return jobStore.getStream(jobId, fetchableUrl);
