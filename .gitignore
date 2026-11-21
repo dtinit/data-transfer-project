@@ -50,6 +50,9 @@ testem.log
 # e2e
 /e2e/*.js
 /e2e/*.map
+# Run artifacts: server logs and mock request journals. The logs are already
+# covered by *.log above, the journals are not.
+/e2e/.logs/
 
 client-rest/dist/
 

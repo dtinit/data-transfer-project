@@ -26,6 +26,11 @@ services:
   # two only ever see the same job when co-located).
   dtp:
     build: .
+    # In every adapter profile: run.sh brings up a *fresh* dtp per adapter, so
+    # no suite can see another's jobs or temp files. LocalJobStore's static maps
+    # and LocalTempFileStore's files accumulate across jobs and nothing clears
+    # them, so a shared container would make test isolation a matter of luck.
+    profiles: ["offline-demo", "imgur"]
     volumes:
       - .:/workspace
       - dtp-logs:/var/log/dtp
@@ -36,6 +41,13 @@ services:
       # bypasses OAuth entirely.
       JWT_KEY: e2e-key
       JWT_SECRET: e2e-secret
+      # Never checked either, but required: OAuth2ServiceExtension.initialize
+      # swallows the missing-credential IOException and returns *without*
+      # setting `initialized`, so the failure surfaces much later as
+      # "Cannot get OAuth2DataGenerator before initialization" on the first
+      # POST /api/transfer.
+      IMGUR_KEY: e2e-imgur-key
+      IMGUR_SECRET: e2e-imgur-secret
     # Published so `docker compose up dtp` is also the credential-free way to
     # poke at a running DTP by hand. JettyTransport hardcodes 8080.
     ports:
@@ -55,16 +67,47 @@ services:
     # logs dtp`, and run.sh captures the same stream to e2e/.logs/ afterwards.
     # Merging stderr matters -- ConsoleMonitor writes the server log to stderr
     # while OfflineDemoImporter prints the delivered payload to stdout.
+    #
+    # `-cp <dir>:<jar>` rather than `-jar`, because `-jar` ignores -cp entirely.
+    # Config resolution is classpath-only -- TransferServiceConfig and
+    # ConfigUtils both use the *singular* getResourceAsStream, so first match
+    # per filename wins -- which makes a prepended directory the one supported
+    # way to feed an adapter a different base URL. e2e/config holds only files
+    # the jar does not ship, so this is purely additive and inert for adapters
+    # that have no file there.
+    #
+    # $$ escapes Compose's own interpolation so the shell gets $(...).
     entrypoint: ["bash", "-c"]
     command:
-      - "java -jar distributions/demo-server/build/libs/*-all.jar 2>&1 | tee /var/log/dtp/dtp.log"
+      - "java -cp /workspace/e2e/config:$$(ls distributions/demo-server/build/libs/*-all.jar) org.datatransferproject.bootstrap.vm.SingleVMMain 2>&1 | tee /var/log/dtp/dtp.log"
+
+  # Stands in for api.imgur.com. Configured entirely by JSON -- mappings/ for
+  # the stubs, __files/ for the image bytes the exporter downloads during
+  # export. Its /__admin/requests journal is the assertion surface for what the
+  # importer actually sent, which is a far better one than a log line.
+  wiremock-imgur:
+    image: wiremock/wiremock:3.9.2
+    profiles: ["imgur"]
+    # Read-only on purpose. WireMock runs as root and will happily mkdir any of
+    # mappings/ or __files/ that is missing, leaving root-owned directories in
+    # your checkout -- the same papercut PYTHONDONTWRITEBYTECODE avoids for the
+    # driver. It never needs to write unless it is recording.
+    volumes:
+      - ./e2e/mocks/imgur:/home/wiremock:ro
+    # Published so run.sh can pull the request journal from the host, keeping
+    # the artifact owned by you rather than by root. The image ships no curl,
+    # so `compose exec` is not an option.
+    ports:
+      - "18080:8080"
+    command: ["--verbose"]
 
   # Stock python image, no Dockerfile. Deps install into a cached volume.
   e2e:
     image: python:3.12-slim
     working_dir: /workspace
-    depends_on:
-      - dtp
+    # No depends_on: `dtp` is now profiled and run.sh starts it explicitly, one
+    # fresh container per adapter. The driver's await_ready() is the readiness
+    # gate regardless -- there has never been a healthcheck.
     volumes:
       - .:/workspace
       - dtp-logs:/var/log/dtp:ro
@@ -72,12 +115,16 @@ services:
     environment:
       DTP_BASE_URL: https://dtp:8080
       DTP_LOG: /var/log/dtp/dtp.log
+      WIREMOCK_IMGUR_URL: http://wiremock-imgur:8080
+      # Which adapter's suite to run, as a pytest marker. Empty runs all of
+      # them, which is what a bare `docker compose run --rm e2e` does.
+      E2E_MARKER: "${E2E_MARKER:-}"
       # Keep the container from littering the bind-mounted repo with
       # root-owned __pycache__ directories.
       PYTHONDONTWRITEBYTECODE: "1"
     entrypoint: ["bash", "-c"]
     command:
-      - "pip install --quiet --root-user-action=ignore -r e2e/driver/requirements.txt && pytest e2e/driver -v -p no:cacheprovider"
+      - "pip install --quiet --root-user-action=ignore -r e2e/driver/requirements.txt && pytest e2e/driver -v -p no:cacheprovider $${E2E_MARKER:+-m $$E2E_MARKER}"
 
 volumes:
   gradle-cache:

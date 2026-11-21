@@ -1,0 +1,94 @@
+{
+  "mappings": [
+    {
+      "name": "albums page 0",
+      "metadata": {
+        "comment": [
+          "ImgurPhotosExporter.requestAlbums hits /account/me/albums/{page}?perPage=10.",
+          "Page 0 is also where it appends the synthetic 'defaultAlbumId' sub-resource that later",
+          "collects non-album photos."
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "urlPath": "/3/account/me/albums/0",
+        "queryParameters": { "perPage": { "equalTo": "10" } }
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+          "success": true,
+          "status": 200,
+          "data": [
+            {
+              "id": "albumId1",
+              "title": "Album 1",
+              "description": null,
+              "privacy": "public",
+              "images_count": 2
+            },
+            {
+              "id": "albumId2",
+              "title": "Album 2",
+              "description": "Description for Album 2",
+              "privacy": "public",
+              "images_count": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "albums page 1",
+      "metadata": {
+        "comment": [
+          "A second non-empty page is the whole reason Imgur was chosen over Koofr: without it the",
+          "copier never recurses on pagination and a green run proves nothing about it."
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "urlPath": "/3/account/me/albums/1",
+        "queryParameters": { "perPage": { "equalTo": "10" } }
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+          "success": true,
+          "status": 200,
+          "data": [
+            {
+              "id": "albumId3",
+              "title": "Album 3",
+              "description": "Description for Album 3",
+              "privacy": "hidden",
+              "images_count": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "albums page 2 (empty terminator)",
+      "metadata": {
+        "comment": [
+          "REQUIRED. The Imgur response carries no last-page flag, so the exporter infers it from",
+          "an empty list: `hasMore = items.size() != 0`. Without this stub WireMock 404s, the",
+          "exporter reads no 'data' array, and the export loops forever."
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "urlPath": "/3/account/me/albums/2",
+        "queryParameters": { "perPage": { "equalTo": "10" } }
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": { "success": true, "status": 200, "data": [] }
+      }
+    }
+  ]
+}

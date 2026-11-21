@@ -1,0 +1,94 @@
+{
+  "mappings": [
+    {
+      "name": "album 1 images",
+      "metadata": {
+        "comment": [
+          "ImgurPhotosExporter.requestPhotos, reached as a sub-resource (IdOnlyContainerResource).",
+          "This endpoint has no paging -- the exporter returns ResultType.END for it.",
+          "Fields actually read: id, name (-> PhotoModel title), description, type, link.",
+          "`link` is fetched during *export* with a plain HttpURLConnection and streamed into the",
+          "temp store, so it has to be a URL this container can reach."
+        ]
+      },
+      "request": { "method": "GET", "urlPath": "/3/album/albumId1/images" },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+          "success": true,
+          "status": 200,
+          "data": [
+            {
+              "id": "album1Photo1",
+              "name": "album1Photo1",
+              "title": "Album 1 photo 1",
+              "description": "First photo in Album 1",
+              "type": "image/jpeg",
+              "link": "http://wiremock-imgur:8080/files/album1Photo1.jpg"
+            },
+            {
+              "id": "album1Photo2",
+              "name": "album1Photo2",
+              "title": null,
+              "description": null,
+              "type": "image/jpeg",
+              "link": "http://wiremock-imgur:8080/files/album1Photo2.jpg"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "album 2 images",
+      "request": { "method": "GET", "urlPath": "/3/album/albumId2/images" },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+          "success": true,
+          "status": 200,
+          "data": [
+            {
+              "id": "album2Photo1",
+              "name": "album2Photo1",
+              "title": "Album 2 photo 1",
+              "description": "First photo in Album 2",
+              "type": "image/jpeg",
+              "link": "http://wiremock-imgur:8080/files/album2Photo1.jpg"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "album 3 images",
+      "metadata": {
+        "comment": [
+          "Album 3 arrives from albums page 1. Because copyHelper processes pagination *before*",
+          "sub-resources, this runs before page 0's defaultAlbumId sub-resource -- which is what",
+          "makes the exporter's non-album detection correct across paginated albums."
+        ]
+      },
+      "request": { "method": "GET", "urlPath": "/3/album/albumId3/images" },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+          "success": true,
+          "status": 200,
+          "data": [
+            {
+              "id": "album3Photo1",
+              "name": "album3Photo1",
+              "title": "Album 3 photo 1",
+              "description": "First photo in Album 3",
+              "type": "image/jpeg",
+              "link": "http://wiremock-imgur:8080/files/album3Photo1.jpg"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
