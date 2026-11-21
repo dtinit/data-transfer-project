@@ -212,33 +212,58 @@ class TransferSignalsTest {
   }
 
   @Test
-  void eachHandlerIsAskedOnce_andTheAnswerIsKeptForTheJob() throws Exception {
-    when(exportHandler.supportsTelemetry()).thenReturn(false);
+  void onlyTheImportHandlerIsAsked_onceForTheJob() throws Exception {
     when(importHandler.supportsTelemetry()).thenReturn(true);
     TransferSignals signals = telemetrySignals();
 
     signals.sendStart(jobId, exportAuthData, importAuthData, withCounters);
     signals.sendEnd(jobId, exportAuthData, importAuthData, COMPLETED);
 
-    verify(exportHandler, times(1)).supportsTelemetry();
+    verify(exportHandler, never()).supportsTelemetry();
     verify(importHandler, times(1)).supportsTelemetry();
   }
 
   @Test
-  void bothHandlersOptIn_bothGetTelemetry() throws Exception {
+  void exportHandlerThatOptsIn_stillGetsTodaysSignals_onlyTheImportHandlerGetsTelemetry()
+      throws Exception {
     when(exportHandler.supportsTelemetry()).thenReturn(true);
     when(importHandler.supportsTelemetry()).thenReturn(true);
-    TransferSignals signals = telemetrySignals();
+    TransferSignals signals = signals(true, Optional.of(LIFETIME), Duration.ofMillis(10));
 
     signals.sendStart(jobId, exportAuthData, importAuthData, withCounters);
+    verify(importHandler, timeout(10_000).atLeast(2))
+        .sendSignal(withState(State.IN_PROGRESS), any(), any());
     signals.sendEnd(jobId, exportAuthData, importAuthData, COMPLETED);
 
-    for (SignalHandler handler : List.of(exportHandler, importHandler)) {
-      AuthData authData = handler == exportHandler ? exportAuthData : importAuthData;
-      List<SignalRequest> requests = requestsTo(handler, authData);
-      assertNotNull(requests.get(0).startTelemetry());
-      assertNotNull(requests.get(1).endTelemetry());
-    }
+    assertEquals(
+        List.of(todaysRequest(JobLifeCycle.JOB_STARTED()), todaysRequest(COMPLETED)),
+        requestsTo(exportHandler, exportAuthData));
+    List<SignalRequest> toImporter = requestsTo(importHandler, importAuthData);
+    assertNotNull(toImporter.get(0).startTelemetry());
+    assertNotNull(toImporter.get(toImporter.size() - 1).endTelemetry());
+  }
+
+  @Test
+  void onlyTheExportHandlerOptsIn_jobSendsNoTelemetry_andReadsNoCounters() throws Exception {
+    when(exportHandler.supportsTelemetry()).thenReturn(true);
+    AtomicBoolean countersRead = new AtomicBoolean();
+    // A short interval, so Progress would go out during the test if the job sent telemetry.
+    TransferSignals signals = signals(true, Optional.of(LIFETIME), Duration.ofMillis(10));
+
+    signals.sendStart(
+        jobId,
+        exportAuthData,
+        importAuthData,
+        () -> {
+          countersRead.set(true);
+          return Optional.of(counters);
+        });
+    Thread.sleep(200);
+    signals.sendEndOnCancel(EndReason.USER_CANCELLED);
+    signals.sendEnd(jobId, exportAuthData, importAuthData, COMPLETED);
+
+    assertTodaysSignalsOnly();
+    assertFalse(countersRead.get());
   }
 
   @Test
@@ -274,20 +299,18 @@ class TransferSignalsTest {
   }
 
   @Test
-  void progress_handlerFailure_isLoggedAtDebug_andDoesNotStopTheOtherHandlerOrLaterProgress()
-      throws Exception {
-    when(exportHandler.supportsTelemetry()).thenReturn(true);
+  void progress_handlerFailure_isLoggedAtDebug_andDoesNotStopLaterProgress() throws Exception {
     when(importHandler.supportsTelemetry()).thenReturn(true);
     IOException failure = new IOException("unreachable");
-    doThrow(failure).when(exportHandler).sendSignal(withState(State.IN_PROGRESS), any(), any());
+    doThrow(failure).when(importHandler).sendSignal(withState(State.IN_PROGRESS), any(), any());
     TransferSignals signals = signals(true, Optional.of(LIFETIME), Duration.ofMillis(10));
 
     signals.sendStart(jobId, exportAuthData, importAuthData, withCounters);
 
     verify(importHandler, timeout(10_000).atLeast(3))
         .sendSignal(withState(State.IN_PROGRESS), any(), any());
+    // Stops the heartbeat and waits for the run in progress, so each failure has been logged.
     signals.sendEnd(jobId, exportAuthData, importAuthData, COMPLETED);
-    // Each run sends to the export handler first, so it has failed at least 3 times by now.
     verify(monitor, atLeast(3)).debug(any(), same(failure));
     verify(monitor, never()).info(any(), same(failure));
   }
@@ -404,17 +427,13 @@ class TransferSignalsTest {
 
   @Test
   void supportsTelemetryThrows_countsAsNo() throws Exception {
-    when(exportHandler.supportsTelemetry()).thenReturn(true);
     when(importHandler.supportsTelemetry()).thenThrow(new IllegalStateException("broken"));
     TransferSignals signals = telemetrySignals();
 
     signals.sendStart(jobId, exportAuthData, importAuthData, withCounters);
     signals.sendEnd(jobId, exportAuthData, importAuthData, COMPLETED);
 
-    assertEquals(
-        List.of(todaysRequest(JobLifeCycle.JOB_STARTED()), todaysRequest(COMPLETED)),
-        requestsTo(importHandler, importAuthData));
-    assertNotNull(requestsTo(exportHandler, exportAuthData).get(0).startTelemetry());
+    assertTodaysSignalsOnly();
   }
 
   @Test

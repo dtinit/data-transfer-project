@@ -48,6 +48,10 @@ public interface SignalHandler<A extends AuthData> {
    * {@code endTelemetry}), periodic {@code IN_PROGRESS} signals, and the more detailed end
    * reasons (e.g. {@code USER_CANCELLED}).
    *
+   * <p>Only the transfer's destination gets telemetry, since the export side already has these
+   * numbers. The worker only asks a job's import handler. A job's export handler always gets
+   * today's signals, whatever this returns.
+   *
    * <p>Defaults to false: the handler keeps receiving exactly the signals it receives today.
    */
   default boolean supportsTelemetry() {
