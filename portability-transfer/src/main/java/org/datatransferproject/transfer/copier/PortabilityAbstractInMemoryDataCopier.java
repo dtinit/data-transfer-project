@@ -16,6 +16,7 @@
 package org.datatransferproject.transfer.copier;
 
 import com.google.cloud.datastore.DatastoreException;
+import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.base.Stopwatch;
 import com.google.inject.Provider;
 import java.io.IOException;
@@ -136,6 +137,7 @@ public abstract class PortabilityAbstractInMemoryDataCopier implements InMemoryD
     if (exportedData != null) {
       telemetryCounters.recordExportedPage(exportedData);
       PortabilityJob job = jobStore.findJob(jobId);
+      checkNotNull(job, "Transfer job not found from jobStore, mid-way through copy iteration, for the job ID \"%s\"", jobId.toString());
       TransferMode transferMode =
           job.transferMode() == null ? TransferMode.DATA_TRANSFER : job.transferMode();
       switch (transferMode) {
