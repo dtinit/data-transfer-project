@@ -9,15 +9,19 @@
 # An adapter is a suite at e2e/driver/test_<adapter>.py (hyphens become
 # underscores). Each gets a fresh dtp -- see "One dtp per adapter" in
 # e2e/README.md. Server logs land in e2e/.logs/dtp-<adapter>.log afterwards,
-# whether the run passed or failed.
+# whether the run passed or failed, along with each mock's log.
 set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 LOG_DIR="e2e/.logs"
 
-# Services an adapter needs beside dtp, typically its mock provider. None yet.
-mocks_for() { :; }
+# Services an adapter needs beside dtp, typically its mock provider.
+mocks_for() {
+  case $1 in
+    imgur) echo wiremock-imgur ;;
+  esac
+}
 
 suite_for() { echo "e2e/driver/test_${1//-/_}.py"; }
 
@@ -48,6 +52,11 @@ capture() {
   mkdir -p "$LOG_DIR"
   docker compose logs --no-color --no-log-prefix dtp \
     > "$LOG_DIR/dtp-$1.log" 2>/dev/null || true
+  local mock
+  for mock in $(mocks_for "$1"); do
+    docker compose logs --no-color --no-log-prefix "$mock" \
+      > "$LOG_DIR/$mock.log" 2>/dev/null || true
+  done
 }
 
 trap teardown EXIT

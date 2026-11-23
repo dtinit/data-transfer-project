@@ -1,4 +1,4 @@
-# Runs a complete offline-demo -> offline-demo transfer against the packaged
+# Runs a complete transfer for every adapter e2e/run.sh knows, against the packaged
 # demo-server jar. See e2e/README.md.
 #
 # continue-on-error is deliberate and temporary: a flaky end-to-end job that
@@ -25,13 +25,13 @@ jobs:
     - name: Run the end-to-end transfer
       run: ./e2e/run.sh
 
-    # The server log is the only record of what the transfer actually did, so
-    # keep it whether the run passed or failed -- a failure should be
+    # The server and mock logs are the only record of what the transfer did, so
+    # keep them whether the run passed or failed -- a failure should be
     # diagnosable without re-running it.
-    - name: Upload server log
+    - name: Upload e2e logs
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: e2e-server-log
+        name: e2e-logs
         path: e2e/.logs/
         if-no-files-found: warn

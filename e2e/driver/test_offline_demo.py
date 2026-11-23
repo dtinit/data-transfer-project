@@ -6,9 +6,7 @@ local callback with a hardcoded code, and generateAuthData returns a fixed
 token -- so no provider API keys are involved at any step.
 """
 
-import re
-
-from dtp import decode_job_id
+from dtp import run_transfer
 
 # OfflineDemoAuthServiceExtension declares "OFFLINE-DEMO" while
 # OfflineDemoTransferExtension declares "offline-demo".
@@ -47,53 +45,18 @@ def test_api_advertises_the_credential_free_vertical(client):
 
 
 def test_transfer_completes_and_delivers_the_payload(client, server_log):
-    encoded_job_id = client.create_job(
-        export_service=SERVICE,
-        import_service=SERVICE,
+    run_transfer(
+        client,
+        server_log,
+        service=SERVICE,
         data_type=DATA_TYPE_JSON,
         encryption_scheme=ENCRYPTION_SCHEME,
         callback_url=CALLBACK_URL,
-    )
-    assert encoded_job_id
-
-    export_auth = client.generate_auth(encoded_job_id, "EXPORT", CALLBACK_URL)
-    import_auth = client.generate_auth(encoded_job_id, "IMPORT", CALLBACK_URL)
-    assert export_auth and import_auth
-
-    client.reserve_worker(encoded_job_id)
-    client.await_worker_claim(encoded_job_id)
-
-    client.start_job(encoded_job_id, export_auth, import_auth)
-
-    job_id = re.escape(decode_job_id(encoded_job_id))
-
-    # Wait for the job to finish, and bail out the moment anything is logged at
-    # SEVERE against this job id. A clean run emits no SEVERE lines at all, so
-    # the pattern needs no list of known failures and stays adapter-agnostic.
-    #
-    # "with 0 error(s)" is necessary but NOT sufficient, which is worth being
-    # explicit about because it is a trap. That count is the size of
-    # copier.getErrors() -- the errors the idempotent import executor logged --
-    # so a job that never copied anything also reports zero. Pointing the jar
-    # at a different encryptionScheme than the driver posts reproduces it
-    # exactly: JobProcessor logs "No auth decrypter found for scheme ...",
-    # returns without transferring, and its finally block still prints
-    # "Finished processing ... with 0 error(s)". That is why the delivered
-    # payload is asserted separately below, and why failure is detected from
-    # the SEVERE line rather than from the absence of a success line.
-    server_log.wait_for(
-        rf"Finished processing jobId: {job_id} with 0 error\(s\)\.",
         timeout=TRANSFER_TIMEOUT,
-        fail_on=rf"SEVERE[^\n]*{job_id}",
-        client=client,
     )
 
-    # Asserted separately, and on purpose: a job can report success without
-    # having moved anything. OfflineDemoImporter's println is the only artifact
-    # a successful import leaves behind.
-    #
-    # Phrased through assert_contains rather than `in server_log.read()` so a
-    # failure prints the tail of the log instead of all 30KB of it.
+    # OfflineDemoImporter's println is the only artifact a successful import
+    # leaves behind.
     server_log.assert_contains(
         "Received offline data:", "the importer never received anything"
     )
