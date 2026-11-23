@@ -4,12 +4,21 @@ Runs a complete DTP transfer — job creation, auth, worker claim, export, impor
 and asserts that the exported payload actually arrives.
 
 ```bash
-./e2e/run.sh
+./e2e/run.sh                  # every adapter
+./e2e/run.sh offline-demo     # just the ones named
 ```
 
 No provider credentials, no local JDK, no local Python. About 35 seconds with a
-warm Gradle cache. The server log lands in `e2e/.logs/dtp.log` afterwards
-whether the run passed or failed.
+warm Gradle cache. Each adapter's server log lands in
+`e2e/.logs/dtp-<adapter>.log` afterwards, whether the run passed or failed.
+
+**One dtp per adapter.** `run.sh` starts a fresh `dtp` for each adapter's
+suite and tears it down after, which costs about 17 seconds per adapter. Job
+data itself is already keyed by job id, so this isn't about the stores. It is
+about how the driver observes DTP: through one server log shared by every job,
+and a single worker that a job left behind by a failed suite could hold. Note
+that `run.sh` runs `docker compose down` for the whole project, so it also stops
+a `dtp` you started by hand.
 
 This is also the shortest path to watching DTP do something real:
 
@@ -98,11 +107,13 @@ service and a directory of JSON, not a driver change:
 1. Add a **WireMock standalone** service to `docker-compose.yml` with the
    adapter's endpoints as `mappings/` (and `__files/` for any binary payloads).
    No code — WireMock is configured entirely by JSON.
-2. Make the adapter's base URL configurable. Most are a single
-   `private static final` constant, e.g. `ImgurTransferExtension.BASE_URL`;
-   they should read from `TransferServiceConfig`, defaulting to today's value.
-3. Add a test module beside `test_offline_demo.py` with that adapter's ids and
-   fixtures.
+2. Make the adapter's base URL configurable: read it from
+   `TransferServiceConfig`, defaulting to today's value. `ImgurTransferExtension`
+   is the pattern to copy (#1519); most other adapters still hardcode a single
+   `private static final`, e.g. `MicrosoftTransferExtension.BASE_GRAPH_URL`.
+3. Add `e2e/driver/test_<adapter>.py` with that adapter's ids and fixtures —
+   `run.sh` picks up every `test_*.py` as an adapter — and list its mock service
+   in `run.sh`'s `mocks_for`.
 
 For the import side, WireMock's `/__admin/requests` admin API returns every
 request it received with bodies intact — that is the assertion surface for
