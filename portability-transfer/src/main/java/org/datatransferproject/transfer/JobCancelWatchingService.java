@@ -84,20 +84,21 @@ class JobCancelWatchingService extends AbstractScheduledService {
         break;
       case ERROR:
         if (signals.isJobFinishing()) {
-          // The job's own finally block wrote ERROR because the job had errors, and it sends End
-          // and records the job's metrics itself. So let it finish, and stop the worker only if it
-          // doesn't finish in time.
-          if (!signals.awaitJobDone()) {
+          // The job's finally block has started, so the job is ending anyway: it writes its own
+          // final state (ERROR if it had errors), sends End and records its metrics. Let it finish.
+          if (signals.awaitJobDone()) {
+            break;
+          }
+          // It didn't finish in time, so it may not record its metrics: report it here, as for any
+          // errored job, and stop the worker even if reporting fails. End is still the job's.
+          try {
+            reportErrored();
+          } finally {
             exit.run();
           }
           break;
         }
-        monitor.severe(
-            () -> String.format("Job %s is errored", JobMetadata.getJobId()),
-            EventCode.WATCHING_SERVICE_JOB_ERRORED);
-        recordGeneralMetric(PortabilityJob.State.ERROR.toString());
-        monitor.flushLogs();
-        store.abandonJob(JobMetadata.getJobId(), PortabilityJob.State.ERROR.toString());
+        reportErrored();
         try {
           signals.sendEndOnCancel(EndReason.ERRORED);
         } finally {
@@ -124,6 +125,16 @@ class JobCancelWatchingService extends AbstractScheduledService {
   @Override
   protected Scheduler scheduler() {
     return scheduler;
+  }
+
+  /** Logs and records an errored job, and abandons it. */
+  private void reportErrored() {
+    monitor.severe(
+        () -> String.format("Job %s is errored", JobMetadata.getJobId()),
+        EventCode.WATCHING_SERVICE_JOB_ERRORED);
+    recordGeneralMetric(PortabilityJob.State.ERROR.toString());
+    monitor.flushLogs();
+    store.abandonJob(JobMetadata.getJobId(), PortabilityJob.State.ERROR.toString());
   }
 
     private void recordGeneralMetric(String jobState) {

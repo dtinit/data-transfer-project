@@ -113,7 +113,8 @@ final class TransferSignals {
 
   /**
    * Counts down when the current job's {@code finally} block is done. Null until the block starts,
-   * by calling {@link #claimEnd}. The cancel watcher reads it from its own thread.
+   * by calling {@link #claimEnd}, and reset when a job starts. The cancel watcher reads it from its
+   * own thread.
    */
   @Nullable private volatile CountDownLatch jobDone;
 
@@ -195,6 +196,8 @@ final class TransferSignals {
       AuthData importAuthData,
       Supplier<Optional<TelemetryCounters>> counters) {
     jobTelemetry = null;
+    // Not finishing until this job's finally block claims End, even if the worker ran a job before.
+    jobDone = null;
     if (!signalsEnabled) {
       monitor.info(() -> "Transfer Signal Disabled.");
       return;
@@ -240,10 +243,10 @@ final class TransferSignals {
    *
    * <p>When a job finishes with errors, the worker writes {@code ERROR} to the store before calling
    * {@link #sendEnd}. If the cancel watcher polls in between and sees {@code ERROR}, {@link
-   * #isJobFinishing} tells it that the job wrote it, so it waits for the job to finish rather than
-   * handling an errored job. Claiming End first also ensures that a cancel watcher that stops the
-   * job anyway, as for a cancel, waits for {@link #sendEnd} rather than sending its own End. If the
-   * {@code finally} block fails before it gets to {@link #sendEnd}, it must call {@link
+   * #isJobFinishing} tells it that the job is already ending, so it waits for the job to finish
+   * rather than handling an errored job. Claiming End first also ensures that a cancel watcher that
+   * stops the job anyway, as for a cancel, waits for {@link #sendEnd} rather than sending its own
+   * End. If the {@code finally} block fails before it gets to {@link #sendEnd}, it must call {@link
    * #sendEndOnFailure} instead.
    */
   void claimEnd() {
@@ -278,7 +281,8 @@ final class TransferSignals {
    * Waits until the worker's {@code finally} block calls {@link #jobDone}, for at most {@link
    * #CANCEL_END_TIMEOUT}.
    *
-   * @return whether the block finished in time; true if it never started
+   * @return whether the block finished in time: true if it never started, and false if this thread
+   *     is interrupted
    */
   boolean awaitJobDone() {
     CountDownLatch done = jobDone;
