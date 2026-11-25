@@ -44,7 +44,9 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
 
 /**
  * Sends transfer telemetry to Google's receiver, the {@code ReportTransferTelemetry} method of the
- * Data Portability API, authorized by the user's Google token.
+ * Data Portability API, authorized by the user's Google Photos import token. That token has to
+ * carry a scope that the receiver accepts, {@code photoslibrary.appendonly}: see {@link
+ * GoogleSignalHandler}.
  *
  * <p>The request body is the {@link SignalRequest}'s JSON, with its timestamps as RFC 3339 strings
  * instead of epoch milliseconds, since the receiver rejects numbers there. A request that fails
@@ -106,7 +108,12 @@ final class GoogleTelemetryClient implements TelemetrySender {
   @Override
   public synchronized void send(
       SignalRequest request, TokensAndUrlAuthData authData, BooleanSupplier mayRetry) {
-    String couldntSend = "Couldn't send transfer telemetry " + signalName(request) + " to Google";
+    String couldntSend =
+        "Couldn't send transfer telemetry "
+            + signalName(request)
+            + " for job "
+            + request.jobId()
+            + " to Google";
     try {
       byte[] body = toJson(request);
       Credential credential = credentialFor(authData);

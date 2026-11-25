@@ -48,6 +48,11 @@ import org.datatransferproject.types.transfer.auth.TokensAndUrlAuthData;
  * photos, videos or media, since it reports with the user's Google Photos import token. It never
  * reports a job that Google exports, so a worker that exports from Google makes no calls.
  *
+ * <p>The receiver accepts that token only because it carries the {@code photoslibrary.appendonly}
+ * scope, which DTP asks for when importing those data types: see {@code GoogleOAuthConfig}, whose
+ * test pins it. If those import scopes change, the receiver has to accept the new ones too, or it
+ * rejects every report with HTTP 403.
+ *
  * <p>It reports the signals that carry telemetry, and an End without its telemetry block for a job
  * whose Start had telemetry: the worker sends that End when it can't read its counters. Other
  * signals, such as those a worker sends when its host turns telemetry off, aren't reported.
@@ -176,7 +181,12 @@ public final class GoogleSignalHandler implements SignalHandler<TokensAndUrlAuth
         });
     try {
       if (!sent.await(endTimeout.toMillis(), MILLISECONDS)) {
-        monitor.info(() -> "Transfer telemetry End didn't go out to Google within " + endTimeout);
+        monitor.info(
+            () ->
+                "Transfer telemetry End for job "
+                    + end.request.jobId()
+                    + " didn't go out to Google within "
+                    + endTimeout);
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -189,7 +199,12 @@ public final class GoogleSignalHandler implements SignalHandler<TokensAndUrlAuth
     } catch (Throwable t) {
       // Catches everything: on this thread, an uncaught throwable reaches the worker's default
       // handler, which can exit the worker in the middle of the transfer.
-      monitor.info(() -> "Couldn't report transfer telemetry to Google.", t);
+      monitor.info(
+          () ->
+              "Couldn't report transfer telemetry for job "
+                  + report.request.jobId()
+                  + " to Google.",
+          t);
     }
   }
 

@@ -32,6 +32,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
+import java.util.function.Supplier;
 import org.datatransferproject.api.launcher.Monitor;
 import org.datatransferproject.spi.transfer.provider.SignalRequest;
 import org.datatransferproject.spi.transfer.types.signals.EndTelemetry;
@@ -48,6 +49,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 
 // Some senders block until the test releases them, so a regression could hang instead of fail.
 @Timeout(30)
@@ -164,10 +166,12 @@ class GoogleSignalHandlerTest {
       handler.sendSignal(end(), authData, monitor);
       Duration waited = Duration.ofNanos(System.nanoTime() - startNanos);
 
-      // It gave up while the report was still going out.
+      // It gave up while the report was still going out, and the log says which job's End.
       assertThat(sent).isEmpty();
       assertThat(waited).isLessThan(Duration.ofSeconds(5));
-      verify(monitor).info(any());
+      ArgumentCaptor<Supplier<String>> message = messageCaptor();
+      verify(monitor).info(message.capture());
+      assertThat(message.getValue().get()).contains(JOB_ID);
     } finally {
       release.countDown();
     }
@@ -378,7 +382,14 @@ class GoogleSignalHandlerTest {
     handler.sendSignal(end(), authData, monitor);
 
     assertThat(sent).containsExactly(end());
-    verify(monitor).info(any(), same(failure));
+    ArgumentCaptor<Supplier<String>> message = messageCaptor();
+    verify(monitor).info(message.capture(), same(failure));
+    assertThat(message.getValue().get()).contains(JOB_ID);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static ArgumentCaptor<Supplier<String>> messageCaptor() {
+    return ArgumentCaptor.forClass(Supplier.class);
   }
 
   private static Stream<Throwable> senderFailures() {

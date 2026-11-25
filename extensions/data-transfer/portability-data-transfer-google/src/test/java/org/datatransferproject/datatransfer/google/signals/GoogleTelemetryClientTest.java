@@ -406,7 +406,7 @@ class GoogleTelemetryClientTest {
   }
 
   @Test
-  void send_failure_logsTheSignal_andTheReceiversError() {
+  void send_failure_logsTheSignal_theJob_andTheReceiversError() {
     server.receiverResponses.add(
         json(
             403,
@@ -418,7 +418,10 @@ class GoogleTelemetryClientTest {
 
     assertThat(infoLogs).hasSize(1);
     assertThat(infoLogs.get(0))
-        .startsWith("Couldn't send transfer telemetry End to Google: HTTP 403: {\"error\"");
+        .startsWith(
+            "Couldn't send transfer telemetry End for job "
+                + JOB_ID
+                + " to Google: HTTP 403: {\"error\"");
     assertThat(infoLogs.get(0)).contains("PERMISSION_DENIED");
     assertThat(infoLogs.get(0)).contains("Request had insufficient authentication scopes.");
   }
@@ -431,8 +434,9 @@ class GoogleTelemetryClientTest {
     client.send(startAt(START_MILLIS), authData, ALWAYS);
 
     assertThat(infoLogs).hasSize(1);
-    assertThat(infoLogs.get(0)).endsWith("x...");
-    assertThat(infoLogs.get(0).length()).isLessThan(limit + 100);
+    String log = infoLogs.get(0);
+    String error = log.substring(log.indexOf("HTTP 400: ") + "HTTP 400: ".length());
+    assertThat(error).isEqualTo("x".repeat(limit) + "...");
   }
 
   @Test
