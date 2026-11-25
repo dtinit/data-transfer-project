@@ -1,0 +1,49 @@
+{
+  "mappings": [
+    {
+      "name": "albums page 0",
+      "metadata": {
+        "comment": ["Page 0 also appends the synthetic sub-resource that collects non-album photos."]
+      },
+      "request": {
+        "method": "GET",
+        "urlPath": "/3/account/me/albums/0",
+        "queryParameters": {"perPage": {"equalTo": "10"}}
+      },
+      "response": {
+        "status": 200,
+        "headers": {"Content-Type": "application/json"},
+        "jsonBody": {
+          "data": [
+            {"id": "albumId1", "title": "Album 1", "description": null},
+            {"id": "albumId2", "title": "Album 2", "description": "Description for Album 2"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "albums page 1",
+      "metadata": {"comment": ["Only source of Album 3, which is what proves pagination."]},
+      "request": {
+        "method": "GET",
+        "urlPath": "/3/account/me/albums/1",
+        "queryParameters": {"perPage": {"equalTo": "10"}}
+      },
+      "response": {
+        "status": 200,
+        "headers": {"Content-Type": "application/json"},
+        "jsonBody": {"data": [{"id": "albumId3", "title": "Album 3", "description": "Description for Album 3"}]}
+      }
+    },
+    {
+      "name": "albums page 2 (empty terminator)",
+      "metadata": {"comment": ["The exporter stops only on an empty page; without this it fails on the 404."]},
+      "request": {
+        "method": "GET",
+        "urlPath": "/3/account/me/albums/2",
+        "queryParameters": {"perPage": {"equalTo": "10"}}
+      },
+      "response": {"status": 200, "headers": {"Content-Type": "application/json"}, "jsonBody": {"data": []}}
+    }
+  ]
+}

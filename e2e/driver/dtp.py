@@ -265,3 +265,45 @@ class ServerLog:
             f"Timed out after {timeout}s waiting for /{pattern}/.{note}\n\n"
             f"--- server log (tail) ---\n{self.tail()}"
         )
+
+
+def run_transfer(
+    client: DtpClient,
+    server_log: ServerLog,
+    *,
+    service: str,
+    data_type: str,
+    encryption_scheme: str,
+    callback_url: str,
+    timeout: float,
+) -> str:
+    """Create, authorize and start a same-service job; wait for it to finish.
+
+    Returns the job's UUID. Finishing only means the job ended -- a job that
+    copied nothing also reports "0 error(s)" (see e2e/README.md) -- so callers
+    must still assert on what arrived. Fails fast on any SEVERE line naming the
+    job.
+    """
+    encoded_job_id = client.create_job(
+        export_service=service,
+        import_service=service,
+        data_type=data_type,
+        encryption_scheme=encryption_scheme,
+        callback_url=callback_url,
+    )
+    export_auth = client.generate_auth(encoded_job_id, "EXPORT", callback_url)
+    import_auth = client.generate_auth(encoded_job_id, "IMPORT", callback_url)
+
+    client.reserve_worker(encoded_job_id)
+    client.await_worker_claim(encoded_job_id)
+    client.start_job(encoded_job_id, export_auth, import_auth)
+
+    job_id = decode_job_id(encoded_job_id)
+    escaped = re.escape(job_id)
+    server_log.wait_for(
+        rf"Finished processing jobId: {escaped} with 0 error\(s\)\.",
+        timeout=timeout,
+        fail_on=rf"SEVERE[^\n]*{escaped}",
+        client=client,
+    )
+    return job_id

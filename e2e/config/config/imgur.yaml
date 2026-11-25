@@ -1,0 +1,4 @@
+# Read via the e2e/config classpath prefix; see e2e/README.md.
+serviceConfig:
+  baseUrl: "http://wiremock-imgur:8080/3"
+  tokenUrl: "http://wiremock-imgur:8080/oauth2/token"

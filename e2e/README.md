@@ -4,12 +4,27 @@ Runs a complete DTP transfer — job creation, auth, worker claim, export, impor
 and asserts that the exported payload actually arrives.
 
 ```bash
-./e2e/run.sh
+./e2e/run.sh                  # every adapter
+./e2e/run.sh imgur            # just the ones named
 ```
 
-No provider credentials, no local JDK, no local Python. About 35 seconds with a
-warm Gradle cache. The server log lands in `e2e/.logs/dtp.log` afterwards
-whether the run passed or failed.
+No provider credentials, no local JDK, no local Python. About a minute for
+both adapters with a warm Gradle cache. Each adapter's server log lands in
+`e2e/.logs/dtp-<adapter>.log` afterwards, and each mock's request journal in
+`e2e/.logs/<mock>.log`, whether the run passed or failed.
+
+| Adapter | What it proves |
+|---|---|
+| `offline-demo` | the machinery — a credential-free transfer with no HTTP surface at all |
+| `imgur` | a real data path — the unmodified Imgur adapter paginating on two axes, recursing into albums, and round-tripping image bytes through the temp store |
+
+**One dtp per adapter.** `run.sh` starts a fresh `dtp` for each adapter's
+suite and tears it down after, which costs about 17 seconds per adapter. Job
+data itself is already keyed by job id, so this isn't about the stores. It is
+about how the driver observes DTP: through one server log shared by every job,
+and a single worker that a job left behind by a failed suite could hold. Note
+that `run.sh` runs `docker compose down` for the whole project, so it also stops
+a `dtp` you started by hand.
 
 This is also the shortest path to watching DTP do something real:
 
@@ -21,14 +36,15 @@ docker compose up dtp          # API on https://localhost:8080 (self-signed)
 
 ## How it fits together
 
-Three services in the root `docker-compose.yml`, two of them sharing the repo's
+Four services in the root `docker-compose.yml`, two of them sharing the repo's
 single `Dockerfile`:
 
 | Service | What it is |
 |---|---|
 | `gradle` | the Gradle build. Its `ENTRYPOINT` is `./gradlew`, so anything you pass it is a Gradle argument. |
-| `dtp` | the same image, with the entrypoint overridden to `java -jar` the shadowJar that `gradle` produced. |
+| `dtp` | the same image, with the entrypoint overridden to run the shadowJar that `gradle` produced. |
 | `e2e` | stock `python:3.12-slim`, pytest, no Dockerfile. |
+| `wiremock-imgur` | `wiremock/wiremock`, standing in for `api.imgur.com`. Configured entirely by JSON. |
 
 `dtp` tees its output to a shared volume; `e2e` reads that file. Both also
 bind-mount the repo, so no image needs rebuilding when a test changes.
@@ -56,9 +72,11 @@ It does already run the real packaged jar, including the `mergeServiceFiles()`
 
 ## What a green run does and does not prove
 
-**Does:** a job was created and authorized over HTTP, a worker claimed it, the
-exporter produced data, the copier moved it, and the importer received the
-exact expected payload.
+**Does:** a job was created and authorized over HTTP — including a real OAuth2
+token exchange, for Imgur — a worker claimed it, the exporter produced data, the
+copier recursed over paginated listings and sub-resources, image bytes made a
+round trip through `LocalTempFileStore`, and the importer delivered every one of
+them to the right album, byte for byte.
 
 **Does not:**
 
@@ -71,8 +89,11 @@ exact expected payload.
   still prints the clean-looking line. This is why the delivered payload is
   asserted separately, and why failure is detected from `SEVERE` lines rather
   than from the absence of a success line.
-- **Cover any real provider adapter.** `offline-demo` has no HTTP surface, no
-  pagination and no sub-resources. It exercises the machinery, not a data path.
+- **Cover a real provider's API.** The Imgur suite drives the real, unmodified
+  `ImgurPhotosExporter` and `ImgurPhotosImporter`, but against a mock built from
+  the adapter's own test fixtures. It tests DTP against *our reading* of Imgur's
+  API, so it catches DTP regressions and not Imgur changing under us.
+- **Cover any vertical but `PHOTOS` and `OFFLINE_DATA`.**
 - **Cover the published image**, since there isn't one.
 
 ### Why the completion signal is a log line
@@ -92,25 +113,56 @@ change to shipped code, so it is deliberately not bundled here.
 ## Adding an adapter
 
 The driver is adapter-agnostic — service ids, vertical and encryption scheme
-are parameters, and `dtp.py` names no provider. Adding one should cost a compose
-service and a directory of JSON, not a driver change:
+are parameters, and `dtp.py` and `wiremock.py` name no provider. `imgur` is the
+worked example; copy its shape:
 
-1. Add a **WireMock standalone** service to `docker-compose.yml` with the
+1. Make the adapter's base URL configurable: read it from
+   `TransferServiceConfig`, defaulting to today's value. `ImgurTransferExtension`
+   is the pattern to copy (#1519); most other adapters still hardcode a single
+   `private static final`, e.g. `MicrosoftTransferExtension.BASE_GRAPH_URL`.
+2. Point the adapter at the mock with a `config/<service>.yaml` under
+   `e2e/config/` — see below.
+3. Add a **WireMock standalone** service to `docker-compose.yml` with the
    adapter's endpoints as `mappings/` (and `__files/` for any binary payloads).
-   No code — WireMock is configured entirely by JSON.
-2. Make the adapter's base URL configurable. Most are a single
-   `private static final` constant, e.g. `ImgurTransferExtension.BASE_URL`;
-   they should read from `TransferServiceConfig`, defaulting to today's value.
-3. Add a test module beside `test_offline_demo.py` with that adapter's ids and
-   fixtures.
+   Run it with `--verbose`: `run.sh` saves its log, which then has every request
+   and body.
+4. Add `e2e/driver/test_<adapter>.py` with that adapter's ids and fixtures —
+   `run.sh` picks up every `test_*.py` as an adapter — and list its mock service
+   in `run.sh`'s `mocks_for`.
 
-For the import side, WireMock's `/__admin/requests` admin API returns every
-request it received with bodies intact — that is the assertion surface for
-"what actually arrived", and a far better one than a log line.
+### How the mock URL reaches the adapter
 
-Derive mock request and response shapes from the adapter's existing
-`MockWebServer` tests rather than from the client code, and seed **more than one
-page** of data — otherwise pagination never fires and its absence passes.
+There is no environment-variable override anywhere in DTP's config chain:
+`TransferServiceConfig.getForService(service)` and `ConfigUtils` read
+`config/<name>.yaml` from the classpath with the singular `getResourceAsStream`,
+so the first match per filename wins. `dtp` therefore runs
+`java -cp /workspace/e2e/config:<jar> …SingleVMMain` rather than `java -jar`,
+which ignores `-cp`. Two things to know:
+
+- **The path is doubled.** `e2e/config` is the classpath entry and
+  `config/imgur.yaml` is the resource name, so the file lives at
+  `e2e/config/config/imgur.yaml`.
+- **Prefer adding a file over shadowing one.** Adding a file the jar does not
+  ship (Imgur's case) is inert for everything else. Shadowing one it *does*
+  ship — `deezer.yaml`, `flickr.yaml`, `synology.yaml` — replaces it wholesale
+  rather than merging, silently dropping settings like `perUserRateLimit`.
+
+### Fixtures and assertions
+
+- Derive request and response shapes from the adapter's existing
+  `MockWebServer` tests rather than from the client code.
+- Include only the fields the adapter reads, and template URLs the adapter
+  follows from `{{request.baseUrl}}` so the mock's hostname lives in one place.
+- Seed data that exists **only on the last non-empty page** of each axis the
+  adapter paginates, and assert it arrives. Adapters that stop on an empty page
+  also need an empty-page terminator stub.
+- Assert on WireMock's `/__admin/requests` journal, which `wiremock.py` wraps —
+  every request the mock received, bodies intact.
+- An import that is deduplicated by the idempotent executor never reaches the
+  mock, so a duplicate *export* can't be seen in the uploads. Assert on what the
+  exporter fetched as well.
+- When negative-checking a bytes-match assertion, break the pipeline (serve the
+  wrong file), not the fixture: the fixture is both sides of the comparison.
 
 Note the fidelity limit that comes with all of this: a mock built from adapter
 code tests DTP against *our reading* of a provider's API. It catches DTP
@@ -136,6 +188,14 @@ session:
   body; the segment only matters for routing.
 - **Job ids are base64url of the UUID's 36-character string**, not of its 16
   bytes.
+- **An adapter with real OAuth needs credentials set, even fake ones.**
+  Without them `OAuth2ServiceExtension.initialize` quietly gives up, and the
+  failure surfaces on the first `POST /api/transfer` as `Cannot get
+  OAuth2DataGenerator before initialization`. Hence the dummy
+  `IMGUR_KEY`/`IMGUR_SECRET` on `dtp`.
+- **A clean Imgur run logs `SEVERE` lines.** On a same-service transfer
+  `ImgurTransferExtension` logs each repeated `initialize()` at `SEVERE`. They
+  carry no job id, so the `SEVERE[^\n]*<job_id>` fail-fast pattern ignores them.
 - **A failed job can take the whole JVM with it.**
   `JobCancelWatchingService` calls `System.exit(0)` on `ERROR`, and
   `SingleVMMain`'s worker loop means that kills the API too. The driver reports

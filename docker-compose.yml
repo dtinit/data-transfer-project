@@ -1,9 +1,9 @@
-# Three services; `gradle` and `dtp` share this repo's one Dockerfile.
+# `gradle` and `dtp` share this repo's one Dockerfile.
 #
 # `gradle` runs the Gradle build (see Dockerfile) -- its ENTRYPOINT is
 # ./gradlew, so arguments passed to it are Gradle arguments. `dtp` runs the
-# packaged demo-server jar that build produces, and `e2e` drives a transfer
-# against it.
+# packaged demo-server jar that build produces, `e2e` drives a transfer
+# against it, and `wiremock-*` services stand in for provider APIs.
 #
 # `dtp` deliberately reuses `build: .` rather than defining an image of its
 # own -- the repo publishes no server image today, so the harness pins a
@@ -36,6 +36,9 @@ services:
       # bypasses OAuth entirely.
       JWT_KEY: e2e-key
       JWT_SECRET: e2e-secret
+      # Never checked either, but required -- see e2e/README.md.
+      IMGUR_KEY: e2e-imgur-key
+      IMGUR_SECRET: e2e-imgur-secret
     # Published so `docker compose up dtp` is also the credential-free way to
     # poke at a running DTP by hand. JettyTransport hardcodes 8080.
     ports:
@@ -55,9 +58,23 @@ services:
     # logs dtp`, and run.sh captures the same stream to e2e/.logs/ afterwards.
     # Merging stderr matters -- ConsoleMonitor writes the server log to stderr
     # while OfflineDemoImporter prints the delivered payload to stdout.
+    #
+    # -cp, not -jar (which ignores -cp), so e2e/config can point adapters at
+    # their mocks -- see "How the mock URL reaches the adapter" in e2e/README.md.
+    #
+    # $$ escapes Compose's own interpolation so the shell gets $(...).
     entrypoint: ["bash", "-c"]
     command:
-      - "java -jar distributions/demo-server/build/libs/*-all.jar 2>&1 | tee /var/log/dtp/dtp.log"
+      - "java -cp /workspace/e2e/config:$$(ls distributions/demo-server/build/libs/*-all.jar) org.datatransferproject.bootstrap.vm.SingleVMMain 2>&1 | tee /var/log/dtp/dtp.log"
+
+  # Stands in for api.imgur.com; see e2e/mocks/imgur.
+  wiremock-imgur:
+    image: wiremock/wiremock:3.9.2
+    # :ro so the root-run container can't write into the checkout.
+    volumes:
+      - ./e2e/mocks/imgur:/home/wiremock:ro
+    # Logs every request with its body; run.sh saves that log.
+    command: ["--verbose"]
 
   # Stock python image, no Dockerfile. Deps install into a cached volume.
   e2e:
@@ -75,9 +92,13 @@ services:
       # Keep the container from littering the bind-mounted repo with
       # root-owned __pycache__ directories.
       PYTHONDONTWRITEBYTECODE: "1"
-    entrypoint: ["bash", "-c"]
-    command:
-      - "pip install --quiet --root-user-action=ignore -r e2e/driver/requirements.txt && pytest e2e/driver -v -p no:cacheprovider"
+    # Arguments are the suite(s) to run; run.sh passes one per adapter.
+    entrypoint:
+      - bash
+      - -c
+      - "pip install --quiet --root-user-action=ignore -r e2e/driver/requirements.txt && exec pytest -v -p no:cacheprovider \"$$@\""
+      - e2e
+    command: ["e2e/driver/test_offline_demo.py"]
 
 volumes:
   gradle-cache:
