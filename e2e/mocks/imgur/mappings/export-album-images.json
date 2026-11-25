@@ -1,0 +1,83 @@
+{
+  "mappings": [
+    {
+      "name": "album 1 images",
+      "metadata": {
+        "comment": [
+          "Album sub-resource; no paging. `link` is fetched during export, so it must be a URL",
+          "the dtp container can reach."
+        ]
+      },
+      "request": {"method": "GET", "urlPath": "/3/album/albumId1/images"},
+      "response": {
+        "status": 200,
+        "headers": {"Content-Type": "application/json"},
+        "jsonBody": {
+          "data": [
+            {
+              "id": "album1Photo1",
+              "name": "album1Photo1",
+              "description": "First photo in Album 1",
+              "type": "image/jpeg",
+              "link": "{{request.baseUrl}}/files/album1Photo1.jpg"
+            },
+            {
+              "id": "album1Photo2",
+              "name": "album1Photo2",
+              "description": null,
+              "type": "image/jpeg",
+              "link": "{{request.baseUrl}}/files/album1Photo2.jpg"
+            }
+          ]
+        },
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "name": "album 2 images",
+      "request": {"method": "GET", "urlPath": "/3/album/albumId2/images"},
+      "response": {
+        "status": 200,
+        "headers": {"Content-Type": "application/json"},
+        "jsonBody": {
+          "data": [
+            {
+              "id": "album2Photo1",
+              "name": "album2Photo1",
+              "description": "First photo in Album 2",
+              "type": "image/jpeg",
+              "link": "{{request.baseUrl}}/files/album2Photo1.jpg"
+            }
+          ]
+        },
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "name": "album 3 images",
+      "metadata": {
+        "comment": [
+          "Album 3 comes from albums page 1, and is walked before page 0's synthetic non-album",
+          "sub-resource -- which is what makes the exporter's non-album detection correct."
+        ]
+      },
+      "request": {"method": "GET", "urlPath": "/3/album/albumId3/images"},
+      "response": {
+        "status": 200,
+        "headers": {"Content-Type": "application/json"},
+        "jsonBody": {
+          "data": [
+            {
+              "id": "album3Photo1",
+              "name": "album3Photo1",
+              "description": "First photo in Album 3",
+              "type": "image/jpeg",
+              "link": "{{request.baseUrl}}/files/album3Photo1.jpg"
+            }
+          ]
+        },
+        "transformers": ["response-template"]
+      }
+    }
+  ]
+}

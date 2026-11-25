@@ -1,0 +1,26 @@
+{
+  "mappings": [
+    {
+      "name": "create album",
+      "metadata": {
+        "comment": [
+          "Returns imported-<title> as the new album id, so the test can check each photo",
+          "arrived in the album created for it."
+        ]
+      },
+      "request": {"method": "POST", "urlPath": "/3/album"},
+      "response": {
+        "status": 200,
+        "headers": {"Content-Type": "application/json"},
+        "jsonBody": {"data": {"id": "imported-{{formData request.body 'form' urlDecode=true}}{{form.title}}"}},
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "name": "upload image",
+      "metadata": {"comment": ["The importer checks only the status code."]},
+      "request": {"method": "POST", "urlPath": "/3/image"},
+      "response": {"status": 200}
+    }
+  ]
+}

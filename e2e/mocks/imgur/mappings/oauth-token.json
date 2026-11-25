@@ -1,0 +1,10 @@
+{
+  "name": "OAuth2 token exchange",
+  "metadata": {"comment": ["OAuth2TokenResponse reads only access_token and refresh_token."]},
+  "request": {"method": "POST", "urlPath": "/oauth2/token"},
+  "response": {
+    "status": 200,
+    "headers": {"Content-Type": "application/json"},
+    "jsonBody": {"access_token": "e2e-access-token", "refresh_token": "e2e-refresh-token"}
+  }
+}
