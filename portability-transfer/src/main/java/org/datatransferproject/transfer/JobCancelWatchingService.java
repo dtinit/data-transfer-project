@@ -83,12 +83,22 @@ class JobCancelWatchingService extends AbstractScheduledService {
         }
         break;
       case ERROR:
-        monitor.severe(
-            () -> String.format("Job %s is errored", JobMetadata.getJobId()),
-            EventCode.WATCHING_SERVICE_JOB_ERRORED);
-        recordGeneralMetric(PortabilityJob.State.ERROR.toString());
-        monitor.flushLogs();
-        store.abandonJob(JobMetadata.getJobId(), PortabilityJob.State.ERROR.toString());
+        if (signals.isJobFinishing()) {
+          // The job's finally block has started, so the job is ending anyway: it writes its own
+          // final state (ERROR if it had errors), sends End and records its metrics. Let it finish.
+          if (signals.awaitJobDone()) {
+            break;
+          }
+          // It didn't finish in time, so it may not record its metrics: report it here, as for any
+          // errored job, and stop the worker even if reporting fails. End is still the job's.
+          try {
+            reportErrored();
+          } finally {
+            exit.run();
+          }
+          break;
+        }
+        reportErrored();
         try {
           signals.sendEndOnCancel(EndReason.ERRORED);
         } finally {
@@ -115,6 +125,16 @@ class JobCancelWatchingService extends AbstractScheduledService {
   @Override
   protected Scheduler scheduler() {
     return scheduler;
+  }
+
+  /** Logs and records an errored job, and abandons it. */
+  private void reportErrored() {
+    monitor.severe(
+        () -> String.format("Job %s is errored", JobMetadata.getJobId()),
+        EventCode.WATCHING_SERVICE_JOB_ERRORED);
+    recordGeneralMetric(PortabilityJob.State.ERROR.toString());
+    monitor.flushLogs();
+    store.abandonJob(JobMetadata.getJobId(), PortabilityJob.State.ERROR.toString());
   }
 
     private void recordGeneralMetric(String jobState) {

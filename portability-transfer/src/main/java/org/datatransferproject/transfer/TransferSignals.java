@@ -88,7 +88,8 @@ final class TransferSignals {
    * Leaves room for a handler that waits up to a minute for its End to go out, plus the heartbeat's
    * shutdown timeout. When the job's {@code finally} block claimed End first, the cancel watcher's
    * wait also covers the job's final store update and hooks, so if those and End together take
-   * longer, the handlers that opt in get no End.
+   * longer, the handlers that opt in get no End. It's also how long the cancel watcher waits for a
+   * job that's finishing with errors to finish, before it stops the worker anyway.
    */
   static final Duration CANCEL_END_TIMEOUT = Duration.ofSeconds(90);
 
@@ -109,6 +110,13 @@ final class TransferSignals {
    * read it from their own threads.
    */
   @Nullable private volatile JobTelemetry jobTelemetry;
+
+  /**
+   * Counts down when the current job's {@code finally} block is done. Null until the block starts,
+   * by calling {@link #claimEnd}, and reset when a job starts. The cancel watcher reads it from its
+   * own thread.
+   */
+  @Nullable private volatile CountDownLatch jobDone;
 
   @Inject
   TransferSignals(
@@ -188,6 +196,8 @@ final class TransferSignals {
       AuthData importAuthData,
       Supplier<Optional<TelemetryCounters>> counters) {
     jobTelemetry = null;
+    // Not finishing until this job's finally block claims End, even if the worker ran a job before.
+    jobDone = null;
     if (!signalsEnabled) {
       monitor.info(() -> "Transfer Signal Disabled.");
       return;
@@ -229,19 +239,65 @@ final class TransferSignals {
 
   /**
    * Claims End for the worker's {@code finally} block before the final state is written to the job
-   * store.
+   * store, and marks the job as finishing. The block must call {@link #jobDone} last.
    *
    * <p>When a job finishes with errors, the worker writes {@code ERROR} to the store before calling
-   * {@link #sendEnd}. Claiming End first ensures that if the cancel watcher polls in between and
-   * sees {@code ERROR}, it waits for {@link #sendEnd} rather than sending {@link EndReason#ERRORED}
-   * or exiting early. If the {@code finally} block then fails before it gets to {@link #sendEnd},
-   * it must call {@link #sendEndOnFailure} instead.
+   * {@link #sendEnd}. If the cancel watcher polls in between and sees {@code ERROR}, {@link
+   * #isJobFinishing} tells it that the job is already ending, so it waits for the job to finish
+   * rather than handling an errored job. Claiming End first also ensures that a cancel watcher that
+   * stops the job anyway, as for a cancel, waits for {@link #sendEnd} rather than sending its own
+   * End. If the {@code finally} block fails before it gets to {@link #sendEnd}, it must call {@link
+   * #sendEndOnFailure} instead.
    */
   void claimEnd() {
+    jobDone = new CountDownLatch(1);
     JobTelemetry telemetry = jobTelemetry;
     if (telemetry != null) {
       telemetry.endClaimer.compareAndSet(null, EndClaimer.JOB);
     }
+  }
+
+  /**
+   * Marks the end of the worker's {@code finally} block, after the job's final state, End and
+   * metrics. Call it last, also when the block fails, so that a cancel watcher waiting for the job
+   * to finish stops waiting.
+   */
+  void jobDone() {
+    CountDownLatch done = jobDone;
+    if (done != null) {
+      done.countDown();
+    }
+  }
+
+  /**
+   * Whether the worker's {@code finally} block has started, by calling {@link #claimEnd}. The job
+   * then writes its own final state to the store: {@code ERROR} if it had errors.
+   */
+  boolean isJobFinishing() {
+    return jobDone != null;
+  }
+
+  /**
+   * Waits until the worker's {@code finally} block calls {@link #jobDone}, for at most {@link
+   * #CANCEL_END_TIMEOUT}.
+   *
+   * @return whether the block finished in time: true if it never started, and false if this thread
+   *     is interrupted
+   */
+  boolean awaitJobDone() {
+    CountDownLatch done = jobDone;
+    if (done == null) {
+      return true;
+    }
+    try {
+      if (done.await(cancelEndTimeout.toMillis(), MILLISECONDS)) {
+        return true;
+      }
+      monitor.info(() -> "The finishing job didn't finish within " + cancelEndTimeout);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    return false;
   }
 
   /**

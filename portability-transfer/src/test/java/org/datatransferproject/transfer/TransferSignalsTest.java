@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -616,7 +617,8 @@ class TransferSignalsTest {
 
     // The job's finally claims End before writing ERROR to JobStore.
     signals.claimEnd();
-    // The cancel watcher polls ERROR before sendEnd starts, loses the claim, and waits.
+    // A cancel watcher that's stopping the job anyway (for a cancel, or an ERROR it saw just before
+    // the claim) calls sendEndOnCancel before sendEnd starts, loses the claim, and waits.
     CompletableFuture<Void> watcher =
         CompletableFuture.runAsync(() -> signals.sendEndOnCancel(EndReason.ERRORED));
     Thread.sleep(100);
@@ -972,6 +974,89 @@ class TransferSignalsTest {
     telemetrySignals().sendStart(jobId, exportAuthData, importAuthData, withCounters);
 
     assertNull(onlyRequestTo(importHandler, importAuthData).startTelemetry().recurringJobId());
+  }
+
+  @Test
+  void jobIsFinishing_onceItsFinallyBlockClaimsEnd() {
+    TransferSignals signals = signals(false, Optional.empty(), NO_PROGRESS);
+    assertFalse(signals.isJobFinishing());
+
+    signals.claimEnd();
+
+    assertTrue(signals.isJobFinishing());
+  }
+
+  @Test
+  void awaitJobDone_returnsTrue_onceTheJobIsDone() throws Exception {
+    TransferSignals signals = signals(false, Optional.empty(), NO_PROGRESS);
+    signals.claimEnd();
+    CompletableFuture<Boolean> waiting = CompletableFuture.supplyAsync(signals::awaitJobDone);
+
+    signals.jobDone();
+
+    assertTrue(waiting.get(10, TimeUnit.SECONDS));
+  }
+
+  @Test
+  void awaitJobDone_returnsFalse_afterTheTimeout_ifTheJobIsntDone() {
+    Duration cancelWait = Duration.ofMillis(200);
+    TransferSignals signals = telemetrySignals(cancelWait);
+    signals.claimEnd();
+    Stopwatch stopwatch = Stopwatch.createStarted();
+
+    assertFalse(signals.awaitJobDone());
+
+    assertTrue(stopwatch.elapsed().compareTo(cancelWait) >= 0);
+  }
+
+  @Test
+  void awaitJobDone_returnsAtOnce_beforeTheJobIsFinishing() {
+    TransferSignals signals = telemetrySignals(Duration.ofHours(1));
+
+    // Bounded, so a regression fails here instead of waiting out the hour.
+    assertTrue(assertTimeoutPreemptively(Duration.ofSeconds(10), signals::awaitJobDone));
+  }
+
+  @Test
+  void signalsDisabled_claimEndStillMarksTheJobFinishing_andTheNextJobsStartResetsIt() {
+    TransferSignals signals =
+        new TransferSignals(
+            () -> exportHandler,
+            () -> importHandler,
+            false,
+            true,
+            NO_PROGRESS,
+            Optional.empty(),
+            CANCEL_WAIT,
+            monitor,
+            CLOCK);
+
+    signals.claimEnd();
+    assertTrue(signals.isJobFinishing());
+    signals.jobDone();
+    signals.sendStart(jobId, exportAuthData, importAuthData, withCounters);
+
+    assertFalse(signals.isJobFinishing());
+  }
+
+  @Test
+  void aNewJob_isntFinishing_evenAfterAnEarlierJobFinished() {
+    TransferSignals signals = signals(false, Optional.empty(), NO_PROGRESS);
+    signals.claimEnd();
+    signals.jobDone();
+
+    signals.sendStart(jobId, exportAuthData, importAuthData, Optional::empty);
+
+    assertFalse(signals.isJobFinishing());
+  }
+
+  @Test
+  void jobDone_beforeClaimEnd_doesNothing() {
+    TransferSignals signals = signals(false, Optional.empty(), NO_PROGRESS);
+
+    signals.jobDone();
+
+    assertFalse(signals.isJobFinishing());
   }
 
   private TransferSignals telemetrySignals() {

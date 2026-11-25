@@ -17,6 +17,7 @@ package org.datatransferproject.transfer;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -46,6 +47,8 @@ class JobCancelWatchingServiceTest {
   private final JobStore store = mock(JobStore.class);
   private final TransferSignals signals = mock(TransferSignals.class);
   private final Runnable exit = mock(Runnable.class);
+  private final Monitor monitor = mock(Monitor.class);
+  private final DtpInternalMetricRecorder metrics = mock(DtpInternalMetricRecorder.class);
   private JobCancelWatchingService service;
 
   @BeforeEach
@@ -57,8 +60,8 @@ class JobCancelWatchingServiceTest {
         new JobCancelWatchingService(
             store,
             Scheduler.newFixedDelaySchedule(0, 1, TimeUnit.HOURS),
-            mock(Monitor.class),
-            mock(DtpInternalMetricRecorder.class),
+            monitor,
+            metrics,
             signals,
             exit);
   }
@@ -89,6 +92,68 @@ class JobCancelWatchingServiceTest {
     InOrder order = inOrder(store, signals, exit);
     order.verify(store).abandonJob(jobId, PortabilityJob.State.ERROR.toString());
     order.verify(signals).sendEndOnCancel(EndReason.ERRORED);
+    order.verify(exit).run();
+  }
+
+  @Test
+  void erroredJob_whileTheJobIsFinishing_isLeftToFinish() {
+    // The job's own finally block wrote ERROR, because the job had errors.
+    jobIs(PortabilityJob.State.ERROR);
+    when(signals.isJobFinishing()).thenReturn(true);
+    when(signals.awaitJobDone()).thenReturn(true);
+
+    service.runOneIteration();
+
+    verify(signals).awaitJobDone();
+    verify(signals, never()).sendEndOnCancel(any());
+    verify(store, never()).abandonJob(any(), any());
+    verify(monitor, never()).severe(any(), any());
+    verifyNoInteractions(metrics, exit);
+  }
+
+  @Test
+  void erroredJob_whileTheJobIsFinishing_isReportedAndStopped_ifItDoesntFinishInTime() {
+    jobIs(PortabilityJob.State.ERROR);
+    when(signals.isJobFinishing()).thenReturn(true);
+    when(signals.awaitJobDone()).thenReturn(false);
+
+    service.runOneIteration();
+
+    // The job won't record its own metrics, so the watcher reports it as errored, as before.
+    verify(monitor).severe(any(), any());
+    verify(metrics)
+        .recordGenericMetric(any(), any(), eq(PortabilityJob.State.ERROR.toString()), any());
+    InOrder order = inOrder(store, exit);
+    order.verify(store).abandonJob(jobId, PortabilityJob.State.ERROR.toString());
+    order.verify(exit).run();
+    // End is still the job's to send.
+    verify(signals, never()).sendEndOnCancel(any());
+  }
+
+  @Test
+  void erroredJob_whileTheJobIsFinishing_stopsTheWorker_evenIfReportingItFails() {
+    jobIs(PortabilityJob.State.ERROR);
+    when(signals.isJobFinishing()).thenReturn(true);
+    when(signals.awaitJobDone()).thenReturn(false);
+    // JobStore.abandonJob may throw IllegalStateException.
+    doThrow(new IllegalStateException("store bug")).when(store).abandonJob(any(), any());
+
+    assertThrows(IllegalStateException.class, () -> service.runOneIteration());
+
+    // Otherwise the stuck job would keep the worker running.
+    verify(exit).run();
+  }
+
+  @Test
+  void canceledJob_whileTheJobIsFinishing_isStillCanceled() {
+    jobIs(PortabilityJob.State.CANCELED);
+    when(signals.isJobFinishing()).thenReturn(true);
+
+    service.runOneIteration();
+
+    InOrder order = inOrder(store, signals, exit);
+    order.verify(store).abandonJob(jobId, PortabilityJob.State.CANCELED.toString());
+    order.verify(signals).sendEndOnCancel(EndReason.USER_CANCELLED);
     order.verify(exit).run();
   }
 
