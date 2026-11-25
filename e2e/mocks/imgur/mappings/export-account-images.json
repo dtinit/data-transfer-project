@@ -1,0 +1,101 @@
+{
+  "mappings": [
+    {
+      "name": "account images page 0",
+      "metadata": {
+        "comment": [
+          "Repeats every album photo; the exporter must skip them, checked by each /files/ GET",
+          "happening exactly once."
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "urlPath": "/3/account/me/images/0",
+        "queryParameters": {"perPage": {"equalTo": "10"}}
+      },
+      "response": {
+        "status": 200,
+        "headers": {"Content-Type": "application/json"},
+        "jsonBody": {
+          "data": [
+            {
+              "id": "album1Photo1",
+              "name": "album1Photo1",
+              "description": "First photo in Album 1",
+              "type": "image/jpeg",
+              "link": "{{request.baseUrl}}/files/album1Photo1.jpg"
+            },
+            {
+              "id": "album1Photo2",
+              "name": "album1Photo2",
+              "description": null,
+              "type": "image/jpeg",
+              "link": "{{request.baseUrl}}/files/album1Photo2.jpg"
+            },
+            {
+              "id": "album2Photo1",
+              "name": "album2Photo1",
+              "description": "First photo in Album 2",
+              "type": "image/jpeg",
+              "link": "{{request.baseUrl}}/files/album2Photo1.jpg"
+            },
+            {
+              "id": "album3Photo1",
+              "name": "album3Photo1",
+              "description": "First photo in Album 3",
+              "type": "image/jpeg",
+              "link": "{{request.baseUrl}}/files/album3Photo1.jpg"
+            },
+            {
+              "id": "nonAlbumPhoto1",
+              "name": "nonAlbumPhoto1",
+              "description": "Loose photo one",
+              "type": "image/jpeg",
+              "link": "{{request.baseUrl}}/files/nonAlbumPhoto1.jpg"
+            }
+          ]
+        },
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "name": "account images page 1",
+      "metadata": {
+        "comment": [
+          "Second page on the other pagination axis; its photo references the synthetic album",
+          "cached on page 0, so the id cache is exercised across copy iterations."
+        ]
+      },
+      "request": {
+        "method": "GET",
+        "urlPath": "/3/account/me/images/1",
+        "queryParameters": {"perPage": {"equalTo": "10"}}
+      },
+      "response": {
+        "status": 200,
+        "headers": {"Content-Type": "application/json"},
+        "jsonBody": {
+          "data": [
+            {
+              "id": "nonAlbumPhoto2",
+              "name": "nonAlbumPhoto2",
+              "description": "Loose photo two",
+              "type": "image/jpeg",
+              "link": "{{request.baseUrl}}/files/nonAlbumPhoto2.jpg"
+            }
+          ]
+        },
+        "transformers": ["response-template"]
+      }
+    },
+    {
+      "name": "account images page 2 (empty terminator)",
+      "request": {
+        "method": "GET",
+        "urlPath": "/3/account/me/images/2",
+        "queryParameters": {"perPage": {"equalTo": "10"}}
+      },
+      "response": {"status": 200, "headers": {"Content-Type": "application/json"}, "jsonBody": {"data": []}}
+    }
+  ]
+}
