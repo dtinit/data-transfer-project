@@ -312,9 +312,10 @@ final class WorkerModule extends FlagBindingModule {
   }
 
   /**
-   * Whether jobs send transfer telemetry to the signal handlers that opt in. On when it isn't set;
-   * set it to false to send none. If it's set to anything other than true, it's off. Handlers that
-   * don't opt in never get telemetry. Also needs {@code transferSignalEnabled}.
+   * Whether jobs send transfer telemetry to their import signal handler, if it opts in. On when it
+   * isn't set; set it to false to send none. If it's set to anything other than true, it's off.
+   * Export handlers, and import handlers that don't opt in, never get telemetry. Also needs {@code
+   * transferSignalEnabled}.
    */
   @Provides
   @Named("transferTelemetryEnabled")
@@ -323,9 +324,9 @@ final class WorkerModule extends FlagBindingModule {
   }
 
   /**
-   * How often, in milliseconds, a job sends Progress to the handlers that opt in to telemetry.
-   * Empty, or not a positive number, means every 15 minutes. Other values are kept between 1
-   * minute and 15 minutes.
+   * How often, in milliseconds, a job sends Progress to its import handler, if it opts in to
+   * telemetry. Empty, or not a positive number, means every 15 minutes. Other values are kept
+   * between 1 minute and 15 minutes.
    */
   @Provides
   @Named("telemetryHeartbeatInterval")
